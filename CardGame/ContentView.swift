@@ -62,6 +62,10 @@ struct ContentView: View {
                     }
                 }
             }
+            .navigationTitle(viewModel.currentNode?.name ?? "Unknown Location")
+            .navigationBarTitleDisplayMode(.inline)
+            .navigationViewStyle(.stack)
+
 
             if viewModel.gameState.status == .gameOver {
                 Color.black.opacity(0.75).ignoresSafeArea()
