@@ -9,14 +9,33 @@ struct PartyStatusView: View {
                 .font(.headline)
 
             ForEach(viewModel.gameState.party) { character in
-                VStack(alignment: .leading) {
+                VStack(alignment: .leading, spacing: 4) {
                     Text(character.name)
                         .font(.subheadline)
                         .bold()
-                    Text("Stress: \(character.stress)")
-                        .font(.caption)
-                    Text("Harm - L: \(character.harm.lesser.count) M: \(character.harm.moderate.count) S: \(character.harm.severe.count)")
-                        .font(.caption2)
+
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Stress \(character.stress)/9")
+                            .font(.caption2)
+                        ProgressView(value: Float(character.stress), total: 9)
+                            .progressViewStyle(.linear)
+                    }
+
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Harm")
+                            .font(.caption2)
+                        HStack {
+                            ProgressView(value: Float(character.harm.lesser.count), total: 2)
+                                .progressViewStyle(.linear)
+                                .tint(.yellow)
+                            ProgressView(value: Float(character.harm.moderate.count), total: 2)
+                                .progressViewStyle(.linear)
+                                .tint(.orange)
+                            ProgressView(value: Float(character.harm.severe.count), total: 2)
+                                .progressViewStyle(.linear)
+                                .tint(.red)
+                        }
+                    }
                 }
                 .padding(.vertical, 2)
             }
