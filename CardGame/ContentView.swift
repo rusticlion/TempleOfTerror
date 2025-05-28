@@ -1,88 +1,90 @@
-//
-//  ContentView.swift
-//  CardGame
-//
-//  Created by Russell Leon Bates IV on 5/28/25.
-//
-
 import SwiftUI
-import CoreData
 
-struct ContentView: View {
-    @Environment(\.managedObjectContext) private var viewContext
+struct Card: Identifiable, Equatable {
+    let id = UUID()
+    let title: String
+    let color: Color
+}
 
-    @FetchRequest(
-        sortDescriptors: [NSSortDescriptor(keyPath: \Item.timestamp, ascending: true)],
-        animation: .default)
-    private var items: FetchedResults<Item>
+struct CardView: View {
+    let card: Card
+    let onRemove: () -> Void
+
+    @State private var offset: CGSize = .zero
 
     var body: some View {
-        NavigationView {
-            List {
-                ForEach(items) { item in
-                    NavigationLink {
-                        Text("Item at \(item.timestamp!, formatter: itemFormatter)")
-                    } label: {
-                        Text(item.timestamp!, formatter: itemFormatter)
+        ZStack {
+            RoundedRectangle(cornerRadius: 24)
+                .fill(card.color)
+                .shadow(radius: 8)
+            Text(card.title)
+                .font(.title)
+                .foregroundColor(.white)
+        }
+        .frame(width: 300, height: 400)
+        .offset(offset)
+        .rotationEffect(.degrees(Double(offset.width / 20)))
+        .gesture(
+            DragGesture()
+                .onChanged { gesture in
+                    offset = gesture.translation
+                }
+                .onEnded { _ in
+                    if abs(offset.width) > 100 {
+                        // Remove card if swiped far enough
+                        withAnimation {
+                            offset.width > 0 ? (offset.width = 1000) : (offset.width = -1000)
+                        }
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                            onRemove()
+                        }
+                    } else {
+                        withAnimation { offset = .zero }
                     }
                 }
-                .onDelete(perform: deleteItems)
-            }
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    EditButton()
-                }
-                ToolbarItem {
-                    Button(action: addItem) {
-                        Label("Add Item", systemImage: "plus")
-                    }
-                }
-            }
-            Text("Select an item")
-        }
-    }
-
-    private func addItem() {
-        withAnimation {
-            let newItem = Item(context: viewContext)
-            newItem.timestamp = Date()
-
-            do {
-                try viewContext.save()
-            } catch {
-                // Replace this implementation with code to handle the error appropriately.
-                // fatalError() causes the application to generate a crash log and terminate. You should not use this function in a shipping application, although it may be useful during development.
-                let nsError = error as NSError
-                fatalError("Unresolved error \(nsError), \(nsError.userInfo)")
-            }
-        }
-    }
-
-    private func deleteItems(offsets: IndexSet) {
-        withAnimation {
-            offsets.map { items[$0] }.forEach(viewContext.delete)
-
-            do {
-                try viewContext.save()
-            } catch {
-                // Replace this implementation with code to handle the error appropriately.
-                // fatalError() causes the application to generate a crash log and terminate. You should not use this function in a shipping application, although it may be useful during development.
-                let nsError = error as NSError
-                fatalError("Unresolved error \(nsError), \(nsError.userInfo)")
-            }
-        }
+        )
+        .animation(.spring(), value: offset)
     }
 }
 
-private let itemFormatter: DateFormatter = {
-    let formatter = DateFormatter()
-    formatter.dateStyle = .short
-    formatter.timeStyle = .medium
-    return formatter
-}()
+struct DeckView: View {
+    @State private var cards = [
+        Card(title: "SwiftUI", color: .blue),
+        Card(title: "Kotlin", color: .purple),
+        Card(title: "JavaScript", color: .orange),
+        Card(title: "Ruby", color: .red)
+    ]
+
+    var body: some View {
+        ZStack {
+            ForEach(cards) { card in
+                if card == cards.last {
+                    CardView(card: card) {
+                        // Remove top card
+                        cards.removeLast()
+                    }
+                }
+            }
+            if cards.isEmpty {
+                Text("No more cards!")
+                    .font(.largeTitle)
+                    .foregroundColor(.gray)
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color(.systemBackground))
+    }
+}
+
+struct ContentView: View {
+    var body: some View {
+        DeckView()
+    }
+}
 
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
-        ContentView().environment(\.managedObjectContext, PersistenceController.preview.container.viewContext)
+        ContentView()
     }
 }
+
