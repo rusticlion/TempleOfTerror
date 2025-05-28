@@ -31,7 +31,8 @@ struct GameClock: Identifiable, Codable {
 }
 
 // Models for the interactable itself
-struct Interactable: Codable {
+struct Interactable: Codable, Identifiable {
+    let id: UUID = UUID()
     var title: String
     var description: String
     var availableActions: [ActionOption]
@@ -42,6 +43,28 @@ struct ActionOption: Codable {
     var actionType: String // Corresponds to a key in Character.actions, e.g., "Tinker"
     var position: RollPosition
     var effect: RollEffect
+    var outcomes: [RollOutcome: [Consequence]] = [:]
+}
+
+enum RollOutcome: String, Codable {
+    case success
+    case partial
+    case failure
+}
+
+enum Consequence: Codable {
+    case gainStress(amount: Int)
+    case sufferHarm(level: HarmLevel, description: String)
+    case tickClock(clockName: String, amount: Int)
+    case unlockConnection(fromNodeID: UUID, toNodeID: UUID)
+    case removeInteractable(id: UUID)
+    case addInteractable(inNodeID: UUID, interactable: Interactable)
+}
+
+enum HarmLevel: String, Codable {
+    case lesser
+    case moderate
+    case severe
 }
 
 enum RollPosition: String, Codable {
