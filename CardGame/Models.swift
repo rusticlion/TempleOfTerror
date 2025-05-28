@@ -1,3 +1,5 @@
+import Foundation
+
 struct GameState: Codable {
     var party: [Character] = []
     var activeClocks: [GameClock] = []
