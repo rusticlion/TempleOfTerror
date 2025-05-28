@@ -1,10 +1,16 @@
 import Foundation
 
+enum GameStatus: String, Codable {
+    case playing
+    case gameOver
+}
+
 struct GameState: Codable {
     var party: [Character] = []
     var activeClocks: [GameClock] = []
     var dungeon: DungeonMap? // The full map
     var currentNodeID: UUID? // The party's current location
+    var status: GameStatus = .playing
     // ... other global state can be added later
 }
 

@@ -83,6 +83,9 @@ class GameViewModel: ObservableObject {
                     case .severe: gameState.party[charIndex].harm.severe.append(description)
                     }
                     descriptions.append("Suffered \(level.rawValue) harm: \(description).")
+                    if gameState.party[charIndex].harm.severe.count >= 2 {
+                        gameState.status = .gameOver
+                    }
                 }
             case .tickClock(let clockName, let amount):
                 if let clockIndex = gameState.activeClocks.firstIndex(where: { $0.name == clockName }) {
@@ -112,6 +115,22 @@ class GameViewModel: ObservableObject {
             gameState.activeClocks[index].progress = min(gameState.activeClocks[index].segments,
                                                          gameState.activeClocks[index].progress + ticks)
         }
+    }
+
+    /// Starts a brand new run, resetting the game state
+    func startNewRun() {
+        self.gameState = GameState(
+            party: [
+                Character(name: "Indy", characterClass: "Archaeologist", stress: 0, harm: HarmState(), actions: ["Study": 3, "Wreck": 1]),
+                Character(name: "Sallah", characterClass: "Brawler", stress: 0, harm: HarmState(), actions: ["Finesse": 2, "Survey": 2]),
+                Character(name: "Marion", characterClass: "Survivor", stress: 0, harm: HarmState(), actions: ["Tinker": 2, "Attune": 1])
+            ],
+            activeClocks: [
+                GameClock(name: "The Guardian Wakes", segments: 6, progress: 0)
+            ],
+            status: .playing
+        )
+        generateDungeon()
     }
 
     /// Generates the dungeon map for the sprint. Currently static.
