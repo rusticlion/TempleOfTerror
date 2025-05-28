@@ -31,24 +31,30 @@ struct ContentView: View {
                     VStack(alignment: .leading, spacing: 16) {
 
                         if let node = viewModel.currentNode {
-                            ForEach(node.interactables, id: \.id) { interactable in
-                                InteractableCardView(interactable: interactable) { action in
-                                    if selectedCharacter != nil {
-                                        pendingAction = action
+                            VStack(alignment: .leading, spacing: 16) {
+                                ForEach(node.interactables, id: \.id) { interactable in
+                                    InteractableCardView(interactable: interactable) { action in
+                                        if selectedCharacter != nil {
+                                            pendingAction = action
+                                        }
                                     }
+                                    .transition(.scale(scale: 0.9).combined(with: .opacity))
+                                }
+
+                                Divider()
+
+                                NodeConnectionsView(currentNode: viewModel.currentNode) { connection in
+                                    viewModel.move(to: connection)
                                 }
                             }
-
-                            Divider()
-
-                            NodeConnectionsView(currentNode: viewModel.currentNode) { connection in
-                                viewModel.move(to: connection)
-                            }
+                            .id(node.id)
+                            .transition(.opacity)
                         } else {
                             Text("Loading dungeon...")
                         }
                     }
                     .padding()
+                    .animation(.default, value: viewModel.currentNode?.id)
                 }
             }
             .disabled(viewModel.gameState.status == .gameOver)
