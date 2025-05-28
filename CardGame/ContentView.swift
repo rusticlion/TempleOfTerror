@@ -2,7 +2,6 @@ import SwiftUI
 
 struct ContentView: View {
     @StateObject var viewModel = GameViewModel()
-    @State private var showingDiceSheet = false
     @State private var pendingAction: ActionOption?
     @State private var selectedCharacterID: UUID? // Track selected character
 
@@ -24,9 +23,8 @@ struct ContentView: View {
                 if let node = viewModel.currentNode {
                     ForEach(node.interactables, id: \.id) { interactable in
                         InteractableCardView(interactable: interactable) { action in
-                            pendingAction = action
                             if selectedCharacter != nil {
-                                showingDiceSheet = true
+                                pendingAction = action
                             }
                         }
                     }
@@ -49,9 +47,8 @@ struct ContentView: View {
             }
             .padding()
             .navigationTitle(viewModel.currentNode?.name ?? "Unknown Location")
-            .sheet(isPresented: $showingDiceSheet) {
-                if let action = pendingAction,
-                   let character = selectedCharacter {
+            .sheet(item: $pendingAction) { action in
+                if let character = selectedCharacter {
                     let clockID = viewModel.gameState.activeClocks.first?.id
                     DiceRollView(viewModel: viewModel,
                                  action: action,

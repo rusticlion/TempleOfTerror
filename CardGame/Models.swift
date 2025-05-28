@@ -53,6 +53,10 @@ struct ActionOption: Codable {
     var outcomes: [RollOutcome: [Consequence]] = [:]
 }
 
+extension ActionOption: Identifiable {
+    var id: String { name }
+}
+
 enum RollOutcome: String, Codable {
     case success
     case partial
