@@ -5,6 +5,12 @@ struct ContentView: View {
     @State private var projectionText: String = ""
     @State private var showingAlert = false
     @State private var pendingAction: ActionOption?
+    @State private var selectedCharacterID: UUID? // Track selected character
+
+    // Helper to retrieve the selected character object
+    private var selectedCharacter: Character? {
+        viewModel.gameState.party.first { $0.id == selectedCharacterID }
+    }
 
     private let interactable = Interactable(
         title: "Trapped Pedestal",
@@ -18,6 +24,8 @@ struct ContentView: View {
     var body: some View {
         NavigationView {
             VStack(alignment: .leading, spacing: 16) {
+                CharacterSelectorView(characters: viewModel.gameState.party,
+                                      selectedCharacterID: $selectedCharacterID)
                 PartyStatusView(viewModel: viewModel)
                 ClocksView(viewModel: viewModel)
                 Divider()
@@ -27,7 +35,7 @@ struct ContentView: View {
                     ForEach(interactable.availableActions, id: \.name) { action in
                         Button(action.name) {
                             pendingAction = action
-                            if let character = viewModel.gameState.party.first {
+                            if let character = selectedCharacter {
                                 projectionText = viewModel.calculateProjection(for: action, with: character)
                                 showingAlert = true
                             }
@@ -37,12 +45,17 @@ struct ContentView: View {
                 }
                 Spacer()
             }
+            .onAppear {
+                if selectedCharacterID == nil {
+                    selectedCharacterID = viewModel.gameState.party.first?.id
+                }
+            }
             .padding()
             .navigationTitle("Temple of Terror")
             .alert("Projection", isPresented: $showingAlert) {
                 Button("Roll") {
                     if let action = pendingAction,
-                       let character = viewModel.gameState.party.first {
+                       let character = selectedCharacter {
                         let clockID = viewModel.gameState.activeClocks.first?.id
                         viewModel.performAction(for: action, with: character, onClock: clockID)
                     }
