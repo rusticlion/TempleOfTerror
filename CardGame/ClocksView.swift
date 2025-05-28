@@ -7,10 +7,37 @@ struct ClocksView: View {
         VStack(alignment: .leading) {
             Text("Active Clocks")
                 .font(.headline)
-            ForEach(viewModel.gameState.activeClocks) { clock in
-                Text("\(clock.name): \(clock.progress) / \(clock.segments)")
-                    .font(.caption)
+            ScrollView(.horizontal) {
+                HStack {
+                    ForEach(viewModel.gameState.activeClocks) { clock in
+                        GraphicalClockView(clock: clock)
+                    }
+                }
             }
+        }
+    }
+}
+
+struct GraphicalClockView: View {
+    let clock: GameClock
+
+    var body: some View {
+        VStack {
+            Text(clock.name)
+                .font(.caption)
+            ZStack {
+                Circle().stroke(lineWidth: 10).opacity(0.3)
+                Circle()
+                    .trim(from: 0.0,
+                          to: min(CGFloat(clock.progress) / CGFloat(clock.segments), 1.0))
+                    .stroke(style: StrokeStyle(lineWidth: 10,
+                                               lineCap: .round,
+                                               lineJoin: .round))
+                    .foregroundColor(.red)
+                    .rotationEffect(Angle(degrees: 270.0))
+                Text("\(clock.progress)/\(clock.segments)")
+            }
+            .frame(width: 60, height: 60)
         }
     }
 }
