@@ -4,6 +4,7 @@ struct ContentView: View {
     @StateObject private var viewModel: GameViewModel
     @State private var pendingAction: ActionOption?
     @State private var selectedCharacterID: UUID? // Track selected character
+    @State private var showingStatusSheet = false // Controls the party sheet
 
     init() {
         let vm = GameViewModel()
@@ -28,9 +29,6 @@ struct ContentView: View {
 
                 ScrollView {
                     VStack(alignment: .leading, spacing: 16) {
-                        PartyStatusView(viewModel: viewModel)
-                        ClocksView(viewModel: viewModel)
-                        Divider()
 
                         if let node = viewModel.currentNode {
                             ForEach(node.interactables, id: \.id) { interactable in
@@ -66,6 +64,22 @@ struct ContentView: View {
                 }
             }
 
+            VStack {
+                Spacer()
+                HStack {
+                    Spacer()
+                    Button {
+                        showingStatusSheet.toggle()
+                    } label: {
+                        Image(systemName: "person.3.fill")
+                        Text("Party")
+                    }
+                    .padding()
+                    .background(.thinMaterial, in: Capsule())
+                    .padding()
+                }
+            }
+
 
             if viewModel.gameState.status == .gameOver {
                 Color.black.opacity(0.75).ignoresSafeArea()
@@ -84,6 +98,10 @@ struct ContentView: View {
                     .controlSize(.large)
                 }
             }
+        }
+        .sheet(isPresented: $showingStatusSheet) {
+            StatusSheetView(viewModel: viewModel)
+                .presentationDetents([.medium, .large])
         }
         .ignoresSafeArea(.all, edges: .bottom)
     }
