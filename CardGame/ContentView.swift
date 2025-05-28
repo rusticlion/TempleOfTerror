@@ -43,7 +43,8 @@ struct ContentView: View {
                 Button("Roll") {
                     if let action = pendingAction,
                        let character = viewModel.gameState.party.first {
-                        viewModel.performAction(for: action, with: character, onClock: nil)
+                        let clockID = viewModel.gameState.activeClocks.first?.id
+                        viewModel.performAction(for: action, with: character, onClock: clockID)
                     }
                 }
                 Button("Cancel", role: .cancel) { }
