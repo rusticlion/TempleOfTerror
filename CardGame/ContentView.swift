@@ -47,7 +47,6 @@ struct ContentView: View {
                     }
                 }
                 .padding()
-                .navigationTitle(viewModel.currentNode?.name ?? "Unknown Location")
                 .sheet(item: $pendingAction) { action in
                     if let character = selectedCharacter {
                         let clockID = viewModel.gameState.activeClocks.first?.id
@@ -60,6 +59,10 @@ struct ContentView: View {
                     }
                 }
             }
+            .navigationTitle(viewModel.currentNode?.name ?? "Unknown Location")
+            .navigationBarTitleDisplayMode(.inline)
+            .navigationViewStyle(.stack)
+
 
             if viewModel.gameState.status == .gameOver {
                 Color.black.opacity(0.75).ignoresSafeArea()
