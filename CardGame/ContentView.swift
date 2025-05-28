@@ -22,7 +22,7 @@ struct ContentView: View {
                 Divider()
 
                 if let node = viewModel.currentNode {
-                    ForEach(node.interactables, id: \.title) { interactable in
+                    ForEach(node.interactables, id: \.id) { interactable in
                         InteractableCardView(interactable: interactable) { action in
                             pendingAction = action
                             if selectedCharacter != nil {
