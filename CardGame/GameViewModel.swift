@@ -35,8 +35,8 @@ class GameViewModel: ObservableObject {
     }
 
     /// The main dice roll function, now returns the result for the UI.
-    func performAction(for action: ActionOption, with character: Character, onClock clockID: UUID?) -> DiceRollResult {
-        guard let characterIndex = gameState.party.firstIndex(where: { $0.id == character.id }) else {
+    func performAction(for action: ActionOption, with character: Character) -> DiceRollResult {
+        guard gameState.party.contains(where: { $0.id == character.id }) else {
             return DiceRollResult(highestRoll: 0, outcome: "Error", consequences: "Character not found.")
         }
 
@@ -46,29 +46,65 @@ class GameViewModel: ObservableObject {
             highestRoll = max(highestRoll, Int.random(in: 1...6))
         }
 
-        var outcome: String
-        var consequences: String
+        var consequencesToApply: [Consequence] = []
+        var outcomeString = ""
 
         switch highestRoll {
         case 6:
-            outcome = "Full Success!"
-            consequences = "You master the situation."
-            if let clockID = clockID {
-                let ticks = 2 // Standard effect
-                updateClock(id: clockID, ticks: ticks)
-                consequences += "\nThe '\(gameState.activeClocks.first(where: {$0.id == clockID})?.name ?? "")' clock progresses by \(ticks)."
-            }
+            outcomeString = "Full Success!"
+            consequencesToApply = action.outcomes[.success] ?? []
         case 4...5:
-            outcome = "Partial Success..."
-            gameState.party[characterIndex].stress += 2
-            consequences = "You do it, but at a cost. Gained 2 Stress."
+            outcomeString = "Partial Success..."
+            consequencesToApply = action.outcomes[.partial] ?? []
         default:
-            outcome = "Failure."
-            gameState.party[characterIndex].harm.lesser.append("Bruised")
-            consequences = "Things go wrong. You suffer minor harm."
+            outcomeString = "Failure."
+            consequencesToApply = action.outcomes[.failure] ?? []
         }
 
-        return DiceRollResult(highestRoll: highestRoll, outcome: outcome, consequences: consequences)
+        let consequencesDescription = processConsequences(consequencesToApply, forCharacter: character)
+
+        return DiceRollResult(highestRoll: highestRoll, outcome: outcomeString, consequences: consequencesDescription)
+    }
+
+    private func processConsequences(_ consequences: [Consequence], forCharacter character: Character) -> String {
+        var descriptions: [String] = []
+        for consequence in consequences {
+            switch consequence {
+            case .gainStress(let amount):
+                if let charIndex = gameState.party.firstIndex(where: { $0.id == character.id }) {
+                    gameState.party[charIndex].stress += amount
+                    descriptions.append("Gained \(amount) Stress.")
+                }
+            case .sufferHarm(let level, let description):
+                if let charIndex = gameState.party.firstIndex(where: { $0.id == character.id }) {
+                    switch level {
+                    case .lesser: gameState.party[charIndex].harm.lesser.append(description)
+                    case .moderate: gameState.party[charIndex].harm.moderate.append(description)
+                    case .severe: gameState.party[charIndex].harm.severe.append(description)
+                    }
+                    descriptions.append("Suffered \(level.rawValue) harm: \(description).")
+                }
+            case .tickClock(let clockName, let amount):
+                if let clockIndex = gameState.activeClocks.firstIndex(where: { $0.name == clockName }) {
+                    updateClock(id: gameState.activeClocks[clockIndex].id, ticks: amount)
+                    descriptions.append("The '\(clockName)' clock progresses by \(amount).")
+                }
+            case .unlockConnection(let fromNodeID, let toNodeID):
+                if let connIndex = gameState.dungeon?.nodes[fromNodeID]?.connections.firstIndex(where: { $0.toNodeID == toNodeID }) {
+                    gameState.dungeon?.nodes[fromNodeID]?.connections[connIndex].isUnlocked = true
+                    descriptions.append("A path has opened!")
+                }
+            case .removeInteractable(let id):
+                if let nodeID = gameState.currentNodeID {
+                    gameState.dungeon?.nodes[nodeID]?.interactables.removeAll(where: { $0.id == id })
+                    descriptions.append("The way is clear.")
+                }
+            case .addInteractable(let inNodeID, let interactable):
+                gameState.dungeon?.nodes[inNodeID]?.interactables.append(interactable)
+                descriptions.append("Something new appears.")
+            }
+        }
+        return descriptions.joined(separator: "\n")
     }
 
     private func updateClock(id: UUID, ticks: Int) {
@@ -86,16 +122,32 @@ class GameViewModel: ObservableObject {
         let secondNodeID = UUID()
         let thirdNodeID = UUID()
 
+        let stoneDoorID = UUID()
+        let doorInteractable = Interactable(
+            id: stoneDoorID,
+            title: "Sealed Stone Door",
+            description: "A massive circular door covered in dust.",
+            availableActions: [
+                ActionOption(
+                    name: "Examine the Mechanism",
+                    actionType: "Study",
+                    position: .controlled,
+                    effect: .standard,
+                    outcomes: [
+                        .success: [
+                            .unlockConnection(fromNodeID: startNodeID, toNodeID: secondNodeID),
+                            .removeInteractable(id: stoneDoorID)
+                        ],
+                        .partial: [.gainStress(amount: 1)],
+                        .failure: [.tickClock(clockName: "The Guardian Wakes", amount: 1)]
+                    ]
+                )
+            ]
+        )
+
         let startNode = MapNode(
             name: "Entrance Chamber",
-            interactables: [
-                Interactable(title: "Sealed Stone Door",
-                              description: "A massive circular door covered in dust.",
-                              availableActions: [
-                                ActionOption(name: "Examine the Mechanism", actionType: "Study", position: .controlled, effect: .standard),
-                                ActionOption(name: "Push with all your might", actionType: "Wreck", position: .desperate, effect: .great)
-                              ])
-            ],
+            interactables: [doorInteractable],
             connections: [NodeConnection(toNodeID: secondNodeID, isUnlocked: false, description: "The Stone Door")],
             isDiscovered: true
         )

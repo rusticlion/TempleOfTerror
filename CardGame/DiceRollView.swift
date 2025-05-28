@@ -48,7 +48,7 @@ struct DiceRollView: View {
                 Button("Roll the Dice!") {
                     withAnimation {
                         isRolling = true
-                        self.result = viewModel.performAction(for: action, with: character, onClock: clockID)
+                        self.result = viewModel.performAction(for: action, with: character)
                     }
                 }
                 .buttonStyle(.borderedProminent)
