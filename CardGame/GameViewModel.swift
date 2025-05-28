@@ -29,9 +29,29 @@ class GameViewModel: ObservableObject {
 
     /// Calculates the projection before the roll.
     func calculateProjection(for action: ActionOption, with character: Character) -> String {
-        // Determine base dice pool from the character's action ratings.
-        let diceCount = character.actions[action.actionType] ?? 0
-        return "Roll \(diceCount)d6. Position: \(action.position.rawValue), Effect: \(action.effect.rawValue)"
+        var diceCount = character.actions[action.actionType] ?? 0
+        var position = action.position
+        var effect = action.effect
+        var notes: [String] = []
+
+        // Apply penalties from all active harm conditions
+        let allHarm = character.harm.lesser + character.harm.moderate + character.harm.severe
+        for condition in allHarm {
+            switch condition.penalty {
+            case .reduceEffect:
+                effect = effect.decreased()
+                notes.append("(-1 Effect from \(condition.description))")
+            case .actionPenalty(let actionType) where actionType == action.actionType:
+                diceCount -= 1
+                notes.append("(-1d from \(condition.description))")
+            default:
+                break
+            }
+        }
+        diceCount = max(diceCount, 0) // Can't roll negative dice
+
+        let notesString = notes.isEmpty ? "" : " " + notes.joined(separator: ", ")
+        return "Roll \(diceCount)d6. Position: \(position.rawValue), Effect: \(effect.rawValue)\(notesString)"
     }
 
     /// The main dice roll function, now returns the result for the UI.
@@ -78,9 +98,18 @@ class GameViewModel: ObservableObject {
             case .sufferHarm(let level, let description):
                 if let charIndex = gameState.party.firstIndex(where: { $0.id == character.id }) {
                     switch level {
-                    case .lesser: gameState.party[charIndex].harm.lesser.append(description)
-                    case .moderate: gameState.party[charIndex].harm.moderate.append(description)
-                    case .severe: gameState.party[charIndex].harm.severe.append(description)
+                    case .lesser:
+                        gameState.party[charIndex].harm.lesser.append(
+                            HarmCondition(description: description, penalty: .reduceEffect)
+                        )
+                    case .moderate:
+                        gameState.party[charIndex].harm.moderate.append(
+                            HarmCondition(description: description, penalty: .reduceEffect)
+                        )
+                    case .severe:
+                        gameState.party[charIndex].harm.severe.append(
+                            HarmCondition(description: description, penalty: .reduceEffect)
+                        )
                     }
                     descriptions.append("Suffered \(level.rawValue) harm: \(description).")
                     if gameState.party[charIndex].harm.severe.count >= 2 {
