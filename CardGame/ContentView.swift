@@ -12,13 +12,14 @@ struct ContentView: View {
 
 
     var body: some View {
-        NavigationView {
-            VStack(alignment: .leading, spacing: 16) {
-                CharacterSelectorView(characters: viewModel.gameState.party,
-                                      selectedCharacterID: $selectedCharacterID)
-                PartyStatusView(viewModel: viewModel)
-                ClocksView(viewModel: viewModel)
-                Divider()
+        ZStack {
+            NavigationView {
+                VStack(alignment: .leading, spacing: 16) {
+                    CharacterSelectorView(characters: viewModel.gameState.party,
+                                          selectedCharacterID: $selectedCharacterID)
+                    PartyStatusView(viewModel: viewModel)
+                    ClocksView(viewModel: viewModel)
+                    Divider()
 
                 if let node = viewModel.currentNode {
                     ForEach(node.interactables, id: \.id) { interactable in
@@ -40,22 +41,40 @@ struct ContentView: View {
 
                 Spacer()
             }
-            .onAppear {
-                if selectedCharacterID == nil {
-                    selectedCharacterID = viewModel.gameState.party.first?.id
+                .onAppear {
+                    if selectedCharacterID == nil {
+                        selectedCharacterID = viewModel.gameState.party.first?.id
+                    }
+                }
+                .padding()
+                .navigationTitle(viewModel.currentNode?.name ?? "Unknown Location")
+                .sheet(item: $pendingAction) { action in
+                    if let character = selectedCharacter {
+                        let clockID = viewModel.gameState.activeClocks.first?.id
+                        DiceRollView(viewModel: viewModel,
+                                     action: action,
+                                     character: character,
+                                     clockID: clockID)
+                    } else {
+                        Text("No action selected")
+                    }
                 }
             }
-            .padding()
-            .navigationTitle(viewModel.currentNode?.name ?? "Unknown Location")
-            .sheet(item: $pendingAction) { action in
-                if let character = selectedCharacter {
-                    let clockID = viewModel.gameState.activeClocks.first?.id
-                    DiceRollView(viewModel: viewModel,
-                                 action: action,
-                                 character: character,
-                                 clockID: clockID)
-                } else {
-                    Text("No action selected")
+
+            if viewModel.gameState.status == .gameOver {
+                Color.black.opacity(0.75).ignoresSafeArea()
+                VStack(spacing: 20) {
+                    Text("Game Over")
+                        .font(.largeTitle)
+                        .bold()
+                        .foregroundColor(.red)
+                    Text("The tomb claims another party.")
+                        .foregroundColor(.white)
+                    Button("Try Again") {
+                        viewModel.startNewRun()
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.large)
                 }
             }
         }
