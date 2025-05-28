@@ -32,10 +32,17 @@ struct GameClock: Identifiable, Codable {
 
 // Models for the interactable itself
 struct Interactable: Codable, Identifiable {
-    let id: UUID = UUID()
+    let id: UUID
     var title: String
     var description: String
     var availableActions: [ActionOption]
+
+    init(id: UUID = UUID(), title: String, description: String, availableActions: [ActionOption]) {
+        self.id = id
+        self.title = title
+        self.description = description
+        self.availableActions = availableActions
+    }
 }
 
 struct ActionOption: Codable {
