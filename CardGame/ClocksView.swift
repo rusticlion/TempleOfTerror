@@ -13,6 +13,7 @@ struct ClocksView: View {
                         GraphicalClockView(clock: clock)
                     }
                 }
+                .padding(.bottom, 8)
             }
         }
     }
