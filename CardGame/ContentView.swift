@@ -29,18 +29,11 @@ struct ContentView: View {
                 PartyStatusView(viewModel: viewModel)
                 ClocksView(viewModel: viewModel)
                 Divider()
-                VStack(alignment: .leading, spacing: 8) {
-                    Text(interactable.title)
-                        .font(.headline)
-                    ForEach(interactable.availableActions, id: \.name) { action in
-                        Button(action.name) {
-                            pendingAction = action
-                            if let character = selectedCharacter {
-                                projectionText = viewModel.calculateProjection(for: action, with: character)
-                                showingAlert = true
-                            }
-                        }
-                        .buttonStyle(.borderedProminent)
+                InteractableCardView(interactable: interactable) { action in
+                    pendingAction = action
+                    if let character = selectedCharacter {
+                        projectionText = viewModel.calculateProjection(for: action, with: character)
+                        showingAlert = true
                     }
                 }
                 Spacer()
