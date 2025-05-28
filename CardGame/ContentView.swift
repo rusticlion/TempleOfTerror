@@ -1,84 +1,56 @@
 import SwiftUI
 
-struct Card: Identifiable, Equatable {
-    let id = UUID()
-    let title: String
-    let color: Color
-}
-
-struct CardView: View {
-    let card: Card
-    let onRemove: () -> Void
-
-    @State private var offset: CGSize = .zero
-
-    var body: some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: 24)
-                .fill(card.color)
-                .shadow(radius: 8)
-            Text(card.title)
-                .font(.title)
-                .foregroundColor(.white)
-        }
-        .frame(width: 300, height: 400)
-        .offset(offset)
-        .rotationEffect(.degrees(Double(offset.width / 20)))
-        .gesture(
-            DragGesture()
-                .onChanged { gesture in
-                    offset = gesture.translation
-                }
-                .onEnded { _ in
-                    if abs(offset.width) > 100 {
-                        // Remove card if swiped far enough
-                        withAnimation {
-                            offset.width > 0 ? (offset.width = 1000) : (offset.width = -1000)
-                        }
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-                            onRemove()
-                        }
-                    } else {
-                        withAnimation { offset = .zero }
-                    }
-                }
-        )
-        .animation(.spring(), value: offset)
-    }
-}
-
-struct DeckView: View {
-    @State private var cards = [
-        Card(title: "SwiftUI", color: .blue),
-        Card(title: "Kotlin", color: .purple),
-        Card(title: "JavaScript", color: .orange),
-        Card(title: "Ruby", color: .red)
-    ]
-
-    var body: some View {
-        ZStack {
-            ForEach(cards) { card in
-                if card == cards.last {
-                    CardView(card: card) {
-                        // Remove top card
-                        cards.removeLast()
-                    }
-                }
-            }
-            if cards.isEmpty {
-                Text("No more cards!")
-                    .font(.largeTitle)
-                    .foregroundColor(.gray)
-            }
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color(.systemBackground))
-    }
-}
-
 struct ContentView: View {
+    @StateObject var viewModel = GameViewModel()
+    @State private var projectionText: String = ""
+    @State private var showingAlert = false
+    @State private var pendingAction: ActionOption?
+
+    private let interactable = Interactable(
+        title: "Trapped Pedestal",
+        description: "An ancient pedestal covered in suspicious glyphs.",
+        availableActions: [
+            ActionOption(name: "Tinker with it", actionType: "Tinker", position: .risky, effect: .standard),
+            ActionOption(name: "Study the Glyphs", actionType: "Study", position: .controlled, effect: .limited)
+        ]
+    )
+
     var body: some View {
-        DeckView()
+        NavigationView {
+            VStack(alignment: .leading, spacing: 16) {
+                PartyStatusView(viewModel: viewModel)
+                ClocksView(viewModel: viewModel)
+                Divider()
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(interactable.title)
+                        .font(.headline)
+                    ForEach(interactable.availableActions, id: \.name) { action in
+                        Button(action.name) {
+                            pendingAction = action
+                            if let character = viewModel.gameState.party.first {
+                                projectionText = viewModel.calculateProjection(for: action, with: character)
+                                showingAlert = true
+                            }
+                        }
+                        .buttonStyle(.borderedProminent)
+                    }
+                }
+                Spacer()
+            }
+            .padding()
+            .navigationTitle("Temple of Terror")
+            .alert("Projection", isPresented: $showingAlert) {
+                Button("Roll") {
+                    if let action = pendingAction,
+                       let character = viewModel.gameState.party.first {
+                        viewModel.performAction(for: action, with: character, onClock: nil)
+                    }
+                }
+                Button("Cancel", role: .cancel) { }
+            } message: {
+                Text(projectionText)
+            }
+        }
     }
 }
 
@@ -87,4 +59,3 @@ struct ContentView_Previews: PreviewProvider {
         ContentView()
     }
 }
-
