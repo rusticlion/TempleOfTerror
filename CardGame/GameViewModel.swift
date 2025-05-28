@@ -4,6 +4,12 @@ import SwiftUI
 class GameViewModel: ObservableObject {
     @Published var gameState: GameState
 
+    // Helper to get the current node
+    var currentNode: MapNode? {
+        guard let map = gameState.dungeon, let currentNodeID = gameState.currentNodeID else { return nil }
+        return map.nodes[currentNodeID]
+    }
+
     init() {
         // For the sprint, we'll use hardcoded starting data.
         self.gameState = GameState(
@@ -16,6 +22,7 @@ class GameViewModel: ObservableObject {
                 GameClock(name: "The Guardian Wakes", segments: 6, progress: 0)
             ]
         )
+        generateDungeon() // Call the new map generation function
     }
 
     // --- Core Logic Functions for the Sprint ---
@@ -68,6 +75,62 @@ class GameViewModel: ObservableObject {
         if let index = gameState.activeClocks.firstIndex(where: { $0.id == id }) {
             gameState.activeClocks[index].progress = min(gameState.activeClocks[index].segments,
                                                          gameState.activeClocks[index].progress + ticks)
+        }
+    }
+
+    /// Generates the dungeon map for the sprint. Currently static.
+    func generateDungeon() {
+        var nodes: [UUID: MapNode] = [:]
+
+        let startNodeID = UUID()
+        let secondNodeID = UUID()
+        let thirdNodeID = UUID()
+
+        let startNode = MapNode(
+            name: "Entrance Chamber",
+            interactables: [
+                Interactable(title: "Sealed Stone Door",
+                              description: "A massive circular door covered in dust.",
+                              availableActions: [
+                                ActionOption(name: "Examine the Mechanism", actionType: "Study", position: .controlled, effect: .standard),
+                                ActionOption(name: "Push with all your might", actionType: "Wreck", position: .desperate, effect: .great)
+                              ])
+            ],
+            connections: [NodeConnection(toNodeID: secondNodeID, isUnlocked: false, description: "The Stone Door")],
+            isDiscovered: true
+        )
+
+        let secondNode = MapNode(
+            name: "The Trap Room",
+            interactables: [
+                Interactable(title: "Trapped Pedestal",
+                              description: "An ancient pedestal covered in suspicious glyphs.",
+                              availableActions: [
+                                ActionOption(name: "Tinker with it", actionType: "Tinker", position: .risky, effect: .standard)
+                              ])
+            ],
+            connections: [
+                NodeConnection(toNodeID: startNodeID, description: "Back to the entrance"),
+                NodeConnection(toNodeID: thirdNodeID, description: "A narrow corridor")
+            ]
+        )
+
+        let thirdNode = MapNode(name: "The Echoing Chasm", interactables: [], connections: [])
+
+        nodes[startNodeID] = startNode
+        nodes[secondNodeID] = secondNode
+        nodes[thirdNodeID] = thirdNode
+
+        let map = DungeonMap(nodes: nodes, startingNodeID: startNodeID)
+        gameState.dungeon = map
+        gameState.currentNodeID = startNodeID
+    }
+
+    /// Move the party to a connected node if possible.
+    func move(to newConnection: NodeConnection) {
+        if newConnection.isUnlocked {
+            gameState.currentNodeID = newConnection.toNodeID
+            gameState.dungeon?.nodes[newConnection.toNodeID]?.isDiscovered = true
         }
     }
 }

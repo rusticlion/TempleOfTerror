@@ -3,6 +3,8 @@ import Foundation
 struct GameState: Codable {
     var party: [Character] = []
     var activeClocks: [GameClock] = []
+    var dungeon: DungeonMap? // The full map
+    var currentNodeID: UUID? // The party's current location
     // ... other global state can be added later
 }
 
