@@ -26,6 +26,7 @@
 		460D62942DE7B24600D50D0C /* CharacterSelectorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 460D62932DE7B24600D50D0C /* CharacterSelectorView.swift */; };
 		460D62962DE7B39400D50D0C /* InteractableCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 460D62952DE7B39400D50D0C /* InteractableCardView.swift */; };
 		460D62982DE7B4A400D50D0C /* DiceRollView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 460D62972DE7B4A400D50D0C /* DiceRollView.swift */; };
+		460D629A2DE7BD4200D50D0C /* NodeConnectionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 460D62992DE7BD4200D50D0C /* NodeConnectionsView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -73,6 +74,7 @@
 		460D62932DE7B24600D50D0C /* CharacterSelectorView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CharacterSelectorView.swift; sourceTree = "<group>"; };
 		460D62952DE7B39400D50D0C /* InteractableCardView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = InteractableCardView.swift; sourceTree = "<group>"; };
 		460D62972DE7B4A400D50D0C /* DiceRollView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DiceRollView.swift; sourceTree = "<group>"; };
+		460D62992DE7BD4200D50D0C /* NodeConnectionsView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NodeConnectionsView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -123,6 +125,7 @@
 		460D624C2DE7934300D50D0C /* CardGame */ = {
 			isa = PBXGroup;
 			children = (
+				460D62992DE7BD4200D50D0C /* NodeConnectionsView.swift */,
 				460D62972DE7B4A400D50D0C /* DiceRollView.swift */,
 				460D62952DE7B39400D50D0C /* InteractableCardView.swift */,
 				460D62932DE7B24600D50D0C /* CharacterSelectorView.swift */,
@@ -312,6 +315,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				460D62922DE7AA3900D50D0C /* Persistence.swift in Sources */,
+				460D629A2DE7BD4200D50D0C /* NodeConnectionsView.swift in Sources */,
 				460D62572DE7934600D50D0C /* Persistence.swift in Sources */,
 				460D625A2DE7934600D50D0C /* CardGame.xcdatamodeld in Sources */,
 				460D628D2DE7AA3900D50D0C /* ContentView.swift in Sources */,
