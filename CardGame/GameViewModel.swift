@@ -27,33 +27,41 @@ class GameViewModel: ObservableObject {
         return "Roll \(diceCount)d6. Position: \(action.position.rawValue), Effect: \(action.effect.rawValue)"
     }
 
-    /// The main dice roll function.
-    func performAction(for action: ActionOption, with character: Character, onClock clockID: UUID?) {
+    /// The main dice roll function, now returns the result for the UI.
+    func performAction(for action: ActionOption, with character: Character, onClock clockID: UUID?) -> DiceRollResult {
         guard let characterIndex = gameState.party.firstIndex(where: { $0.id == character.id }) else {
-            return
+            return DiceRollResult(highestRoll: 0, outcome: "Error", consequences: "Character not found.")
         }
 
-        // 1. Get dice pool from character stats.
         let dicePool = max(character.actions[action.actionType] ?? 0, 1)
-        var highestRoll = 1
+        var highestRoll = 0
         for _ in 0..<dicePool {
             highestRoll = max(highestRoll, Int.random(in: 1...6))
         }
 
-        // 2. Determine outcome and apply consequences or rewards.
+        var outcome: String
+        var consequences: String
+
         switch highestRoll {
         case 6:
-            // Success
+            outcome = "Full Success!"
+            consequences = "You master the situation."
             if let clockID = clockID {
-                updateClock(id: clockID, ticks: 2) // 2 for standard effect
+                let ticks = 2 // Standard effect
+                updateClock(id: clockID, ticks: ticks)
+                consequences += "\nThe '\(gameState.activeClocks.first(where: {$0.id == clockID})?.name ?? "")' clock progresses by \(ticks)."
             }
         case 4...5:
-            // Partial Success
+            outcome = "Partial Success..."
             gameState.party[characterIndex].stress += 2
+            consequences = "You do it, but at a cost. Gained 2 Stress."
         default:
-            // Failure
+            outcome = "Failure."
             gameState.party[characterIndex].harm.lesser.append("Bruised")
+            consequences = "Things go wrong. You suffer minor harm."
         }
+
+        return DiceRollResult(highestRoll: highestRoll, outcome: outcome, consequences: consequences)
     }
 
     private func updateClock(id: UUID, ticks: Int) {
