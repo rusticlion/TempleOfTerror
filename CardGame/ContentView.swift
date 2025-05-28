@@ -1,9 +1,15 @@
 import SwiftUI
 
 struct ContentView: View {
-    @StateObject var viewModel = GameViewModel()
+    @StateObject private var viewModel: GameViewModel
     @State private var pendingAction: ActionOption?
     @State private var selectedCharacterID: UUID? // Track selected character
+
+    init() {
+        let vm = GameViewModel()
+        _viewModel = StateObject(wrappedValue: vm)
+        _selectedCharacterID = State(initialValue: vm.gameState.party.first?.id)
+    }
 
     // Helper to retrieve the selected character object
     private var selectedCharacter: Character? {
@@ -41,11 +47,6 @@ struct ContentView: View {
 
                 Spacer()
             }
-                .onAppear {
-                    if selectedCharacterID == nil {
-                        selectedCharacterID = viewModel.gameState.party.first?.id
-                    }
-                }
                 .padding()
                 .navigationTitle(viewModel.currentNode?.name ?? "Unknown Location")
                 .sheet(item: $pendingAction) { action in
@@ -72,6 +73,7 @@ struct ContentView: View {
                         .foregroundColor(.white)
                     Button("Try Again") {
                         viewModel.startNewRun()
+                        selectedCharacterID = viewModel.gameState.party.first?.id
                     }
                     .buttonStyle(.borderedProminent)
                     .controlSize(.large)
