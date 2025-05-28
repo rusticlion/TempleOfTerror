@@ -11,14 +11,6 @@ struct ContentView: View {
         viewModel.gameState.party.first { $0.id == selectedCharacterID }
     }
 
-    private let interactable = Interactable(
-        title: "Trapped Pedestal",
-        description: "An ancient pedestal covered in suspicious glyphs.",
-        availableActions: [
-            ActionOption(name: "Tinker with it", actionType: "Tinker", position: .risky, effect: .standard),
-            ActionOption(name: "Study the Glyphs", actionType: "Study", position: .controlled, effect: .limited)
-        ]
-    )
 
     var body: some View {
         NavigationView {
@@ -28,12 +20,26 @@ struct ContentView: View {
                 PartyStatusView(viewModel: viewModel)
                 ClocksView(viewModel: viewModel)
                 Divider()
-                InteractableCardView(interactable: interactable) { action in
-                    pendingAction = action
-                    if selectedCharacter != nil {
-                        showingDiceSheet = true
+
+                if let node = viewModel.currentNode {
+                    ForEach(node.interactables, id: \.title) { interactable in
+                        InteractableCardView(interactable: interactable) { action in
+                            pendingAction = action
+                            if selectedCharacter != nil {
+                                showingDiceSheet = true
+                            }
+                        }
                     }
+
+                    Divider()
+
+                    NodeConnectionsView(currentNode: viewModel.currentNode) { connection in
+                        viewModel.move(to: connection)
+                    }
+                } else {
+                    Text("Loading dungeon...")
                 }
+
                 Spacer()
             }
             .onAppear {
@@ -42,7 +48,7 @@ struct ContentView: View {
                 }
             }
             .padding()
-            .navigationTitle("Temple of Terror")
+            .navigationTitle(viewModel.currentNode?.name ?? "Unknown Location")
             .sheet(isPresented: $showingDiceSheet) {
                 if let action = pendingAction,
                    let character = selectedCharacter {
