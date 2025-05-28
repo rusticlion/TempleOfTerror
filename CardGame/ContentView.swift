@@ -19,52 +19,52 @@ struct ContentView: View {
 
     var body: some View {
         ZStack {
-            NavigationView {
-                VStack(alignment: .leading, spacing: 16) {
-                    CharacterSelectorView(characters: viewModel.gameState.party,
-                                          selectedCharacterID: $selectedCharacterID)
-                    PartyStatusView(viewModel: viewModel)
-                    ClocksView(viewModel: viewModel)
-                    Divider()
+            VStack(spacing: 0) {
+                HeaderView(
+                    title: viewModel.currentNode?.name ?? "Unknown Location",
+                    characters: viewModel.gameState.party,
+                    selectedCharacterID: $selectedCharacterID
+                )
 
-                if let node = viewModel.currentNode {
-                    ForEach(node.interactables, id: \.id) { interactable in
-                        InteractableCardView(interactable: interactable) { action in
-                            if selectedCharacter != nil {
-                                pendingAction = action
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 16) {
+                        PartyStatusView(viewModel: viewModel)
+                        ClocksView(viewModel: viewModel)
+                        Divider()
+
+                        if let node = viewModel.currentNode {
+                            ForEach(node.interactables, id: \.id) { interactable in
+                                InteractableCardView(interactable: interactable) { action in
+                                    if selectedCharacter != nil {
+                                        pendingAction = action
+                                    }
+                                }
                             }
+
+                            Divider()
+
+                            NodeConnectionsView(currentNode: viewModel.currentNode) { connection in
+                                viewModel.move(to: connection)
+                            }
+                        } else {
+                            Text("Loading dungeon...")
                         }
                     }
-
-                    Divider()
-
-                    NodeConnectionsView(currentNode: viewModel.currentNode) { connection in
-                        viewModel.move(to: connection)
-                    }
+                    .padding()
+                }
+            }
+            .disabled(viewModel.gameState.status == .gameOver)
+            .sheet(item: $pendingAction) { action in
+                if let character = selectedCharacter {
+                    let clockID = viewModel.gameState.activeClocks.first?.id
+                    DiceRollView(viewModel: viewModel,
+                                 action: action,
+                                 character: character,
+                                 clockID: clockID)
                 } else {
-                    Text("Loading dungeon...")
-                }
-
-                Spacer()
-            }
-                .padding()
-                .navigationTitle(viewModel.currentNode?.name ?? "Unknown Location")
-                .navigationBarTitleDisplayMode(.inline)
-                .sheet(item: $pendingAction) { action in
-                    if let character = selectedCharacter {
-                        let clockID = viewModel.gameState.activeClocks.first?.id
-                        DiceRollView(viewModel: viewModel,
-                                     action: action,
-                                     character: character,
-                                     clockID: clockID)
-                    } else {
-                        Text("No action selected")
-                    }
+                    Text("No action selected")
                 }
             }
-            .navigationTitle(viewModel.currentNode?.name ?? "Unknown Location")
-            .navigationBarTitleDisplayMode(.inline)
-            .navigationViewStyle(.stack)
 
 
             if viewModel.gameState.status == .gameOver {
@@ -85,6 +85,7 @@ struct ContentView: View {
                 }
             }
         }
+        .ignoresSafeArea(.all, edges: .bottom)
     }
 }
 
