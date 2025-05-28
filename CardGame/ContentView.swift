@@ -2,8 +2,7 @@ import SwiftUI
 
 struct ContentView: View {
     @StateObject var viewModel = GameViewModel()
-    @State private var projectionText: String = ""
-    @State private var showingAlert = false
+    @State private var showingDiceSheet = false
     @State private var pendingAction: ActionOption?
     @State private var selectedCharacterID: UUID? // Track selected character
 
@@ -31,9 +30,8 @@ struct ContentView: View {
                 Divider()
                 InteractableCardView(interactable: interactable) { action in
                     pendingAction = action
-                    if let character = selectedCharacter {
-                        projectionText = viewModel.calculateProjection(for: action, with: character)
-                        showingAlert = true
+                    if selectedCharacter != nil {
+                        showingDiceSheet = true
                     }
                 }
                 Spacer()
@@ -45,17 +43,17 @@ struct ContentView: View {
             }
             .padding()
             .navigationTitle("Temple of Terror")
-            .alert("Projection", isPresented: $showingAlert) {
-                Button("Roll") {
-                    if let action = pendingAction,
-                       let character = selectedCharacter {
-                        let clockID = viewModel.gameState.activeClocks.first?.id
-                        viewModel.performAction(for: action, with: character, onClock: clockID)
-                    }
+            .sheet(isPresented: $showingDiceSheet) {
+                if let action = pendingAction,
+                   let character = selectedCharacter {
+                    let clockID = viewModel.gameState.activeClocks.first?.id
+                    DiceRollView(viewModel: viewModel,
+                                 action: action,
+                                 character: character,
+                                 clockID: clockID)
+                } else {
+                    Text("No action selected")
                 }
-                Button("Cancel", role: .cancel) { }
-            } message: {
-                Text(projectionText)
             }
         }
     }
