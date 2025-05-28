@@ -49,6 +49,7 @@ struct ContentView: View {
             }
                 .padding()
                 .navigationTitle(viewModel.currentNode?.name ?? "Unknown Location")
+                .navigationBarTitleDisplayMode(.inline)
                 .sheet(item: $pendingAction) { action in
                     if let character = selectedCharacter {
                         let clockID = viewModel.gameState.activeClocks.first?.id
