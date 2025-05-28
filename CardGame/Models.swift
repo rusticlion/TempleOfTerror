@@ -23,10 +23,25 @@ struct Character: Identifiable, Codable {
     var actions: [String: Int] // e.g., ["Study": 2, "Tinker": 1]
 }
 
+/// A specific injury or affliction with a mechanical effect.
+struct HarmCondition: Codable, Identifiable {
+    let id: UUID = UUID()
+    var description: String
+    var penalty: Penalty
+}
+
+/// The mechanical penalty imposed by a HarmCondition.
+enum Penalty: Codable {
+    case reduceEffect               // All actions are one effect level lower.
+    case increaseStressCost(amount: Int) // Stress costs are increased.
+    case actionPenalty(actionType: String) // Specific action suffers –1 die.
+}
+
+/// HarmState now tracks detailed conditions rather than simple strings.
 struct HarmState: Codable {
-    var lesser: [String] = []
-    var moderate: [String] = []
-    var severe: [String] = []
+    var lesser: [HarmCondition] = []
+    var moderate: [HarmCondition] = []
+    var severe: [HarmCondition] = []
 }
 
 struct GameClock: Identifiable, Codable {
@@ -94,6 +109,15 @@ enum RollEffect: String, Codable {
     case limited
     case standard
     case great
+
+    /// Returns a reduced effect level, clamping at `.limited`.
+    func decreased() -> RollEffect {
+        switch self {
+        case .great: return .standard
+        case .standard: return .limited
+        case .limited: return .limited
+        }
+    }
 }
 
 
