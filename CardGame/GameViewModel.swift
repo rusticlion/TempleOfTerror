@@ -97,22 +97,9 @@ class GameViewModel: ObservableObject {
                     gameState.party[charIndex].stress += amount
                     descriptions.append("Gained \(amount) Stress.")
                 }
-            case .sufferHarm(let level, let description):
-                if let charIndex = gameState.party.firstIndex(where: { $0.id == character.id }) {
-                    let entry = (familyId: description, description: description)
-                    switch level {
-                    case .lesser:
-                        gameState.party[charIndex].harm.lesser.append(entry)
-                    case .moderate:
-                        gameState.party[charIndex].harm.moderate.append(entry)
-                    case .severe:
-                        gameState.party[charIndex].harm.severe.append(entry)
-                    }
-                    descriptions.append("Suffered \(level.rawValue) harm: \(description).")
-                    if gameState.party[charIndex].harm.severe.count >= HarmState.severeSlots {
-                        gameState.status = .gameOver
-                    }
-                }
+            case .sufferHarm(let level, let familyId):
+                let description = applyHarm(familyId: familyId, level: level, toCharacter: character.id)
+                descriptions.append(description)
             case .tickClock(let clockName, let amount):
                 if let clockIndex = gameState.activeClocks.firstIndex(where: { $0.name == clockName }) {
                     updateClock(id: gameState.activeClocks[clockIndex].id, ticks: amount)
@@ -172,6 +159,44 @@ class GameViewModel: ObservableObject {
                 // Handle Trauma case later
             }
             gameState.party[charIndex].stress += 2
+        }
+    }
+
+    private func applyHarm(familyId: String, level: HarmLevel, toCharacter characterId: UUID) -> String {
+        guard let charIndex = gameState.party.firstIndex(where: { $0.id == characterId }) else { return "" }
+        guard let harmFamily = HarmLibrary.families[familyId] else { return "" }
+
+        var currentLevel = level
+
+        while true {
+            switch currentLevel {
+            case .lesser:
+                if gameState.party[charIndex].harm.lesser.count < HarmState.lesserSlots {
+                    let harm = harmFamily.lesser
+                    gameState.party[charIndex].harm.lesser.append((familyId, harm.description))
+                    return "Suffered Lesser Harm: \(harm.description)."
+                } else {
+                    currentLevel = .moderate
+                }
+            case .moderate:
+                if gameState.party[charIndex].harm.moderate.count < HarmState.moderateSlots {
+                    let harm = harmFamily.moderate
+                    gameState.party[charIndex].harm.moderate.append((familyId, harm.description))
+                    return "Suffered Moderate Harm: \(harm.description)."
+                } else {
+                    currentLevel = .severe
+                }
+            case .severe:
+                if gameState.party[charIndex].harm.severe.count < HarmState.severeSlots {
+                    let harm = harmFamily.severe
+                    gameState.party[charIndex].harm.severe.append((familyId, harm.description))
+                    return "Suffered SEVERE Harm: \(harm.description)."
+                } else {
+                    gameState.status = .gameOver
+                    let fatalDescription = harmFamily.fatal.description
+                    return "Suffered FATAL Harm: \(fatalDescription)."
+                }
+            }
         }
     }
 
@@ -248,7 +273,7 @@ class GameViewModel: ObservableObject {
                             ))
                         ],
                         .failure: [
-                            .sufferHarm(level: .lesser, description: "Electric Jolt")
+                            .sufferHarm(level: .lesser, familyId: "electric_shock")
                         ]
                     ]
                 )
