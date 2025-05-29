@@ -54,6 +54,7 @@
           "actionType": "Finesse",
           "position": "desperate",
           "effect": "standard",
+          "isGroupAction": true,
           "outcomes": {
             "success": [ { "type": "removeInteractable", "id": "self" } ],
             "partial": [

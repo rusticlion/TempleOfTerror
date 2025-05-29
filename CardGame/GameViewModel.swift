@@ -102,6 +102,10 @@ class GameViewModel: ObservableObject {
             }
         }
 
+        if action.isGroupAction {
+            notes.append("Group Action: party rolls together; best result counts. Leader takes 1 Stress per failed ally.")
+        }
+
         diceCount = max(diceCount, 0) // Can't roll negative dice
 
         return RollProjectionDetails(
@@ -117,6 +121,9 @@ class GameViewModel: ObservableObject {
 
     /// The main dice roll function, now returns the result for the UI.
     func performAction(for action: ActionOption, with character: Character, interactableID: String?) -> DiceRollResult {
+        if action.isGroupAction {
+            return performGroupAction(for: action, leader: character, interactableID: interactableID)
+        }
         guard gameState.party.contains(where: { $0.id == character.id }) else {
             return DiceRollResult(highestRoll: 0, outcome: "Error", consequences: "Character not found.")
         }
@@ -175,6 +182,50 @@ class GameViewModel: ObservableObject {
         }
 
         return DiceRollResult(highestRoll: highestRoll, outcome: outcomeString, consequences: consequencesDescription)
+    }
+
+    private func performGroupAction(for action: ActionOption, leader: Character, interactableID: String?) -> DiceRollResult {
+        guard partyMovementMode == .grouped, !isPartyActuallySplit() else {
+            return DiceRollResult(highestRoll: 0, outcome: "Cannot", consequences: "Party must be together for a group action.")
+        }
+
+        var bestRoll = 0
+        var failures = 0
+
+        for member in gameState.party {
+            let dicePool = max(member.actions[action.actionType] ?? 0, 1)
+            var highest = 0
+            for _ in 0..<dicePool { highest = max(highest, Int.random(in: 1...6)) }
+            bestRoll = max(bestRoll, highest)
+            if highest <= 3 { failures += 1 }
+        }
+
+        var consequences: [Consequence] = []
+        var outcomeString = ""
+
+        switch bestRoll {
+        case 6:
+            outcomeString = "Full Success!"
+            consequences = action.outcomes[.success] ?? []
+        case 4...5:
+            outcomeString = "Partial Success..."
+            consequences = action.outcomes[.partial] ?? []
+        default:
+            outcomeString = "Failure."
+            consequences = action.outcomes[.failure] ?? []
+        }
+
+        var description = processConsequences(consequences, forCharacter: leader, interactableID: interactableID)
+
+        if let leaderIndex = gameState.party.firstIndex(where: { $0.id == leader.id }) {
+            gameState.party[leaderIndex].stress += failures
+            if failures > 0 {
+                if !description.isEmpty { description += "\n" }
+                description += "Leader takes \(failures) Stress from allies' slips."
+            }
+        }
+
+        return DiceRollResult(highestRoll: bestRoll, outcome: outcomeString, consequences: description)
     }
 
     private func processConsequences(_ consequences: [Consequence], forCharacter character: Character, interactableID: String?) -> String {

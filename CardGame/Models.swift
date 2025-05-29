@@ -239,21 +239,24 @@ struct ActionOption: Codable {
     var actionType: String // Corresponds to a key in Character.actions, e.g., "Tinker"
     var position: RollPosition
     var effect: RollEffect
+    var isGroupAction: Bool = false
     var outcomes: [RollOutcome: [Consequence]] = [:]
 
     enum CodingKeys: String, CodingKey {
-        case name, actionType, position, effect, outcomes
+        case name, actionType, position, effect, isGroupAction, outcomes
     }
 
     init(name: String,
          actionType: String,
          position: RollPosition,
          effect: RollEffect,
+         isGroupAction: Bool = false,
          outcomes: [RollOutcome: [Consequence]] = [:]) {
         self.name = name
         self.actionType = actionType
         self.position = position
         self.effect = effect
+        self.isGroupAction = isGroupAction
         self.outcomes = outcomes
     }
 
@@ -263,6 +266,7 @@ struct ActionOption: Codable {
         actionType = try container.decode(String.self, forKey: .actionType)
         position = try container.decode(RollPosition.self, forKey: .position)
         effect = try container.decode(RollEffect.self, forKey: .effect)
+        isGroupAction = try container.decodeIfPresent(Bool.self, forKey: .isGroupAction) ?? false
         let rawOutcomes = try container.decodeIfPresent([String: [Consequence]].self, forKey: .outcomes) ?? [:]
         var mapped: [RollOutcome: [Consequence]] = [:]
         for (key, value) in rawOutcomes {
@@ -279,6 +283,9 @@ struct ActionOption: Codable {
         try container.encode(actionType, forKey: .actionType)
         try container.encode(position, forKey: .position)
         try container.encode(effect, forKey: .effect)
+        if isGroupAction {
+            try container.encode(isGroupAction, forKey: .isGroupAction)
+        }
         var raw: [String: [Consequence]] = [:]
         for (key, value) in outcomes { raw[key.rawValue] = value }
         try container.encode(raw, forKey: .outcomes)
