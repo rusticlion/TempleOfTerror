@@ -185,6 +185,7 @@ struct DiceRollView: View {
     let action: ActionOption
     let character: Character
     let clockID: UUID?
+    let interactableID: UUID?
 
     @State private var diceValues: [Int] = []
     @State private var diceOffsets: [CGSize] = []
@@ -228,7 +229,7 @@ struct DiceRollView: View {
         showVignette = false
         isRolling = false
         AudioManager.shared.play(sound: "sfx_dice_land.wav")
-        let rollResult = viewModel.performAction(for: action, with: character)
+        let rollResult = viewModel.performAction(for: action, with: character, interactableID: interactableID)
         self.result = rollResult
         let totalDice = diceValues.count
         highlightIndex = Int.random(in: 0..<totalDice)
@@ -1068,17 +1069,26 @@ import Foundation
 
 class DungeonGenerator {
     private let content: ContentLoader
+    private let clockTemplates: [GameClock] = [
+        GameClock(name: "Shifting Walls", segments: 4, progress: 0),
+        GameClock(name: "Ancient Machinery Grinds", segments: 6, progress: 0),
+        GameClock(name: "Torchlight Fading", segments: 4, progress: 0),
+        GameClock(name: "Unearthly Wailing", segments: 6, progress: 0)
+    ]
 
     init(content: ContentLoader = .shared) {
         self.content = content
     }
 
-    func generate(level: Int) -> DungeonMap {
+    func generate(level: Int) -> (DungeonMap, [GameClock]) {
         var nodes: [UUID: MapNode] = [:]
         let nodeCount = 5 + level // Simple scaling
 
         var previousNode: MapNode? = nil
         var nodeIDs: [UUID] = []
+        var lockedConnection: (from: UUID, to: UUID)? = nil
+
+        let themes = ["antechamber", "corridor", "trap_chamber", "shrine"]
 
         let soundProfiles = ["cave_drips", "chasm_wind", "silent_tomb"]
 
@@ -1088,20 +1098,35 @@ class DungeonGenerator {
                 connections.append(NodeConnection(toNodeID: prev.id, description: "Go back"))
             }
 
+            let theme = themes.randomElement()
+
             var newNode = MapNode(
                 name: "Forgotten Antechamber \(i + 1)",
                 soundProfile: soundProfiles.randomElement() ?? "silent_tomb",
                 interactables: [],
-                connections: connections
+                connections: connections,
+                theme: theme
             )
             nodes[newNode.id] = newNode
             nodeIDs.append(newNode.id)
 
             if let prev = previousNode {
                 let desc = i == nodeCount - 1 ? "Path to the final chamber" : "Deeper into the tomb"
-                nodes[prev.id]?.connections.append(NodeConnection(toNodeID: newNode.id, description: desc))
+                let connection = NodeConnection(toNodeID: newNode.id, description: desc)
+                nodes[prev.id]?.connections.append(connection)
             }
             previousNode = newNode
+        }
+
+        // Choose a single connection along the main path to lock
+        if nodeIDs.count > 2 {
+            let lockIndex = Int.random(in: 1..<(nodeIDs.count - 1))
+            let fromID = nodeIDs[lockIndex]
+            let toID = nodeIDs[lockIndex + 1]
+            if let idx = nodes[fromID]?.connections.firstIndex(where: { $0.toNodeID == toID }) {
+                nodes[fromID]?.connections[idx].isUnlocked = false
+                lockedConnection = (from: fromID, to: toID)
+            }
         }
 
         for id in nodeIDs.dropFirst() {
@@ -1116,10 +1141,35 @@ class DungeonGenerator {
             }
         }
 
+        if let lock = lockedConnection {
+            let lever = Interactable(
+                title: "Rusty Lever",
+                description: "It looks like it controls a nearby mechanism.",
+                availableActions: [
+                    ActionOption(
+                        name: "Pull the Lever",
+                        actionType: "Tinker",
+                        position: .risky,
+                        effect: .standard,
+                        outcomes: [
+                            .success: [
+                                .unlockConnection(fromNodeID: lock.from, toNodeID: lock.to),
+                                .removeSelfInteractable
+                            ]
+                        ]
+                    )
+                ]
+            )
+            nodes[lock.from]?.interactables.append(lever)
+        }
+
         let startingNodeID = nodeIDs.first!
         nodes[startingNodeID]?.isDiscovered = true
 
-        return DungeonMap(nodes: nodes, startingNodeID: startingNodeID)
+        let clockCount = Int.random(in: 1...2)
+        let clocks = Array(clockTemplates.shuffled().prefix(clockCount))
+
+        return (DungeonMap(nodes: nodes, startingNodeID: startingNodeID), clocks)
     }
 }
 
@@ -1252,7 +1302,14 @@ class ContentLoader {
         do {
             let data = try Data(contentsOf: url)
             let decoder = JSONDecoder()
-            return try decoder.decode([T].self, from: data)
+            if let array = try? decoder.decode([T].self, from: data) {
+                return array
+            } else if let dict = try? decoder.decode([String: [T]].self, from: data) {
+                return dict.flatMap { $0.value }
+            } else {
+                print("Failed to decode \(filename): unexpected format")
+                return []
+            }
         } catch {
             print("Failed to decode \(filename): \(error)")
             return []
@@ -1332,7 +1389,7 @@ struct Modifier: Codable {
 
 /// A collectible treasure that grants a modifier when acquired.
 struct Treasure: Codable, Identifiable {
-    let id: UUID = UUID()
+    let id: String
     var name: String
     var description: String
     var grantedModifier: Modifier
@@ -1532,13 +1589,15 @@ enum Consequence: Codable {
     case tickClock(clockName: String, amount: Int)
     case unlockConnection(fromNodeID: UUID, toNodeID: UUID)
     case removeInteractable(id: UUID)
+    case removeSelfInteractable
     case addInteractable(inNodeID: UUID, interactable: Interactable)
-    case gainTreasure(treasure: Treasure)
+    case addInteractableHere(interactable: Interactable)
+    case gainTreasure(treasureId: String)
 
     private enum CodingKeys: String, CodingKey {
         case type, amount, level, familyId, clockName
         case fromNodeID, toNodeID, id, inNodeID
-        case interactable, treasure
+        case interactable, treasure, treasureId
     }
 
     private enum Kind: String, Codable {
@@ -1547,7 +1606,9 @@ enum Consequence: Codable {
         case tickClock
         case unlockConnection
         case removeInteractable
+        case removeSelfInteractable
         case addInteractable
+        case addInteractableHere
         case gainTreasure
     }
 
@@ -1571,15 +1632,37 @@ enum Consequence: Codable {
             let to = try container.decode(UUID.self, forKey: .toNodeID)
             self = .unlockConnection(fromNodeID: from, toNodeID: to)
         case .removeInteractable:
-            let id = try container.decode(UUID.self, forKey: .id)
-            self = .removeInteractable(id: id)
+            if let idString = try? container.decode(String.self, forKey: .id), idString == "self" {
+                self = .removeSelfInteractable
+            } else if let uuid = try? container.decode(UUID.self, forKey: .id) {
+                self = .removeInteractable(id: uuid)
+            } else {
+                let idStr = try container.decode(String.self, forKey: .id)
+                self = .removeInteractable(id: UUID(uuidString: idStr) ?? UUID())
+            }
+        case .removeSelfInteractable:
+            self = .removeSelfInteractable
         case .addInteractable:
-            let node = try container.decode(UUID.self, forKey: .inNodeID)
+            if let nodeString = try? container.decode(String.self, forKey: .inNodeID), nodeString == "current" {
+                let interactable = try container.decode(Interactable.self, forKey: .interactable)
+                self = .addInteractableHere(interactable: interactable)
+            } else {
+                let node = try container.decode(UUID.self, forKey: .inNodeID)
+                let interactable = try container.decode(Interactable.self, forKey: .interactable)
+                self = .addInteractable(inNodeID: node, interactable: interactable)
+            }
+        case .addInteractableHere:
             let interactable = try container.decode(Interactable.self, forKey: .interactable)
-            self = .addInteractable(inNodeID: node, interactable: interactable)
+            self = .addInteractableHere(interactable: interactable)
         case .gainTreasure:
-            let treasure = try container.decode(Treasure.self, forKey: .treasure)
-            self = .gainTreasure(treasure: treasure)
+            if let treasureId = try? container.decode(String.self, forKey: .treasureId) {
+                self = .gainTreasure(treasureId: treasureId)
+            } else if let treasure = try? container.decode(Treasure.self, forKey: .treasure) {
+                // Fallback to embedded treasure object
+                self = .gainTreasure(treasureId: treasure.id)
+            } else {
+                self = .gainTreasure(treasureId: "")
+            }
         }
     }
 
@@ -1604,13 +1687,19 @@ enum Consequence: Codable {
         case .removeInteractable(let id):
             try container.encode(Kind.removeInteractable, forKey: .type)
             try container.encode(id, forKey: .id)
+        case .removeSelfInteractable:
+            try container.encode(Kind.removeSelfInteractable, forKey: .type)
         case .addInteractable(let node, let interactable):
             try container.encode(Kind.addInteractable, forKey: .type)
             try container.encode(node, forKey: .inNodeID)
             try container.encode(interactable, forKey: .interactable)
-        case .gainTreasure(let treasure):
+        case .addInteractableHere(let interactable):
+            try container.encode(Kind.addInteractable, forKey: .type)
+            try container.encode("current", forKey: .inNodeID)
+            try container.encode(interactable, forKey: .interactable)
+        case .gainTreasure(let treasureId):
             try container.encode(Kind.gainTreasure, forKey: .type)
-            try container.encode(treasure, forKey: .treasure)
+            try container.encode(treasureId, forKey: .treasureId)
         }
     }
 }
@@ -1656,6 +1745,7 @@ struct MapNode: Identifiable, Codable {
     var soundProfile: String
     var interactables: [Interactable]
     var connections: [NodeConnection]
+    var theme: String? = nil
     var isDiscovered: Bool = false // To support fog of war
 }
 
@@ -2035,7 +2125,7 @@ class GameViewModel: ObservableObject {
     }
 
     /// The main dice roll function, now returns the result for the UI.
-    func performAction(for action: ActionOption, with character: Character) -> DiceRollResult {
+    func performAction(for action: ActionOption, with character: Character, interactableID: UUID?) -> DiceRollResult {
         guard gameState.party.contains(where: { $0.id == character.id }) else {
             return DiceRollResult(highestRoll: 0, outcome: "Error", consequences: "Character not found.")
         }
@@ -2061,12 +2151,12 @@ class GameViewModel: ObservableObject {
             consequencesToApply = action.outcomes[.failure] ?? []
         }
 
-        let consequencesDescription = processConsequences(consequencesToApply, forCharacter: character)
+        let consequencesDescription = processConsequences(consequencesToApply, forCharacter: character, interactableID: interactableID)
 
         return DiceRollResult(highestRoll: highestRoll, outcome: outcomeString, consequences: consequencesDescription)
     }
 
-    private func processConsequences(_ consequences: [Consequence], forCharacter character: Character) -> String {
+    private func processConsequences(_ consequences: [Consequence], forCharacter character: Character, interactableID: UUID?) -> String {
         var descriptions: [String] = []
         for consequence in consequences {
             switch consequence {
@@ -2093,11 +2183,22 @@ class GameViewModel: ObservableObject {
                     gameState.dungeon?.nodes[nodeID]?.interactables.removeAll(where: { $0.id == id })
                     descriptions.append("The way is clear.")
                 }
+            case .removeSelfInteractable:
+                if let nodeID = gameState.currentNodeID, let targetID = interactableID {
+                    gameState.dungeon?.nodes[nodeID]?.interactables.removeAll(where: { $0.id == targetID })
+                    descriptions.append("The way is clear.")
+                }
             case .addInteractable(let inNodeID, let interactable):
                 gameState.dungeon?.nodes[inNodeID]?.interactables.append(interactable)
                 descriptions.append("Something new appears.")
-            case .gainTreasure(let treasure):
-                if let charIndex = gameState.party.firstIndex(where: { $0.id == character.id }) {
+            case .addInteractableHere(let interactable):
+                if let nodeID = gameState.currentNodeID {
+                    gameState.dungeon?.nodes[nodeID]?.interactables.append(interactable)
+                    descriptions.append("Something new appears.")
+                }
+            case .gainTreasure(let treasureId):
+                if let treasure = ContentLoader.shared.treasureTemplates.first(where: { $0.id == treasureId }),
+                   let charIndex = gameState.party.firstIndex(where: { $0.id == character.id }) {
                     gameState.party[charIndex].treasures.append(treasure)
                     gameState.party[charIndex].modifiers.append(treasure.grantedModifier)
                     descriptions.append("Gained Treasure: \(treasure.name)!")
@@ -2181,7 +2282,7 @@ class GameViewModel: ObservableObject {
     /// Starts a brand new run, resetting the game state
     func startNewRun() {
         let generator = DungeonGenerator()
-        let newDungeon = generator.generate(level: 1)
+        let (newDungeon, generatedClocks) = generator.generate(level: 1)
 
         self.gameState = GameState(
             party: [
@@ -2191,7 +2292,7 @@ class GameViewModel: ObservableObject {
             ],
             activeClocks: [
                 GameClock(name: "The Guardian Wakes", segments: 6, progress: 0)
-            ],
+            ] + generatedClocks,
             dungeon: newDungeon,
             currentNodeID: newDungeon.startingNodeID,
             status: .playing
@@ -2227,6 +2328,7 @@ import SwiftUI
 struct ContentView: View {
     @StateObject private var viewModel: GameViewModel
     @State private var pendingAction: ActionOption?
+    @State private var pendingInteractableID: UUID?
     @State private var selectedCharacterID: UUID? // Track selected character
     @State private var showingStatusSheet = false // Controls the party sheet
     @State private var doorProgress: CGFloat = 0 // For sliding door transition
@@ -2274,6 +2376,7 @@ struct ContentView: View {
                                     InteractableCardView(interactable: interactable) { action in
                                         if selectedCharacter != nil {
                                             pendingAction = action
+                                            pendingInteractableID = interactable.id
                                         }
                                     }
                                     .transition(.scale(scale: 0.9).combined(with: .opacity))
@@ -2302,7 +2405,8 @@ struct ContentView: View {
                     DiceRollView(viewModel: viewModel,
                                  action: action,
                                  character: character,
-                                 clockID: clockID)
+                                 clockID: clockID,
+                                 interactableID: pendingInteractableID)
                 } else {
                     Text("No action selected")
                 }
@@ -2418,6 +2522,48 @@ struct SlidingDoor: View {
       "improveEffect": true,
       "description": "Lucky Find"
     }
+  },
+  {
+    "id": "treasure_steadying_herbs",
+    "name": "Steadying Herbs",
+    "description": "Chewing these calms the nerves, for a time.",
+    "grantedModifier": {
+      "improvePosition": true,
+      "uses": 1,
+      "description": "from Steadying Herbs"
+    }
+  },
+  {
+    "id": "treasure_precise_tools",
+    "name": "Set of Precise Tools",
+    "description": "Ideal instruments for delicate work.",
+    "grantedModifier": {
+      "bonusDice": 1,
+      "applicableToAction": "Tinker",
+      "uses": 2,
+      "description": "from Precise Tools"
+    }
+  },
+  {
+    "id": "treasure_charmed_talisman",
+    "name": "Charmed Talisman",
+    "description": "Offers fleeting protection from dark thoughts.",
+    "grantedModifier": {
+      "bonusDice": 1,
+      "applicableToAction": "Attune",
+      "uses": 1,
+      "description": "from Charmed Talisman"
+    }
+  },
+  {
+    "id": "treasure_map_fragment",
+    "name": "Map Fragment",
+    "description": "Hints at a secret room somewhere in the tomb.",
+    "grantedModifier": {
+      "improveEffect": true,
+      "uses": 1,
+      "description": "from Map Fragment"
+    }
   }
 ]
 
@@ -2472,6 +2618,152 @@ struct SlidingDoor: View {
         }
       ]
     }
+    ,
+    {
+      "id": "template_crumbling_ledge",
+      "title": "Crumbling Ledge",
+      "description": "A narrow ledge over a dark chasm. It looks unstable.",
+      "availableActions": [
+        {
+          "name": "Cross Carefully",
+          "actionType": "Finesse",
+          "position": "desperate",
+          "effect": "standard",
+          "outcomes": {
+            "success": [ { "type": "removeInteractable", "id": "self" } ],
+            "partial": [
+              { "type": "gainStress", "amount": 2 },
+              { "type": "sufferHarm", "level": "lesser", "familyId": "leg_injury" }
+            ],
+            "failure": [
+              { "type": "sufferHarm", "level": "moderate", "familyId": "leg_injury" },
+              { "type": "tickClock", "clockName": "Chasm Peril", "amount": 2 }
+            ]
+          }
+        },
+        {
+          "name": "Test its Stability",
+          "actionType": "Survey",
+          "position": "risky",
+          "effect": "limited",
+          "outcomes": {
+            "success": [],
+            "failure": [ { "type": "gainStress", "amount": 1 } ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "template_mysterious_whispers",
+      "title": "Mysterious Whispers",
+      "description": "Voices echo softly from unseen sources.",
+      "availableActions": [
+        {
+          "name": "Listen Closely",
+          "actionType": "Attune",
+          "position": "risky",
+          "effect": "standard",
+          "outcomes": {
+            "success": [ { "type": "gainTreasure", "treasureId": "treasure_map_fragment" } ],
+            "partial": [ { "type": "sufferHarm", "level": "lesser", "familyId": "mental_anguish" } ],
+            "failure": [ { "type": "sufferHarm", "level": "moderate", "familyId": "mental_anguish" } ]
+          }
+        },
+        {
+          "name": "Block Out Noise",
+          "actionType": "Study",
+          "position": "controlled",
+          "effect": "limited",
+          "outcomes": {
+            "success": [ { "type": "removeInteractable", "id": "self" } ],
+            "failure": [ { "type": "gainStress", "amount": 1 } ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "template_jammed_lock",
+      "title": "Jammed Lock",
+      "description": "A sturdy door with a rusted mechanism.",
+      "availableActions": [
+        {
+          "name": "Pick the Lock",
+          "actionType": "Tinker",
+          "position": "risky",
+          "effect": "standard",
+          "outcomes": {
+            "success": [ { "type": "gainTreasure", "treasureId": "treasure_precise_tools" } ],
+            "partial": [ { "type": "tickClock", "clockName": "Lockdown Approaches", "amount": 1 } ],
+            "failure": [ { "type": "sufferHarm", "level": "moderate", "familyId": "gear_damage" } ]
+          }
+        },
+        {
+          "name": "Force it",
+          "actionType": "Wreck",
+          "position": "desperate",
+          "effect": "great",
+          "outcomes": {
+            "success": [ { "type": "removeInteractable", "id": "self" } ],
+            "failure": [ { "type": "sufferHarm", "level": "lesser", "familyId": "gear_damage" } ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "template_unstable_rune",
+      "title": "Unstable Rune",
+      "description": "A glowing rune pulsates with dangerous energy.",
+      "availableActions": [
+        {
+          "name": "Decode Glyphs",
+          "actionType": "Study",
+          "position": "controlled",
+          "effect": "limited",
+          "outcomes": {
+            "success": [ { "type": "removeInteractable", "id": "self" } ],
+            "partial": [ { "type": "tickClock", "clockName": "Rune Overload", "amount": 1 } ],
+            "failure": [ { "type": "sufferHarm", "level": "moderate", "familyId": "electric_shock" } ]
+          }
+        },
+        {
+          "name": "Shatter it",
+          "actionType": "Wreck",
+          "position": "risky",
+          "effect": "standard",
+          "outcomes": {
+            "success": [ { "type": "removeInteractable", "id": "self" } ],
+            "failure": [ { "type": "sufferHarm", "level": "severe", "familyId": "electric_shock" } ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "template_hidden_niche",
+      "title": "Hidden Niche",
+      "description": "A faint outline hints at a recess in the wall.",
+      "availableActions": [
+        {
+          "name": "Search Carefully",
+          "actionType": "Survey",
+          "position": "controlled",
+          "effect": "standard",
+          "outcomes": {
+            "success": [ { "type": "addInteractable", "inNodeID": "current", "interactable": { "id": "template_small_chest", "title": "Small Chest", "description": "Dusty but intact.", "availableActions": [ { "name": "Open", "actionType": "Finesse", "position": "risky", "effect": "standard", "outcomes": { "success": [ { "type": "gainTreasure", "treasureId": "treasure_charmed_talisman" }, { "type": "removeInteractable", "id": "self" } ], "failure": [ { "type": "tickClock", "clockName": "Chest Trap", "amount": 1 } ] } } ] } } ],
+            "failure": [ { "type": "gainStress", "amount": 1 } ]
+          }
+        },
+        {
+          "name": "Force it Open",
+          "actionType": "Wreck",
+          "position": "risky",
+          "effect": "limited",
+          "outcomes": {
+            "success": [ { "type": "addInteractable", "inNodeID": "current", "interactable": { "id": "template_small_chest", "title": "Small Chest", "description": "Dusty but intact.", "availableActions": [ { "name": "Open", "actionType": "Wreck", "position": "risky", "effect": "standard", "outcomes": { "success": [ { "type": "gainTreasure", "treasureId": "treasure_charmed_talisman" }, { "type": "removeInteractable", "id": "self" } ], "failure": [ { "type": "sufferHarm", "level": "lesser", "familyId": "gear_damage" } ] } } ] } } ],
+            "failure": [ { "type": "sufferHarm", "level": "lesser", "familyId": "gear_damage" } ]
+          }
+        }
+      ]
+    }
   ]
 }
 
@@ -2503,6 +2795,20 @@ struct SlidingDoor: View {
       "moderate": { "description": "Seared Nerves", "penalty": { "type": "reduceEffect" } },
       "severe": { "description": "Nerve Damage", "penalty": { "type": "banAction", "actionType": "Tinker" } },
       "fatal": { "description": "Heart Stops" }
+    },
+    {
+      "id": "mental_anguish",
+      "lesser": { "description": "Unease", "penalty": { "type": "increaseStressCost", "amount": 1 } },
+      "moderate": { "description": "Fleeting Shadows", "penalty": { "type": "actionPenalty", "actionType": "Survey" } },
+      "severe": { "description": "Terror", "penalty": { "type": "reduceEffect" } },
+      "fatal": { "description": "Mind Broken" }
+    },
+    {
+      "id": "gear_damage",
+      "lesser": { "description": "Frayed Rope", "penalty": { "type": "actionPenalty", "actionType": "Finesse" } },
+      "moderate": { "description": "Broken Tools", "penalty": { "type": "banAction", "actionType": "Tinker" } },
+      "severe": { "description": "Lost Map", "penalty": { "type": "increaseStressCost", "amount": 1 } },
+      "fatal": { "description": "Stranded and Helpless" }
     }
   ]
 }
