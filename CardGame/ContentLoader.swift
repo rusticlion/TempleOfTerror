@@ -14,7 +14,12 @@ class ContentLoader {
     }
 
     private static func load<T: Decodable>(_ filename: String) -> [T] {
-        guard let url = Bundle.main.url(forResource: filename, withExtension: nil) else {
+        // The JSON files are stored within the "Content" folder reference in the
+        // Xcode project. When bundled, this folder becomes a subdirectory in the
+        // app bundle, so we must specify it when looking up the resource.
+        guard let url = Bundle.main.url(forResource: filename,
+                                        withExtension: nil,
+                                        subdirectory: "Content") else {
             print("Failed to locate \(filename)")
             return []
         }
