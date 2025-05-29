@@ -61,8 +61,17 @@ struct PartyStatusView: View {
                             .font(.caption2)
                         LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], alignment: .leading, spacing: 2) {
                             ForEach(character.actions.sorted(by: { $0.key < $1.key }), id: \.key) { action, rating in
-                                Text("\(action): \(rating)")
-                                    .font(.caption2)
+                                HStack(spacing: 2) {
+                                    Text(action)
+                                    HStack(spacing: 1) {
+                                        ForEach(0..<rating, id: \.self) { _ in
+                                            Image("icon_stress_pip_lit")
+                                                .resizable()
+                                                .frame(width: 8, height: 8)
+                                        }
+                                    }
+                                }
+                                .font(.caption2)
                             }
                         }
                     }
