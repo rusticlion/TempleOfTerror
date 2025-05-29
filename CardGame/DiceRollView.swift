@@ -88,6 +88,9 @@ struct DiceRollView: View {
             Text(character.name).font(.title)
             Text("is attempting to...").font(.subheadline).foregroundColor(.secondary)
             Text(action.name).font(.title2).bold()
+            Text("\(action.actionType): \(character.actions[action.actionType] ?? 0)")
+                .font(.subheadline)
+                .foregroundColor(.secondary)
 
             Spacer()
 
