@@ -47,6 +47,31 @@ struct PartyStatusView: View {
                             }
                         }
                     }
+
+                    // Action ratings
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Actions")
+                            .font(.caption2)
+                        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], alignment: .leading, spacing: 2) {
+                            ForEach(character.actions.sorted(by: { $0.key < $1.key }), id: \.key) { action, rating in
+                                Text("\(action): \(rating)")
+                                    .font(.caption2)
+                            }
+                        }
+                    }
+
+                    // Active modifiers
+                    if !character.modifiers.isEmpty {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Modifiers")
+                                .font(.caption2)
+                            ForEach(Array(character.modifiers.enumerated()), id: \.offset) { index, modifier in
+                                Text("\(modifier.description) (\(modifier.uses) use\(modifier.uses == 1 ? "" : "s") left)")
+                                    .font(.caption2)
+                                    .foregroundColor(.purple)
+                            }
+                        }
+                    }
                 }
                 .padding(.vertical, 2)
             }
