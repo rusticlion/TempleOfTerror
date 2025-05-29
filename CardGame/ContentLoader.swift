@@ -5,11 +5,13 @@ class ContentLoader {
 
     let interactableTemplates: [Interactable]
     let harmFamilies: [HarmFamily]
+    let harmFamilyDict: [String: HarmFamily]
     let treasureTemplates: [Treasure]
 
     private init() {
         self.interactableTemplates = Self.load("interactables.json")
         self.harmFamilies = Self.load("harm_families.json")
+        self.harmFamilyDict = Dictionary(uniqueKeysWithValues: harmFamilies.map { ($0.id, $0) })
         self.treasureTemplates = Self.load("treasures.json")
     }
 
