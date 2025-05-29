@@ -38,6 +38,9 @@ if [ -d "$PROJECT_DIR" ]; then
     find "$PROJECT_DIR" -type f \
         -not -path "$PROJECT_DIR/.git/*" \
         -not -path "$PROJECT_DIR/node_modules/*" \
+        -not -path "$PROJECT_DIR/AssetPlaceholders/*" \
+        -not -path "$PROJECT_DIR/Assets.xcassets/*" \
+        -not -path "$PROJECT_DIR/.DS_Store" \
         -not -name "$OUTPUT_FILE" \
         -not -name "*.sh" \
         -print0 | while IFS= read -r -d $'\0' file; do

@@ -185,7 +185,7 @@ struct DiceRollView: View {
     let action: ActionOption
     let character: Character
     let clockID: UUID?
-    let interactableID: UUID?
+    let interactableID: String?
 
     @State private var diceValues: [Int] = []
     @State private var diceOffsets: [CGSize] = []
@@ -385,13 +385,6 @@ struct NodeConnectionsView: View {
 
 ```
 
-### `CardGame/.DS_Store`
-
-```
-
-   Bud1           	                                                           G a m e . x                                                                                                                                                                                                                                                                                                                                                                                                                                           C a r d G a m e . x c d a t a m o d e l dlg1Scomp      |    C a r d G a m e . x c d a t a m o d e l dmoDDblob   Ê|>£ÉóÆA    C a r d G a m e . x c d a t a m o d e l dmodDblob   Ê|>£ÉóÆA    C a r d G a m e . x c d a t a m o d e l dph1Scomp                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          @      €                                        @      €                                          @      €                                          @                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   E  	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       DSDB                                 `          €                                         @      €                                          @      €                                          @                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              
-```
-
 ### `CardGame/Persistence.swift`
 
 ```
@@ -535,499 +528,6 @@ struct CharacterSelectorView_Previews: PreviewProvider {
 
 ```
 
-### `CardGame/Assets.xcassets/icon_harm_lesser_empty.imageset/Contents.json`
-
-```
-
-{
-  "images" : [
-    {
-      "filename" : "icon_harm_lesser_empty.png",
-      "idiom" : "universal",
-      "scale" : "1x"
-    },
-    {
-      "idiom" : "universal",
-      "scale" : "2x"
-    },
-    {
-      "idiom" : "universal",
-      "scale" : "3x"
-    }
-  ],
-  "info" : {
-    "author" : "xcode",
-    "version" : 1
-  }
-}
-
-```
-
-### `CardGame/Assets.xcassets/icon_harm_lesser_empty.imageset/icon_harm_lesser_empty.png`
-
-```
-
-‰PNG
-
-   IHDR   @   @   ·ì   sRGB ®Îé   `PLTE      Ff Ã6ÿJ$È¦ ¦Ş ÿ×  R™Z4ÄzlÄÑ%¨ ’ßÉ¸ÿÿÿÿJ$ ’{¦q ïó¿ÿ‰ ¼®Fš ¼½¡ÿá´ñÁŸ4Œ?Eÿ¹izl…ã¦1§    tRNS ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ’š­v  kIDATX…í–KÃ D+/rÜÿšÀ&Æ¦RÕEİM7ó4ş’×ë?ÔbWKl`Šú*LHÎ‚t	ÆÇhò¤C1–z OÇù£†^éy!\>±Ô53aY€úêà¸«‘Â…—²!}ºLZô± Ú 6ÃIÌr`vÂ ê 3ªŒ€©•˜[À ³2âF@š` mAD!€ê£NyØíé(ZE`À däáI4 Wg[àHáö WÁ¬},÷¼¨¡ öM)g	P®üâ²Ê@õ#@òÎØ ¨~ˆÈ%®`ûÜo†Uñ4 ‚Ù¾' èíB€q+ ª Ú°¢2ˆr[¾8¤;E,Ú¤ ±6O›ÛA›äf!Ø…:É*‡(€: Åy
-pF@p›¨~İ¶n²
-ygİä»Ñò×èNŸ@²–1ò$ì
-eı"8||øÇïÆl<k`ì3    IEND®B`‚
-```
-
-### `CardGame/Assets.xcassets/icon_harm_lesser_full.imageset/icon_harm_lesser_full.png`
-
-```
-
-‰PNG
-
-   IHDR   @   @   ·ì   sRGB ®Îé   `PLTE      Ff Ã6ÿJ$È¦ ¦Ş ÿ×  R™Z4ÄzlÄÑ%¨ ’ßÉ¸ÿÿÿÿJ$ ’{¦q ïó¿ÿ‰ ¼®Fš ¼½¡ÿá´ñÁŸ4Œ?Eÿ¹izl…ã¦1§    tRNS ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ’š­v  œIDATX…í–[Ã0E#d/ÂÙÿ6'øÁ#¶	¤Ò¨¥RÕª½'Œ±ã_‰â­úìñÓÕPC`BrÔ–+€1>É‹ÁxÔk9—2çÊx@ ^=½ië+¥fÃ4½2OúÊ@„ea©Õ8Âe€ô=‘ Fh h 2 švü`Ø Ölbµ¯Û0ƒ²€ì,¨êª°µ 2¸TØ8´·6Ö õ.£N!'äœ‹"ì º¸^€´À•Ç28beÊºV+¥i”©¬F8ê0˜=Ü‰ Öq6q·dÌ„>MÅŸCÆ<‡Å¦ä‚Ø3¥¥UyÊ?LVn¨*¡5>gl 7T$x(j¨*¥­dí M 'aÔ` <Ëw~6ÑC@¹ï¢  *`¼Åh 7"Ï–\
-€7EìZ±¡‚ËrÀÆP'“…à*ŒN9D  œ[€‹0‚»)õ;*Gp7!àA¿¾bK÷¸ğú jô1äô÷òyŞ:åùDpøøğ‹ï?CgëŒºy§    IEND®B`‚
-```
-
-### `CardGame/Assets.xcassets/icon_harm_lesser_full.imageset/Contents.json`
-
-```
-
-{
-  "images" : [
-    {
-      "filename" : "icon_harm_lesser_full.png",
-      "idiom" : "universal",
-      "scale" : "1x"
-    },
-    {
-      "idiom" : "universal",
-      "scale" : "2x"
-    },
-    {
-      "idiom" : "universal",
-      "scale" : "3x"
-    }
-  ],
-  "info" : {
-    "author" : "xcode",
-    "version" : 1
-  }
-}
-
-```
-
-### `CardGame/Assets.xcassets/icon_harm_moderate_full.imageset/Contents.json`
-
-```
-
-{
-  "images" : [
-    {
-      "filename" : "icon_harm_moderate_full.png",
-      "idiom" : "universal",
-      "scale" : "1x"
-    },
-    {
-      "idiom" : "universal",
-      "scale" : "2x"
-    },
-    {
-      "idiom" : "universal",
-      "scale" : "3x"
-    }
-  ],
-  "info" : {
-    "author" : "xcode",
-    "version" : 1
-  }
-}
-
-```
-
-### `CardGame/Assets.xcassets/icon_harm_moderate_full.imageset/icon_harm_moderate_full.png`
-
-```
-
-‰PNG
-
-   IHDR   @   @   ·ì   sRGB ®Îé   `PLTE      Ff Ã6ÿJ$È¦ ¦Ş ÿ×  R™Z4ÄzlÄÑ%¨ ’ßÉ¸ÿÿÿÿJ$ ’{¦q ïó¿ÿ‰ ¼®Fš ¼½¡ÿá´ñÁŸ4Œ?Eÿ¹izl…ã¦1§    tRNS ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ’š­v  ÕIDATX…í—Û²… †&Ö;xÑû¿æJ@Å’ÖÌ¾Ú\”9ıŸ€*¥»3PöN6{C¸ôİ3î‰²Xq&F ’äÜ	"Pø  Ÿ!ğğV/„-Ä$'ıç#ı›Ãgc•ğœËÙûª&{t¢'§¿MÁÕ$¼°«gBmB¾CMŞõŞq€m7V>iŠª·G‚Î~Ñ "€:`µ,~ğCE8>èÍS4Eb Am™ 7O“õqØ\K²¤MÂ®»¼&€Ş½m · #`}'Ä Ğ¤‚é+i `8V?˜¬¤¬	;²8Ó¨ß@´¡HÇ:ĞOõÒ!@~ Ì)p  l8{Á„8 `¤`\x0.àÀIA-¦[€E•Ò'º]Ğb’Şå¡Èi4³‚4.1ov‚Ÿ+ÀÉêçÒ2Ô5`×ò4NçÂV}^¼å dõø ‡ø.,–ß~Û)` ´ŠÀcÃ~œ„ß úUb¼(†àÙo€]|Àş$v LRŸöWQêIì 9ÀgG$TyØw€—†~uäŠáŸ.Ï 7º†ôL¨7iÿ1àRÁp}£ÿ@Ò›W0·µ}õj‘f¯D    IEND®B`‚
-```
-
-### `CardGame/Assets.xcassets/vfx_damage_vignette.imageset/vfx_damage_vignette.png`
-
-```
-
-‰PNG
-
-   IHDR         HÃÛ±   sRGB ®Îé   `PLTE      Ff Ã6ÿJ$È¦ ¦Ş ÿ×  R™Z4ÄzlÄÑ%¨ ’ßÉ¸ÿÿÿÿJ$ ’{¦q ïó¿ÿ‰ ¼®Fš ¼½¡ÿá´ñÁŸ4Œ?Eÿ¹izl…ã¦1§    tRNS ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ’š­v    IDATxœíİÛvã8Ğ¬^şÿo©{U"Û ¹7;Yˆ#J®şø ˜×C-T pNöÄRÑ ïdÏ*Õ« à™ì¥z |•=Ôˆ€¿eÏ%5² à‡ì‰¤F dÏ¢‰ëšì£ıRÀÿ=ş­k>wö«óÿD½êWÎtÁt ;œó‘¿à0Dşx-}¶V¬{c¾ñÈLÀÿ}÷)Çğ)d›HŸµujğÀol€Mı3õ³æ«ò@öÁ°ô™›_Õ†şsC² l£ôÔF JúôÍ«iÆş±Y –6åÜ?"Ğ.}çÔÔsÿHŸ, Ëù=ù³$Şï,} L"}­õÿWÁI Ö°Êÿv²„ÊÒ'ò¸Ú¦÷ÿˆJ0µ_×üÙÇ‘Á O¤Ïä1µãèÿWÈ Ìgİİş«~í	dU¤Oæşµûäÿìf€iì|ÕÿŠ¾KŸÎ=ËUÿ+7r ”çªÿ9`géº_ı§µæ (Êì¿HØQú”îSf“– Å˜ı7È;IŸÔfAWs aö‘v>­»Lÿì³ºŠ+9 ²ıxÖ/û(Öâó+KŸ×á³ßŸj¸ÓÏ	BÏù÷ôãóÙGA¨ô‰möÏD
- (»şcØXIúÔşÙgsî
-PŠ+ÿÑì,!}n‡Í~İ?ÜåÏ
-@<WşyìÌ-}vMÿìó¸3ÿr y\ù L*}z›ş‹hı„¼y4³ï_‰{ÓIŸß÷§ö)äoÍ)@à"Ÿõ+I
-˜Gú7ıWt+xOyÏ'ıkód@}éüŞì×şµİLŞ]±ï?	) °ô)~kúgŸ=Î¹›¼ÑüËôŸŒPRú7ı·q?xËùÆôŸ”PLú$7ı7‘¼ù;3ı''”‘>Ëçöyã˜àÏ`CßúË>îóÒgyÓô×ÿK¸ıt °Ïü/Å's¥OsÓwa)ÀßÅòLÿ%IYÒç¹éÏ7R o™ş+³¸—>ÑMşË şNÖã¹¿x6p¨ô™~múûËØ@ÜN€?—…hÿ}¸0HúT¿4ÿ³ÏãHüÅÿíx* ¿ô©~aúkÿíf =33ıwå~@Oésıüô÷W°©È DSÒş{³ĞIúd?=ÿ³Ï¹¤€}¹úGì#}¶ŸšşŞx>‚ïø›š„şç;ÁÒ§û©ùŸ}–¨#v'ÀŸVqüãOÆIŸî'¦¿öç`¦?Ç<!}¾Ÿ˜ÿÙçˆšì,Ïÿí‡WìÜ”>ßßNıÏ2ÀÂ\ıó€véşíüÏ>CÔg'`M®ş9É¤h’>áßLo*'g yéô?W¸pYúŒ3ÿ³Ïs±°»ÿ\gj\“>å_Íÿì“ÃŒd€xöVvNKŸòÏ§¿ş§•»“sõÏ=<#}Î¿˜ÿÙç†¹¹0/Wÿ0EŞHŸóO§¿7 2ÀŒô?QÜx!}Ò?ÿÙg†u¸0»ÿÄr7à™ôYoş3€»ó°ûO¦ÊôY<ÿ³O+’fàÙzq7à“ôY4ıõ?½È Õiº’şHŸö‡ó?û¬°6 .wÿéÏ?¤O{óŸ±OÅî?ƒ˜4€7…QÜ¨ÆİFÚş‰€ôyÿyúëF’*Ñş·sHŸø_æöa?2@úŸ»f€ô‰oşS‚ÏÓäÙó©Àô™oşS„§s¹ûO²í&PúÌÿwşgŸv'¤1ÿ)`«1”>óÍª	Ì œgşSÄF£(}êÿ™şûœtª“FÓÿT²É§Óçş_ó?û\Àßd€ô?å¬ŸÒç¾ùOa2À úŸ’VÏ é“ßü§4` ıOY+g€ôÉoşSĞ™ş§´U3@úä7ÿ™BTà€ş§¼53@úì7ÿ™„Ğ‰şg
-ëe€ôÙoş3 ıÏ4ÖÊ é³ßüg22@0ıÏTVÊ éÓßüg:1€ïô?ÓY%¤OóŸ)É Aô?SZ!¤OóŸiÉ ô?Óš?˜ÿĞ."lMÿ3µ¹3€ù÷È 7è¦7s0ÿá. ‘şg	³f ó"ÜÏ Òÿ,cÎ`şCà"ıÏRæË æ?Ä¹›¶¢ÿYÎ\ uşèÖ#œõŸ€õL•ksçÿD'
-ÎzÜË »0ÿYÔ4£Íü‡d€·Ì6Éx3ÿ¡‹[`}æ?‹›`Ä™ÿĞ]€ç, ,¯ş‰ó_ÿ³<» Oè¶P;˜ÿĞW{X˜şg•3€ù½É Ÿı·îKƒ/ªÎ»¤ùï€½4?¸&O ²™¢#Ïü‡!d€ßÌ6Tpì™ÿ0Œğƒ€-U{ mşë¶Ô¶°ıÏ¶je óÆ’<ÈÎ*Í¿¤ı²!OÓÓ ëğ ›+3ÍHĞVaşC•1hşCŠ]€ >j<2ÿõ?|´<° ı?åg€Œü’¡Œ«`~î ÀoÉy8cşëøíâÓ ³3ÿá©#Ñü‡d;%  |’w' aşëød›] ı²2Àøò2¡¸+`^î À¡¤l<zşë8tái€iéx&e`ğü· ÀË' ı/dÜ	0ÿ¡Š³`Nş/ ğÚø94Œ~q0—“wfä	 xkø˜4ÿ¡U€ N}'`Øü×ÿpÂ™]€ù¸ çŒ•ÃÀÈó:q'`6î ÀiCÇ¥ùÅ¬– , pÁÈ;Cæ¿ş‡ŞíÌÅ ¸fÜÌ´ å¼¹0w à²acÓü‡‚VI  h0êN@ÿ0äeÀb^íÌÃ 4”í @I/îLCÿC«!» ç¿ MŸ ô?Ü0âN@ßĞığaaÏ2ÀÜ€[dè®; ½Ö6s° ÀMıw:Îı7ïÌÀ¿ ÷õ£v  °Ãç' ÿ!Bç] ; PÙ”	@ÿC¾wz%€‡[™/xÂtÍÓv ú0ìf¶ç- ¨ç.€ ¨n®OÚ€P3µ (ïé¿Xş‡hİv:Ì ›çßô)@ˆ×k®Ú€	Ìò	ĞÿĞC§] ; 0ƒ9ş_v  >³Õ LáÅ.@•®ó tÓe¼šÿ0‰	 DçY  £Ÿ
-ŒM á‡üöj ¿ùì @W2¶ ˜ÆËÜ è,~À Ìãõ.@fÚ€îÂs¶ ˜È›Ö…  zÀ Ìäİ.@N#Ú€!‚³¶ ˜ÊÛĞ‹ $vÀ Ìåı.Àèv´ Ã„æm; 0™	`hGZ ` È] ; 0›3» ãšÒ ˜¹í ÀtN%€A}i€Áâvì À|ÎíŒhM; 0\Xî¶ :™ ºw§ DíØ€İèÜ  ÈP#¸€5ÀúRÄÌŞÛ	 â €«2€ş‡,!» v `Nç@¯6µ y"æ¯ ˜Ô…]€.ªÿ!SÀ.À½ğ€FW@|³ú ¤
-¸· Óº” ¢ÿÇâ Èuÿ3v `^×v"[Ö ¤»Ãí ÀÄ@àšH °±KOf ıÜ¼Ğ<ÿ- PÀÕÓ¸v  †{³Ø Lírˆø± j¸÷4`k;|à–ë» wÛ×S€PÆ­<n &— B ÀÆ.?x3è¨äÆ}€¦ùo€BZ@{Û€ZÚg² ˜^Shìc Óş4`K=tà¶¶]€¦V¶ @5ã€+ (g\p êiË	 öÀûšlèeı5î\O ÁÇ“ üK PRãÅ¹ XÂ ĞáÈÛ$ ØØˆ@ÿCUM÷®&€ğ£BôO î@YMèv `@—ãH °±†û ~Ÿã"4Ü¸– :3¤op Jk¸H· Ëèœ :5B€]¾pég÷:j Æåû W@—#ÂôK î@y—/Ôí ÀB:&€nÇ‘ `cï\ø¹ıˆrñ>€{ °	 6Ö'Ø€)ôI îÀ®Íj÷ `)=€ &ñ¸´à ¬åÊ.ÀéÙó€8 l,>ø$ LãÒ{ °˜	 ëñ$ ØØ…Oüy}ˆtá>€{ °	 6› lÀTb€{ 0—ó3Û= X “ `c§Ÿ8õ³z-ëô}€3	 ë‘á$ ØX\° Ó‰K îÀ|ÎÎm÷ `A lL€|àÄÏé¬@´“÷Ş'€ÎÇ	t ÀÆb€- ˜RLp ætnv» K’ `c l,"X `RS÷< k:sàíq @<	 6v?üg€YÚÁs  †'Ğ »™  Lìn°;ñ¯½ùöA
-tpâI€×	`À1ÜI ö ar l¬=Ø„éñ€e5& W °	 6Ö” ìÂî$ {€0¹†ğ×€ ¦öşßô ¬ëİ“ _¾Ş ¬C€]K îÂR$ ØØ•à. ,æmº6è˜ßéà
- Ö#ÀÆ$ ØXk°8™ ® , 0½wŸx  ĞÑë'~~=@X“ {Ÿ Ü„eI °±w	À]@XX[p	 KhM ÙÇDx=ËŸ&€Q‡ô$ÀÆ$ Ø˜ “ `c l¬%xñxõ$€OÀâ^>è
- Ö&ÀÆ$ Ø˜ “ `c lL€]O ‚e¼ô® `q	 û( lL€I °1	 6&ÀÆ$ Ø˜ “ `cW€'a!/şUÀÃ@ÿÃJ^|Ğ ¬N€I °1	 6&ÀÆ$ Ø˜ “ `c lL€I °1	 6&ÀÆ®% Ÿ†¥\K .`)W@öñ‘Ït{€°<	 6&ÀÆ$ Ø˜ “ `c lL€I °1	 6&ÀÆ$ Ø˜ “ `c lL€I °1	 6&ÀÆ$ Ø˜ “ `c lL€I °1	 6&ÀÆ$ Ø˜ “ `c lL€I °1	 6&ÀÆ$ Ø˜ “ `c lL€I °1	 6&ÀÆ.% + ,åEK­
-®`%	 öõøïù’ `q lL€I °1	 6&ÀÆ$ Ø˜ “ `c lL€I °1	 6v9X`¯úp]° À:Îÿ'	À5 ,äÕ@— `q lL€I °1	 6&ÀÆ$ Ø˜ kH V XÄóO<K  XÆ‹Ï>é× °	 6&ÀÆ$ Ø˜ “ `c l¬)X`	¯›ùÉÊ`€5¼˜ÿO€k XÄëa.ÀÒ$ Ø˜ “ `c l¬)X`	oZùÙÊà Vğê9@	 ÷ò“  ¬M€I °1	 6öÿĞği@+ ¬àÑ˜ \À~ôÿ‹ÿ.Àº¾_H °'	 6&ÀÆn$ + Lîõ=€W	À Óû}ğô\À²$ Ø˜ “ `c7€ &÷æ“ /€k ˜ÜŸşú ¬êÍs€ ¬L€I °±›	À
- {wàu° ÀÔş¹xò%®`Q lL€İN V ˜Ö¿ıÿäk\ÀšŞ>ğ&¸€‰I °1	 6 ¬ 0©÷÷ Ş%  LëÓÀ“/r K’ `c_ö ¿È
- +zûïH ®`R_ûÿğ«$ XÑ‰§ $ X• I V ˜ÒÁàá—¹€¹ À¢® ¿L€…% + Lç¨ÿ¿Î5 ¬çÔ=€	À5 LH€…% + Lçğ“@‡_è –sî€ Kzrpğ… ,'4X`*Ïúÿà+]ÀjNŞ8• \Àd$ ØXh°ÀTş{ _ê sö€ zzpğ¥ ,&<X`Ïûÿàk]ÀZNß8™ \ÀD:$ + LâüÀÙ`€i¼¸8øb× °	 6Ö!X`OŸ¾‘ \À$^õÿÁWK °’OœO V ˜ÂË+€ƒ/w ¹² Àb^^|¹ é– ¬ PŞëş?øz× °K÷ .$ × 0wW _¾Ş5 ,ãÚÀ•`€òŞ^|ù× °Œ®	À
- ¥½ïÿ/ßá VqñÀ¥à Šëœ ¬ PØÕ€k	À ¥¸øò-®`İ€ Ê:Óÿ_¾Ç5 ¬áò=€‹	À5 6 X ¨ë; W€ Ê:uğå›\À†$ + ”t®ÿ¿|—k XAÃ=€Ë	À5 5(X  –€ë	À %¼øòmË5 T4,X œ³ıÿåû®¯ 	¯x©é@Cøÿ5€ ŠyùÿM v š¶€¦`€jN_|ùÆË	À. sú
-  ¸Åœïÿ/ß)Àìï4|à{°@!® ¾|ëõùï> ”ÒºĞ˜ D (äJÿùŞ†` 
-iŞhL î@!		À
- E´ï 4'  ª¸tğå›€ Jh~
-ğF° EÜÙ `r7îÜI V (àÒÀÁ·7& × PÁ€	@€®õÿÁ÷7& » PÀ­€	À} ( 1X Ù½€[	@€l¯ ~À`€T·¼™ ì@²«ığî$ + $º;ÿo&  2]¾xğ#n$  dJO V Hs½ÿ~Æ` İ|
-ğvğ™@ÈÓpğà‡ÜJ v Ëı€Û	@€$-ığSn% » $`àv° 9š>ø17€] È± , ¡é
-ààÇÜL v ÁíÏ% Ÿ	„mığsî' + 3ÿC€ £í Ä$ + ´’ ìÀ`Q; A	À
- EÍÿ  ÀHOş¨`€aÂv ‚€] ¨µÿVL°À qó?,ˆ 0Jóç€XP°À; a	À. ÒŞÿ‡?-*X`€Èù˜ D áÆ¿vøãÂ€ ºİ¸ ì@¦;ıøó3ÀàSÛ‰ÿ¡	@€Ş‚w b€ º
-ŞM v ³è€à`€¢çp §[ÿ7°'?24X ›ğ€à` :º×ÿO~fl°@'ñó?<øŸC'wûÿÉON  èâÖà ğ!@·w ŸüØà`zè±Ğ!ˆ ĞAŸùßaÀ ñºì tH v ^§€	À. Dë³Ğ’ ìÀh÷ûÿéOî¬ ©×üï’ |*bì >ıÑ]€ ÂÜŞœ |*EôÿÓŸİ'X H¿ùß-ˆ %ä §?¼S°@ˆ; İ€ç!FHÿ¿øñ€‹ ˆĞsşwL " ˆéÿ?¿S° :}
-ğN° ƒí ¾ø-%À]ï üXZ¾ëTğ< ÜÕÿ/~CK‰ 0@ïùß9ˆ pGĞàË_ÑR" ô×} sp' Ú…õÿË_ÒR§¹€Vıç÷ @£¸şù[Zê’A§–2bş·&€K ûDÂŒŸ~ùkÚJ€‹$ ÏBƒÈşù{ÚJ€ÆÌÿ!	À ¸hÔü“ , pIçàïÕ¡íû.$ ÏÂ5¡;€o~U[]5ä´ÁBûÿİêĞú×2@ö)…yÄöÿ›ßÕZ" t1nşK ¶à¤èşóÛZK€†İø±:´~ç¥àN œ¼øö×µÖuNL.¸ÿß¯­ßy1¸ 'Œİš ¬ ğÆØù'\Î ¶àøşûÛK€XCï üXÚ¿÷ú.€ ^ß<ñ+ÛË6 D
-ïÿ3+Dû÷^N 2 <×¡ÿOüÒöjà^ <3~şßK @€'zôÿ‰ßz§l@Œù?<øÿÀ±.w OüÚ;%@ŒÇ&	À øªKÿŸúÅwªUç“	“Išÿw@kÈ>İPKŸş?õ›ï• ·eÍÿ¤` şÒ«ÿOıî{e nÊ›ÿI	ÀÓ ğG§Ï Ÿüå÷J€{3'€æ`€oºõÿÉ_·d h—:ÿ€§à£çàÉß·D h–;ÿS€m ¶—=ÿs€€½eÏÿˆ @›ıúî— -†ÿ_ Ö‰û?£9x€=$ €muíÿóëDÄO‘à¢ó?¦ÿe ¸¨Äü/ <È–úöÿ…ãˆ( .©1ÿK$ Û l§Êü¯‘ ¬ ì¥ÊüJ 2 œ×»ÿ/KL‰ pV' ÿ¬1?çVğ4 ;yH 2 ÛêŞÿ×ÖŠ¨Ÿ$À	¥æ\ÿË pB©ù_(È ì`@ÿ_< ¨ŠĞå”CÅædˆÈ Ùoô5¢ÿ/Q\‰ ğRµù_,Ø`iõæµ``]õælà¹1ıù¨"K€'*Îÿr	@`Q5çÅ``=5çtÊ ÙoDô	à†‹- ¾zH Ê
-ÀZõÓ¡ÅV”à7 •ÿñ	@€O†õÓÁE— +<ÿË& €Uìÿ¦Ã‹®8Áo$(=ÿ{$  ~+>ÿ{ô¿ ?Ÿÿ¥€Àì†öã!ÆW¤Ğ·†*?ÿû$  >¦˜ÿ}ú_€æù 0«Áıß|˜=*Và›ƒL1ÿ{% €ÍM2ÿ{õ¿ÀÖ&™ÿı€ÀÆ†÷ÿCíU2 »šfşO’ d f2ÑüŸ&X˜ÅDó¿gØRBÿß:Ü~%°Ÿ©æß °Éæßş—ØÌdóª P]Jÿß<ä/äm‚.¦›ÿ½€ÀF&œÿ½û_`Îÿé€@UIıû°ûVo›rş÷O 2 [˜tş÷ï€L:ÿG$ €å¥õÀ¡÷/!€¥=¦ÿc@‡ PF^ÿ‡ıˆ’XÖ¼Óÿ[Mš d ŠÈìÿãQ„œ ¸aîù?*È ¬iöù?ªÿe V4ûü— ze K i¹ıô"F•ÀZ’û?¦® =2€§É²ÄüÙÿ2 Ybş/ d 2,2ÿ—H V F[dşM 3€%€éıøZF–Àòû?®¯ ½2€ †ÉïşĞW3¶d &—ßÿ‘5|è˜,tW"ı‡¾ Ñ%0¯ıY	+@¯à‰ z+ÑÿÁ/i|É Ì©DÿÇÖR	Àtô(Ñÿá¯j|u~Šà£JÿGWÊ
-Ğ3Ø ‹*İşº2J`2Uú?º’V€ÎÀ@¨2é¿ÃKË)!€y”éÿøJ[zf O©PÿwxqY%0…G¡ş¯Ä oQ©ÿ»¼¾¼’(¯N÷÷©Ô {°pK¡éßëo9õ5	TVªÿûTò
-Ğ7øl 7<Šõ§W™[B EUëÿ>•¾ôÎ îĞ¤Z÷w{Ù%PÏÓÿ[Xºg !€‹ÊõÇ—š_B ¥<Êõ¿*±ôÎ v¸ ^ÿw}µJ Œjİß·Š¬ C2€%€·ÊMÿoÕõ×(!€
-JöÏ*³ôÏ äGÉşïüš«”@²šıß·
-­ #2€À3E»¿ûË®SB yŠöï*µŒÈ v8P7ıwå•jœîç•‰<êöï*¶ŒÉ äo…»À‹¯UB ƒí;ı¿U¹`Lğé ~ªÜÿC^µ§p÷©‚+À‡ )İÿƒNAÅàQºÿÇTÑ`àN€%`Sêı?è4Ô,!€¾Šwÿ¨*»ŒÊ ÜRõé?îO2ûu>­±†o
-xÔïÿQUx—ÜØËİ?ğdÔ-!€Lÿ¿«ô
-0.¸°‹)ÒÿĞR¹†zên†î[ÅW€Ñ) û/”æèÿÁç¤z	Ä˜¢ûG×+ÀĞ`+`UsLÿo5ø¼Ô¯ñ¿t÷˜§ÿÇÖ+À‡À3uÿğs3GI´2ı_Ô4+ÀÈ ,d®îO8?³”@ƒ¹ú|M´ŒÍ \ÁdİŸrŠæ©)o
-!Lÿ÷5Õ
-ğ!pÚc¶şO:Ms•À)³uVM·|H¼5İôÏûË~İ%ğÒ|İŸWS® £3€0“	§æßVö+oª$‰o'ÍØı™5é
-ğ‘”¬¥ıZ¨ç«Äs6keI|¯xiÚîÏ¬‰W€ñÀg
-›¹ûSÏÛ¼•'õãÀcæşÏ¬©W€)€oæîşäs7w%J~ãøé×Û¡Zjúà#)ˆ5LßıÙ²_@%Ê~÷v7{÷ç×+ÀGJ
-ğ|`¶ÇüıŸ/ûU¦ì·pOt…ZføÈJb@†Çı_Aö9¬TÙïãN~ru¿–Z>ÒR€0Î2İ_CöY®\Ùoæú~gUË­ I)ÀË5j4  ‡IDATnÀ …ú¿ŠìóĞ¡’e¿£«úuzUd-¹|$¦ ÿj@«uÙg¢SeË~[×òóœªøZvø^™»Ö€ v%Ùç¢keË~sç÷ûLª>µø
-ğ‘–ä€ûíşZ²ÏF÷Ê—ıÏé÷ÙS=kƒà{ÉSY¸û«É>ƒ*_ö=ßgLõ¯mV€ï%”·x÷×“}F†V¾ì·»¶ßgIªï§}³JÎCº¿¢ìs’Pd¿ëÕü91jlı<ÿVb°!ğ]z¿¦ì³’Vd¿ùù~Ÿ	•S¿ßˆm+/ì¾#ğØ¨ûëÊ>3éU@öß@†?/^eÖ_ïÈæ•‘[.Ûõ~eÙç¦Leøü›³ÿúûüÚUrıõÖ¨Ÿ5`î­/+ß&U[öÙ)X½½ÿÍÙñ6íıúõÏ›¤ªÛÌ?®õ¢Àæ½_]öù)_}gş»ß™ıçqÏs †Ô§7L®›“ş}Í½
-èıïU_öš¶"&ı•ß’ı‡rŞŸ¨¾¼yª^M³t^§«dŸ#u²j/½“êTo¥ª[rë€ÎR³È>Oª¡
-,ö?Ô€:|oÕõµ	Ç÷½Î?¬ydŸ)u»…şşµBYªWn7¼¾?_3É>WªKÅÊ~5ª[Y6)?¨f“}¾”RyeeP*®æ“}Æ”RyemP*ªf”}Î”RyemP*¢f•}Ş”RyeuPê~Í+ûÌ)¥òÊú ÔİšYö¹SJe•B©{5»ìó§”Ê)k„R÷j~ÙgP)•QV	¥îÔ²Ï¢Rj|Y'”ºS«È>J©ñe­PªµV’}.•R£Ëj¡T[­&û|*¥ÆÖßşf•Î¢ÿ`H    IEND®B`‚
-```
-
-### `CardGame/Assets.xcassets/vfx_damage_vignette.imageset/Contents.json`
-
-```
-
-{
-  "images" : [
-    {
-      "filename" : "vfx_damage_vignette.png",
-      "idiom" : "universal",
-      "scale" : "1x"
-    },
-    {
-      "idiom" : "universal",
-      "scale" : "2x"
-    },
-    {
-      "idiom" : "universal",
-      "scale" : "3x"
-    }
-  ],
-  "info" : {
-    "author" : "xcode",
-    "version" : 1
-  }
-}
-
-```
-
-### `CardGame/Assets.xcassets/texture_stone_door.imageset/texture_stone_door.png`
-
-```
-
-‰PNG
-
-   IHDR         k¬XT   sRGB ®Îé   `PLTE      Ff Ã6ÿJ$È¦ ¦Ş ÿ×  R™Z4ÄzlÄÑ%¨ ’ßÉ¸ÿÿÿÿJ$ ’{¦q ïó¿ÿ‰ ¼®Fš ¼½¡ÿá´ñÁŸ4Œ?Eÿ¹izl…ã¦1§    tRNS ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ’š­v  ÙIDATxœíÒÀ ÅPLÂüËœ‡KG(é¡€÷»á½¿M·¦ ·ˆıÏ>€[Ä*€Ù(VäÈF±
- G6ŠU 9²Q¬È‘b@l« rd£X#Å*€Ù(VäÈF±
- G6ŠU 9²Q¬È‘b@l« rd£X#Å*€Ù(VäÈF±
- G6ŠU 9²Q¬È‘b@l« rd£X#Å*€Ù(VäÈF±
- G6ŠU 9²Q¬È‘b@l« rd£X#Å*€Ù(VäÈF±
- G6ŠU 9²Q¬È‘b@l« rd£X#Å*€Ù(VäÈF±
- G6ŠU 9²Q¬È‘b@l« rd£X#Å*€Ù(VäÈF±
- G6ŠU 9²Q¬È‘b@l« rd£X#Å*€Ù(VäÈF±
- G6ŠU 9²Q¬È‘b@l« rd£X#Å*€Ù(VäÈF±
- G6ŠU 9²Q¬È‘b@l« rd£X#Å*€Ù(VäÈF±
- G6ŠU 9²Q¬È‘b@l« rd£X#Å*€Ù(VäÈF±
- G6ŠU 9²Q¬È‘b@l« rd£X#Å*€Ù(VäÈF±
- G6ŠU 9²Q¬È‘b@l« rd£X#Å*€Ù(VäÈF±
- G6ŠU 9²Q¬È‘b@l« rd£X#Å*€Ù(VäÈF±
- G6ŠU 9²Q¬È‘b@l« rd£X#Å*€Ù(VäÈF±
- G6ŠU 9²Q¬È‘b@l« rd£X#Å*€Ù(VäÈF±
- G6ŠU 9²Q¬È‘b@lû nmù<b7ı    IEND®B`‚
-```
-
-### `CardGame/Assets.xcassets/texture_stone_door.imageset/Contents.json`
-
-```
-
-{
-  "images" : [
-    {
-      "filename" : "texture_stone_door.png",
-      "idiom" : "universal",
-      "scale" : "1x"
-    },
-    {
-      "idiom" : "universal",
-      "scale" : "2x"
-    },
-    {
-      "idiom" : "universal",
-      "scale" : "3x"
-    }
-  ],
-  "info" : {
-    "author" : "xcode",
-    "version" : 1
-  }
-}
-
-```
-
-### `CardGame/Assets.xcassets/icon_harm_moderate_empty.imageset/Contents.json`
-
-```
-
-{
-  "images" : [
-    {
-      "filename" : "icon_harm_moderate_empty.png",
-      "idiom" : "universal",
-      "scale" : "1x"
-    },
-    {
-      "idiom" : "universal",
-      "scale" : "2x"
-    },
-    {
-      "idiom" : "universal",
-      "scale" : "3x"
-    }
-  ],
-  "info" : {
-    "author" : "xcode",
-    "version" : 1
-  }
-}
-
-```
-
-### `CardGame/Assets.xcassets/icon_harm_moderate_empty.imageset/icon_harm_moderate_empty.png`
-
-```
-
-‰PNG
-
-   IHDR   @   @   ·ì   sRGB ®Îé   `PLTE      Ff Ã6ÿJ$È¦ ¦Ş ÿ×  R™Z4ÄzlÄÑ%¨ ’ßÉ¸ÿÿÿÿJ$ ’{¦q ïó¿ÿ‰ ¼®Fš ¼½¡ÿá´ñÁŸ4Œ?Eÿ¹izl…ã¦1§    tRNS ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ’š­v  |IDATX…í—;Ã D¾ƒŠÜÿš±ù
-´€D2“&ª'û¼ú vÿX‰8Ó¿jœn}3ğò›ˆ"Îñ˜ñ(J˜\„˜>	ÀÅBº}¯ÏBÉ£şºòuãí¹‹BØ×R»/ê[­x©ıµ÷ÇÈÉ°ê¡|~¼LC4ªŸA¤/5bE­	²úR£ ³±„z¸¯rñì€ Ï²˜4ğdASRÒyğ¸ÏÂ(Slô…ìô# Ğ°ƒIïÌ£õ(u •Šşi4€ ¸ßè €'ÍkAm„´ h}O ÚÂ JPS`rJé}Sİï¦›bB ÁÉ÷ÌÅÆá`$Ká(oÜ›£eHçò€Ú)R0ÏS ?7À 3íÌ,Àñóä`~HÊóÂm#ËßŒB~Àü  QåiáLÅg «°7±ÊÉ›à0P‹Ø<ëeÙŸU ÄÛÎÙKÏqÿñ“xI8m×!Ì}    IEND®B`‚
-```
-
-### `CardGame/Assets.xcassets/AppIcon.appiconset/Contents.json`
-
-```
-
-{
-  "images" : [
-    {
-      "idiom" : "universal",
-      "platform" : "ios",
-      "size" : "1024x1024"
-    }
-  ],
-  "info" : {
-    "author" : "xcode",
-    "version" : 1
-  }
-}
-
-```
-
-### `CardGame/Assets.xcassets/AccentColor.colorset/Contents.json`
-
-```
-
-{
-  "colors" : [
-    {
-      "idiom" : "universal"
-    }
-  ],
-  "info" : {
-    "author" : "xcode",
-    "version" : 1
-  }
-}
-
-```
-
-### `CardGame/Assets.xcassets/icon_stress_pip_unlit.imageset/icon_stress_pip_unlit.png`
-
-```
-
-‰PNG
-
-   IHDR   0   0   `Ü	µ   sRGB ®Îé   `PLTE      Ff Ã6ÿJ$È¦ ¦Ş ÿ×  R™Z4ÄzlÄÑ%¨ ’ßÉ¸ÿÿÿÿJ$ ’{¦q ïó¿ÿ‰ ¼®Fš ¼½¡ÿá´ñÁŸ4Œ?Eÿ¹izl…ã¦1§    tRNS ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ’š­v  IDATH‰ÅVAÄ l|€/høÿ3·ŠUFKw‹1MÚ¨¢Çá-u#×à©aÎfO6¤5á7egğF	»_‰ìñ„±‡+%?Í#€7‡Ïuœu2FÄÿœ
-d3ˆğñL“@÷+m‚†Jx«ƒKBóß A&¼Ó(„¹Fİ¿ZyZ’ÖT`8	¨Ñğ¯‚u‚œ‡çL5€P¬‰­Ó2îÿ_9 †ÏÁ$±ÿIõŒŸ³vş¿[K®%²Z3pCd©Şß{ÔÖé„ç"¢]‰ïé4Ú†ÃØ±FáÆ·o},¦·Í5aû~&üv ¼>²öy¬Ñd;·ıA¸\:Í^Ü6¢—$‘™ÍÌ¿å    IEND®B`‚
-```
-
-### `CardGame/Assets.xcassets/icon_stress_pip_unlit.imageset/Contents.json`
-
-```
-
-{
-  "images" : [
-    {
-      "filename" : "icon_stress_pip_unlit.png",
-      "idiom" : "universal",
-      "scale" : "1x"
-    },
-    {
-      "idiom" : "universal",
-      "scale" : "2x"
-    },
-    {
-      "idiom" : "universal",
-      "scale" : "3x"
-    }
-  ],
-  "info" : {
-    "author" : "xcode",
-    "version" : 1
-  }
-}
-
-```
-
-### `CardGame/Assets.xcassets/Contents.json`
-
-```
-
-{
-  "info" : {
-    "author" : "xcode",
-    "version" : 1
-  }
-}
-
-```
-
-### `CardGame/Assets.xcassets/icon_harm_severe_empty.imageset/Contents.json`
-
-```
-
-{
-  "images" : [
-    {
-      "filename" : "icon_harm_severe_empty.png",
-      "idiom" : "universal",
-      "scale" : "1x"
-    },
-    {
-      "idiom" : "universal",
-      "scale" : "2x"
-    },
-    {
-      "idiom" : "universal",
-      "scale" : "3x"
-    }
-  ],
-  "info" : {
-    "author" : "xcode",
-    "version" : 1
-  }
-}
-
-```
-
-### `CardGame/Assets.xcassets/icon_harm_severe_empty.imageset/icon_harm_severe_empty.png`
-
-```
-
-‰PNG
-
-   IHDR   @   @   ·ì   sRGB ®Îé   `PLTE      Ff Ã6ÿJ$È¦ ¦Ş ÿ×  R™Z4ÄzlÄÑ%¨ ’ßÉ¸ÿÿÿÿJ$ ’{¦q ïó¿ÿ‰ ¼®Fš ¼½¡ÿá´ñÁŸ4Œ?Eÿ¹izl…ã¦1§    tRNS ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ’š­v  ÕIDATX…µ—YrÄ D]úğøàş×ŒÍ"´4«'LU*‰éGKÈ‚¹®É ¢Ù”	 ~"<ëÇøä,Ğ+¦sB’†pL(úcëa“ABŸ1î òî±ş%äÿ¬!êä¦¿ŸÏ2ÂÉ_õıúdÈğ«Fv1b@ù]?á¦ÊÀj´ºæÔ„zìN&^üZõ·ÜVk—üH¹ùmåHGÚ»VPÁ0 å  ¤ @*P´á® ZW@c@+ùæêÉ¹£ÌŒbèt› ¨Põ,º‡à}$ÕîAíOÍÅ kAìµ­0BcAø”S”•F§Çd{âQDw È‚+ Y å×y€µ ëWpmÑ pıõ#ğûp0óú` Ø‡Îb@§–ş v±$aï,Ã“M®NØ 0<-ğFHí{$u.M…M®QUÇXÅş¡œyõÍO.ÚÊ4Wé *Ëf@œ\,\*¨h±÷UõÅõµ¡tö+·¤Ãå Ğ­œ9`R»€­~àäs#	 ;_ -,ApDı¦ÔÊ`Ó‚zÄÏe¢f5¥£ø†2èdÆ€³Nfø:Ù
->üŠéÜ²Æâ    IEND®B`‚
-```
-
-### `CardGame/Assets.xcassets/icon_harm_severe_full.imageset/icon_harm_severe_full.png`
-
-```
-
-‰PNG
-
-   IHDR   @   @   ·ì   sRGB ®Îé   `PLTE      Ff Ã6ÿJ$È¦ ¦Ş ÿ×  R™Z4ÄzlÄÑ%¨ ’ßÉ¸ÿÿÿÿJ$ ’{¦q ïó¿ÿ‰ ¼®Fš ¼½¡ÿá´ñÁŸ4Œ?Eÿ¹izl…ã¦1§    tRNS ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ’š­v  &IDATX…½—Q’Ã †;IÏïÍ
-HMgÖ}ØšÀçR´ŸÏÃ €'“@ù‰p®_Ê vÿA3¼'°ëq¼&ˆÿkBóÂ"Œ?JYAÔİkşD¨OæjÜı÷óo1¸“÷NCßÜ2ÆÕ£ª¸c´5 zaeäŞºzTĞ9šĞQESwˆ¿ÑAÕ·Û
-fmÑ.ìã >®É©ÈfŞ#öB¤†ÔÔHàÏ¾è È# pdµ "l ¸p7h <¯³TkV@vÛöı~±å¦NV` V.-G¼ô bÀ­E|Î+ 1
-ğmfˆ¡ •A ¸z6İº½Vux¶ İ1¯S»=W€(ÿKéøéV Å™|â9§Y
-\µ«èğ.xP2Cö= —pÖÄĞàr@&AŠ*#ÄfêÆ]’¶ ­tRÂ(`Ü‡
-4L‚hC9 «¥“‰8	HkéˆY,  $»(IH‹inåN–T&»“ßıä€ifjšM¹:]åˆcğC½K‘Cñú g~óÖW†{g•Á•9§mş¦&%éú¥KšÔhGå”¬\¹#€?½ øKÊÊm·j÷	Š÷~#“Ğ†°ò£¡¼„é À Ş¡¿”àX”`¾	VÇ¼„^È3›Gé(cC¹édAÀ8:YP02ÑÉf˜éË?Ú„Œ»èãì    IEND®B`‚
-```
-
-### `CardGame/Assets.xcassets/icon_harm_severe_full.imageset/Contents.json`
-
-```
-
-{
-  "images" : [
-    {
-      "filename" : "icon_harm_severe_full.png",
-      "idiom" : "universal",
-      "scale" : "1x"
-    },
-    {
-      "idiom" : "universal",
-      "scale" : "2x"
-    },
-    {
-      "idiom" : "universal",
-      "scale" : "3x"
-    }
-  ],
-  "info" : {
-    "author" : "xcode",
-    "version" : 1
-  }
-}
-
-```
-
-### `CardGame/Assets.xcassets/icon_stress_pip_lit.imageset/Contents.json`
-
-```
-
-{
-  "images" : [
-    {
-      "filename" : "icon_stress_pip_lit.png",
-      "idiom" : "universal",
-      "scale" : "1x"
-    },
-    {
-      "idiom" : "universal",
-      "scale" : "2x"
-    },
-    {
-      "idiom" : "universal",
-      "scale" : "3x"
-    }
-  ],
-  "info" : {
-    "author" : "xcode",
-    "version" : 1
-  }
-}
-
-```
-
-### `CardGame/Assets.xcassets/icon_stress_pip_lit.imageset/icon_stress_pip_lit.png`
-
-```
-
-‰PNG
-
-   IHDR   0   0   `Ü	µ   sRGB ®Îé   `PLTE      Ff Ã6ÿJ$È¦ ¦Ş ÿ×  R™Z4ÄzlÄÑ%¨ ’ßÉ¸ÿÿÿÿJ$ ’{¦q ïó¿ÿ‰ ¼®Fš ¼½¡ÿá´ñÁŸ4Œ?Eÿ¹izl…ã¦1§    tRNS ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ’š­v  IDATH‰ÅVÑÄ [Lü
-öÿßySœJ©İ=Æ,ÙZ
-LÑãğ–º‘kpˆÔ0g³'ŠÒğ›²À3x£„İ¯DöxÂØÃ•ŒŸæÀ†Ãç:Î:#âN²D‚øx&‰I û•6AC%¼À…ÕÁ%¡ùïĞ 
-ŞiÂ\£î_­<­FIk*0œÔhøWÁ:AÎÃs¦@¨
-ÖÄÖi™÷ÿ¯PÃç`’Øÿ‡¤¿zÆÏY;ÿß­¥×Y­¸!²ˆÔ	ïï=jëtÂsÑ®Ä÷tmÃaGìX£pãÛ·>ÓÛæš°}?~;P^Yû<ÖÇh²[Çş NˆÜ.f/nÑË	’ÈÇŒõXX    IEND®B`‚
-```
-
 ### `CardGame/AudioManager.swift`
 
 ```
@@ -1129,7 +629,7 @@ class DungeonGenerator {
             }
         }
 
-        for id in nodeIDs.dropFirst() {
+        for id in nodeIDs {
             if var node = nodes[id] {
                 let number = Int.random(in: 1...2)
                 for _ in 0..<number {
@@ -1143,6 +643,7 @@ class DungeonGenerator {
 
         if let lock = lockedConnection {
             let lever = Interactable(
+                id: "lever_room_\(lock.from.uuidString)",
                 title: "Rusty Lever",
                 description: "It looks like it controls a nearby mechanism.",
                 availableActions: [
@@ -1295,7 +796,12 @@ class ContentLoader {
     }
 
     private static func load<T: Decodable>(_ filename: String) -> [T] {
-        guard let url = Bundle.main.url(forResource: filename, withExtension: nil) else {
+        // The JSON files are stored within the "Content" folder reference in the
+        // Xcode project. When bundled, this folder becomes a subdirectory in the
+        // app bundle, so we must specify it when looking up the resource.
+        guard let url = Bundle.main.url(forResource: filename,
+                                        withExtension: nil,
+                                        subdirectory: "Content") else {
             print("Failed to locate \(filename)")
             return []
         }
@@ -1385,6 +891,44 @@ struct Modifier: Codable {
     var applicableToAction: String? = nil
     var uses: Int = 1
     var description: String
+
+    enum CodingKeys: String, CodingKey {
+        case bonusDice, improvePosition, improveEffect, applicableToAction, uses, description
+    }
+
+    init(bonusDice: Int = 0,
+         improvePosition: Bool = false,
+         improveEffect: Bool = false,
+         applicableToAction: String? = nil,
+         uses: Int = 1,
+         description: String) {
+        self.bonusDice = bonusDice
+        self.improvePosition = improvePosition
+        self.improveEffect = improveEffect
+        self.applicableToAction = applicableToAction
+        self.uses = uses
+        self.description = description
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        bonusDice = try container.decodeIfPresent(Int.self, forKey: .bonusDice) ?? 0
+        improvePosition = try container.decodeIfPresent(Bool.self, forKey: .improvePosition) ?? false
+        improveEffect = try container.decodeIfPresent(Bool.self, forKey: .improveEffect) ?? false
+        applicableToAction = try container.decodeIfPresent(String.self, forKey: .applicableToAction)
+        uses = try container.decodeIfPresent(Int.self, forKey: .uses) ?? 1
+        description = try container.decode(String.self, forKey: .description)
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(bonusDice, forKey: .bonusDice)
+        try container.encode(improvePosition, forKey: .improvePosition)
+        try container.encode(improveEffect, forKey: .improveEffect)
+        try container.encodeIfPresent(applicableToAction, forKey: .applicableToAction)
+        try container.encode(uses, forKey: .uses)
+        try container.encode(description, forKey: .description)
+    }
 }
 
 /// A collectible treasure that grants a modifier when acquired.
@@ -1552,17 +1096,10 @@ struct GameClock: Identifiable, Codable {
 
 // Models for the interactable itself
 struct Interactable: Codable, Identifiable {
-    let id: UUID
+    let id: String
     var title: String
     var description: String
     var availableActions: [ActionOption]
-
-    init(id: UUID = UUID(), title: String, description: String, availableActions: [ActionOption]) {
-        self.id = id
-        self.title = title
-        self.description = description
-        self.availableActions = availableActions
-    }
 }
 
 struct ActionOption: Codable {
@@ -1571,6 +1108,49 @@ struct ActionOption: Codable {
     var position: RollPosition
     var effect: RollEffect
     var outcomes: [RollOutcome: [Consequence]] = [:]
+
+    enum CodingKeys: String, CodingKey {
+        case name, actionType, position, effect, outcomes
+    }
+
+    init(name: String,
+         actionType: String,
+         position: RollPosition,
+         effect: RollEffect,
+         outcomes: [RollOutcome: [Consequence]] = [:]) {
+        self.name = name
+        self.actionType = actionType
+        self.position = position
+        self.effect = effect
+        self.outcomes = outcomes
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        name = try container.decode(String.self, forKey: .name)
+        actionType = try container.decode(String.self, forKey: .actionType)
+        position = try container.decode(RollPosition.self, forKey: .position)
+        effect = try container.decode(RollEffect.self, forKey: .effect)
+        let rawOutcomes = try container.decodeIfPresent([String: [Consequence]].self, forKey: .outcomes) ?? [:]
+        var mapped: [RollOutcome: [Consequence]] = [:]
+        for (key, value) in rawOutcomes {
+            if let outcome = RollOutcome(rawValue: key) {
+                mapped[outcome] = value
+            }
+        }
+        outcomes = mapped
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(name, forKey: .name)
+        try container.encode(actionType, forKey: .actionType)
+        try container.encode(position, forKey: .position)
+        try container.encode(effect, forKey: .effect)
+        var raw: [String: [Consequence]] = [:]
+        for (key, value) in outcomes { raw[key.rawValue] = value }
+        try container.encode(raw, forKey: .outcomes)
+    }
 }
 
 extension ActionOption: Identifiable {
@@ -1588,7 +1168,7 @@ enum Consequence: Codable {
     case sufferHarm(level: HarmLevel, familyId: String)
     case tickClock(clockName: String, amount: Int)
     case unlockConnection(fromNodeID: UUID, toNodeID: UUID)
-    case removeInteractable(id: UUID)
+    case removeInteractable(id: String)
     case removeSelfInteractable
     case addInteractable(inNodeID: UUID, interactable: Interactable)
     case addInteractableHere(interactable: Interactable)
@@ -1632,13 +1212,11 @@ enum Consequence: Codable {
             let to = try container.decode(UUID.self, forKey: .toNodeID)
             self = .unlockConnection(fromNodeID: from, toNodeID: to)
         case .removeInteractable:
-            if let idString = try? container.decode(String.self, forKey: .id), idString == "self" {
+            let idString = try container.decode(String.self, forKey: .id)
+            if idString == "self" {
                 self = .removeSelfInteractable
-            } else if let uuid = try? container.decode(UUID.self, forKey: .id) {
-                self = .removeInteractable(id: uuid)
             } else {
-                let idStr = try container.decode(String.self, forKey: .id)
-                self = .removeInteractable(id: UUID(uuidString: idStr) ?? UUID())
+                self = .removeInteractable(id: idString)
             }
         case .removeSelfInteractable:
             self = .removeSelfInteractable
@@ -1793,285 +1371,6 @@ struct InteractableCardView: View {
 
 ```
 
-### `CardGame/AssetPlaceholders/icon_harm_severe_full.png`
-
-```
-
-‰PNG
-
-   IHDR   @   @   ·ì   sRGB ®Îé   `PLTE      Ff Ã6ÿJ$È¦ ¦Ş ÿ×  R™Z4ÄzlÄÑ%¨ ’ßÉ¸ÿÿÿÿJ$ ’{¦q ïó¿ÿ‰ ¼®Fš ¼½¡ÿá´ñÁŸ4Œ?Eÿ¹izl…ã¦1§    tRNS ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ’š­v  &IDATX…½—Q’Ã †;IÏïÍ
-HMgÖ}ØšÀçR´ŸÏÃ €'“@ù‰p®_Ê vÿA3¼'°ëq¼&ˆÿkBóÂ"Œ?JYAÔİkşD¨OæjÜı÷óo1¸“÷NCßÜ2ÆÕ£ª¸c´5 zaeäŞºzTĞ9šĞQESwˆ¿ÑAÕ·Û
-fmÑ.ìã >®É©ÈfŞ#öB¤†ÔÔHàÏ¾è È# pdµ "l ¸p7h <¯³TkV@vÛöı~±å¦NV` V.-G¼ô bÀ­E|Î+ 1
-ğmfˆ¡ •A ¸z6İº½Vux¶ İ1¯S»=W€(ÿKéøéV Å™|â9§Y
-\µ«èğ.xP2Cö= —pÖÄĞàr@&AŠ*#ÄfêÆ]’¶ ­tRÂ(`Ü‡
-4L‚hC9 «¥“‰8	HkéˆY,  $»(IH‹inåN–T&»“ßıä€ifjšM¹:]åˆcğC½K‘Cñú g~óÖW†{g•Á•9§mş¦&%éú¥KšÔhGå”¬\¹#€?½ øKÊÊm·j÷	Š÷~#“Ğ†°ò£¡¼„é À Ş¡¿”àX”`¾	VÇ¼„^È3›Gé(cC¹édAÀ8:YP02ÑÉf˜éË?Ú„Œ»èãì    IEND®B`‚
-```
-
-### `CardGame/AssetPlaceholders/vfx_damage_vignette.png`
-
-```
-
-‰PNG
-
-   IHDR         HÃÛ±   sRGB ®Îé   `PLTE      Ff Ã6ÿJ$È¦ ¦Ş ÿ×  R™Z4ÄzlÄÑ%¨ ’ßÉ¸ÿÿÿÿJ$ ’{¦q ïó¿ÿ‰ ¼®Fš ¼½¡ÿá´ñÁŸ4Œ?Eÿ¹izl…ã¦1§    tRNS ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ’š­v    IDATxœíİÛvã8Ğ¬^şÿo©{U"Û ¹7;Yˆ#J®şø ˜×C-T pNöÄRÑ ïdÏ*Õ« à™ì¥z |•=Ôˆ€¿eÏ%5² à‡ì‰¤F dÏ¢‰ëšì£ıRÀÿ=ş­k>wö«óÿD½êWÎtÁt ;œó‘¿à0Dşx-}¶V¬{c¾ñÈLÀÿ}÷)Çğ)d›HŸµujğÀol€Mı3õ³æ«ò@öÁ°ô™›_Õ†şsC² l£ôÔF JúôÍ«iÆş±Y –6åÜ?"Ğ.}çÔÔsÿHŸ, Ëù=ù³$Şï,} L"}­õÿWÁI Ö°Êÿv²„ÊÒ'ò¸Ú¦÷ÿˆJ0µ_×üÙÇ‘Á O¤Ïä1µãèÿWÈ Ìgİİş«~í	dU¤Oæşµûäÿìf€iì|ÕÿŠ¾KŸÎ=ËUÿ+7r ”çªÿ9`géº_ı§µæ (Êì¿HØQú”îSf“– Å˜ı7È;IŸÔfAWs aö‘v>­»Lÿì³ºŠ+9 ²ıxÖ/û(Öâó+KŸ×á³ßŸj¸ÓÏ	BÏù÷ôãóÙGA¨ô‰möÏD
- (»şcØXIúÔşÙgsî
-PŠ+ÿÑì,!}n‡Í~İ?ÜåÏ
-@<WşyìÌ-}vMÿìó¸3ÿr y\ù L*}z›ş‹hı„¼y4³ï_‰{ÓIŸß÷§ö)äoÍ)@à"Ÿõ+I
-˜Gú7ıWt+xOyÏ'ıkód@}éüŞì×şµİLŞ]±ï?	) °ô)~kúgŸ=Î¹›¼ÑüËôŸŒPRú7ı·q?xËùÆôŸ”PLú$7ı7‘¼ù;3ı''”‘>Ëçöyã˜àÏ`CßúË>îóÒgyÓô×ÿK¸ıt °Ïü/Å's¥OsÓwa)ÀßÅòLÿ%IYÒç¹éÏ7R o™ş+³¸—>ÑMşË şNÖã¹¿x6p¨ô™~múûËØ@ÜN€?—…hÿ}¸0HúT¿4ÿ³ÏãHüÅÿíx* ¿ô©~aúkÿíf =33ıwå~@Oésıüô÷W°©È DSÒş{³ĞIúd?=ÿ³Ï¹¤€}¹úGì#}¶ŸšşŞx>‚ïø›š„şç;ÁÒ§û©ùŸ}–¨#v'ÀŸVqüãOÆIŸî'¦¿öç`¦?Ç<!}¾Ÿ˜ÿÙçˆšì,Ïÿí‡WìÜ”>ßßNıÏ2ÀÂ\ıó€véşíüÏ>CÔg'`M®ş9É¤h’>áßLo*'g yéô?W¸pYúŒ3ÿ³Ïs±°»ÿ\gj\“>å_Íÿì“ÃŒd€xöVvNKŸòÏ§¿ş§•»“sõÏ=<#}Î¿˜ÿÙç†¹¹0/Wÿ0EŞHŸóO§¿7 2ÀŒô?QÜx!}Ò?ÿÙg†u¸0»ÿÄr7à™ôYoş3€»ó°ûO¦ÊôY<ÿ³O+’fàÙzq7à“ôY4ıõ?½È Õiº’şHŸö‡ó?û¬°6 .wÿéÏ?¤O{óŸ±OÅî?ƒ˜4€7…QÜ¨ÆİFÚş‰€ôyÿyúëF’*Ñş·sHŸø_æöa?2@úŸ»f€ô‰oşS‚ÏÓäÙó©Àô™oşS„§s¹ûO²í&PúÌÿwşgŸv'¤1ÿ)`«1”>óÍª	Ì œgşSÄF£(}êÿ™şûœtª“FÓÿT²É§Óçş_ó?û\Àßd€ô?å¬ŸÒç¾ùOa2À úŸ’VÏ é“ßü§4` ıOY+g€ôÉoşSĞ™ş§´U3@úä7ÿ™BTà€ş§¼53@úì7ÿ™„Ğ‰şg
-ëe€ôÙoş3 ıÏ4ÖÊ é³ßüg22@0ıÏTVÊ éÓßüg:1€ïô?ÓY%¤OóŸ)É Aô?SZ!¤OóŸiÉ ô?Óš?˜ÿĞ."lMÿ3µ¹3€ù÷È 7è¦7s0ÿá. ‘şg	³f ó"ÜÏ Òÿ,cÎ`şCà"ıÏRæË æ?Ä¹›¶¢ÿYÎ\ uşèÖ#œõŸ€õL•ksçÿD'
-ÎzÜË »0ÿYÔ4£Íü‡d€·Ì6Éx3ÿ¡‹[`}æ?‹›`Ä™ÿĞ]€ç, ,¯ş‰ó_ÿ³<» Oè¶P;˜ÿĞW{X˜şg•3€ù½É Ÿı·îKƒ/ªÎ»¤ùï€½4?¸&O ²™¢#Ïü‡!d€ßÌ6Tpì™ÿ0Œğƒ€-U{ mşë¶Ô¶°ıÏ¶je óÆ’<ÈÎ*Í¿¤ı²!OÓÓ ëğ ›+3ÍHĞVaşC•1hşCŠ]€ >j<2ÿõ?|´<° ı?åg€Œü’¡Œ«`~î ÀoÉy8cşëøíâÓ ³3ÿá©#Ñü‡d;%  |’w' aşëød›] ı²2Àøò2¡¸+`^î À¡¤l<zşë8tái€iéx&e`ğü· ÀË' ı/dÜ	0ÿ¡Š³`Nş/ ğÚø94Œ~q0—“wfä	 xkø˜4ÿ¡U€ N}'`Øü×ÿpÂ™]€ù¸ çŒ•ÃÀÈó:q'`6î ÀiCÇ¥ùÅ¬– , pÁÈ;Cæ¿ş‡ŞíÌÅ ¸fÜÌ´ å¼¹0w à²acÓü‡‚VI  h0êN@ÿ0äeÀb^íÌÃ 4”í @I/îLCÿC«!» ç¿ MŸ ô?Ü0âN@ßĞığaaÏ2ÀÜ€[dè®; ½Ö6s° ÀMıw:Îı7ïÌÀ¿ ÷õ£v  °Ãç' ÿ!Bç] ; PÙ”	@ÿC¾wz%€‡[™/xÂtÍÓv ú0ìf¶ç- ¨ç.€ ¨n®OÚ€P3µ (ïé¿Xş‡hİv:Ì ›çßô)@ˆ×k®Ú€	Ìò	ĞÿĞC§] ; 0ƒ9ş_v  >³Õ LáÅ.@•®ó tÓe¼šÿ0‰	 DçY  £Ÿ
-ŒM á‡üöj ¿ùì @W2¶ ˜ÆËÜ è,~À Ìãõ.@fÚ€îÂs¶ ˜È›Ö…  zÀ Ìäİ.@N#Ú€!‚³¶ ˜ÊÛĞ‹ $vÀ Ìåı.Àèv´ Ã„æm; 0™	`hGZ ` È] ; 0›3» ãšÒ ˜¹í ÀtN%€A}i€Áâvì À|ÎíŒhM; 0\Xî¶ :™ ºw§ DíØ€İèÜ  ÈP#¸€5ÀúRÄÌŞÛ	 â €«2€ş‡,!» v `Nç@¯6µ y"æ¯ ˜Ô…]€.ªÿ!SÀ.À½ğ€FW@|³ú ¤
-¸· Óº” ¢ÿÇâ Èuÿ3v `^×v"[Ö ¤»Ãí ÀÄ@àšH °±KOf ıÜ¼Ğ<ÿ- PÀÕÓ¸v  †{³Ø Lírˆø± j¸÷4`k;|à–ë» wÛ×S€PÆ­<n &— B ÀÆ.?x3è¨äÆ}€¦ùo€BZ@{Û€ZÚg² ˜^Shìc Óş4`K=tà¶¶]€¦V¶ @5ã€+ (g\p êiË	 öÀûšlèeı5î\O ÁÇ“ üK PRãÅ¹ XÂ ĞáÈÛ$ ØØˆ@ÿCUM÷®&€ğ£BôO î@YMèv `@—ãH °±†û ~Ÿã"4Ü¸– :3¤op Jk¸H· Ëèœ :5B€]¾pég÷:j Æåû W@—#ÂôK î@y—/Ôí ÀB:&€nÇ‘ `cï\ø¹ıˆrñ>€{ °	 6Ö'Ø€)ôI îÀ®Íj÷ `)=€ &ñ¸´à ¬åÊ.ÀéÙó€8 l,>ø$ LãÒ{ °˜	 ëñ$ ØØ…Oüy}ˆtá>€{ °	 6› lÀTb€{ 0—ó3Û= X “ `c§Ÿ8õ³z-ëô}€3	 ë‘á$ ØX\° Ó‰K îÀ|ÎÎm÷ `A lL€|àÄÏé¬@´“÷Ş'€ÎÇ	t ÀÆb€- ˜RLp ætnv» K’ `c l,"X `RS÷< k:sàíq @<	 6v?üg€YÚÁs  †'Ğ »™  Lìn°;ñ¯½ùöA
-tpâI€×	`À1ÜI ö ar l¬=Ø„éñ€e5& W °	 6Ö” ìÂî$ {€0¹†ğ×€ ¦öşßô ¬ëİ“ _¾Ş ¬C€]K îÂR$ ØØ•à. ,æmº6è˜ßéà
- Ö#ÀÆ$ ØXk°8™ ® , 0½wŸx  ĞÑë'~~=@X“ {Ÿ Ü„eI °±w	À]@XX[p	 KhM ÙÇDx=ËŸ&€Q‡ô$ÀÆ$ Ø˜ “ `c l¬%xñxõ$€OÀâ^>è
- Ö&ÀÆ$ Ø˜ “ `c lL€]O ‚e¼ô® `q	 û( lL€I °1	 6&ÀÆ$ Ø˜ “ `cW€'a!/şUÀÃ@ÿÃJ^|Ğ ¬N€I °1	 6&ÀÆ$ Ø˜ “ `c lL€I °1	 6&ÀÆ®% Ÿ†¥\K .`)W@öñ‘Ït{€°<	 6&ÀÆ$ Ø˜ “ `c lL€I °1	 6&ÀÆ$ Ø˜ “ `c lL€I °1	 6&ÀÆ$ Ø˜ “ `c lL€I °1	 6&ÀÆ$ Ø˜ “ `c lL€I °1	 6&ÀÆ$ Ø˜ “ `c lL€I °1	 6&ÀÆ.% + ,åEK­
-®`%	 öõøïù’ `q lL€I °1	 6&ÀÆ$ Ø˜ “ `c lL€I °1	 6v9X`¯úp]° À:Îÿ'	À5 ,äÕ@— `q lL€I °1	 6&ÀÆ$ Ø˜ kH V XÄóO<K  XÆ‹Ï>é× °	 6&ÀÆ$ Ø˜ “ `c l¬)X`	¯›ùÉÊ`€5¼˜ÿO€k XÄëa.ÀÒ$ Ø˜ “ `c l¬)X`	oZùÙÊà Vğê9@	 ÷ò“  ¬M€I °1	 6öÿĞği@+ ¬àÑ˜ \À~ôÿ‹ÿ.Àº¾_H °'	 6&ÀÆn$ + Lîõ=€W	À Óû}ğô\À²$ Ø˜ “ `c7€ &÷æ“ /€k ˜ÜŸşú ¬êÍs€ ¬L€I °±›	À
- {wàu° ÀÔş¹xò%®`Q lL€İN V ˜Ö¿ıÿäk\ÀšŞ>ğ&¸€‰I °1	 6 ¬ 0©÷÷ Ş%  LëÓÀ“/r K’ `c_ö ¿È
- +zûïH ®`R_ûÿğ«$ XÑ‰§ $ X• I V ˜ÒÁàá—¹€¹ À¢® ¿L€…% + Lç¨ÿ¿Î5 ¬çÔ=€	À5 LH€…% + Lçğ“@‡_è –sî€ Kzrpğ… ,'4X`*Ïúÿà+]ÀjNŞ8• \Àd$ ØXh°ÀTş{ _ê sö€ zzpğ¥ ,&<X`Ïûÿàk]ÀZNß8™ \ÀD:$ + LâüÀÙ`€i¼¸8øb× °	 6Ö!X`OŸ¾‘ \À$^õÿÁWK °’OœO V ˜ÂË+€ƒ/w ¹² Àb^^|¹ é– ¬ PŞëş?øz× °K÷ .$ × 0wW _¾Ş5 ,ãÚÀ•`€òŞ^|ù× °Œ®	À
- ¥½ïÿ/ßá VqñÀ¥à Šëœ ¬ PØÕ€k	À ¥¸øò-®`İ€ Ê:Óÿ_¾Ç5 ¬áò=€‹	À5 6 X ¨ë; W€ Ê:uğå›\À†$ + ”t®ÿ¿|—k XAÃ=€Ë	À5 5(X  –€ë	À %¼øòmË5 T4,X œ³ıÿåû®¯ 	¯x©é@Cøÿ5€ ŠyùÿM v š¶€¦`€jN_|ùÆË	À. sú
-  ¸Åœïÿ/ß)Àìï4|à{°@!® ¾|ëõùï> ”ÒºĞ˜ D (äJÿùŞ†` 
-iŞhL î@!		À
- E´ï 4'  ª¸tğå›€ Jh~
-ğF° EÜÙ `r7îÜI V (àÒÀÁ·7& × PÁ€	@€®õÿÁ÷7& » PÀ­€	À} ( 1X Ù½€[	@€l¯ ~À`€T·¼™ ì@²«ığî$ + $º;ÿo&  2]¾xğ#n$  dJO V Hs½ÿ~Æ` İ|
-ğvğ™@ÈÓpğà‡ÜJ v Ëı€Û	@€$-ığSn% » $`àv° 9š>ø17€] È± , ¡é
-ààÇÜL v ÁíÏ% Ÿ	„mığsî' + 3ÿC€ £í Ä$ + ´’ ìÀ`Q; A	À
- EÍÿ  ÀHOş¨`€aÂv ‚€] ¨µÿVL°À qó?,ˆ 0Jóç€XP°À; a	À. ÒŞÿ‡?-*X`€Èù˜ D áÆ¿vøãÂ€ ºİ¸ ì@¦;ıøó3ÀàSÛ‰ÿ¡	@€Ş‚w b€ º
-ŞM v ³è€à`€¢çp §[ÿ7°'?24X ›ğ€à` :º×ÿO~fl°@'ñó?<øŸC'wûÿÉON  èâÖà ğ!@·w ŸüØà`zè±Ğ!ˆ ĞAŸùßaÀ ñºì tH v ^§€	À. Dë³Ğ’ ìÀh÷ûÿéOî¬ ©×üï’ |*bì >ıÑ]€ ÂÜŞœ |*EôÿÓŸİ'X H¿ùß-ˆ %ä §?¼S°@ˆ; İ€ç!FHÿ¿øñ€‹ ˆĞsşwL " ˆéÿ?¿S° :}
-ğN° ƒí ¾ø-%À]ï üXZ¾ëTğ< ÜÕÿ/~CK‰ 0@ïùß9ˆ pGĞàË_ÑR" ô×} sp' Ú…õÿË_ÒR§¹€Vıç÷ @£¸şù[Zê’A§–2bş·&€K ûDÂŒŸ~ùkÚJ€‹$ ÏBƒÈşù{ÚJ€ÆÌÿ!	À ¸hÔü“ , pIçàïÕ¡íû.$ ÏÂ5¡;€o~U[]5ä´ÁBûÿİêĞú×2@ö)…yÄöÿ›ßÕZ" t1nşK ¶à¤èşóÛZK€†İø±:´~ç¥àN œ¼øö×µÖuNL.¸ÿß¯­ßy1¸ 'Œİš ¬ ğÆØù'\Î ¶àøşûÛK€XCï üXÚ¿÷ú.€ ^ß<ñ+ÛË6 D
-ïÿ3+Dû÷^N 2 <×¡ÿOüÒöjà^ <3~şßK @€'zôÿ‰ßz§l@Œù?<øÿÀ±.w OüÚ;%@ŒÇ&	À øªKÿŸúÅwªUç“	“Išÿw@kÈ>İPKŸş?õ›ï• ·eÍÿ¤` şÒ«ÿOıî{e nÊ›ÿI	ÀÓ ğG§Ï Ÿüå÷J€{3'€æ`€oºõÿÉ_·d h—:ÿ€§à£çàÉß·D h–;ÿS€m ¶—=ÿs€€½eÏÿˆ @›ıúî— -†ÿ_ Ö‰û?£9x€=$ €muíÿóëDÄO‘à¢ó?¦ÿe ¸¨Äü/ <È–úöÿ…ãˆ( .©1ÿK$ Û l§Êü¯‘ ¬ ì¥ÊüJ 2 œ×»ÿ/KL‰ pV' ÿ¬1?çVğ4 ;yH 2 ÛêŞÿ×ÖŠ¨Ÿ$À	¥æ\ÿË pB©ù_(È ì`@ÿ_< ¨ŠĞå”CÅædˆÈ Ùoô5¢ÿ/Q\‰ ğRµù_,Ø`iõæµ``]õælà¹1ıù¨"K€'*Îÿr	@`Q5çÅ``=5çtÊ ÙoDô	à†‹- ¾zH Ê
-ÀZõÓ¡ÅV”à7 •ÿñ	@€O†õÓÁE— +<ÿË& €Uìÿ¦Ã‹®8Áo$(=ÿ{$  ~+>ÿ{ô¿ ?Ÿÿ¥€Àì†öã!ÆW¤Ğ·†*?ÿû$  >¦˜ÿ}ú_€æù 0«Áıß|˜=*Và›ƒL1ÿ{% €ÍM2ÿ{õ¿ÀÖ&™ÿı€ÀÆ†÷ÿCíU2 »šfşO’ d f2ÑüŸ&X˜ÅDó¿gØRBÿß:Ü~%°Ÿ©æß °Éæßş—ØÌdóª P]Jÿß<ä/äm‚.¦›ÿ½€ÀF&œÿ½û_`Îÿé€@UIıû°ûVo›rş÷O 2 [˜tş÷ï€L:ÿG$ €å¥õÀ¡÷/!€¥=¦ÿc@‡ PF^ÿ‡ıˆ’XÖ¼Óÿ[Mš d ŠÈìÿãQ„œ ¸aîù?*È ¬iöù?ªÿe V4ûü— ze K i¹ıô"F•ÀZ’û?¦® =2€§É²ÄüÙÿ2 Ybş/ d 2,2ÿ—H V F[dşM 3€%€éıøZF–Àòû?®¯ ½2€ †ÉïşĞW3¶d &—ßÿ‘5|è˜,tW"ı‡¾ Ñ%0¯ıY	+@¯à‰ z+ÑÿÁ/i|É Ì©DÿÇÖR	Àtô(Ñÿá¯j|u~Šà£JÿGWÊ
-Ğ3Ø ‹*İşº2J`2Uú?º’V€ÎÀ@¨2é¿ÃKË)!€y”éÿøJ[zf O©PÿwxqY%0…G¡ş¯Ä oQ©ÿ»¼¾¼’(¯N÷÷©Ô {°pK¡éßëo9õ5	TVªÿûTò
-Ğ7øl 7<Šõ§W™[B EUëÿ>•¾ôÎ îĞ¤Z÷w{Ù%PÏÓÿ[Xºg !€‹ÊõÇ—š_B ¥<Êõ¿*±ôÎ v¸ ^ÿw}µJ Œjİß·Š¬ C2€%€·ÊMÿoÕõ×(!€
-JöÏ*³ôÏ äGÉşïüš«”@²šıß·
-­ #2€À3E»¿ûË®SB yŠöï*µŒÈ v8P7ıwå•jœîç•‰<êöï*¶ŒÉ äo…»À‹¯UB ƒí;ı¿U¹`Lğé ~ªÜÿC^µ§p÷©‚+À‡ )İÿƒNAÅàQºÿÇTÑ`àN€%`Sêı?è4Ô,!€¾Šwÿ¨*»ŒÊ ÜRõé?îO2ûu>­±†o
-xÔïÿQUx—ÜØËİ?ğdÔ-!€Lÿ¿«ô
-0.¸°‹)ÒÿĞR¹†zên†î[ÅW€Ñ) û/”æèÿÁç¤z	Ä˜¢ûG×+ÀĞ`+`UsLÿo5ø¼Ô¯ñ¿t÷˜§ÿÇÖ+À‡À3uÿğs3GI´2ı_Ô4+ÀÈ ,d®îO8?³”@ƒ¹ú|M´ŒÍ \ÁdİŸrŠæ©)o
-!Lÿ÷5Õ
-ğ!pÚc¶şO:Ms•À)³uVM·|H¼5İôÏûË~İ%ğÒ|İŸWS® £3€0“	§æßVö+oª$‰o'ÍØı™5é
-ğ‘”¬¥ıZ¨ç«Äs6keI|¯xiÚîÏ¬‰W€ñÀg
-›¹ûSÏÛ¼•'õãÀcæşÏ¬©W€)€oæîşäs7w%J~ãøé×Û¡Zjúà#)ˆ5LßıÙ²_@%Ê~÷v7{÷ç×+ÀGJ
-ğ|`¶ÇüıŸ/ûU¦ì·pOt…ZføÈJb@†Çı_Aö9¬TÙïãN~ru¿–Z>ÒR€0Î2İ_CöY®\Ùoæú~gUË­ I)ÀË5j4  ‡IDATnÀ …ú¿ŠìóĞ¡’e¿£«úuzUd-¹|$¦ ÿj@«uÙg¢SeË~[×òóœªøZvø^™»Ö€ v%Ùç¢keË~sç÷ûLª>µø
-ğ‘–ä€ûíşZ²ÏF÷Ê—ıÏé÷ÙS=kƒà{ÉSY¸û«É>ƒ*_ö=ßgLõ¯mV€ï%”·x÷×“}F†V¾ì·»¶ßgIªï§}³JÎCº¿¢ìs’Pd¿ëÕü91jlı<ÿVb°!ğ]z¿¦ì³’Vd¿ùù~Ÿ	•S¿ßˆm+/ì¾#ğØ¨ûëÊ>3éU@öß@†?/^eÖ_ïÈæ•‘[.Ûõ~eÙç¦Leøü›³ÿúûüÚUrıõÖ¨Ÿ5`î­/+ß&U[öÙ)X½½ÿÍÙñ6íıúõÏ›¤ªÛÌ?®õ¢Àæ½_]öù)_}gş»ß™ıçqÏs †Ô§7L®›“ş}Í½
-èıïU_öš¶"&ı•ß’ı‡rŞŸ¨¾¼yª^M³t^§«dŸ#u²j/½“êTo¥ª[rë€ÎR³È>Oª¡
-,ö?Ô€:|oÕõµ	Ç÷½Î?¬ydŸ)u»…şşµBYªWn7¼¾?_3É>WªKÅÊ~5ª[Y6)?¨f“}¾”RyeeP*®æ“}Æ”RyemP*ªf”}Î”RyemP*¢f•}Ş”RyeuPê~Í+ûÌ)¥òÊú ÔİšYö¹SJe•B©{5»ìó§”Ê)k„R÷j~ÙgP)•QV	¥îÔ²Ï¢Rj|Y'”ºS«È>J©ñe­PªµV’}.•R£Ëj¡T[­&û|*¥ÆÖßşf•Î¢ÿ`H    IEND®B`‚
-```
-
-### `CardGame/AssetPlaceholders/icon_harm_severe_empty.md`
-
-```
-
-# Placeholder Image: icon_harm_severe_empty.png
-A grim-looking skull for the severe harm slot. Size: 64x64.
-
-```
-
-### `CardGame/AssetPlaceholders/icon_harm_lesser_full.png`
-
-```
-
-‰PNG
-
-   IHDR   @   @   ·ì   sRGB ®Îé   `PLTE      Ff Ã6ÿJ$È¦ ¦Ş ÿ×  R™Z4ÄzlÄÑ%¨ ’ßÉ¸ÿÿÿÿJ$ ’{¦q ïó¿ÿ‰ ¼®Fš ¼½¡ÿá´ñÁŸ4Œ?Eÿ¹izl…ã¦1§    tRNS ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ’š­v  œIDATX…í–[Ã0E#d/ÂÙÿ6'øÁ#¶	¤Ò¨¥RÕª½'Œ±ã_‰â­úìñÓÕPC`BrÔ–+€1>É‹ÁxÔk9—2çÊx@ ^=½ië+¥fÃ4½2OúÊ@„ea©Õ8Âe€ô=‘ Fh h 2 švü`Ø Ölbµ¯Û0ƒ²€ì,¨êª°µ 2¸TØ8´·6Ö õ.£N!'äœ‹"ì º¸^€´À•Ç28beÊºV+¥i”©¬F8ê0˜=Ü‰ Öq6q·dÌ„>MÅŸCÆ<‡Å¦ä‚Ø3¥¥UyÊ?LVn¨*¡5>gl 7T$x(j¨*¥­dí M 'aÔ` <Ëw~6ÑC@¹ï¢  *`¼Åh 7"Ï–\
-€7EìZ±¡‚ËrÀÆP'“…à*ŒN9D  œ[€‹0‚»)õ;*Gp7!àA¿¾bK÷¸ğú jô1äô÷òyŞ:åùDpøøğ‹ï?CgëŒºy§    IEND®B`‚
-```
-
-### `CardGame/AssetPlaceholders/icon_harm_lesser_empty.md`
-
-```
-
-# Placeholder Image: icon_harm_lesser_empty.png
-A small, simple skull icon representing an empty lesser harm slot. Size: 64x64.
-
-```
-
-### `CardGame/AssetPlaceholders/icon_stress_pip_unlit.png`
-
-```
-
-‰PNG
-
-   IHDR   0   0   `Ü	µ   sRGB ®Îé   `PLTE      Ff Ã6ÿJ$È¦ ¦Ş ÿ×  R™Z4ÄzlÄÑ%¨ ’ßÉ¸ÿÿÿÿJ$ ’{¦q ïó¿ÿ‰ ¼®Fš ¼½¡ÿá´ñÁŸ4Œ?Eÿ¹izl…ã¦1§    tRNS ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ’š­v  IDATH‰ÅVAÄ l|€/høÿ3·ŠUFKw‹1MÚ¨¢Çá-u#×à©aÎfO6¤5á7egğF	»_‰ìñ„±‡+%?Í#€7‡Ïuœu2FÄÿœ
-d3ˆğñL“@÷+m‚†Jx«ƒKBóß A&¼Ó(„¹Fİ¿ZyZ’ÖT`8	¨Ñğ¯‚u‚œ‡çL5€P¬‰­Ó2îÿ_9 †ÏÁ$±ÿIõŒŸ³vş¿[K®%²Z3pCd©Şß{ÔÖé„ç"¢]‰ïé4Ú†ÃØ±FáÆ·o},¦·Í5aû~&üv ¼>²öy¬Ñd;·ıA¸\:Í^Ü6¢—$‘™ÍÌ¿å    IEND®B`‚
-```
-
-### `CardGame/AssetPlaceholders/sfx_ui_pop.md`
-
-```
-
-# Placeholder Audio: sfx_ui_pop.wav
-A satisfying "pop" that emphasizes the highest die and result text.
-
-```
-
-### `CardGame/AssetPlaceholders/sfx_dice_shake.md`
-
-```
-
-# Placeholder Audio: sfx_dice_shake.wav
-A short, lo-fi rattling sound that plays while the dice are shaking.
-
-```
-
-### `CardGame/AssetPlaceholders/texture_stone_door.md`
-
-```
-
-# Placeholder Image: texture_stone_door.png
-A 256x256 repeating stone texture used for the sliding door transition.
-
-```
-
-### `CardGame/AssetPlaceholders/icon_harm_moderate_full.md`
-
-```
-
-# Placeholder Image: icon_harm_moderate_full.png
-The moderate skull with branching cracks, showing the slot is filled. Size: 64x64.
-
-```
-
-### `CardGame/AssetPlaceholders/texture_stone_door.png`
-
-```
-
-‰PNG
-
-   IHDR         k¬XT   sRGB ®Îé   `PLTE      Ff Ã6ÿJ$È¦ ¦Ş ÿ×  R™Z4ÄzlÄÑ%¨ ’ßÉ¸ÿÿÿÿJ$ ’{¦q ïó¿ÿ‰ ¼®Fš ¼½¡ÿá´ñÁŸ4Œ?Eÿ¹izl…ã¦1§    tRNS ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ’š­v  ÙIDATxœíÒÀ ÅPLÂüËœ‡KG(é¡€÷»á½¿M·¦ ·ˆıÏ>€[Ä*€Ù(VäÈF±
- G6ŠU 9²Q¬È‘b@l« rd£X#Å*€Ù(VäÈF±
- G6ŠU 9²Q¬È‘b@l« rd£X#Å*€Ù(VäÈF±
- G6ŠU 9²Q¬È‘b@l« rd£X#Å*€Ù(VäÈF±
- G6ŠU 9²Q¬È‘b@l« rd£X#Å*€Ù(VäÈF±
- G6ŠU 9²Q¬È‘b@l« rd£X#Å*€Ù(VäÈF±
- G6ŠU 9²Q¬È‘b@l« rd£X#Å*€Ù(VäÈF±
- G6ŠU 9²Q¬È‘b@l« rd£X#Å*€Ù(VäÈF±
- G6ŠU 9²Q¬È‘b@l« rd£X#Å*€Ù(VäÈF±
- G6ŠU 9²Q¬È‘b@l« rd£X#Å*€Ù(VäÈF±
- G6ŠU 9²Q¬È‘b@l« rd£X#Å*€Ù(VäÈF±
- G6ŠU 9²Q¬È‘b@l« rd£X#Å*€Ù(VäÈF±
- G6ŠU 9²Q¬È‘b@l« rd£X#Å*€Ù(VäÈF±
- G6ŠU 9²Q¬È‘b@l« rd£X#Å*€Ù(VäÈF±
- G6ŠU 9²Q¬È‘b@l« rd£X#Å*€Ù(VäÈF±
- G6ŠU 9²Q¬È‘b@l« rd£X#Å*€Ù(VäÈF±
- G6ŠU 9²Q¬È‘b@lû nmù<b7ı    IEND®B`‚
-```
-
-### `CardGame/AssetPlaceholders/sfx_dice_land.md`
-
-```
-
-# Placeholder Audio: sfx_dice_land.wav
-A sharp "clack" that plays when the dice finish rolling.
-
-```
-
-### `CardGame/AssetPlaceholders/icon_harm_moderate_full.png`
-
-```
-
-‰PNG
-
-   IHDR   @   @   ·ì   sRGB ®Îé   `PLTE      Ff Ã6ÿJ$È¦ ¦Ş ÿ×  R™Z4ÄzlÄÑ%¨ ’ßÉ¸ÿÿÿÿJ$ ’{¦q ïó¿ÿ‰ ¼®Fš ¼½¡ÿá´ñÁŸ4Œ?Eÿ¹izl…ã¦1§    tRNS ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ’š­v  ÕIDATX…í—Û²… †&Ö;xÑû¿æJ@Å’ÖÌ¾Ú\”9ıŸ€*¥»3PöN6{C¸ôİ3î‰²Xq&F ’äÜ	"Pø  Ÿ!ğğV/„-Ä$'ıç#ı›Ãgc•ğœËÙûª&{t¢'§¿MÁÕ$¼°«gBmB¾CMŞõŞq€m7V>iŠª·G‚Î~Ñ "€:`µ,~ğCE8>èÍS4Eb Am™ 7O“õqØ\K²¤MÂ®»¼&€Ş½m · #`}'Ä Ğ¤‚é+i `8V?˜¬¤¬	;²8Ó¨ß@´¡HÇ:ĞOõÒ!@~ Ì)p  l8{Á„8 `¤`\x0.àÀIA-¦[€E•Ò'º]Ğb’Şå¡Èi4³‚4.1ov‚Ÿ+ÀÉêçÒ2Ô5`×ò4NçÂV}^¼å dõø ‡ø.,–ß~Û)` ´ŠÀcÃ~œ„ß úUb¼(†àÙo€]|Àş$v LRŸöWQêIì 9ÀgG$TyØw€—†~uäŠáŸ.Ï 7º†ôL¨7iÿ1àRÁp}£ÿ@Ò›W0·µ}õj‘f¯D    IEND®B`‚
-```
-
-### `CardGame/AssetPlaceholders/icon_harm_severe_empty.png`
-
-```
-
-‰PNG
-
-   IHDR   @   @   ·ì   sRGB ®Îé   `PLTE      Ff Ã6ÿJ$È¦ ¦Ş ÿ×  R™Z4ÄzlÄÑ%¨ ’ßÉ¸ÿÿÿÿJ$ ’{¦q ïó¿ÿ‰ ¼®Fš ¼½¡ÿá´ñÁŸ4Œ?Eÿ¹izl…ã¦1§    tRNS ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ’š­v  ÕIDATX…µ—YrÄ D]úğøàş×ŒÍ"´4«'LU*‰éGKÈ‚¹®É ¢Ù”	 ~"<ëÇøä,Ğ+¦sB’†pL(úcëa“ABŸ1î òî±ş%äÿ¬!êä¦¿ŸÏ2ÂÉ_õıúdÈğ«Fv1b@ù]?á¦ÊÀj´ºæÔ„zìN&^üZõ·ÜVk—üH¹ùmåHGÚ»VPÁ0 å  ¤ @*P´á® ZW@c@+ùæêÉ¹£ÌŒbèt› ¨Põ,º‡à}$ÕîAíOÍÅ kAìµ­0BcAø”S”•F§Çd{âQDw È‚+ Y å×y€µ ëWpmÑ pıõ#ğûp0óú` Ø‡Îb@§–ş v±$aï,Ã“M®NØ 0<-ğFHí{$u.M…M®QUÇXÅş¡œyõÍO.ÚÊ4Wé *Ëf@œ\,\*¨h±÷UõÅõµ¡tö+·¤Ãå Ğ­œ9`R»€­~àäs#	 ;_ -,ApDı¦ÔÊ`Ó‚zÄÏe¢f5¥£ø†2èdÆ€³Nfø:Ù
->üŠéÜ²Æâ    IEND®B`‚
-```
-
-### `CardGame/AssetPlaceholders/icon_harm_moderate_empty.md`
-
-```
-
-# Placeholder Image: icon_harm_moderate_empty.png
-A slightly more angular skull indicating a moderate harm slot. Size: 64x64.
-
-```
-
-### `CardGame/AssetPlaceholders/vfx_damage_vignette.md`
-
-```
-
-# Placeholder Image: vfx_damage_vignette.png
-A full-screen 1024x1024 PNG with dithered edges in red/black. Flash briefly during dice roll impact.
-
-```
-
-### `CardGame/AssetPlaceholders/icon_harm_moderate_empty.png`
-
-```
-
-‰PNG
-
-   IHDR   @   @   ·ì   sRGB ®Îé   `PLTE      Ff Ã6ÿJ$È¦ ¦Ş ÿ×  R™Z4ÄzlÄÑ%¨ ’ßÉ¸ÿÿÿÿJ$ ’{¦q ïó¿ÿ‰ ¼®Fš ¼½¡ÿá´ñÁŸ4Œ?Eÿ¹izl…ã¦1§    tRNS ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ’š­v  |IDATX…í—;Ã D¾ƒŠÜÿš±ù
-´€D2“&ª'û¼ú vÿX‰8Ó¿jœn}3ğò›ˆ"Îñ˜ñ(J˜\„˜>	ÀÅBº}¯ÏBÉ£şºòuãí¹‹BØ×R»/ê[­x©ıµ÷ÇÈÉ°ê¡|~¼LC4ªŸA¤/5bE­	²úR£ ³±„z¸¯rñì€ Ï²˜4ğdASRÒyğ¸ÏÂ(Slô…ìô# Ğ°ƒIïÌ£õ(u •Šşi4€ ¸ßè €'ÍkAm„´ h}O ÚÂ JPS`rJé}Sİï¦›bB ÁÉ÷ÌÅÆá`$Ká(oÜ›£eHçò€Ú)R0ÏS ?7À 3íÌ,Àñóä`~HÊóÂm#ËßŒB~Àü  QåiáLÅg «°7±ÊÉ›à0P‹Ø<ëeÙŸU ÄÛÎÙKÏqÿñ“xI8m×!Ì}    IEND®B`‚
-```
-
-### `CardGame/AssetPlaceholders/icon_stress_pip_unlit.md`
-
-```
-
-# Placeholder Image: icon_stress_pip_unlit.png
-A small, dithered gray or dark purple circle or rune. Size: 48x48.
-
-```
-
-### `CardGame/AssetPlaceholders/icon_harm_severe_full.md`
-
-```
-
-# Placeholder Image: icon_harm_severe_full.png
-The severe skull, heavily cracked with a possible glowing eye. Size: 64x64.
-
-```
-
-### `CardGame/AssetPlaceholders/icon_stress_pip_lit.png`
-
-```
-
-‰PNG
-
-   IHDR   0   0   `Ü	µ   sRGB ®Îé   `PLTE      Ff Ã6ÿJ$È¦ ¦Ş ÿ×  R™Z4ÄzlÄÑ%¨ ’ßÉ¸ÿÿÿÿJ$ ’{¦q ïó¿ÿ‰ ¼®Fš ¼½¡ÿá´ñÁŸ4Œ?Eÿ¹izl…ã¦1§    tRNS ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ’š­v  IDATH‰ÅVÑÄ [Lü
-öÿßySœJ©İ=Æ,ÙZ
-LÑãğ–º‘kpˆÔ0g³'ŠÒğ›²À3x£„İ¯DöxÂØÃ•ŒŸæÀ†Ãç:Î:#âN²D‚øx&‰I û•6AC%¼À…ÕÁ%¡ùïĞ 
-ŞiÂ\£î_­<­FIk*0œÔhøWÁ:AÎÃs¦@¨
-ÖÄÖi™÷ÿ¯PÃç`’Øÿ‡¤¿zÆÏY;ÿß­¥×Y­¸!²ˆÔ	ïï=jëtÂsÑ®Ä÷tmÃaGìX£pãÛ·>ÓÛæš°}?~;P^Yû<ÖÇh²[Çş NˆÜ.f/nÑË	’ÈÇŒõXX    IEND®B`‚
-```
-
-### `CardGame/AssetPlaceholders/icon_stress_pip_lit.md`
-
-```
-
-# Placeholder Image: icon_stress_pip_lit.png
-A glowing version of the stress pip with a bright, ominous red or purple hue. Size: 48x48.
-
-```
-
-### `CardGame/AssetPlaceholders/icon_harm_lesser_empty.png`
-
-```
-
-‰PNG
-
-   IHDR   @   @   ·ì   sRGB ®Îé   `PLTE      Ff Ã6ÿJ$È¦ ¦Ş ÿ×  R™Z4ÄzlÄÑ%¨ ’ßÉ¸ÿÿÿÿJ$ ’{¦q ïó¿ÿ‰ ¼®Fš ¼½¡ÿá´ñÁŸ4Œ?Eÿ¹izl…ã¦1§    tRNS ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ’š­v  kIDATX…í–KÃ D+/rÜÿšÀ&Æ¦RÕEİM7ó4ş’×ë?ÔbWKl`Šú*LHÎ‚t	ÆÇhò¤C1–z OÇù£†^éy!\>±Ô53aY€úêà¸«‘Â…—²!}ºLZô± Ú 6ÃIÌr`vÂ ê 3ªŒ€©•˜[À ³2âF@š` mAD!€ê£NyØíé(ZE`À däáI4 Wg[àHáö WÁ¬},÷¼¨¡ öM)g	P®üâ²Ê@õ#@òÎØ ¨~ˆÈ%®`ûÜo†Uñ4 ‚Ù¾' èíB€q+ ª Ú°¢2ˆr[¾8¤;E,Ú¤ ±6O›ÛA›äf!Ø…:É*‡(€: Åy
-pF@p›¨~İ¶n²
-ygİä»Ñò×èNŸ@²–1ò$ì
-eı"8||øÇïÆl<k`ì3    IEND®B`‚
-```
-
-### `CardGame/AssetPlaceholders/icon_harm_lesser_full.md`
-
-```
-
-# Placeholder Image: icon_harm_lesser_full.png
-A lesser harm skull with a single crack to show the slot is filled. Size: 64x64.
-
-```
-
 ### `CardGame/GameViewModel.swift`
 
 ```
@@ -2125,7 +1424,7 @@ class GameViewModel: ObservableObject {
     }
 
     /// The main dice roll function, now returns the result for the UI.
-    func performAction(for action: ActionOption, with character: Character, interactableID: UUID?) -> DiceRollResult {
+    func performAction(for action: ActionOption, with character: Character, interactableID: String?) -> DiceRollResult {
         guard gameState.party.contains(where: { $0.id == character.id }) else {
             return DiceRollResult(highestRoll: 0, outcome: "Error", consequences: "Character not found.")
         }
@@ -2156,8 +1455,9 @@ class GameViewModel: ObservableObject {
         return DiceRollResult(highestRoll: highestRoll, outcome: outcomeString, consequences: consequencesDescription)
     }
 
-    private func processConsequences(_ consequences: [Consequence], forCharacter character: Character, interactableID: UUID?) -> String {
+    private func processConsequences(_ consequences: [Consequence], forCharacter character: Character, interactableID: String?) -> String {
         var descriptions: [String] = []
+        let partyMemberId = character.id
         for consequence in consequences {
             switch consequence {
             case .gainStress(let amount):
@@ -2184,8 +1484,8 @@ class GameViewModel: ObservableObject {
                     descriptions.append("The way is clear.")
                 }
             case .removeSelfInteractable:
-                if let nodeID = gameState.currentNodeID, let targetID = interactableID {
-                    gameState.dungeon?.nodes[nodeID]?.interactables.removeAll(where: { $0.id == targetID })
+                if let nodeID = gameState.currentNodeID, let interactableStrID = interactableID {
+                    gameState.dungeon?.nodes[nodeID]?.interactables.removeAll(where: { $0.id == interactableStrID })
                     descriptions.append("The way is clear.")
                 }
             case .addInteractable(let inNodeID, let interactable):
@@ -2328,7 +1628,7 @@ import SwiftUI
 struct ContentView: View {
     @StateObject private var viewModel: GameViewModel
     @State private var pendingAction: ActionOption?
-    @State private var pendingInteractableID: UUID?
+    @State private var pendingInteractableID: String?
     @State private var selectedCharacterID: UUID? // Track selected character
     @State private var showingStatusSheet = false // Controls the party sheet
     @State private var doorProgress: CGFloat = 0 // For sliding door transition
