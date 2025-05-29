@@ -11,18 +11,8 @@ class GameViewModel: ObservableObject {
     }
 
     init() {
-        // For the sprint, we'll use hardcoded starting data.
-        self.gameState = GameState(
-            party: [
-                Character(name: "Indy", characterClass: "Archaeologist", stress: 0, harm: HarmState(), actions: ["Study": 3, "Wreck": 1]),
-                Character(name: "Sallah", characterClass: "Brawler", stress: 0, harm: HarmState(), actions: ["Finesse": 2, "Survey": 2]),
-                Character(name: "Marion", characterClass: "Survivor", stress: 0, harm: HarmState(), actions: ["Tinker": 2, "Attune": 1])
-            ],
-            activeClocks: [
-                GameClock(name: "The Guardian Wakes", segments: 6, progress: 0)
-            ]
-        )
-        generateDungeon() // Call the new map generation function
+        self.gameState = GameState()
+        startNewRun()
     }
 
     // --- Core Logic Functions for the Sprint ---
@@ -202,6 +192,9 @@ class GameViewModel: ObservableObject {
 
     /// Starts a brand new run, resetting the game state
     func startNewRun() {
+        let generator = DungeonGenerator()
+        let newDungeon = generator.generate(level: 1)
+
         self.gameState = GameState(
             party: [
                 Character(name: "Indy", characterClass: "Archaeologist", stress: 0, harm: HarmState(), actions: ["Study": 3, "Wreck": 1]),
@@ -211,103 +204,12 @@ class GameViewModel: ObservableObject {
             activeClocks: [
                 GameClock(name: "The Guardian Wakes", segments: 6, progress: 0)
             ],
+            dungeon: newDungeon,
+            currentNodeID: newDungeon.startingNodeID,
             status: .playing
         )
-        generateDungeon()
     }
 
-    /// Generates the dungeon map for the sprint. Currently static.
-    func generateDungeon() {
-        var nodes: [UUID: MapNode] = [:]
-
-        let startNodeID = UUID()
-        let secondNodeID = UUID()
-        let thirdNodeID = UUID()
-
-        let stoneDoorID = UUID()
-        let doorInteractable = Interactable(
-            id: stoneDoorID,
-            title: "Sealed Stone Door",
-            description: "A massive circular door covered in dust.",
-            availableActions: [
-                ActionOption(
-                    name: "Examine the Mechanism",
-                    actionType: "Study",
-                    position: .controlled,
-                    effect: .standard,
-                    outcomes: [
-                        .success: [
-                            .unlockConnection(fromNodeID: startNodeID, toNodeID: secondNodeID),
-                            .removeInteractable(id: stoneDoorID)
-                        ],
-                        .partial: [.gainStress(amount: 1)],
-                        .failure: [.tickClock(clockName: "The Guardian Wakes", amount: 1)]
-                    ]
-                )
-            ]
-        )
-
-        let pedestalID = UUID()
-        let pedestalInteractable = Interactable(
-            id: pedestalID,
-            title: "Trapped Pedestal",
-            description: "An ancient pedestal covered in suspicious glyphs.",
-            availableActions: [
-                ActionOption(
-                    name: "Tinker with it",
-                    actionType: "Tinker",
-                    position: .risky,
-                    effect: .standard,
-                    outcomes: [
-                        .success: [
-                            .removeInteractable(id: pedestalID),
-                            .gainTreasure(treasure: Treasure(
-                                name: "Lens of True Sight",
-                                description: "This crystal lens reveals hidden things.",
-                                grantedModifier: Modifier(
-                                    improveEffect: true,
-                                    applicableToAction: "Survey",
-                                    uses: 2,
-                                    description: "from Lens of True Sight"
-                                )
-                            ))
-                        ],
-                        .failure: [
-                            .sufferHarm(level: .lesser, familyId: "electric_shock")
-                        ]
-                    ]
-                )
-            ]
-        )
-
-        let startNode = MapNode(
-            name: "Entrance Chamber",
-            interactables: [doorInteractable],
-            connections: [NodeConnection(toNodeID: secondNodeID, isUnlocked: false, description: "The Stone Door")],
-            isDiscovered: true
-        )
-
-        let secondNode = MapNode(
-            name: "The Trap Room",
-            interactables: [
-                pedestalInteractable
-            ],
-            connections: [
-                NodeConnection(toNodeID: startNodeID, description: "Back to the entrance"),
-                NodeConnection(toNodeID: thirdNodeID, description: "A narrow corridor")
-            ]
-        )
-
-        let thirdNode = MapNode(name: "The Echoing Chasm", interactables: [], connections: [])
-
-        nodes[startNodeID] = startNode
-        nodes[secondNodeID] = secondNode
-        nodes[thirdNodeID] = thirdNode
-
-        let map = DungeonMap(nodes: nodes, startingNodeID: startNodeID)
-        gameState.dungeon = map
-        gameState.currentNodeID = startNodeID
-    }
 
     /// Move the party to a connected node if possible.
     func move(to newConnection: NodeConnection) {
