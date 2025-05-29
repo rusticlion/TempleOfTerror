@@ -1,0 +1,3 @@
+Minor Model/Loader Adjustments
+Action: As you define new content, if you realize a new type of Consequence, Penalty, or Modifier is essential for a placeholder idea, update Models.swift accordingly.
+Details: Ensure any new enum cases or struct properties are Codable and that ContentLoader.swift and your custom init(from decoder: Decoder) / encode(to encoder: Encoder) methods can handle them. The goal is to support the content, not to add entirely new game systems unless absolutely necessary for variety.
