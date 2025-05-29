@@ -142,8 +142,7 @@ struct SlidingDoor: View {
             HStack(spacing: 0) {
                 Rectangle()
                     .fill(
-                        Image("texture_stone_door")
-                            .resizable(resizingMode: .tile)
+                        ImagePaint(image: Image("texture_stone_door"), scale: 1)
                     )
                     .frame(width: geo.size.width * progress)
                 Spacer(minLength: 0)
