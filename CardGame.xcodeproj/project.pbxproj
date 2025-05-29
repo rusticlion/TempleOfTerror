@@ -32,6 +32,7 @@
 		46A9D22D2DE7F82000FE459E /* ContentLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46A9D22C2DE7F81F00FE459E /* ContentLoader.swift */; };
 		46A9D2302DE7F85F00FE459E /* Content in Resources */ = {isa = PBXBuildFile; fileRef = 46A9D22F2DE7F85F00FE459E /* Content */; };
 		46A9D2322DE7FAF100FE459E /* DungeonGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46A9D2312DE7FAF100FE459E /* DungeonGenerator.swift */; };
+		46A9D2342DE8001F00FE459E /* AudioManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46A9D2332DE8001F00FE459E /* AudioManager.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -85,6 +86,7 @@
 		46A9D22C2DE7F81F00FE459E /* ContentLoader.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ContentLoader.swift; sourceTree = "<group>"; };
 		46A9D22F2DE7F85F00FE459E /* Content */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Content; sourceTree = "<group>"; };
 		46A9D2312DE7FAF100FE459E /* DungeonGenerator.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DungeonGenerator.swift; sourceTree = "<group>"; };
+		46A9D2332DE8001F00FE459E /* AudioManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AudioManager.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -136,6 +138,7 @@
 		460D624C2DE7934300D50D0C /* CardGame */ = {
 			isa = PBXGroup;
 			children = (
+				46A9D2332DE8001F00FE459E /* AudioManager.swift */,
 				46A9D2312DE7FAF100FE459E /* DungeonGenerator.swift */,
 				46A9D22C2DE7F81F00FE459E /* ContentLoader.swift */,
 				46A9D22A2DE7D2E500FE459E /* StatusSheetView.swift */,
@@ -348,6 +351,7 @@
 				460D62912DE7AA3900D50D0C /* PartyStatusView.swift in Sources */,
 				460D628C2DE7AA3900D50D0C /* GameViewModel.swift in Sources */,
 				460D624E2DE7934300D50D0C /* CardGameApp.swift in Sources */,
+				46A9D2342DE8001F00FE459E /* AudioManager.swift in Sources */,
 				46A9D2292DE7D14C00FE459E /* HeaderView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
