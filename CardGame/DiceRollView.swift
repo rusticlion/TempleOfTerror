@@ -15,6 +15,8 @@ struct DiceRollView: View {
     @State private var diceValues: [Int] = []
     @State private var result: DiceRollResult? = nil
     @State private var isRolling = false
+    @State private var extraDiceFromPush = 0
+    @State private var hasPushed = false
 
     @Environment(\.dismiss) var dismiss
 
@@ -33,12 +35,26 @@ struct DiceRollView: View {
                     Text(result.consequences).padding()
                 }
             } else {
-                HStack(spacing: 10) {
-                    ForEach(0..<diceValues.count, id: \.self) { index in
-                        Image(systemName: "die.face.\(diceValues[index]).fill")
-                            .font(.largeTitle)
-                            .rotationEffect(.degrees(isRolling ? 360 : 0))
+                VStack(spacing: 20) {
+                    HStack(spacing: 10) {
+                        let totalDice = (diceValues.count + extraDiceFromPush)
+                        ForEach(0..<totalDice, id: \.self) { index in
+                            Image(systemName: "die.face.\(diceValues.indices.contains(index) ? diceValues[index] : 1).fill")
+                                .font(.largeTitle)
+                                .foregroundColor(index >= diceValues.count ? .cyan : .primary)
+                                .rotationEffect(.degrees(isRolling ? 360 : 0))
+                        }
                     }
+
+                    Button {
+                        viewModel.pushYourself(forCharacter: character)
+                        extraDiceFromPush += 1
+                        hasPushed = true
+                    } label: {
+                        Text("Push Yourself (+1d for 2 Stress)")
+                    }
+                    .disabled(hasPushed)
+                    .buttonStyle(.bordered)
                 }
             }
 

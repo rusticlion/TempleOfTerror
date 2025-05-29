@@ -165,6 +165,16 @@ class GameViewModel: ObservableObject {
         }
     }
 
+    func pushYourself(forCharacter character: Character) {
+        if let charIndex = gameState.party.firstIndex(where: { $0.id == character.id }) {
+            let currentStress = gameState.party[charIndex].stress
+            if currentStress + 2 > 9 {
+                // Handle Trauma case later
+            }
+            gameState.party[charIndex].stress += 2
+        }
+    }
+
     /// Starts a brand new run, resetting the game state
     func startNewRun() {
         self.gameState = GameState(
