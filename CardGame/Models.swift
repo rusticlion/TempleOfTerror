@@ -200,6 +200,24 @@ struct Interactable: Codable, Identifiable {
         self.description = description
         self.availableActions = availableActions
     }
+
+    private enum CodingKeys: String, CodingKey {
+        case id, title, description, availableActions
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        if let idString = try? container.decode(String.self, forKey: .id) {
+            self.id = UUID(uuidString: idString) ?? UUID()
+        } else if let uuid = try? container.decode(UUID.self, forKey: .id) {
+            self.id = uuid
+        } else {
+            self.id = UUID()
+        }
+        self.title = try container.decode(String.self, forKey: .title)
+        self.description = try container.decode(String.self, forKey: .description)
+        self.availableActions = try container.decode([ActionOption].self, forKey: .availableActions)
+    }
 }
 
 struct ActionOption: Codable {
