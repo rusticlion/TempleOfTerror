@@ -62,7 +62,7 @@ class DungeonGenerator {
             }
         }
 
-        for id in nodeIDs.dropFirst() {
+        for id in nodeIDs {
             if var node = nodes[id] {
                 let number = Int.random(in: 1...2)
                 for _ in 0..<number {
