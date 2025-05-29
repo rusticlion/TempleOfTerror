@@ -132,7 +132,37 @@ class GameViewModel: ObservableObject {
             consequencesToApply = action.outcomes[.failure] ?? []
         }
 
-        let consequencesDescription = processConsequences(consequencesToApply, forCharacter: character, interactableID: interactableID)
+        var consequencesDescription = processConsequences(consequencesToApply, forCharacter: character, interactableID: interactableID)
+
+        if let charIndex = gameState.party.firstIndex(where: { $0.id == character.id }) {
+            var updatedModifiers: [Modifier] = []
+            var consumedMessages: [String] = []
+            for var modifier in gameState.party[charIndex].modifiers {
+                if modifier.uses == 0 { continue }
+                if let specific = modifier.applicableToAction, specific != action.actionType {
+                    updatedModifiers.append(modifier)
+                    continue
+                }
+                if modifier.uses > 0 {
+                    modifier.uses -= 1
+                    if modifier.uses == 0 {
+                        let name = modifier.description.replacingOccurrences(of: "from ", with: "")
+                        consumedMessages.append("Used up \(name).")
+                        continue
+                    }
+                }
+                updatedModifiers.append(modifier)
+            }
+            gameState.party[charIndex].modifiers = updatedModifiers
+            if !consumedMessages.isEmpty {
+                AudioManager.shared.play(sound: "sfx_modifier_consume.wav")
+                if consequencesDescription.isEmpty {
+                    consequencesDescription = consumedMessages.joined(separator: "\n")
+                } else {
+                    consequencesDescription += "\n" + consumedMessages.joined(separator: "\n")
+                }
+            }
+        }
 
         return DiceRollResult(highestRoll: highestRoll, outcome: outcomeString, consequences: consequencesDescription)
     }
