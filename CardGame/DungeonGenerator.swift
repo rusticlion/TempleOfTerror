@@ -76,6 +76,7 @@ class DungeonGenerator {
 
         if let lock = lockedConnection {
             let lever = Interactable(
+                id: "lever_room_\(lock.from.uuidString)",
                 title: "Rusty Lever",
                 description: "It looks like it controls a nearby mechanism.",
                 availableActions: [

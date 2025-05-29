@@ -11,7 +11,7 @@ struct DiceRollView: View {
     let action: ActionOption
     let character: Character
     let clockID: UUID?
-    let interactableID: UUID?
+    let interactableID: String?
 
     @State private var diceValues: [Int] = []
     @State private var diceOffsets: [CGSize] = []

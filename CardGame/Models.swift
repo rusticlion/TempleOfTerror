@@ -189,35 +189,10 @@ struct GameClock: Identifiable, Codable {
 
 // Models for the interactable itself
 struct Interactable: Codable, Identifiable {
-    let id: UUID
+    let id: String
     var title: String
     var description: String
     var availableActions: [ActionOption]
-
-    init(id: UUID = UUID(), title: String, description: String, availableActions: [ActionOption]) {
-        self.id = id
-        self.title = title
-        self.description = description
-        self.availableActions = availableActions
-    }
-
-    private enum CodingKeys: String, CodingKey {
-        case id, title, description, availableActions
-    }
-
-    init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        if let idString = try? container.decode(String.self, forKey: .id) {
-            self.id = UUID(uuidString: idString) ?? UUID()
-        } else if let uuid = try? container.decode(UUID.self, forKey: .id) {
-            self.id = uuid
-        } else {
-            self.id = UUID()
-        }
-        self.title = try container.decode(String.self, forKey: .title)
-        self.description = try container.decode(String.self, forKey: .description)
-        self.availableActions = try container.decode([ActionOption].self, forKey: .availableActions)
-    }
 }
 
 struct ActionOption: Codable {
@@ -243,7 +218,7 @@ enum Consequence: Codable {
     case sufferHarm(level: HarmLevel, familyId: String)
     case tickClock(clockName: String, amount: Int)
     case unlockConnection(fromNodeID: UUID, toNodeID: UUID)
-    case removeInteractable(id: UUID)
+    case removeInteractable(id: String)
     case removeSelfInteractable
     case addInteractable(inNodeID: UUID, interactable: Interactable)
     case addInteractableHere(interactable: Interactable)
@@ -287,13 +262,11 @@ enum Consequence: Codable {
             let to = try container.decode(UUID.self, forKey: .toNodeID)
             self = .unlockConnection(fromNodeID: from, toNodeID: to)
         case .removeInteractable:
-            if let idString = try? container.decode(String.self, forKey: .id), idString == "self" {
+            let idString = try container.decode(String.self, forKey: .id)
+            if idString == "self" {
                 self = .removeSelfInteractable
-            } else if let uuid = try? container.decode(UUID.self, forKey: .id) {
-                self = .removeInteractable(id: uuid)
             } else {
-                let idStr = try container.decode(String.self, forKey: .id)
-                self = .removeInteractable(id: UUID(uuidString: idStr) ?? UUID())
+                self = .removeInteractable(id: idString)
             }
         case .removeSelfInteractable:
             self = .removeSelfInteractable

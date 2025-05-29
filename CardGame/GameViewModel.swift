@@ -47,7 +47,7 @@ class GameViewModel: ObservableObject {
     }
 
     /// The main dice roll function, now returns the result for the UI.
-    func performAction(for action: ActionOption, with character: Character, interactableID: UUID?) -> DiceRollResult {
+    func performAction(for action: ActionOption, with character: Character, interactableID: String?) -> DiceRollResult {
         guard gameState.party.contains(where: { $0.id == character.id }) else {
             return DiceRollResult(highestRoll: 0, outcome: "Error", consequences: "Character not found.")
         }
@@ -78,8 +78,9 @@ class GameViewModel: ObservableObject {
         return DiceRollResult(highestRoll: highestRoll, outcome: outcomeString, consequences: consequencesDescription)
     }
 
-    private func processConsequences(_ consequences: [Consequence], forCharacter character: Character, interactableID: UUID?) -> String {
+    private func processConsequences(_ consequences: [Consequence], forCharacter character: Character, interactableID: String?) -> String {
         var descriptions: [String] = []
+        let partyMemberId = character.id
         for consequence in consequences {
             switch consequence {
             case .gainStress(let amount):
@@ -106,8 +107,8 @@ class GameViewModel: ObservableObject {
                     descriptions.append("The way is clear.")
                 }
             case .removeSelfInteractable:
-                if let nodeID = gameState.currentNodeID, let targetID = interactableID {
-                    gameState.dungeon?.nodes[nodeID]?.interactables.removeAll(where: { $0.id == targetID })
+                if let nodeID = gameState.currentNodeID, let interactableStrID = interactableID {
+                    gameState.dungeon?.nodes[nodeID]?.interactables.removeAll(where: { $0.id == interactableStrID })
                     descriptions.append("The way is clear.")
                 }
             case .addInteractable(let inNodeID, let interactable):
