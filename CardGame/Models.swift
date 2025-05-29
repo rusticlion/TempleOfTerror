@@ -24,6 +24,14 @@ struct Modifier: Codable {
     var description: String
 }
 
+/// A collectible treasure that grants a modifier when acquired.
+struct Treasure: Codable, Identifiable {
+    let id: UUID = UUID()
+    var name: String
+    var description: String
+    var grantedModifier: Modifier
+}
+
 struct Character: Identifiable, Codable {
     let id: UUID = UUID()
     var name: String
@@ -31,6 +39,7 @@ struct Character: Identifiable, Codable {
     var stress: Int
     var harm: HarmState
     var actions: [String: Int] // e.g., ["Study": 2, "Tinker": 1]
+    var treasures: [Treasure] = []
     var modifiers: [Modifier] = []
 }
 
@@ -102,6 +111,7 @@ enum Consequence: Codable {
     case unlockConnection(fromNodeID: UUID, toNodeID: UUID)
     case removeInteractable(id: UUID)
     case addInteractable(inNodeID: UUID, interactable: Interactable)
+    case gainTreasure(treasure: Treasure)
 }
 
 enum HarmLevel: String, Codable {
