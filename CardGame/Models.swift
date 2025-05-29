@@ -76,6 +76,34 @@ struct HarmState: Codable {
     static let lesserSlots = 2
     static let moderateSlots = 2
     static let severeSlots = 1
+
+    private struct Entry: Codable {
+        var familyId: String
+        var description: String
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case lesser, moderate, severe
+    }
+
+    init() {}
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        let lesserEntries = try container.decodeIfPresent([Entry].self, forKey: .lesser) ?? []
+        let moderateEntries = try container.decodeIfPresent([Entry].self, forKey: .moderate) ?? []
+        let severeEntries = try container.decodeIfPresent([Entry].self, forKey: .severe) ?? []
+        self.lesser = lesserEntries.map { ($0.familyId, $0.description) }
+        self.moderate = moderateEntries.map { ($0.familyId, $0.description) }
+        self.severe = severeEntries.map { ($0.familyId, $0.description) }
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(lesser.map { Entry(familyId: $0.familyId, description: $0.description) }, forKey: .lesser)
+        try container.encode(moderate.map { Entry(familyId: $0.familyId, description: $0.description) }, forKey: .moderate)
+        try container.encode(severe.map { Entry(familyId: $0.familyId, description: $0.description) }, forKey: .severe)
+    }
 }
 
 /// Central catalog of all harm families available in the game.
