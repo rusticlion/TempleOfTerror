@@ -25,7 +25,9 @@ struct ContentView: View {
         }
         AudioManager.shared.play(sound: "sfx_stone_door_slide.wav")
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-            viewModel.move(to: connection)
+            if let id = selectedCharacterID {
+                viewModel.move(characterID: id, to: connection)
+            }
             withAnimation(.linear(duration: 0.3)) {
                 doorProgress = 0
             }
@@ -37,7 +39,7 @@ struct ContentView: View {
         ZStack {
             VStack(spacing: 0) {
                 HeaderView(
-                    title: viewModel.currentNode?.name ?? "Unknown Location",
+                    title: viewModel.getNodeName(for: selectedCharacterID) ?? "Unknown Location",
                     characters: viewModel.gameState.party,
                     selectedCharacterID: $selectedCharacterID
                 )
@@ -45,7 +47,7 @@ struct ContentView: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 16) {
 
-                        if let node = viewModel.currentNode {
+                        if let node = viewModel.node(for: selectedCharacterID) {
                             VStack(alignment: .leading, spacing: 16) {
                                 ForEach(node.interactables, id: \.id) { interactable in
                                     InteractableCardView(interactable: interactable, selectedCharacter: selectedCharacter) { action in
@@ -59,7 +61,7 @@ struct ContentView: View {
 
                                 Divider()
 
-                                NodeConnectionsView(currentNode: viewModel.currentNode) { connection in
+                                NodeConnectionsView(currentNode: viewModel.node(for: selectedCharacterID)) { connection in
                                     performTransition(to: connection)
                                 }
                             }
@@ -70,7 +72,7 @@ struct ContentView: View {
                         }
                     }
                     .padding()
-                    .animation(.default, value: viewModel.currentNode?.id)
+                    .animation(.default, value: viewModel.node(for: selectedCharacterID)?.id)
                 }
             }
             .disabled(viewModel.gameState.status == .gameOver)
@@ -92,7 +94,16 @@ struct ContentView: View {
             VStack {
                 Spacer()
                 HStack {
+                    Button {
+                        viewModel.toggleMovementMode()
+                    } label: {
+                        Text("Movement: \(viewModel.partyMovementMode == .grouped ? "Grouped" : "Solo")")
+                    }
+                    .padding()
+                    .background(.thinMaterial, in: Capsule())
+
                     Spacer()
+
                     Button {
                         showingStatusSheet.toggle()
                     } label: {
@@ -101,8 +112,8 @@ struct ContentView: View {
                     }
                     .padding()
                     .background(.thinMaterial, in: Capsule())
-                    .padding()
                 }
+                .padding()
             }
 
 

@@ -11,14 +11,24 @@ struct RollProjectionDetails {
 }
 
 @MainActor
+enum PartyMovementMode {
+    case grouped
+    case solo
+}
+
 class GameViewModel: ObservableObject {
     @Published var gameState: GameState
+    @Published var partyMovementMode: PartyMovementMode = .grouped
 
-    // Helper to get the current node
-    var currentNode: MapNode? {
-        guard let map = gameState.dungeon, let currentNodeID = gameState.currentNodeID else { return nil }
-        return map.nodes[currentNodeID]
+
+    // Retrieve the node a specific character is currently in
+    func node(for characterID: UUID?) -> MapNode? {
+        guard let id = characterID,
+              let nodeID = gameState.characterLocations[id],
+              let map = gameState.dungeon else { return nil }
+        return map.nodes[nodeID]
     }
+
 
     init() {
         self.gameState = GameState()
@@ -191,12 +201,12 @@ class GameViewModel: ObservableObject {
                     descriptions.append("A path has opened!")
                 }
             case .removeInteractable(let id):
-                if let nodeID = gameState.currentNodeID {
+                if let nodeID = gameState.characterLocations[partyMemberId] {
                     gameState.dungeon?.nodes[nodeID]?.interactables.removeAll(where: { $0.id == id })
                     descriptions.append("The way is clear.")
                 }
             case .removeSelfInteractable:
-                if let nodeID = gameState.currentNodeID, let interactableStrID = interactableID {
+                if let nodeID = gameState.characterLocations[partyMemberId], let interactableStrID = interactableID {
                     gameState.dungeon?.nodes[nodeID]?.interactables.removeAll(where: { $0.id == interactableStrID })
                     descriptions.append("The way is clear.")
                 }
@@ -204,7 +214,7 @@ class GameViewModel: ObservableObject {
                 gameState.dungeon?.nodes[inNodeID]?.interactables.append(interactable)
                 descriptions.append("Something new appears.")
             case .addInteractableHere(let interactable):
-                if let nodeID = gameState.currentNodeID {
+                if let nodeID = gameState.characterLocations[partyMemberId] {
                     gameState.dungeon?.nodes[nodeID]?.interactables.append(interactable)
                     descriptions.append("Something new appears.")
                 }
@@ -307,8 +317,13 @@ class GameViewModel: ObservableObject {
             ] + generatedClocks,
             dungeon: newDungeon,
             currentNodeID: newDungeon.startingNodeID,
+            characterLocations: [:],
             status: .playing
         )
+
+        for id in gameState.party.map({ $0.id }) {
+            gameState.characterLocations[id] = newDungeon.startingNodeID
+        }
 
         if let startingNode = newDungeon.nodes[newDungeon.startingNodeID] {
             AudioManager.shared.play(sound: "ambient_\(startingNode.soundProfile).wav", loop: true)
@@ -316,15 +331,39 @@ class GameViewModel: ObservableObject {
     }
 
 
-    /// Move the party to a connected node if possible.
-    func move(to newConnection: NodeConnection) {
-        if newConnection.isUnlocked {
-            gameState.currentNodeID = newConnection.toNodeID
-            if let node = gameState.dungeon?.nodes[newConnection.toNodeID] {
-                gameState.dungeon?.nodes[newConnection.toNodeID]?.isDiscovered = true
-                AudioManager.shared.play(sound: "ambient_\(node.soundProfile).wav", loop: true)
+    /// Move one or all party members depending on the current movement mode.
+    func move(characterID: UUID, to connection: NodeConnection) {
+        guard connection.isUnlocked else { return }
+
+        if partyMovementMode == .solo {
+            gameState.characterLocations[characterID] = connection.toNodeID
+        } else {
+            for id in gameState.party.map({ $0.id }) {
+                gameState.characterLocations[id] = connection.toNodeID
             }
         }
+
+        gameState.currentNodeID = connection.toNodeID
+        if let node = gameState.dungeon?.nodes[connection.toNodeID] {
+            gameState.dungeon?.nodes[connection.toNodeID]?.isDiscovered = true
+            AudioManager.shared.play(sound: "ambient_\(node.soundProfile).wav", loop: true)
+        }
+    }
+
+    func getNodeName(for characterID: UUID?) -> String? {
+        guard let id = characterID,
+              let nodeID = gameState.characterLocations[id],
+              let node = gameState.dungeon?.nodes[nodeID] else { return nil }
+        return node.name
+    }
+
+    func isPartyActuallySplit() -> Bool {
+        let unique = Set(gameState.characterLocations.values)
+        return unique.count > 1
+    }
+
+    func toggleMovementMode() {
+        partyMovementMode = (partyMovementMode == .grouped) ? .solo : .grouped
     }
 }
 
