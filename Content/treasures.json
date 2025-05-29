@@ -1,0 +1,20 @@
+[
+  {
+    "id": "treasure_purified_idol_shard",
+    "name": "Purified Idol Shard",
+    "description": "A fragment of the idol, cleansed of its curse.",
+    "grantedModifier": {
+      "bonusDice": 1,
+      "description": "Blessing of the Idol"
+    }
+  },
+  {
+    "id": "treasure_ancient_coin",
+    "name": "Ancient Coin",
+    "description": "A coin from a forgotten empire.",
+    "grantedModifier": {
+      "improveEffect": true,
+      "description": "Lucky Find"
+    }
+  }
+]
