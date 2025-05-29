@@ -25,13 +25,13 @@ struct PartyStatusView: View {
                         Text("Harm")
                             .font(.caption2)
                         HStack {
-                            ProgressView(value: Float(character.harm.lesser.count), total: 2)
+                            ProgressView(value: Float(character.harm.lesser.count), total: Float(HarmState.lesserSlots))
                                 .progressViewStyle(.linear)
                                 .tint(.yellow)
-                            ProgressView(value: Float(character.harm.moderate.count), total: 2)
+                            ProgressView(value: Float(character.harm.moderate.count), total: Float(HarmState.moderateSlots))
                                 .progressViewStyle(.linear)
                                 .tint(.orange)
-                            ProgressView(value: Float(character.harm.severe.count), total: 2)
+                            ProgressView(value: Float(character.harm.severe.count), total: Float(HarmState.severeSlots))
                                 .progressViewStyle(.linear)
                                 .tint(.red)
                         }

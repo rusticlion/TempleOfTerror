@@ -35,17 +35,19 @@ class GameViewModel: ObservableObject {
         var notes: [String] = []
 
         // Apply penalties from all active harm conditions
-        let allHarm = character.harm.lesser + character.harm.moderate + character.harm.severe
-        for condition in allHarm {
-            switch condition.penalty {
-            case .reduceEffect:
-                effect = effect.decreased()
-                notes.append("(-1 Effect from \(condition.description))")
-            case .actionPenalty(let actionType) where actionType == action.actionType:
-                diceCount -= 1
-                notes.append("(-1d from \(condition.description))")
-            default:
-                break
+        for harm in character.harm.lesser {
+            if let penalty = HarmLibrary.families[harm.familyId]?.lesser.penalty {
+                apply(penalty: penalty, description: harm.description, to: action.actionType, diceCount: &diceCount, effect: &effect, notes: &notes)
+            }
+        }
+        for harm in character.harm.moderate {
+            if let penalty = HarmLibrary.families[harm.familyId]?.moderate.penalty {
+                apply(penalty: penalty, description: harm.description, to: action.actionType, diceCount: &diceCount, effect: &effect, notes: &notes)
+            }
+        }
+        for harm in character.harm.severe {
+            if let penalty = HarmLibrary.families[harm.familyId]?.severe.penalty {
+                apply(penalty: penalty, description: harm.description, to: action.actionType, diceCount: &diceCount, effect: &effect, notes: &notes)
             }
         }
         diceCount = max(diceCount, 0) // Can't roll negative dice
@@ -97,22 +99,17 @@ class GameViewModel: ObservableObject {
                 }
             case .sufferHarm(let level, let description):
                 if let charIndex = gameState.party.firstIndex(where: { $0.id == character.id }) {
+                    let entry = (familyId: description, description: description)
                     switch level {
                     case .lesser:
-                        gameState.party[charIndex].harm.lesser.append(
-                            HarmCondition(description: description, penalty: .reduceEffect)
-                        )
+                        gameState.party[charIndex].harm.lesser.append(entry)
                     case .moderate:
-                        gameState.party[charIndex].harm.moderate.append(
-                            HarmCondition(description: description, penalty: .reduceEffect)
-                        )
+                        gameState.party[charIndex].harm.moderate.append(entry)
                     case .severe:
-                        gameState.party[charIndex].harm.severe.append(
-                            HarmCondition(description: description, penalty: .reduceEffect)
-                        )
+                        gameState.party[charIndex].harm.severe.append(entry)
                     }
                     descriptions.append("Suffered \(level.rawValue) harm: \(description).")
-                    if gameState.party[charIndex].harm.severe.count >= 2 {
+                    if gameState.party[charIndex].harm.severe.count >= HarmState.severeSlots {
                         gameState.status = .gameOver
                     }
                 }
@@ -143,6 +140,22 @@ class GameViewModel: ObservableObject {
             }
         }
         return descriptions.joined(separator: "\n")
+    }
+
+    private func apply(penalty: Penalty, description: String, to actionType: String, diceCount: inout Int, effect: inout RollEffect, notes: inout [String]) {
+        switch penalty {
+        case .reduceEffect:
+            effect = effect.decreased()
+            notes.append("(-1 Effect from \(description))")
+        case .actionPenalty(let action) where action == actionType:
+            diceCount -= 1
+            notes.append("(-1d from \(description))")
+        case .banAction(let action) where action == actionType:
+            diceCount = 0
+            notes.append("(Cannot perform due to \(description))")
+        default:
+            break
+        }
     }
 
     private func updateClock(id: UUID, ticks: Int) {

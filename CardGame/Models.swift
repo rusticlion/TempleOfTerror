@@ -43,25 +43,60 @@ struct Character: Identifiable, Codable {
     var modifiers: [Modifier] = []
 }
 
-/// A specific injury or affliction with a mechanical effect.
-struct HarmCondition: Codable, Identifiable {
-    let id: UUID = UUID()
+/// Defines a single tier of a harm family.
+struct HarmTier: Codable {
     var description: String
-    var penalty: Penalty
+    var penalty: Penalty? // Penalty is optional for the "Fatal" tier
 }
 
-/// The mechanical penalty imposed by a HarmCondition.
+/// Defines a full "family" of related harms, from minor to fatal.
+struct HarmFamily: Codable, Identifiable {
+    let id: String // e.g., "head_trauma", "leg_injury"
+    var lesser: HarmTier
+    var moderate: HarmTier
+    var severe: HarmTier
+    var fatal: HarmTier // The "game over" description
+}
+
+/// The mechanical penalty imposed by a HarmTier.
 enum Penalty: Codable {
     case reduceEffect               // All actions are one effect level lower.
     case increaseStressCost(amount: Int) // Stress costs are increased.
     case actionPenalty(actionType: String) // Specific action suffers –1 die.
+    case banAction(actionType: String) // An action is impossible without effort
 }
 
 /// HarmState now tracks detailed conditions rather than simple strings.
 struct HarmState: Codable {
-    var lesser: [HarmCondition] = []
-    var moderate: [HarmCondition] = []
-    var severe: [HarmCondition] = []
+    // We store the family ID along with the specific description.
+    var lesser: [(familyId: String, description: String)] = []
+    var moderate: [(familyId: String, description: String)] = []
+    var severe: [(familyId: String, description: String)] = []
+
+    static let lesserSlots = 2
+    static let moderateSlots = 2
+    static let severeSlots = 1
+}
+
+/// Central catalog of all harm families available in the game.
+struct HarmLibrary {
+    static let families: [String: HarmFamily] = [
+        "head_trauma": HarmFamily(
+            id: "head_trauma",
+            lesser: HarmTier(description: "Headache", penalty: .actionPenalty(actionType: "Study")),
+            moderate: HarmTier(description: "Migraine", penalty: .reduceEffect),
+            severe: HarmTier(description: "Brain Lightning", penalty: .banAction(actionType: "Study")),
+            fatal: HarmTier(description: "Head Explosion", penalty: nil)
+        ),
+        "leg_injury": HarmFamily(
+            id: "leg_injury",
+            lesser: HarmTier(description: "Twisted Ankle", penalty: .actionPenalty(actionType: "Finesse")),
+            moderate: HarmTier(description: "Torn Muscle", penalty: .reduceEffect),
+            severe: HarmTier(description: "Shattered Knee", penalty: .banAction(actionType: "Finesse")),
+            fatal: HarmTier(description: "Crippled Beyond Recovery", penalty: nil)
+        )
+        // Additional families can be added here
+    ]
 }
 
 struct GameClock: Identifiable, Codable {
