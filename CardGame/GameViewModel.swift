@@ -204,7 +204,7 @@ class GameViewModel: ObservableObject {
     /// Starts a brand new run, resetting the game state
     func startNewRun() {
         let generator = DungeonGenerator()
-        let newDungeon = generator.generate(level: 1)
+        let (newDungeon, generatedClocks) = generator.generate(level: 1)
 
         self.gameState = GameState(
             party: [
@@ -214,7 +214,7 @@ class GameViewModel: ObservableObject {
             ],
             activeClocks: [
                 GameClock(name: "The Guardian Wakes", segments: 6, progress: 0)
-            ],
+            ] + generatedClocks,
             dungeon: newDungeon,
             currentNodeID: newDungeon.startingNodeID,
             status: .playing
