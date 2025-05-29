@@ -134,6 +134,12 @@ class GameViewModel: ObservableObject {
             case .addInteractable(let inNodeID, let interactable):
                 gameState.dungeon?.nodes[inNodeID]?.interactables.append(interactable)
                 descriptions.append("Something new appears.")
+            case .gainTreasure(let treasure):
+                if let charIndex = gameState.party.firstIndex(where: { $0.id == character.id }) {
+                    gameState.party[charIndex].treasures.append(treasure)
+                    gameState.party[charIndex].modifiers.append(treasure.grantedModifier)
+                    descriptions.append("Gained Treasure: \(treasure.name)!")
+                }
             }
         }
         return descriptions.joined(separator: "\n")
@@ -193,6 +199,39 @@ class GameViewModel: ObservableObject {
             ]
         )
 
+        let pedestalID = UUID()
+        let pedestalInteractable = Interactable(
+            id: pedestalID,
+            title: "Trapped Pedestal",
+            description: "An ancient pedestal covered in suspicious glyphs.",
+            availableActions: [
+                ActionOption(
+                    name: "Tinker with it",
+                    actionType: "Tinker",
+                    position: .risky,
+                    effect: .standard,
+                    outcomes: [
+                        .success: [
+                            .removeInteractable(id: pedestalID),
+                            .gainTreasure(treasure: Treasure(
+                                name: "Lens of True Sight",
+                                description: "This crystal lens reveals hidden things.",
+                                grantedModifier: Modifier(
+                                    improveEffect: true,
+                                    applicableToAction: "Survey",
+                                    uses: 2,
+                                    description: "from Lens of True Sight"
+                                )
+                            ))
+                        ],
+                        .failure: [
+                            .sufferHarm(level: .lesser, description: "Electric Jolt")
+                        ]
+                    ]
+                )
+            ]
+        )
+
         let startNode = MapNode(
             name: "Entrance Chamber",
             interactables: [doorInteractable],
@@ -203,11 +242,7 @@ class GameViewModel: ObservableObject {
         let secondNode = MapNode(
             name: "The Trap Room",
             interactables: [
-                Interactable(title: "Trapped Pedestal",
-                              description: "An ancient pedestal covered in suspicious glyphs.",
-                              availableActions: [
-                                ActionOption(name: "Tinker with it", actionType: "Tinker", position: .risky, effect: .standard)
-                              ])
+                pedestalInteractable
             ],
             connections: [
                 NodeConnection(toNodeID: startNodeID, description: "Back to the entrance"),
