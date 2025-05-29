@@ -14,6 +14,8 @@ class DungeonGenerator {
         var previousNode: MapNode? = nil
         var nodeIDs: [UUID] = []
 
+        let soundProfiles = ["cave_drips", "chasm_wind", "silent_tomb"]
+
         for i in 0..<nodeCount {
             var connections: [NodeConnection] = []
             if let prev = previousNode {
@@ -22,6 +24,7 @@ class DungeonGenerator {
 
             var newNode = MapNode(
                 name: "Forgotten Antechamber \(i + 1)",
+                soundProfile: soundProfiles.randomElement() ?? "silent_tomb",
                 interactables: [],
                 connections: connections
             )

@@ -347,6 +347,7 @@ struct DungeonMap: Codable {
 struct MapNode: Identifiable, Codable {
     let id: UUID = UUID()
     var name: String
+    var soundProfile: String
     var interactables: [Interactable]
     var connections: [NodeConnection]
     var isDiscovered: Bool = false // To support fog of war

@@ -208,6 +208,10 @@ class GameViewModel: ObservableObject {
             currentNodeID: newDungeon.startingNodeID,
             status: .playing
         )
+
+        if let startingNode = newDungeon.nodes[newDungeon.startingNodeID] {
+            AudioManager.shared.play(sound: "ambient_\(startingNode.soundProfile).wav", loop: true)
+        }
     }
 
 
@@ -215,7 +219,10 @@ class GameViewModel: ObservableObject {
     func move(to newConnection: NodeConnection) {
         if newConnection.isUnlocked {
             gameState.currentNodeID = newConnection.toNodeID
-            gameState.dungeon?.nodes[newConnection.toNodeID]?.isDiscovered = true
+            if let node = gameState.dungeon?.nodes[newConnection.toNodeID] {
+                gameState.dungeon?.nodes[newConnection.toNodeID]?.isDiscovered = true
+                AudioManager.shared.play(sound: "ambient_\(node.soundProfile).wav", loop: true)
+            }
         }
     }
 }

@@ -5,6 +5,7 @@ struct ContentView: View {
     @State private var pendingAction: ActionOption?
     @State private var selectedCharacterID: UUID? // Track selected character
     @State private var showingStatusSheet = false // Controls the party sheet
+    @State private var doorProgress: CGFloat = 0 // For sliding door transition
 
     init() {
         let vm = GameViewModel()
@@ -15,6 +16,19 @@ struct ContentView: View {
     // Helper to retrieve the selected character object
     private var selectedCharacter: Character? {
         viewModel.gameState.party.first { $0.id == selectedCharacterID }
+    }
+
+    private func performTransition(to connection: NodeConnection) {
+        withAnimation(.linear(duration: 0.3)) {
+            doorProgress = 1
+        }
+        AudioManager.shared.play(sound: "sfx_stone_door_slide.wav")
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            viewModel.move(to: connection)
+            withAnimation(.linear(duration: 0.3)) {
+                doorProgress = 0
+            }
+        }
     }
 
 
@@ -44,7 +58,7 @@ struct ContentView: View {
                                 Divider()
 
                                 NodeConnectionsView(currentNode: viewModel.currentNode) { connection in
-                                    viewModel.move(to: connection)
+                                    performTransition(to: connection)
                                 }
                             }
                             .id(node.id)
@@ -69,6 +83,8 @@ struct ContentView: View {
                     Text("No action selected")
                 }
             }
+
+            SlidingDoor(progress: doorProgress)
 
             VStack {
                 Spacer()
@@ -116,5 +132,24 @@ struct ContentView: View {
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
         ContentView()
+    }
+}
+
+struct SlidingDoor: View {
+    var progress: CGFloat
+    var body: some View {
+        GeometryReader { geo in
+            HStack(spacing: 0) {
+                Rectangle()
+                    .fill(
+                        Image("texture_stone_door")
+                            .resizable(resizingMode: .tile)
+                    )
+                    .frame(width: geo.size.width * progress)
+                Spacer(minLength: 0)
+            }
+        }
+        .ignoresSafeArea()
+        .allowsHitTesting(false)
     }
 }
