@@ -17,6 +17,7 @@ struct DiceRollView: View {
     @State private var diceOffsets: [CGSize] = []
     @State private var diceRotations: [Double] = []
     @State private var result: DiceRollResult? = nil
+    @State private var projection: RollProjectionDetails? = nil
     @State private var isRolling = false
     @State private var extraDiceFromPush = 0
     @State private var hasPushed = false
@@ -99,6 +100,18 @@ struct DiceRollView: View {
                     Text("Rolled a \(result.highestRoll)").font(.title3)
                     Text(result.consequences).padding()
                 }
+            } else if let proj = projection {
+                VStack(spacing: 4) {
+                    Text("Dice: \(proj.finalDiceCount)d6")
+                        .font(.headline)
+                    Text("Position: \(proj.finalPosition.rawValue.capitalized), Effect: \(proj.finalEffect.rawValue.capitalized)")
+                        .font(.subheadline)
+                    ForEach(proj.notes, id: \.self) { note in
+                        Text(note)
+                            .font(.caption)
+                            .foregroundColor(note.contains("-") || note.contains("Cannot") ? .red : .blue)
+                    }
+                }
             }
 
             VStack(spacing: 20) {
@@ -151,7 +164,9 @@ struct DiceRollView: View {
         }
         .padding(30)
         .onAppear {
-            let diceCount = max(character.actions[action.actionType] ?? 0, 1)
+            let proj = viewModel.calculateProjection(for: action, with: character)
+            self.projection = proj
+            let diceCount = max(proj.finalDiceCount, 1)
             self.diceValues = Array(repeating: 1, count: diceCount)
             self.diceOffsets = Array(repeating: .zero, count: diceCount)
             self.diceRotations = Array(repeating: 0, count: diceCount)
