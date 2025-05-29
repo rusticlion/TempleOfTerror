@@ -20,6 +20,20 @@
       "moderate": { "description": "Seared Nerves", "penalty": { "type": "reduceEffect" } },
       "severe": { "description": "Nerve Damage", "penalty": { "type": "banAction", "actionType": "Tinker" } },
       "fatal": { "description": "Heart Stops" }
+    },
+    {
+      "id": "mental_anguish",
+      "lesser": { "description": "Unease", "penalty": { "type": "increaseStressCost", "amount": 1 } },
+      "moderate": { "description": "Fleeting Shadows", "penalty": { "type": "actionPenalty", "actionType": "Survey" } },
+      "severe": { "description": "Terror", "penalty": { "type": "reduceEffect" } },
+      "fatal": { "description": "Mind Broken" }
+    },
+    {
+      "id": "gear_damage",
+      "lesser": { "description": "Frayed Rope", "penalty": { "type": "actionPenalty", "actionType": "Finesse" } },
+      "moderate": { "description": "Broken Tools", "penalty": { "type": "banAction", "actionType": "Tinker" } },
+      "severe": { "description": "Lost Map", "penalty": { "type": "increaseStressCost", "amount": 1 } },
+      "fatal": { "description": "Stranded and Helpless" }
     }
   ]
 }

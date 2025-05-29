@@ -26,7 +26,7 @@ struct Modifier: Codable {
 
 /// A collectible treasure that grants a modifier when acquired.
 struct Treasure: Codable, Identifiable {
-    let id: UUID = UUID()
+    let id: String
     var name: String
     var description: String
     var grantedModifier: Modifier
@@ -226,13 +226,15 @@ enum Consequence: Codable {
     case tickClock(clockName: String, amount: Int)
     case unlockConnection(fromNodeID: UUID, toNodeID: UUID)
     case removeInteractable(id: UUID)
+    case removeSelfInteractable
     case addInteractable(inNodeID: UUID, interactable: Interactable)
-    case gainTreasure(treasure: Treasure)
+    case addInteractableHere(interactable: Interactable)
+    case gainTreasure(treasureId: String)
 
     private enum CodingKeys: String, CodingKey {
         case type, amount, level, familyId, clockName
         case fromNodeID, toNodeID, id, inNodeID
-        case interactable, treasure
+        case interactable, treasure, treasureId
     }
 
     private enum Kind: String, Codable {
@@ -241,7 +243,9 @@ enum Consequence: Codable {
         case tickClock
         case unlockConnection
         case removeInteractable
+        case removeSelfInteractable
         case addInteractable
+        case addInteractableHere
         case gainTreasure
     }
 
@@ -265,15 +269,37 @@ enum Consequence: Codable {
             let to = try container.decode(UUID.self, forKey: .toNodeID)
             self = .unlockConnection(fromNodeID: from, toNodeID: to)
         case .removeInteractable:
-            let id = try container.decode(UUID.self, forKey: .id)
-            self = .removeInteractable(id: id)
+            if let idString = try? container.decode(String.self, forKey: .id), idString == "self" {
+                self = .removeSelfInteractable
+            } else if let uuid = try? container.decode(UUID.self, forKey: .id) {
+                self = .removeInteractable(id: uuid)
+            } else {
+                let idStr = try container.decode(String.self, forKey: .id)
+                self = .removeInteractable(id: UUID(uuidString: idStr) ?? UUID())
+            }
+        case .removeSelfInteractable:
+            self = .removeSelfInteractable
         case .addInteractable:
-            let node = try container.decode(UUID.self, forKey: .inNodeID)
+            if let nodeString = try? container.decode(String.self, forKey: .inNodeID), nodeString == "current" {
+                let interactable = try container.decode(Interactable.self, forKey: .interactable)
+                self = .addInteractableHere(interactable: interactable)
+            } else {
+                let node = try container.decode(UUID.self, forKey: .inNodeID)
+                let interactable = try container.decode(Interactable.self, forKey: .interactable)
+                self = .addInteractable(inNodeID: node, interactable: interactable)
+            }
+        case .addInteractableHere:
             let interactable = try container.decode(Interactable.self, forKey: .interactable)
-            self = .addInteractable(inNodeID: node, interactable: interactable)
+            self = .addInteractableHere(interactable: interactable)
         case .gainTreasure:
-            let treasure = try container.decode(Treasure.self, forKey: .treasure)
-            self = .gainTreasure(treasure: treasure)
+            if let treasureId = try? container.decode(String.self, forKey: .treasureId) {
+                self = .gainTreasure(treasureId: treasureId)
+            } else if let treasure = try? container.decode(Treasure.self, forKey: .treasure) {
+                // Fallback to embedded treasure object
+                self = .gainTreasure(treasureId: treasure.id)
+            } else {
+                self = .gainTreasure(treasureId: "")
+            }
         }
     }
 
@@ -298,13 +324,19 @@ enum Consequence: Codable {
         case .removeInteractable(let id):
             try container.encode(Kind.removeInteractable, forKey: .type)
             try container.encode(id, forKey: .id)
+        case .removeSelfInteractable:
+            try container.encode(Kind.removeSelfInteractable, forKey: .type)
         case .addInteractable(let node, let interactable):
             try container.encode(Kind.addInteractable, forKey: .type)
             try container.encode(node, forKey: .inNodeID)
             try container.encode(interactable, forKey: .interactable)
-        case .gainTreasure(let treasure):
+        case .addInteractableHere(let interactable):
+            try container.encode(Kind.addInteractable, forKey: .type)
+            try container.encode("current", forKey: .inNodeID)
+            try container.encode(interactable, forKey: .interactable)
+        case .gainTreasure(let treasureId):
             try container.encode(Kind.gainTreasure, forKey: .type)
-            try container.encode(treasure, forKey: .treasure)
+            try container.encode(treasureId, forKey: .treasureId)
         }
     }
 }

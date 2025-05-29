@@ -11,6 +11,7 @@ struct DiceRollView: View {
     let action: ActionOption
     let character: Character
     let clockID: UUID?
+    let interactableID: UUID?
 
     @State private var diceValues: [Int] = []
     @State private var diceOffsets: [CGSize] = []
@@ -54,7 +55,7 @@ struct DiceRollView: View {
         showVignette = false
         isRolling = false
         AudioManager.shared.play(sound: "sfx_dice_land.wav")
-        let rollResult = viewModel.performAction(for: action, with: character)
+        let rollResult = viewModel.performAction(for: action, with: character, interactableID: interactableID)
         self.result = rollResult
         let totalDice = diceValues.count
         highlightIndex = Int.random(in: 0..<totalDice)
