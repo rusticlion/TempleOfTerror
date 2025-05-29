@@ -48,7 +48,7 @@ struct ContentView: View {
                         if let node = viewModel.currentNode {
                             VStack(alignment: .leading, spacing: 16) {
                                 ForEach(node.interactables, id: \.id) { interactable in
-                                    InteractableCardView(interactable: interactable) { action in
+                                    InteractableCardView(interactable: interactable, selectedCharacter: selectedCharacter) { action in
                                         if selectedCharacter != nil {
                                             pendingAction = action
                                             pendingInteractableID = interactable.id

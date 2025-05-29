@@ -1,5 +1,15 @@
 import SwiftUI
 
+struct RollProjectionDetails {
+    var baseDiceCount: Int
+    var finalDiceCount: Int
+    var basePosition: RollPosition
+    var finalPosition: RollPosition
+    var baseEffect: RollEffect
+    var finalEffect: RollEffect
+    var notes: [String]
+}
+
 @MainActor
 class GameViewModel: ObservableObject {
     @Published var gameState: GameState
@@ -18,10 +28,13 @@ class GameViewModel: ObservableObject {
     // --- Core Logic Functions for the Sprint ---
 
     /// Calculates the projection before the roll.
-    func calculateProjection(for action: ActionOption, with character: Character) -> String {
+    func calculateProjection(for action: ActionOption, with character: Character) -> RollProjectionDetails {
         var diceCount = character.actions[action.actionType] ?? 0
         var position = action.position
         var effect = action.effect
+        let baseDice = diceCount
+        let basePosition = position
+        let baseEffect = effect
         var notes: [String] = []
 
         // Apply penalties from all active harm conditions
@@ -40,10 +53,56 @@ class GameViewModel: ObservableObject {
                 apply(penalty: penalty, description: harm.description, to: action.actionType, diceCount: &diceCount, effect: &effect, notes: &notes)
             }
         }
+        // Apply bonuses from modifiers
+        for modifier in character.modifiers {
+            if modifier.uses == 0 { continue }
+            if let specific = modifier.applicableToAction, specific != action.actionType { continue }
+
+            if modifier.bonusDice != 0 {
+                diceCount += modifier.bonusDice
+                var note = "(+\(modifier.bonusDice)d \(modifier.description)"
+                if modifier.uses > 0 {
+                    note += " (\(modifier.uses) use\(modifier.uses == 1 ? "" : "s") left)"
+                }
+                if modifier.uses == 1 { note += " - will be consumed" }
+                note += ")"
+                notes.append(note)
+            }
+
+            if modifier.improvePosition {
+                position = position.improved()
+                var note = "(Improved Position from \(modifier.description)"
+                if modifier.uses > 0 {
+                    note += " (\(modifier.uses) use\(modifier.uses == 1 ? "" : "s") left)"
+                }
+                if modifier.uses == 1 { note += " - will be consumed" }
+                note += ")"
+                notes.append(note)
+            }
+
+            if modifier.improveEffect {
+                effect = effect.increased()
+                var note = "(+1 Effect from \(modifier.description)"
+                if modifier.uses > 0 {
+                    note += " (\(modifier.uses) use\(modifier.uses == 1 ? "" : "s") left)"
+                }
+                if modifier.uses == 1 { note += " - will be consumed" }
+                note += ")"
+                notes.append(note)
+            }
+        }
+
         diceCount = max(diceCount, 0) // Can't roll negative dice
 
-        let notesString = notes.isEmpty ? "" : " " + notes.joined(separator: ", ")
-        return "Roll \(diceCount)d6. Position: \(position.rawValue), Effect: \(effect.rawValue)\(notesString)"
+        return RollProjectionDetails(
+            baseDiceCount: baseDice,
+            finalDiceCount: diceCount,
+            basePosition: basePosition,
+            finalPosition: position,
+            baseEffect: baseEffect,
+            finalEffect: effect,
+            notes: notes
+        )
     }
 
     /// The main dice roll function, now returns the result for the UI.

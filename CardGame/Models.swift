@@ -423,6 +423,15 @@ enum RollPosition: String, Codable {
     case controlled
     case risky
     case desperate
+
+    /// Returns a one-step improved position, clamping at `.controlled`.
+    func improved() -> RollPosition {
+        switch self {
+        case .desperate: return .risky
+        case .risky: return .controlled
+        case .controlled: return .controlled
+        }
+    }
 }
 
 enum RollEffect: String, Codable {
@@ -436,6 +445,15 @@ enum RollEffect: String, Codable {
         case .great: return .standard
         case .standard: return .limited
         case .limited: return .limited
+        }
+    }
+
+    /// Returns an increased effect level, clamping at `.great`.
+    func increased() -> RollEffect {
+        switch self {
+        case .limited: return .standard
+        case .standard: return .great
+        case .great: return .great
         }
     }
 }
