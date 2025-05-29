@@ -94,6 +94,13 @@ struct HarmLibrary {
             moderate: HarmTier(description: "Torn Muscle", penalty: .reduceEffect),
             severe: HarmTier(description: "Shattered Knee", penalty: .banAction(actionType: "Finesse")),
             fatal: HarmTier(description: "Crippled Beyond Recovery", penalty: nil)
+        ),
+        "electric_shock": HarmFamily(
+            id: "electric_shock",
+            lesser: HarmTier(description: "Electric Jolt", penalty: nil),
+            moderate: HarmTier(description: "Seared Nerves", penalty: .reduceEffect),
+            severe: HarmTier(description: "Nerve Damage", penalty: .banAction(actionType: "Tinker")),
+            fatal: HarmTier(description: "Heart Stops", penalty: nil)
         )
         // Additional families can be added here
     ]
@@ -141,7 +148,7 @@ enum RollOutcome: String, Codable {
 
 enum Consequence: Codable {
     case gainStress(amount: Int)
-    case sufferHarm(level: HarmLevel, description: String)
+    case sufferHarm(level: HarmLevel, familyId: String)
     case tickClock(clockName: String, amount: Int)
     case unlockConnection(fromNodeID: UUID, toNodeID: UUID)
     case removeInteractable(id: UUID)
