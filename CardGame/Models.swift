@@ -14,6 +14,16 @@ struct GameState: Codable {
     // ... other global state can be added later
 }
 
+/// A general-purpose modifier that can adjust action rolls.
+struct Modifier: Codable {
+    var bonusDice: Int = 0
+    var improvePosition: Bool = false
+    var improveEffect: Bool = false
+    var applicableToAction: String? = nil
+    var uses: Int = 1
+    var description: String
+}
+
 struct Character: Identifiable, Codable {
     let id: UUID = UUID()
     var name: String
@@ -21,6 +31,7 @@ struct Character: Identifiable, Codable {
     var stress: Int
     var harm: HarmState
     var actions: [String: Int] // e.g., ["Study": 2, "Tinker": 1]
+    var modifiers: [Modifier] = []
 }
 
 /// A specific injury or affliction with a mechanical effect.
