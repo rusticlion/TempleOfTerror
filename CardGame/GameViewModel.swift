@@ -47,7 +47,7 @@ class GameViewModel: ObservableObject {
     }
 
     /// The main dice roll function, now returns the result for the UI.
-    func performAction(for action: ActionOption, with character: Character) -> DiceRollResult {
+    func performAction(for action: ActionOption, with character: Character, interactableID: UUID?) -> DiceRollResult {
         guard gameState.party.contains(where: { $0.id == character.id }) else {
             return DiceRollResult(highestRoll: 0, outcome: "Error", consequences: "Character not found.")
         }
@@ -73,12 +73,12 @@ class GameViewModel: ObservableObject {
             consequencesToApply = action.outcomes[.failure] ?? []
         }
 
-        let consequencesDescription = processConsequences(consequencesToApply, forCharacter: character)
+        let consequencesDescription = processConsequences(consequencesToApply, forCharacter: character, interactableID: interactableID)
 
         return DiceRollResult(highestRoll: highestRoll, outcome: outcomeString, consequences: consequencesDescription)
     }
 
-    private func processConsequences(_ consequences: [Consequence], forCharacter character: Character) -> String {
+    private func processConsequences(_ consequences: [Consequence], forCharacter character: Character, interactableID: UUID?) -> String {
         var descriptions: [String] = []
         for consequence in consequences {
             switch consequence {
@@ -105,11 +105,22 @@ class GameViewModel: ObservableObject {
                     gameState.dungeon?.nodes[nodeID]?.interactables.removeAll(where: { $0.id == id })
                     descriptions.append("The way is clear.")
                 }
+            case .removeSelfInteractable:
+                if let nodeID = gameState.currentNodeID, let targetID = interactableID {
+                    gameState.dungeon?.nodes[nodeID]?.interactables.removeAll(where: { $0.id == targetID })
+                    descriptions.append("The way is clear.")
+                }
             case .addInteractable(let inNodeID, let interactable):
                 gameState.dungeon?.nodes[inNodeID]?.interactables.append(interactable)
                 descriptions.append("Something new appears.")
-            case .gainTreasure(let treasure):
-                if let charIndex = gameState.party.firstIndex(where: { $0.id == character.id }) {
+            case .addInteractableHere(let interactable):
+                if let nodeID = gameState.currentNodeID {
+                    gameState.dungeon?.nodes[nodeID]?.interactables.append(interactable)
+                    descriptions.append("Something new appears.")
+                }
+            case .gainTreasure(let treasureId):
+                if let treasure = ContentLoader.shared.treasureTemplates.first(where: { $0.id == treasureId }),
+                   let charIndex = gameState.party.firstIndex(where: { $0.id == character.id }) {
                     gameState.party[charIndex].treasures.append(treasure)
                     gameState.party[charIndex].modifiers.append(treasure.grantedModifier)
                     descriptions.append("Gained Treasure: \(treasure.name)!")

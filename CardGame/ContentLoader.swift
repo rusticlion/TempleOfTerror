@@ -21,7 +21,14 @@ class ContentLoader {
         do {
             let data = try Data(contentsOf: url)
             let decoder = JSONDecoder()
-            return try decoder.decode([T].self, from: data)
+            if let array = try? decoder.decode([T].self, from: data) {
+                return array
+            } else if let dict = try? decoder.decode([String: [T]].self, from: data) {
+                return dict.flatMap { $0.value }
+            } else {
+                print("Failed to decode \(filename): unexpected format")
+                return []
+            }
         } catch {
             print("Failed to decode \(filename): \(error)")
             return []

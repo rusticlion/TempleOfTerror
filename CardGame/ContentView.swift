@@ -3,6 +3,7 @@ import SwiftUI
 struct ContentView: View {
     @StateObject private var viewModel: GameViewModel
     @State private var pendingAction: ActionOption?
+    @State private var pendingInteractableID: UUID?
     @State private var selectedCharacterID: UUID? // Track selected character
     @State private var showingStatusSheet = false // Controls the party sheet
     @State private var doorProgress: CGFloat = 0 // For sliding door transition
@@ -50,6 +51,7 @@ struct ContentView: View {
                                     InteractableCardView(interactable: interactable) { action in
                                         if selectedCharacter != nil {
                                             pendingAction = action
+                                            pendingInteractableID = interactable.id
                                         }
                                     }
                                     .transition(.scale(scale: 0.9).combined(with: .opacity))
@@ -78,7 +80,8 @@ struct ContentView: View {
                     DiceRollView(viewModel: viewModel,
                                  action: action,
                                  character: character,
-                                 clockID: clockID)
+                                 clockID: clockID,
+                                 interactableID: pendingInteractableID)
                 } else {
                     Text("No action selected")
                 }
