@@ -22,6 +22,44 @@ struct Modifier: Codable {
     var applicableToAction: String? = nil
     var uses: Int = 1
     var description: String
+
+    enum CodingKeys: String, CodingKey {
+        case bonusDice, improvePosition, improveEffect, applicableToAction, uses, description
+    }
+
+    init(bonusDice: Int = 0,
+         improvePosition: Bool = false,
+         improveEffect: Bool = false,
+         applicableToAction: String? = nil,
+         uses: Int = 1,
+         description: String) {
+        self.bonusDice = bonusDice
+        self.improvePosition = improvePosition
+        self.improveEffect = improveEffect
+        self.applicableToAction = applicableToAction
+        self.uses = uses
+        self.description = description
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        bonusDice = try container.decodeIfPresent(Int.self, forKey: .bonusDice) ?? 0
+        improvePosition = try container.decodeIfPresent(Bool.self, forKey: .improvePosition) ?? false
+        improveEffect = try container.decodeIfPresent(Bool.self, forKey: .improveEffect) ?? false
+        applicableToAction = try container.decodeIfPresent(String.self, forKey: .applicableToAction)
+        uses = try container.decodeIfPresent(Int.self, forKey: .uses) ?? 1
+        description = try container.decode(String.self, forKey: .description)
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(bonusDice, forKey: .bonusDice)
+        try container.encode(improvePosition, forKey: .improvePosition)
+        try container.encode(improveEffect, forKey: .improveEffect)
+        try container.encodeIfPresent(applicableToAction, forKey: .applicableToAction)
+        try container.encode(uses, forKey: .uses)
+        try container.encode(description, forKey: .description)
+    }
 }
 
 /// A collectible treasure that grants a modifier when acquired.
@@ -201,6 +239,49 @@ struct ActionOption: Codable {
     var position: RollPosition
     var effect: RollEffect
     var outcomes: [RollOutcome: [Consequence]] = [:]
+
+    enum CodingKeys: String, CodingKey {
+        case name, actionType, position, effect, outcomes
+    }
+
+    init(name: String,
+         actionType: String,
+         position: RollPosition,
+         effect: RollEffect,
+         outcomes: [RollOutcome: [Consequence]] = [:]) {
+        self.name = name
+        self.actionType = actionType
+        self.position = position
+        self.effect = effect
+        self.outcomes = outcomes
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        name = try container.decode(String.self, forKey: .name)
+        actionType = try container.decode(String.self, forKey: .actionType)
+        position = try container.decode(RollPosition.self, forKey: .position)
+        effect = try container.decode(RollEffect.self, forKey: .effect)
+        let rawOutcomes = try container.decodeIfPresent([String: [Consequence]].self, forKey: .outcomes) ?? [:]
+        var mapped: [RollOutcome: [Consequence]] = [:]
+        for (key, value) in rawOutcomes {
+            if let outcome = RollOutcome(rawValue: key) {
+                mapped[outcome] = value
+            }
+        }
+        outcomes = mapped
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(name, forKey: .name)
+        try container.encode(actionType, forKey: .actionType)
+        try container.encode(position, forKey: .position)
+        try container.encode(effect, forKey: .effect)
+        var raw: [String: [Consequence]] = [:]
+        for (key, value) in outcomes { raw[key.rawValue] = value }
+        try container.encode(raw, forKey: .outcomes)
+    }
 }
 
 extension ActionOption: Identifiable {
