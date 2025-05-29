@@ -192,31 +192,12 @@ struct HarmState: Codable {
 }
 
 /// Central catalog of all harm families available in the game.
+/// This dictionary is populated from the JSON content loaded by `ContentLoader`.
 struct HarmLibrary {
-    static let families: [String: HarmFamily] = [
-        "head_trauma": HarmFamily(
-            id: "head_trauma",
-            lesser: HarmTier(description: "Headache", penalty: .actionPenalty(actionType: "Study")),
-            moderate: HarmTier(description: "Migraine", penalty: .reduceEffect),
-            severe: HarmTier(description: "Brain Lightning", penalty: .banAction(actionType: "Study")),
-            fatal: HarmTier(description: "Head Explosion", penalty: nil)
-        ),
-        "leg_injury": HarmFamily(
-            id: "leg_injury",
-            lesser: HarmTier(description: "Twisted Ankle", penalty: .actionPenalty(actionType: "Finesse")),
-            moderate: HarmTier(description: "Torn Muscle", penalty: .reduceEffect),
-            severe: HarmTier(description: "Shattered Knee", penalty: .banAction(actionType: "Finesse")),
-            fatal: HarmTier(description: "Crippled Beyond Recovery", penalty: nil)
-        ),
-        "electric_shock": HarmFamily(
-            id: "electric_shock",
-            lesser: HarmTier(description: "Electric Jolt", penalty: nil),
-            moderate: HarmTier(description: "Seared Nerves", penalty: .reduceEffect),
-            severe: HarmTier(description: "Nerve Damage", penalty: .banAction(actionType: "Tinker")),
-            fatal: HarmTier(description: "Heart Stops", penalty: nil)
-        )
-        // Additional families can be added here
-    ]
+    static let families: [String: HarmFamily] = {
+        let families = ContentLoader.shared.harmFamilies
+        return Dictionary(uniqueKeysWithValues: families.map { ($0.id, $0) })
+    }()
 }
 
 struct GameClock: Identifiable, Codable {
