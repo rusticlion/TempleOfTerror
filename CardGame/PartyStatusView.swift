@@ -13,6 +13,13 @@ struct PartyStatusView: View {
                     Text(character.name)
                         .font(.subheadline)
                         .bold()
+                    if viewModel.partyMovementMode == .solo && viewModel.isPartyActuallySplit() {
+                        if let locName = viewModel.getNodeName(for: character.id) {
+                            Text("At: \(locName)")
+                                .font(.caption)
+                                .foregroundColor(.gray)
+                        }
+                    }
 
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Stress \(character.stress)/9")

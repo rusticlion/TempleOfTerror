@@ -9,7 +9,8 @@ struct GameState: Codable {
     var party: [Character] = []
     var activeClocks: [GameClock] = []
     var dungeon: DungeonMap? // The full map
-    var currentNodeID: UUID? // The party's current location
+    var currentNodeID: UUID? // The party's current location (legacy)
+    var characterLocations: [UUID: UUID] = [:] // Individual character locations
     var status: GameStatus = .playing
     // ... other global state can be added later
 }
