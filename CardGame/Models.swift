@@ -382,6 +382,7 @@ struct MapNode: Identifiable, Codable {
     var soundProfile: String
     var interactables: [Interactable]
     var connections: [NodeConnection]
+    var theme: String? = nil
     var isDiscovered: Bool = false // To support fog of war
 }
 
