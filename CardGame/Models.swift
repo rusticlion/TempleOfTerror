@@ -64,6 +64,52 @@ enum Penalty: Codable {
     case increaseStressCost(amount: Int) // Stress costs are increased.
     case actionPenalty(actionType: String) // Specific action suffers –1 die.
     case banAction(actionType: String) // An action is impossible without effort
+
+    private enum CodingKeys: String, CodingKey {
+        case type, amount, actionType
+    }
+
+    private enum Kind: String, Codable {
+        case reduceEffect
+        case increaseStressCost
+        case actionPenalty
+        case banAction
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        let kind = try container.decode(Kind.self, forKey: .type)
+        switch kind {
+        case .reduceEffect:
+            self = .reduceEffect
+        case .increaseStressCost:
+            let amount = try container.decode(Int.self, forKey: .amount)
+            self = .increaseStressCost(amount: amount)
+        case .actionPenalty:
+            let action = try container.decode(String.self, forKey: .actionType)
+            self = .actionPenalty(actionType: action)
+        case .banAction:
+            let action = try container.decode(String.self, forKey: .actionType)
+            self = .banAction(actionType: action)
+        }
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        switch self {
+        case .reduceEffect:
+            try container.encode(Kind.reduceEffect, forKey: .type)
+        case .increaseStressCost(let amount):
+            try container.encode(Kind.increaseStressCost, forKey: .type)
+            try container.encode(amount, forKey: .amount)
+        case .actionPenalty(let action):
+            try container.encode(Kind.actionPenalty, forKey: .type)
+            try container.encode(action, forKey: .actionType)
+        case .banAction(let action):
+            try container.encode(Kind.banAction, forKey: .type)
+            try container.encode(action, forKey: .actionType)
+        }
+    }
 }
 
 /// HarmState now tracks detailed conditions rather than simple strings.
@@ -182,6 +228,85 @@ enum Consequence: Codable {
     case removeInteractable(id: UUID)
     case addInteractable(inNodeID: UUID, interactable: Interactable)
     case gainTreasure(treasure: Treasure)
+
+    private enum CodingKeys: String, CodingKey {
+        case type, amount, level, familyId, clockName
+        case fromNodeID, toNodeID, id, inNodeID
+        case interactable, treasure
+    }
+
+    private enum Kind: String, Codable {
+        case gainStress
+        case sufferHarm
+        case tickClock
+        case unlockConnection
+        case removeInteractable
+        case addInteractable
+        case gainTreasure
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        let kind = try container.decode(Kind.self, forKey: .type)
+        switch kind {
+        case .gainStress:
+            let amount = try container.decode(Int.self, forKey: .amount)
+            self = .gainStress(amount: amount)
+        case .sufferHarm:
+            let level = try container.decode(HarmLevel.self, forKey: .level)
+            let family = try container.decode(String.self, forKey: .familyId)
+            self = .sufferHarm(level: level, familyId: family)
+        case .tickClock:
+            let name = try container.decode(String.self, forKey: .clockName)
+            let amount = try container.decode(Int.self, forKey: .amount)
+            self = .tickClock(clockName: name, amount: amount)
+        case .unlockConnection:
+            let from = try container.decode(UUID.self, forKey: .fromNodeID)
+            let to = try container.decode(UUID.self, forKey: .toNodeID)
+            self = .unlockConnection(fromNodeID: from, toNodeID: to)
+        case .removeInteractable:
+            let id = try container.decode(UUID.self, forKey: .id)
+            self = .removeInteractable(id: id)
+        case .addInteractable:
+            let node = try container.decode(UUID.self, forKey: .inNodeID)
+            let interactable = try container.decode(Interactable.self, forKey: .interactable)
+            self = .addInteractable(inNodeID: node, interactable: interactable)
+        case .gainTreasure:
+            let treasure = try container.decode(Treasure.self, forKey: .treasure)
+            self = .gainTreasure(treasure: treasure)
+        }
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        switch self {
+        case .gainStress(let amount):
+            try container.encode(Kind.gainStress, forKey: .type)
+            try container.encode(amount, forKey: .amount)
+        case .sufferHarm(let level, let family):
+            try container.encode(Kind.sufferHarm, forKey: .type)
+            try container.encode(level, forKey: .level)
+            try container.encode(family, forKey: .familyId)
+        case .tickClock(let name, let amount):
+            try container.encode(Kind.tickClock, forKey: .type)
+            try container.encode(name, forKey: .clockName)
+            try container.encode(amount, forKey: .amount)
+        case .unlockConnection(let from, let to):
+            try container.encode(Kind.unlockConnection, forKey: .type)
+            try container.encode(from, forKey: .fromNodeID)
+            try container.encode(to, forKey: .toNodeID)
+        case .removeInteractable(let id):
+            try container.encode(Kind.removeInteractable, forKey: .type)
+            try container.encode(id, forKey: .id)
+        case .addInteractable(let node, let interactable):
+            try container.encode(Kind.addInteractable, forKey: .type)
+            try container.encode(node, forKey: .inNodeID)
+            try container.encode(interactable, forKey: .interactable)
+        case .gainTreasure(let treasure):
+            try container.encode(Kind.gainTreasure, forKey: .type)
+            try container.encode(treasure, forKey: .treasure)
+        }
+    }
 }
 
 enum HarmLevel: String, Codable {

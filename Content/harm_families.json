@@ -1,0 +1,25 @@
+{
+  "families": [
+    {
+      "id": "head_trauma",
+      "lesser": { "description": "Headache", "penalty": { "type": "actionPenalty", "actionType": "Study" } },
+      "moderate": { "description": "Migraine", "penalty": { "type": "reduceEffect" } },
+      "severe": { "description": "Brain Lightning", "penalty": { "type": "banAction", "actionType": "Study" } },
+      "fatal": { "description": "Head Explosion" }
+    },
+    {
+      "id": "leg_injury",
+      "lesser": { "description": "Twisted Ankle", "penalty": { "type": "actionPenalty", "actionType": "Finesse" } },
+      "moderate": { "description": "Torn Muscle", "penalty": { "type": "reduceEffect" } },
+      "severe": { "description": "Shattered Knee", "penalty": { "type": "banAction", "actionType": "Finesse" } },
+      "fatal": { "description": "Crippled Beyond Recovery" }
+    },
+    {
+      "id": "electric_shock",
+      "lesser": { "description": "Electric Jolt" },
+      "moderate": { "description": "Seared Nerves", "penalty": { "type": "reduceEffect" } },
+      "severe": { "description": "Nerve Damage", "penalty": { "type": "banAction", "actionType": "Tinker" } },
+      "fatal": { "description": "Heart Stops" }
+    }
+  ]
+}
