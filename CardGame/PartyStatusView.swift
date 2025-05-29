@@ -17,23 +17,34 @@ struct PartyStatusView: View {
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Stress \(character.stress)/9")
                             .font(.caption2)
-                        ProgressView(value: Float(character.stress), total: 9)
-                            .progressViewStyle(.linear)
+                        HStack(spacing: 2) {
+                            ForEach(1...9, id: .self) { index in
+                                Image(character.stress >= index ? "icon_stress_pip_lit" : "icon_stress_pip_unlit")
+                                    .resizable()
+                                    .frame(width: 12, height: 12)
+                            }
+                        }
                     }
 
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Harm")
                             .font(.caption2)
                         HStack {
-                            ProgressView(value: Float(character.harm.lesser.count), total: Float(HarmState.lesserSlots))
-                                .progressViewStyle(.linear)
-                                .tint(.yellow)
-                            ProgressView(value: Float(character.harm.moderate.count), total: Float(HarmState.moderateSlots))
-                                .progressViewStyle(.linear)
-                                .tint(.orange)
-                            ProgressView(value: Float(character.harm.severe.count), total: Float(HarmState.severeSlots))
-                                .progressViewStyle(.linear)
-                                .tint(.red)
+                            ForEach(0..<HarmState.lesserSlots, id: .self) { index in
+                                Image(index < character.harm.lesser.count ? "icon_harm_lesser_full" : "icon_harm_lesser_empty")
+                                    .resizable()
+                                    .frame(width: 16, height: 16)
+                            }
+                            ForEach(0..<HarmState.moderateSlots, id: .self) { index in
+                                Image(index < character.harm.moderate.count ? "icon_harm_moderate_full" : "icon_harm_moderate_empty")
+                                    .resizable()
+                                    .frame(width: 16, height: 16)
+                            }
+                            ForEach(0..<HarmState.severeSlots, id: .self) { index in
+                                Image(index < character.harm.severe.count ? "icon_harm_severe_full" : "icon_harm_severe_empty")
+                                    .resizable()
+                                    .frame(width: 16, height: 16)
+                            }
                         }
                     }
                 }
