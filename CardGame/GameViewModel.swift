@@ -367,7 +367,6 @@ class GameViewModel: ObservableObject {
                 GameClock(name: "The Guardian Wakes", segments: 6, progress: 0)
             ] + generatedClocks,
             dungeon: newDungeon,
-            currentNodeID: newDungeon.startingNodeID,
             characterLocations: [:],
             status: .playing
         )
@@ -394,7 +393,6 @@ class GameViewModel: ObservableObject {
             }
         }
 
-        gameState.currentNodeID = connection.toNodeID
         if let node = gameState.dungeon?.nodes[connection.toNodeID] {
             gameState.dungeon?.nodes[connection.toNodeID]?.isDiscovered = true
             AudioManager.shared.play(sound: "ambient_\(node.soundProfile).wav", loop: true)
