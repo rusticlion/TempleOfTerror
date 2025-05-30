@@ -65,7 +65,9 @@ struct ContentView: View {
                                 let items = threats.isEmpty ? node.interactables : threats
 
                                 ForEach(items, id: \.id) { interactable in
-                                    InteractableCardView(interactable: interactable, selectedCharacter: selectedCharacter) { action in
+                                    InteractableCardView(viewModel: viewModel,
+                                                        interactable: interactable,
+                                                        selectedCharacter: selectedCharacter) { action in
                                         if let character = selectedCharacter {
                                             if action.requiresTest {
                                                 pendingAction = action
