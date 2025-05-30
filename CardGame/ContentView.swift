@@ -6,6 +6,7 @@ struct ContentView: View {
     @State private var pendingInteractableID: String?
     @State private var selectedCharacterID: UUID? // Track selected character
     @State private var showingStatusSheet = false // Controls the party sheet
+    @State private var showingMap = false // Controls the map sheet
     @State private var doorProgress: CGFloat = 0 // For sliding door transition
 
     init() {
@@ -122,6 +123,15 @@ struct ContentView: View {
                     }
                     .padding()
                     .background(.thinMaterial, in: Capsule())
+
+                    Button {
+                        showingMap.toggle()
+                    } label: {
+                        Image(systemName: "map")
+                        Text("Map")
+                    }
+                    .padding()
+                    .background(.thinMaterial, in: Capsule())
                 }
                 .padding()
             }
@@ -148,6 +158,9 @@ struct ContentView: View {
         .sheet(isPresented: $showingStatusSheet) {
             StatusSheetView(viewModel: viewModel)
                 .presentationDetents([.medium, .large])
+        }
+        .sheet(isPresented: $showingMap) {
+            MapView(viewModel: viewModel)
         }
         .ignoresSafeArea(.all, edges: .bottom)
     }
