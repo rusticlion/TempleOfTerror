@@ -10,7 +10,7 @@ struct MapView: View {
         while let id = queue.first {
             queue.removeFirst()
             guard visited.insert(id).inserted else { continue }
-            if let node = map.nodes[id] {
+            if let node = map.nodes[id.uuidString] {
                 result.append(node)
                 queue.append(contentsOf: node.connections.map { $0.toNodeID })
             }
