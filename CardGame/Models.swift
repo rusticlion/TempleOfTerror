@@ -213,6 +213,43 @@ struct Interactable: Codable, Identifiable {
     var title: String
     var description: String
     var availableActions: [ActionOption]
+    var isThreat: Bool = false
+
+    enum CodingKeys: String, CodingKey {
+        case id, title, description, availableActions, isThreat
+    }
+
+    init(id: String,
+         title: String,
+         description: String,
+         availableActions: [ActionOption],
+         isThreat: Bool = false) {
+        self.id = id
+        self.title = title
+        self.description = description
+        self.availableActions = availableActions
+        self.isThreat = isThreat
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(String.self, forKey: .id)
+        title = try container.decode(String.self, forKey: .title)
+        description = try container.decode(String.self, forKey: .description)
+        availableActions = try container.decode([ActionOption].self, forKey: .availableActions)
+        isThreat = try container.decodeIfPresent(Bool.self, forKey: .isThreat) ?? false
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(title, forKey: .title)
+        try container.encode(description, forKey: .description)
+        try container.encode(availableActions, forKey: .availableActions)
+        if isThreat {
+            try container.encode(isThreat, forKey: .isThreat)
+        }
+    }
 }
 
 struct ActionOption: Codable {
