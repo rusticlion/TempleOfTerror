@@ -5,9 +5,10 @@
 OUTPUT_FILE="project_structure.md"
 PROJECT_DIR="CardGame" # Focus on the inner CardGame directory
 CONTENT_DIR="Content"  # Additional directory to include
+DOCS_DIR="Docs"        # Directory for documentation
 
 # Start with a clean output file
-echo "# Project and Content Structure" > "$OUTPUT_FILE"
+echo "# Project, Content, and Documentation Structure" > "$OUTPUT_FILE"
 echo "" >> "$OUTPUT_FILE"
 
 # --- Directory Tree for PROJECT_DIR ---
@@ -28,7 +29,16 @@ if [ -d "$CONTENT_DIR" ]; then
     find "$CONTENT_DIR" -print | sed -e 's;[^/]*/;|____;g' -e 's;____|; |;' -e 's;[^./]*\.[[:alnum:]_]\+;\`&\`;g' >> "$OUTPUT_FILE"
     echo "\`\`\`" >> "$OUTPUT_FILE"
     echo "" >> "$OUTPUT_FILE"
-fi # No message if not found, as it's an optional addition
+fi
+
+# --- Directory Tree for DOCS_DIR ---
+if [ -d "$DOCS_DIR" ]; then
+    echo "## Directory Tree for $DOCS_DIR" >> "$OUTPUT_FILE"
+    echo "\`\`\`" >> "$OUTPUT_FILE"
+    find "$DOCS_DIR" -print | sed -e 's;[^/]*/;|____;g' -e 's;____|; |;' -e 's;[^./]*\.[[:alnum:]_]\+;\`&\`;g' >> "$OUTPUT_FILE"
+    echo "\`\`\`" >> "$OUTPUT_FILE"
+    echo "" >> "$OUTPUT_FILE"
+fi
 
 echo "## File Contents" >> "$OUTPUT_FILE"
 echo "" >> "$OUTPUT_FILE"
@@ -60,6 +70,25 @@ if [ -d "$CONTENT_DIR" ]; then
     find "$CONTENT_DIR" -type f \
         -not -path "$CONTENT_DIR/.git/*" \
         -not -path "$CONTENT_DIR/node_modules/*" \
+        -not -name "$OUTPUT_FILE" \
+        -not -name "*.sh" \
+        -print0 | while IFS= read -r -d $'\0' file; do
+        echo "### \`$file\`" >> "$OUTPUT_FILE"
+        echo "" >> "$OUTPUT_FILE"
+        echo "\`\`\`" >> "$OUTPUT_FILE"
+        if [ -s "$file" ]; then echo "" >> "$OUTPUT_FILE"; fi
+        cat "$file" >> "$OUTPUT_FILE"
+        if [ -s "$file" ]; then echo "" >> "$OUTPUT_FILE"; fi
+        echo "\`\`\`" >> "$OUTPUT_FILE"
+        echo "" >> "$OUTPUT_FILE"
+    done
+fi
+
+# --- File Contents for DOCS_DIR ---
+if [ -d "$DOCS_DIR" ]; then
+    find "$DOCS_DIR" -type f \
+        -not -path "$DOCS_DIR/.git/*" \
+        -not -path "$DOCS_DIR/node_modules/*" \
         -not -name "$OUTPUT_FILE" \
         -not -name "*.sh" \
         -print0 | while IFS= read -r -d $'\0' file; do

@@ -1,4 +1,4 @@
-# Project and Content Structure
+# Project, Content, and Documentation Structure
 
 ## Directory Tree for CardGame
 ```
@@ -26,6 +26,12 @@ CardGame
 | |____|____Contents.json
 | |____texture_stone_door.imageset
 | |____|____texture_stone_door.png
+| |____|____Contents.json
+| |____icon_bonus_action.imageset
+| |____|____icon_bonus_action.png
+| |____|____Contents.json
+| |____icon_penalty_action.imageset
+| |____|____icon_penalty_action.png
 | |____|____Contents.json
 | |____icon_harm_moderate_empty.imageset
 | |____|____Contents.json
@@ -68,12 +74,15 @@ CardGame
 | |____icon_harm_lesser_full.png
 | |____icon_harm_lesser_empty.md
 | |____icon_stress_pip_unlit.png
+| |____icon_bonus_action.md
 | |____sfx_ui_pop.md
 | |____sfx_dice_shake.md
 | |____texture_stone_door.md
 | |____icon_harm_moderate_full.md
+| |____icon_penalty_action.md
 | |____texture_stone_door.png
 | |____sfx_dice_land.md
+| |____sfx_modifier_consume.md
 | |____icon_harm_moderate_full.png
 | |____icon_harm_severe_empty.png
 | |____icon_harm_moderate_empty.md
@@ -98,6 +107,55 @@ Content
 |____harm_families.json
 ```
 
+## Directory Tree for Docs
+```
+Docs
+|____S6_MechanicalDepth
+| |____1-HarmSystemOverhaul.md
+| |____3-Treasures.md
+| |____2-GeneralPurposeModifiers.md
+|____S11_UIClarity
+| |____2-IntegrateModiferAndPenaltyInfoInDiceRollView.md
+| |____1-EnhanceCharacterStatDisplay.md
+| |____3-FeedbackForModifierConsumption.md
+|____PRD.md
+|____S10_ContentPipelineAndGenerationPolish
+| |____2-EnhanceDungeonGenerator.md
+| |____1-ExpandPlaceholderContentJsons.md
+| |____Side-ModelAndLoaderTweaks.md
+|____S9_GameJuice
+| |____1-AmbientWorld.md
+| |____3-ThematicStatusVisualization.md
+| |____2-HighStakesDiceRolls.md
+|____S4_FullGameLoop
+| |____1-DynamicActionConsequences.md
+| |____3-ImplementRoguelikeRuns.md
+| |____2-ImproveUIFeedback.md
+|____S1_CoreSlice
+| |____3-BasicUI.md
+| |____1-ProjectSetupAndCoreDataModels.md
+| |____2-ViewModelGameLogicEngine.md
+|____S7_AdvancedFitDMechanics
+| |____2-ImplementPushYourselfMechanic.md
+| |____3-HarmEscalation.md
+| |____1-HarmFamiliesAndSlots.md
+|____S5_VisualPolishAndRefactor
+| |____2-ReorganizeStatusViewsIntoPartySheet.md
+| |____3-SubtleAnimationsAndTransitions.md
+| |____1-IsolatedHeader.md
+|____S2_ImproveDynamicism
+| |____1-DynamicCharacterSelection.md
+| |____3-DesignDedicatedDiceRollView.md
+| |____2-CreateReusableInteractableCardView.md
+|____S8_ContentAndGenerationArchitecture
+| |____2-ArchitectDungeonGenerator.md
+| |____1-ExternalizeContentToJson.md
+|____S3_DungeonCrawl
+| |____1-DungeonModel.md
+| |____2-GenerateAndManageDungeonState.md
+| |____3-BuildDungeonViews.md
+```
+
 ## File Contents
 
 ### `CardGame/PartyStatusView.swift`
@@ -119,6 +177,13 @@ struct PartyStatusView: View {
                     Text(character.name)
                         .font(.subheadline)
                         .bold()
+                    if viewModel.partyMovementMode == .solo && viewModel.isPartyActuallySplit() {
+                        if let locName = viewModel.getNodeName(for: character.id) {
+                            Text("At: \(locName)")
+                                .font(.caption)
+                                .foregroundColor(.gray)
+                        }
+                    }
 
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Stress \(character.stress)/9")
@@ -150,6 +215,40 @@ struct PartyStatusView: View {
                                 Image(index < character.harm.severe.count ? "icon_harm_severe_full" : "icon_harm_severe_empty")
                                     .resizable()
                                     .frame(width: 16, height: 16)
+                            }
+                        }
+                    }
+
+                    // Action ratings
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Actions")
+                            .font(.caption2)
+                        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], alignment: .leading, spacing: 2) {
+                            ForEach(character.actions.sorted(by: { $0.key < $1.key }), id: \.key) { action, rating in
+                                HStack(spacing: 2) {
+                                    Text(action)
+                                    HStack(spacing: 1) {
+                                        ForEach(0..<rating, id: \.self) { _ in
+                                            Image("icon_stress_pip_lit")
+                                                .resizable()
+                                                .frame(width: 8, height: 8)
+                                        }
+                                    }
+                                }
+                                .font(.caption2)
+                            }
+                        }
+                    }
+
+                    // Active modifiers
+                    if !character.modifiers.isEmpty {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Modifiers")
+                                .font(.caption2)
+                            ForEach(Array(character.modifiers.enumerated()), id: \.offset) { index, modifier in
+                                Text("\(modifier.description) (\(modifier.uses) use\(modifier.uses == 1 ? "" : "s") left)")
+                                    .font(.caption2)
+                                    .foregroundColor(.purple)
                             }
                         }
                     }
@@ -191,6 +290,7 @@ struct DiceRollView: View {
     @State private var diceOffsets: [CGSize] = []
     @State private var diceRotations: [Double] = []
     @State private var result: DiceRollResult? = nil
+    @State private var projection: RollProjectionDetails? = nil
     @State private var isRolling = false
     @State private var extraDiceFromPush = 0
     @State private var hasPushed = false
@@ -261,6 +361,9 @@ struct DiceRollView: View {
             Text(character.name).font(.title)
             Text("is attempting to...").font(.subheadline).foregroundColor(.secondary)
             Text(action.name).font(.title2).bold()
+            Text("\(action.actionType): \(character.actions[action.actionType] ?? 0)")
+                .font(.subheadline)
+                .foregroundColor(.secondary)
 
             Spacer()
 
@@ -272,6 +375,18 @@ struct DiceRollView: View {
                         .transition(.scale.combined(with: .opacity))
                     Text("Rolled a \(result.highestRoll)").font(.title3)
                     Text(result.consequences).padding()
+                }
+            } else if let proj = projection {
+                VStack(spacing: 4) {
+                    Text("Dice: \(proj.finalDiceCount)d6")
+                        .font(.headline)
+                    Text("Position: \(proj.finalPosition.rawValue.capitalized), Effect: \(proj.finalEffect.rawValue.capitalized)")
+                        .font(.subheadline)
+                    ForEach(proj.notes, id: \.self) { note in
+                        Text(note)
+                            .font(.caption)
+                            .foregroundColor(note.contains("-") || note.contains("Cannot") ? .red : .blue)
+                    }
                 }
             }
 
@@ -325,7 +440,9 @@ struct DiceRollView: View {
         }
         .padding(30)
         .onAppear {
-            let diceCount = max(character.actions[action.actionType] ?? 0, 1)
+            let proj = viewModel.calculateProjection(for: action, with: character)
+            self.projection = proj
+            let diceCount = max(proj.finalDiceCount, 1)
             self.diceValues = Array(repeating: 1, count: diceCount)
             self.diceOffsets = Array(repeating: .zero, count: diceCount)
             self.diceRotations = Array(repeating: 0, count: diceCount)
@@ -787,11 +904,13 @@ class ContentLoader {
 
     let interactableTemplates: [Interactable]
     let harmFamilies: [HarmFamily]
+    let harmFamilyDict: [String: HarmFamily]
     let treasureTemplates: [Treasure]
 
     private init() {
         self.interactableTemplates = Self.load("interactables.json")
         self.harmFamilies = Self.load("harm_families.json")
+        self.harmFamilyDict = Dictionary(uniqueKeysWithValues: harmFamilies.map { ($0.id, $0) })
         self.treasureTemplates = Self.load("treasures.json")
     }
 
@@ -878,7 +997,8 @@ struct GameState: Codable {
     var party: [Character] = []
     var activeClocks: [GameClock] = []
     var dungeon: DungeonMap? // The full map
-    var currentNodeID: UUID? // The party's current location
+    var currentNodeID: UUID? // The party's current location (legacy)
+    var characterLocations: [UUID: UUID] = [:] // Individual character locations
     var status: GameStatus = .playing
     // ... other global state can be added later
 }
@@ -1060,31 +1180,12 @@ struct HarmState: Codable {
 }
 
 /// Central catalog of all harm families available in the game.
+/// This dictionary is populated from the JSON content loaded by `ContentLoader`.
 struct HarmLibrary {
-    static let families: [String: HarmFamily] = [
-        "head_trauma": HarmFamily(
-            id: "head_trauma",
-            lesser: HarmTier(description: "Headache", penalty: .actionPenalty(actionType: "Study")),
-            moderate: HarmTier(description: "Migraine", penalty: .reduceEffect),
-            severe: HarmTier(description: "Brain Lightning", penalty: .banAction(actionType: "Study")),
-            fatal: HarmTier(description: "Head Explosion", penalty: nil)
-        ),
-        "leg_injury": HarmFamily(
-            id: "leg_injury",
-            lesser: HarmTier(description: "Twisted Ankle", penalty: .actionPenalty(actionType: "Finesse")),
-            moderate: HarmTier(description: "Torn Muscle", penalty: .reduceEffect),
-            severe: HarmTier(description: "Shattered Knee", penalty: .banAction(actionType: "Finesse")),
-            fatal: HarmTier(description: "Crippled Beyond Recovery", penalty: nil)
-        ),
-        "electric_shock": HarmFamily(
-            id: "electric_shock",
-            lesser: HarmTier(description: "Electric Jolt", penalty: nil),
-            moderate: HarmTier(description: "Seared Nerves", penalty: .reduceEffect),
-            severe: HarmTier(description: "Nerve Damage", penalty: .banAction(actionType: "Tinker")),
-            fatal: HarmTier(description: "Heart Stops", penalty: nil)
-        )
-        // Additional families can be added here
-    ]
+    static let families: [String: HarmFamily] = {
+        let families = ContentLoader.shared.harmFamilies
+        return Dictionary(uniqueKeysWithValues: families.map { ($0.id, $0) })
+    }()
 }
 
 struct GameClock: Identifiable, Codable {
@@ -1107,21 +1208,24 @@ struct ActionOption: Codable {
     var actionType: String // Corresponds to a key in Character.actions, e.g., "Tinker"
     var position: RollPosition
     var effect: RollEffect
+    var isGroupAction: Bool = false
     var outcomes: [RollOutcome: [Consequence]] = [:]
 
     enum CodingKeys: String, CodingKey {
-        case name, actionType, position, effect, outcomes
+        case name, actionType, position, effect, isGroupAction, outcomes
     }
 
     init(name: String,
          actionType: String,
          position: RollPosition,
          effect: RollEffect,
+         isGroupAction: Bool = false,
          outcomes: [RollOutcome: [Consequence]] = [:]) {
         self.name = name
         self.actionType = actionType
         self.position = position
         self.effect = effect
+        self.isGroupAction = isGroupAction
         self.outcomes = outcomes
     }
 
@@ -1131,6 +1235,7 @@ struct ActionOption: Codable {
         actionType = try container.decode(String.self, forKey: .actionType)
         position = try container.decode(RollPosition.self, forKey: .position)
         effect = try container.decode(RollEffect.self, forKey: .effect)
+        isGroupAction = try container.decodeIfPresent(Bool.self, forKey: .isGroupAction) ?? false
         let rawOutcomes = try container.decodeIfPresent([String: [Consequence]].self, forKey: .outcomes) ?? [:]
         var mapped: [RollOutcome: [Consequence]] = [:]
         for (key, value) in rawOutcomes {
@@ -1147,6 +1252,9 @@ struct ActionOption: Codable {
         try container.encode(actionType, forKey: .actionType)
         try container.encode(position, forKey: .position)
         try container.encode(effect, forKey: .effect)
+        if isGroupAction {
+            try container.encode(isGroupAction, forKey: .isGroupAction)
+        }
         var raw: [String: [Consequence]] = [:]
         for (key, value) in outcomes { raw[key.rawValue] = value }
         try container.encode(raw, forKey: .outcomes)
@@ -1292,6 +1400,15 @@ enum RollPosition: String, Codable {
     case controlled
     case risky
     case desperate
+
+    /// Returns a one-step improved position, clamping at `.controlled`.
+    func improved() -> RollPosition {
+        switch self {
+        case .desperate: return .risky
+        case .risky: return .controlled
+        case .controlled: return .controlled
+        }
+    }
 }
 
 enum RollEffect: String, Codable {
@@ -1305,6 +1422,15 @@ enum RollEffect: String, Codable {
         case .great: return .standard
         case .standard: return .limited
         case .limited: return .limited
+        }
+    }
+
+    /// Returns an increased effect level, clamping at `.great`.
+    func increased() -> RollEffect {
+        switch self {
+        case .limited: return .standard
+        case .standard: return .great
+        case .great: return .great
         }
     }
 }
@@ -1345,7 +1471,41 @@ import SwiftUI
 
 struct InteractableCardView: View {
     let interactable: Interactable
+    let selectedCharacter: Character?
     let onActionTapped: (ActionOption) -> Void
+
+    private func hasPenalty(for action: ActionOption) -> Bool {
+        guard let character = selectedCharacter else { return false }
+        for harm in character.harm.lesser {
+            if let penalty = HarmLibrary.families[harm.familyId]?.lesser.penalty {
+                if case .actionPenalty(let t) = penalty, t == action.actionType { return true }
+                if case .banAction(let t) = penalty, t == action.actionType { return true }
+            }
+        }
+        for harm in character.harm.moderate {
+            if let penalty = HarmLibrary.families[harm.familyId]?.moderate.penalty {
+                if case .actionPenalty(let t) = penalty, t == action.actionType { return true }
+                if case .banAction(let t) = penalty, t == action.actionType { return true }
+            }
+        }
+        for harm in character.harm.severe {
+            if let penalty = HarmLibrary.families[harm.familyId]?.severe.penalty {
+                if case .actionPenalty(let t) = penalty, t == action.actionType { return true }
+                if case .banAction(let t) = penalty, t == action.actionType { return true }
+            }
+        }
+        return false
+    }
+
+    private func hasBonus(for action: ActionOption) -> Bool {
+        guard let character = selectedCharacter else { return false }
+        for mod in character.modifiers {
+            if mod.uses == 0 { continue }
+            if let specific = mod.applicableToAction, specific != action.actionType { continue }
+            if mod.bonusDice != 0 || mod.improvePosition || mod.improveEffect { return true }
+        }
+        return false
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -1360,6 +1520,17 @@ struct InteractableCardView: View {
                 }
                 .buttonStyle(.bordered)
                 .frame(maxWidth: .infinity)
+                .overlay(alignment: .topTrailing) {
+                    if hasPenalty(for: action) {
+                        Image("icon_penalty_action")
+                            .resizable()
+                            .frame(width: 16, height: 16)
+                    } else if hasBonus(for: action) {
+                        Image("icon_bonus_action")
+                            .resizable()
+                            .frame(width: 16, height: 16)
+                    }
+                }
             }
         }
         .padding()
@@ -1377,15 +1548,35 @@ struct InteractableCardView: View {
 
 import SwiftUI
 
+struct RollProjectionDetails {
+    var baseDiceCount: Int
+    var finalDiceCount: Int
+    var basePosition: RollPosition
+    var finalPosition: RollPosition
+    var baseEffect: RollEffect
+    var finalEffect: RollEffect
+    var notes: [String]
+}
+
 @MainActor
+enum PartyMovementMode {
+    case grouped
+    case solo
+}
+
 class GameViewModel: ObservableObject {
     @Published var gameState: GameState
+    @Published var partyMovementMode: PartyMovementMode = .grouped
 
-    // Helper to get the current node
-    var currentNode: MapNode? {
-        guard let map = gameState.dungeon, let currentNodeID = gameState.currentNodeID else { return nil }
-        return map.nodes[currentNodeID]
+
+    // Retrieve the node a specific character is currently in
+    func node(for characterID: UUID?) -> MapNode? {
+        guard let id = characterID,
+              let nodeID = gameState.characterLocations[id],
+              let map = gameState.dungeon else { return nil }
+        return map.nodes[nodeID]
     }
+
 
     init() {
         self.gameState = GameState()
@@ -1395,10 +1586,13 @@ class GameViewModel: ObservableObject {
     // --- Core Logic Functions for the Sprint ---
 
     /// Calculates the projection before the roll.
-    func calculateProjection(for action: ActionOption, with character: Character) -> String {
+    func calculateProjection(for action: ActionOption, with character: Character) -> RollProjectionDetails {
         var diceCount = character.actions[action.actionType] ?? 0
         var position = action.position
         var effect = action.effect
+        let baseDice = diceCount
+        let basePosition = position
+        let baseEffect = effect
         var notes: [String] = []
 
         // Apply penalties from all active harm conditions
@@ -1417,14 +1611,67 @@ class GameViewModel: ObservableObject {
                 apply(penalty: penalty, description: harm.description, to: action.actionType, diceCount: &diceCount, effect: &effect, notes: &notes)
             }
         }
+        // Apply bonuses from modifiers
+        for modifier in character.modifiers {
+            if modifier.uses == 0 { continue }
+            if let specific = modifier.applicableToAction, specific != action.actionType { continue }
+
+            if modifier.bonusDice != 0 {
+                diceCount += modifier.bonusDice
+                var note = "(+\(modifier.bonusDice)d \(modifier.description)"
+                if modifier.uses > 0 {
+                    note += " (\(modifier.uses) use\(modifier.uses == 1 ? "" : "s") left)"
+                }
+                if modifier.uses == 1 { note += " - will be consumed" }
+                note += ")"
+                notes.append(note)
+            }
+
+            if modifier.improvePosition {
+                position = position.improved()
+                var note = "(Improved Position from \(modifier.description)"
+                if modifier.uses > 0 {
+                    note += " (\(modifier.uses) use\(modifier.uses == 1 ? "" : "s") left)"
+                }
+                if modifier.uses == 1 { note += " - will be consumed" }
+                note += ")"
+                notes.append(note)
+            }
+
+            if modifier.improveEffect {
+                effect = effect.increased()
+                var note = "(+1 Effect from \(modifier.description)"
+                if modifier.uses > 0 {
+                    note += " (\(modifier.uses) use\(modifier.uses == 1 ? "" : "s") left)"
+                }
+                if modifier.uses == 1 { note += " - will be consumed" }
+                note += ")"
+                notes.append(note)
+            }
+        }
+
+        if action.isGroupAction {
+            notes.append("Group Action: party rolls together; best result counts. Leader takes 1 Stress per failed ally.")
+        }
+
         diceCount = max(diceCount, 0) // Can't roll negative dice
 
-        let notesString = notes.isEmpty ? "" : " " + notes.joined(separator: ", ")
-        return "Roll \(diceCount)d6. Position: \(position.rawValue), Effect: \(effect.rawValue)\(notesString)"
+        return RollProjectionDetails(
+            baseDiceCount: baseDice,
+            finalDiceCount: diceCount,
+            basePosition: basePosition,
+            finalPosition: position,
+            baseEffect: baseEffect,
+            finalEffect: effect,
+            notes: notes
+        )
     }
 
     /// The main dice roll function, now returns the result for the UI.
     func performAction(for action: ActionOption, with character: Character, interactableID: String?) -> DiceRollResult {
+        if action.isGroupAction {
+            return performGroupAction(for: action, leader: character, interactableID: interactableID)
+        }
         guard gameState.party.contains(where: { $0.id == character.id }) else {
             return DiceRollResult(highestRoll: 0, outcome: "Error", consequences: "Character not found.")
         }
@@ -1450,9 +1697,83 @@ class GameViewModel: ObservableObject {
             consequencesToApply = action.outcomes[.failure] ?? []
         }
 
-        let consequencesDescription = processConsequences(consequencesToApply, forCharacter: character, interactableID: interactableID)
+        var consequencesDescription = processConsequences(consequencesToApply, forCharacter: character, interactableID: interactableID)
+
+        if let charIndex = gameState.party.firstIndex(where: { $0.id == character.id }) {
+            var updatedModifiers: [Modifier] = []
+            var consumedMessages: [String] = []
+            for var modifier in gameState.party[charIndex].modifiers {
+                if modifier.uses == 0 { continue }
+                if let specific = modifier.applicableToAction, specific != action.actionType {
+                    updatedModifiers.append(modifier)
+                    continue
+                }
+                if modifier.uses > 0 {
+                    modifier.uses -= 1
+                    if modifier.uses == 0 {
+                        let name = modifier.description.replacingOccurrences(of: "from ", with: "")
+                        consumedMessages.append("Used up \(name).")
+                        continue
+                    }
+                }
+                updatedModifiers.append(modifier)
+            }
+            gameState.party[charIndex].modifiers = updatedModifiers
+            if !consumedMessages.isEmpty {
+                AudioManager.shared.play(sound: "sfx_modifier_consume.wav")
+                if consequencesDescription.isEmpty {
+                    consequencesDescription = consumedMessages.joined(separator: "\n")
+                } else {
+                    consequencesDescription += "\n" + consumedMessages.joined(separator: "\n")
+                }
+            }
+        }
 
         return DiceRollResult(highestRoll: highestRoll, outcome: outcomeString, consequences: consequencesDescription)
+    }
+
+    private func performGroupAction(for action: ActionOption, leader: Character, interactableID: String?) -> DiceRollResult {
+        guard partyMovementMode == .grouped, !isPartyActuallySplit() else {
+            return DiceRollResult(highestRoll: 0, outcome: "Cannot", consequences: "Party must be together for a group action.")
+        }
+
+        var bestRoll = 0
+        var failures = 0
+
+        for member in gameState.party {
+            let dicePool = max(member.actions[action.actionType] ?? 0, 1)
+            var highest = 0
+            for _ in 0..<dicePool { highest = max(highest, Int.random(in: 1...6)) }
+            bestRoll = max(bestRoll, highest)
+            if highest <= 3 { failures += 1 }
+        }
+
+        var consequences: [Consequence] = []
+        var outcomeString = ""
+
+        switch bestRoll {
+        case 6:
+            outcomeString = "Full Success!"
+            consequences = action.outcomes[.success] ?? []
+        case 4...5:
+            outcomeString = "Partial Success..."
+            consequences = action.outcomes[.partial] ?? []
+        default:
+            outcomeString = "Failure."
+            consequences = action.outcomes[.failure] ?? []
+        }
+
+        var description = processConsequences(consequences, forCharacter: leader, interactableID: interactableID)
+
+        if let leaderIndex = gameState.party.firstIndex(where: { $0.id == leader.id }) {
+            gameState.party[leaderIndex].stress += failures
+            if failures > 0 {
+                if !description.isEmpty { description += "\n" }
+                description += "Leader takes \(failures) Stress from allies' slips."
+            }
+        }
+
+        return DiceRollResult(highestRoll: bestRoll, outcome: outcomeString, consequences: description)
     }
 
     private func processConsequences(_ consequences: [Consequence], forCharacter character: Character, interactableID: String?) -> String {
@@ -1479,12 +1800,12 @@ class GameViewModel: ObservableObject {
                     descriptions.append("A path has opened!")
                 }
             case .removeInteractable(let id):
-                if let nodeID = gameState.currentNodeID {
+                if let nodeID = gameState.characterLocations[partyMemberId] {
                     gameState.dungeon?.nodes[nodeID]?.interactables.removeAll(where: { $0.id == id })
                     descriptions.append("The way is clear.")
                 }
             case .removeSelfInteractable:
-                if let nodeID = gameState.currentNodeID, let interactableStrID = interactableID {
+                if let nodeID = gameState.characterLocations[partyMemberId], let interactableStrID = interactableID {
                     gameState.dungeon?.nodes[nodeID]?.interactables.removeAll(where: { $0.id == interactableStrID })
                     descriptions.append("The way is clear.")
                 }
@@ -1492,7 +1813,7 @@ class GameViewModel: ObservableObject {
                 gameState.dungeon?.nodes[inNodeID]?.interactables.append(interactable)
                 descriptions.append("Something new appears.")
             case .addInteractableHere(let interactable):
-                if let nodeID = gameState.currentNodeID {
+                if let nodeID = gameState.characterLocations[partyMemberId] {
                     gameState.dungeon?.nodes[nodeID]?.interactables.append(interactable)
                     descriptions.append("Something new appears.")
                 }
@@ -1594,9 +1915,13 @@ class GameViewModel: ObservableObject {
                 GameClock(name: "The Guardian Wakes", segments: 6, progress: 0)
             ] + generatedClocks,
             dungeon: newDungeon,
-            currentNodeID: newDungeon.startingNodeID,
+            characterLocations: [:],
             status: .playing
         )
+
+        for id in gameState.party.map({ $0.id }) {
+            gameState.characterLocations[id] = newDungeon.startingNodeID
+        }
 
         if let startingNode = newDungeon.nodes[newDungeon.startingNodeID] {
             AudioManager.shared.play(sound: "ambient_\(startingNode.soundProfile).wav", loop: true)
@@ -1604,15 +1929,38 @@ class GameViewModel: ObservableObject {
     }
 
 
-    /// Move the party to a connected node if possible.
-    func move(to newConnection: NodeConnection) {
-        if newConnection.isUnlocked {
-            gameState.currentNodeID = newConnection.toNodeID
-            if let node = gameState.dungeon?.nodes[newConnection.toNodeID] {
-                gameState.dungeon?.nodes[newConnection.toNodeID]?.isDiscovered = true
-                AudioManager.shared.play(sound: "ambient_\(node.soundProfile).wav", loop: true)
+    /// Move one or all party members depending on the current movement mode.
+    func move(characterID: UUID, to connection: NodeConnection) {
+        guard connection.isUnlocked else { return }
+
+        if partyMovementMode == .solo {
+            gameState.characterLocations[characterID] = connection.toNodeID
+        } else {
+            for id in gameState.party.map({ $0.id }) {
+                gameState.characterLocations[id] = connection.toNodeID
             }
         }
+
+        if let node = gameState.dungeon?.nodes[connection.toNodeID] {
+            gameState.dungeon?.nodes[connection.toNodeID]?.isDiscovered = true
+            AudioManager.shared.play(sound: "ambient_\(node.soundProfile).wav", loop: true)
+        }
+    }
+
+    func getNodeName(for characterID: UUID?) -> String? {
+        guard let id = characterID,
+              let nodeID = gameState.characterLocations[id],
+              let node = gameState.dungeon?.nodes[nodeID] else { return nil }
+        return node.name
+    }
+
+    func isPartyActuallySplit() -> Bool {
+        let unique = Set(gameState.characterLocations.values)
+        return unique.count > 1
+    }
+
+    func toggleMovementMode() {
+        partyMovementMode = (partyMovementMode == .grouped) ? .solo : .grouped
     }
 }
 
@@ -1650,7 +1998,9 @@ struct ContentView: View {
         }
         AudioManager.shared.play(sound: "sfx_stone_door_slide.wav")
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-            viewModel.move(to: connection)
+            if let id = selectedCharacterID {
+                viewModel.move(characterID: id, to: connection)
+            }
             withAnimation(.linear(duration: 0.3)) {
                 doorProgress = 0
             }
@@ -1662,7 +2012,7 @@ struct ContentView: View {
         ZStack {
             VStack(spacing: 0) {
                 HeaderView(
-                    title: viewModel.currentNode?.name ?? "Unknown Location",
+                    title: viewModel.getNodeName(for: selectedCharacterID) ?? "Unknown Location",
                     characters: viewModel.gameState.party,
                     selectedCharacterID: $selectedCharacterID
                 )
@@ -1670,10 +2020,10 @@ struct ContentView: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 16) {
 
-                        if let node = viewModel.currentNode {
+                        if let node = viewModel.node(for: selectedCharacterID) {
                             VStack(alignment: .leading, spacing: 16) {
                                 ForEach(node.interactables, id: \.id) { interactable in
-                                    InteractableCardView(interactable: interactable) { action in
+                                    InteractableCardView(interactable: interactable, selectedCharacter: selectedCharacter) { action in
                                         if selectedCharacter != nil {
                                             pendingAction = action
                                             pendingInteractableID = interactable.id
@@ -1684,7 +2034,7 @@ struct ContentView: View {
 
                                 Divider()
 
-                                NodeConnectionsView(currentNode: viewModel.currentNode) { connection in
+                                NodeConnectionsView(currentNode: viewModel.node(for: selectedCharacterID)) { connection in
                                     performTransition(to: connection)
                                 }
                             }
@@ -1695,7 +2045,7 @@ struct ContentView: View {
                         }
                     }
                     .padding()
-                    .animation(.default, value: viewModel.currentNode?.id)
+                    .animation(.default, value: viewModel.node(for: selectedCharacterID)?.id)
                 }
             }
             .disabled(viewModel.gameState.status == .gameOver)
@@ -1717,7 +2067,16 @@ struct ContentView: View {
             VStack {
                 Spacer()
                 HStack {
+                    Button {
+                        viewModel.toggleMovementMode()
+                    } label: {
+                        Text("Movement: \(viewModel.partyMovementMode == .grouped ? "Grouped" : "Solo")")
+                    }
+                    .padding()
+                    .background(.thinMaterial, in: Capsule())
+
                     Spacer()
+
                     Button {
                         showingStatusSheet.toggle()
                     } label: {
@@ -1726,8 +2085,8 @@ struct ContentView: View {
                     }
                     .padding()
                     .background(.thinMaterial, in: Capsule())
-                    .padding()
                 }
+                .padding()
             }
 
 
@@ -1929,6 +2288,7 @@ struct SlidingDoor: View {
           "actionType": "Finesse",
           "position": "desperate",
           "effect": "standard",
+          "isGroupAction": true,
           "outcomes": {
             "success": [ { "type": "removeInteractable", "id": "self" } ],
             "partial": [
@@ -2113,5 +2473,2107 @@ struct SlidingDoor: View {
   ]
 }
 
+```
+
+### `Docs/S6_MechanicalDepth/1-HarmSystemOverhaul.md`
+
+```
+
+Task 1: Overhaul the Harm System
+Harm should be more than a simple damage counter; it should be a narrative and mechanical complication that players have to actively work around.
+
+Action: Redefine the HarmState and introduce HarmCondition and Penalty models.
+Action: Update the GameViewModel to apply penalties from Harm to a character's actions.
+Models.swift (Updates)
+
+Swift
+
+// In Models.swift
+
+// A specific injury or affliction with a mechanical effect.
+struct HarmCondition: Codable, Identifiable {
+    let id: UUID = UUID()
+    var description: String // e.g., "Shattered Hand", "Spiraling Paranoia"
+    var penalty: Penalty
+}
+
+// The mechanical penalty imposed by a HarmCondition.
+enum Penalty: Codable {
+    case reduceEffect // All actions are one effect level lower.
+    case increaseStressCost(amount: Int) // Pushing yourself or resisting costs more stress.
+    case actionPenalty(actionType: String) // A specific action (e.g., "Wreck") is at a disadvantage (e.g., -1d).
+    // Future penalties could include locking an action entirely.
+}
+
+// HarmState now holds specific conditions instead of just strings.
+struct HarmState: Codable {
+    var lesser: [HarmCondition] = []
+    var moderate: [HarmCondition] = []
+    var severe: [HarmCondition] = []
+}
+GameViewModel.swift (Updates)
+
+We need to update calculateProjection to reflect these penalties before the roll.
+
+Swift
+
+// In GameViewModel.swift
+
+func calculateProjection(for action: ActionOption, with character: Character) -> String {
+    var diceCount = character.actions[action.actionType] ?? 0
+    var position = action.position
+    var effect = action.effect
+    var notes: [String] = []
+
+    // Apply penalties from all active harm conditions
+    let allHarm = character.harm.lesser + character.harm.moderate + character.harm.severe
+    for condition in allHarm {
+        switch condition.penalty {
+        case .reduceEffect:
+            effect = effect.decreased() // We'll need to add this helper function to the enum
+            notes.append("(-1 Effect from \(condition.description))")
+        case .actionPenalty(let actionType) where actionType == action.actionType:
+            diceCount -= 1
+            notes.append("(-1d from \(condition.description))")
+        default:
+            break
+        }
+    }
+    diceCount = max(diceCount, 0) // Can't roll negative dice
+
+    let notesString = notes.isEmpty ? "" : " " + notes.joined(separator: ", ")
+    return "Roll \(diceCount)d6. Position: \(position.rawValue), Effect: \(effect.rawValue)\(notesString)"
+}
+
+// We'll also need a helper on RollEffect enum in Models.swift
+enum RollEffect: String, Codable {
+    // ... cases
+    func decreased() -> RollEffect {
+        switch self {
+        case .great: return .standard
+        case .standard: return .limited
+        case .limited: return .limited
+        }
+    }
+}
+```
+
+### `Docs/S6_MechanicalDepth/3-Treasures.md`
+
+```
+
+Task 3: Introduce "Treasures" for Intra-Run Progression
+Treasures are the "loot" of this game. They are the primary way players will gain these new Modifiers, creating a satisfying progression loop within a single run.
+
+Action: Create a Treasure model that can grant Modifiers.
+Action: Create a new Consequence type to allow players to gain treasures.
+Models.swift (Updates)
+
+Swift
+
+// In Models.swift
+
+struct Treasure: Codable, Identifiable {
+    let id: UUID = UUID()
+    var name: String
+    var description: String
+    var grantedModifier: Modifier // The benefit this treasure provides
+}
+
+// Add to the Character struct
+struct Character: Identifiable, Codable {
+    // ...
+    var treasures: [Treasure] = []
+    var modifiers: [Modifier] = []
+}
+
+// Add a new case to the Consequence enum
+enum Consequence: Codable {
+    // ... existing cases
+    case gainTreasure(treasure: Treasure)
+}
+GameViewModel.swift (Updates)
+
+We need to update our consequence processor to handle gaining treasures.
+
+Swift
+
+// In processConsequences() in GameViewModel
+
+case .gainTreasure(let treasure):
+    if let charIndex = gameState.party.firstIndex(where: { $0.id == character.id }) {
+        // Add the treasure to their inventory
+        gameState.party[charIndex].treasures.append(treasure)
+        // AND add its modifier to their active modifiers
+        gameState.party[charIndex].modifiers.append(treasure.grantedModifier)
+        descriptions.append("Gained Treasure: \(treasure.name)!")
+    }
+Now, we can update our generateDungeon function to include a treasure as a reward:
+
+Swift
+
+// In generateDungeon(), inside an interactable's outcomes
+let pedestalID = UUID()
+let pedestalInteractable = Interactable(
+    id: pedestalID,
+    title: "Trapped Pedestal",
+    //...
+    outcomes: [
+        .success: [
+            .removeInteractable(id: pedestalID),
+            .gainTreasure(treasure: Treasure(
+                name: "Lens of True Sight",
+                description: "This crystal lens reveals hidden things.",
+                grantedModifier: Modifier(
+                    improveEffect: true,
+                    applicableToAction: "Survey",
+                    uses: 2,
+                    description: "from Lens of True Sight"
+                )
+            ))
+        ],
+        .failure: [.sufferHarm(level: .lesser, description: "Electric Jolt")]
+    ]
+)
+```
+
+### `Docs/S6_MechanicalDepth/2-GeneralPurposeModifiers.md`
+
+```
+
+Task 2: Implement a General-Purpose Modifier System
+This system will allow items, boons, or special circumstances to temporarily grant bonuses to a roll.
+
+Action: Define a Modifier model.
+Action: Add a list of active modifiers to the Character model.
+Models.swift (Additions)
+
+Swift
+
+// In Models.swift, a universal modifier struct.
+
+struct Modifier: Codable {
+    var bonusDice: Int = 0
+    var improvePosition: Bool = false // e.g., Risky -> Controlled
+    var improveEffect: Bool = false   // e.g., Standard -> Great
+    var applicableToAction: String? = nil // Optional: only applies to a specific action like "Tinker"
+    var uses: Int = 1 // How many times it can be used. -1 for infinite.
+    var description: String // e.g., "From 'Fine Tools'"
+}
+
+// Add to the Character struct
+struct Character: Identifiable, Codable {
+    // ... existing properties
+    var modifiers: [Modifier] = []
+}
+```
+
+### `Docs/S11_UIClarity/2-IntegrateModiferAndPenaltyInfoInDiceRollView.md`
+
+```
+
+Task 2: Integrate Modifier/Penalty Info into DiceRollView Projection
+Description: The calculateProjection string is good, but we need to make it explicitly clear why the dice pool, Position, or Effect might be different from their base values, especially due to Harm penalties or active Modifiers. The DiceRollView itself should also visually hint at these changes.
+
+Implementation Plan:
+
+Refactor GameViewModel.calculateProjection:
+Instead of returning a simple String, modify it to return a new struct, e.g., RollProjectionDetails.
+Swift
+
+struct RollProjectionDetails {
+    var baseDiceCount: Int
+    var finalDiceCount: Int
+    var basePosition: RollPosition
+    var finalPosition: RollPosition
+    var baseEffect: RollEffect
+    var finalEffect: RollEffect
+    var notes: [String] // e.g., ["-1d from Shattered Hand", "+1 Effect from Lens (1 use left)"]
+}
+The function should calculate the base values, then iterate through active HarmCondition penalties and applicable Modifier bonuses, adjusting the finalDiceCount, finalPosition, finalEffect, and populating the notes array.
+Update DiceRollView.swift:
+When presenting the pre-roll information (before result is set), use the RollProjectionDetails.
+Display the finalDiceCount, finalPosition, and finalEffect prominently.
+Below this, list each string from projectionDetails.notes. Use color-coding: red for notes originating from Harm, green or blue for notes from Modifiers/Treasures.
+If a modifier is about to be consumed (e.g., a Treasure with uses: 1), make this clear in the notes (e.g., "Lens of True Sight will be consumed").
+Visual Cues for ActionOption Buttons:
+In InteractableCardView.swift, before an action is even tapped, if a selected character has a Harm penalty directly affecting an actionType for one of the availableActions (e.g., "Brain Lightning" banAction for "Study"), visually indicate this on the button itself.
+This could be greying out the button slightly, adding a "cracked" overlay, or a small warning icon. This requires InteractableCardView to have access to the selectedCharacter's state or for ContentView to pass down pre-calculated penalty info.
+Asset Callouts:
+
+icon_penalty_action.png: A small, dithered red "X" or "broken tool" icon to overlay on an action button if it's negatively affected by Harm.
+Canvas Size: 48x48 pixels (to be scaled down next to button text).
+icon_bonus_action.png: A small, dithered green/cyan "+" or "star" icon if an action is positively affected by a Modifier.
+Canvas Size: 48x48 pixels.
+```
+
+### `Docs/S11_UIClarity/1-EnhanceCharacterStatDisplay.md`
+
+```
+
+Task 1: Enhance Character Stat Display in PartyStatusView
+Description: The current PartyStatusView shows Stress and Harm icons. Let's make it more comprehensive by clearly listing action ratings and any active Modifiers a character has.
+
+Implementation Plan:
+
+In PartyStatusView.swift, for each character, below their Harm icons, add a new section.
+Action Ratings: Display each of the character's actions (e.g., "Study: 3," "Tinker: 2") in a compact list or grid.
+Active Modifiers: If a character has any active modifiers from their treasures, list their descriptions (e.g., "from Lens of True Sight: +1 Effect to Survey (1 use left)").
+Consider a distinct visual treatment (e.g., a different color, a small icon next to them) for active modifiers.
+```
+
+### `Docs/S11_UIClarity/3-FeedbackForModifierConsumption.md`
+
+```
+
+Task 3: Explicit Feedback for Modifier Consumption
+Description: When a Treasure's Modifier with limited uses is consumed, provide clear feedback that it happened.
+
+Implementation Plan:
+
+GameViewModel.performAction():
+When applying Modifiers, if a modifier has its uses decremented to 0 (or removed if it was the last use), this information should be part of the DiceRollResult.consequences string. E.g., "Used up Lens of True Sight."
+DiceRollView.swift: The result.consequences text will automatically display this.
+PartyStatusView.swift: This view will naturally update as the character's modifiers list changes (as GameViewModel is an @ObservedObject), so consumed modifiers will disappear from the list.
+Sound Effect (Optional but Recommended):
+Play a distinct sound effect when a limited-use modifier is consumed.
+Asset Callouts:
+
+Audio:
+sfx_modifier_consume.wav: A short, slightly "magical" or "vanishing" sound (e.g., a quick shimmer or puff).
+```
+
+### `Docs/PRD.md`
+
+```
+
+Forged in the Tomb: A Product Requirements Document
+Project: Forged in the Tomb
+Platform: iPhone (SwiftUI)
+Version: 1.0
+
+1. Overview
+Forged in the Tomb is a single-player, rogue-lite dungeon crawl for iOS, built with SwiftUI. It draws inspiration from the high-stakes, trap-filled exploration of the classic D&D module "Tomb of Horrors" and the adventurous spirit of the Indiana Jones franchise. The game will leverage a simplified interpretation of the Forged in the Dark (FitD) tabletop roleplaying game's core mechanics, specifically its dice, stress, and harm systems, which are available under a creative commons license. The gameplay will eschew traditional combat, focusing instead on overcoming environmental hazards, disarming traps, and deciphering cryptic curses.
+
+The game will be structured as a node-based crawl, with players navigating a procedurally generated dungeon. Each run will feature a randomly rolled party of three adventurers, each with unique starting statistics and equipment. The core gameplay loop will revolve around players selecting a character to interact with various "Interactables" within each node, using a chosen statistic to make a roll. A key feature will be the "dice roll projection" which will clearly communicate the potential outcomes (position and effect) to the player before they commit to an action.
+
+2. Goals
+To create a compelling and challenging single-player, rogue-lite experience on iOS.
+To successfully translate the core tension and player agency of the Forged in the Dark system into a digital format.
+To deliver a unique dungeon crawl experience by focusing on non-combat challenges.
+To build a robust and scalable architecture in SwiftUI that can be expanded with new content in the future.
+To establish a clear and intuitive user interface centered around a "card" metaphor for interactable elements.
+3. Target Audience
+Players of tabletop roleplaying games, particularly those familiar with Forged in the Dark or other narrative-driven systems.
+Fans of rogue-lite and dungeon crawl genres on mobile platforms.
+Players who enjoy puzzle-solving and strategic decision-making over fast-paced action.
+Admirers of the "Tomb of Horrors" and Indiana Jones style of adventure.
+4. Core Mechanics
+4.1. The Dice Roll
+All actions that involve risk or uncertainty are resolved by a dice roll. The player will assemble a pool of six-sided dice (d6) based on their character's chosen Action Rating. The number of dice in the pool will typically be between one and four. The player rolls the dice and the single highest result determines the outcome:
+
+6: Full Success. The character achieves their goal without any negative consequences.
+4-5: Partial Success. The character achieves their goal, but at a cost. This could be taking Stress, suffering Harm, or some other complication.
+1-3: Failure. The character fails to achieve their goal and suffers a consequence.
+A Critical Success occurs when multiple sixes are rolled. This will result in an enhanced effect or an additional benefit.
+
+4.2. Position & Effect
+Before a player commits to a roll, the game will display a "dice roll projection" that communicates the Position and Effect of the action.
+
+Position: This represents the level of risk involved in the action. There are three positions:
+
+Controlled: A failed roll has a minor consequence.
+Risky: A failed roll has a standard consequence. This is the default position.
+Desperate: A failed roll has a severe consequence.
+Effect: This represents the potential level of reward or impact of a successful action. There are three effect levels:
+
+Limited: A less-than-ideal outcome.
+Standard: The expected outcome.
+Great: A more-than-ideal outcome.
+The player's choice of action and the current circumstances will determine the initial Position and Effect.
+
+4.3. Stress
+Stress is a resource that players can spend to improve their odds or mitigate negative outcomes. Each character has a Stress track (e.g., 0-9). Players can choose to take Stress to:
+
+Push Themselves: Gain +1d to their dice pool for a roll.
+Resist a Consequence: Reduce the severity of a negative outcome. The cost in Stress is determined by a resistance roll.
+If a character's Stress track is filled, they suffer Trauma.
+
+4.4. Harm & Trauma
+Harm represents physical and mental injuries. Harm comes in levels of severity:
+
+Level 1: Lesser (e.g., "Shaken," "Bruised")
+Level 2: Moderate (e.g., "Gashed Arm," "Concussion")
+Level 3: Severe (e.g., "Broken Leg," "Cursed")
+Each level of Harm imposes a penalty on the character's actions. If a character suffers Harm when all slots of that severity are full, the Harm is upgraded to the next level. If a character with a Severe Harm takes another, they are taken out of the current run.
+
+Trauma is a permanent negative trait a character gains when their Stress track is filled. Each Trauma condition will have a specific mechanical and narrative effect. Accumulating a certain number of Traumas will force a character's retirement from the party.
+
+5. Game Structure
+5.1. The Rogue-lite Loop
+Party Generation: The player begins a new run with a randomly generated party of three characters. Each character will have a "class" with unique starting stats and gear.
+Dungeon Crawl: The player navigates the node-based dungeon.
+Interactables: Within each node, the player will encounter Interactables presented as cards.
+Action & Resolution: The player chooses a character and an action to interact with the card, leading to a dice roll.
+Consequences & Rewards: The outcome of the roll determines the rewards (e.g., new paths, loot, information) and consequences (e.g., Stress, Harm, environmental changes).
+Perma-death (for the run): Characters taken out by Harm are gone for the remainder of the run. If all characters are defeated, the run ends.
+Meta-Progression: Successful runs will unlock new character classes, starting gear, and potentially new dungeon types for future runs.
+5.2. The Dungeon: A Node Crawl
+The dungeon will be represented as a map of interconnected nodes. The player's party will occupy a single node at a time. Connections between nodes may be initially hidden or locked, requiring successful checks to reveal or open them. Each node will contain one or more "Interactables."
+
+6. User Interface & User Experience (UI/UX)
+6.1. The "Card" Metaphor
+The primary visual metaphor for interacting with the game world will be through "cards." Each Interactable (e.g., a trapped chest, a mysterious lever, a cryptic riddle) will be presented as a card. The card will contain:
+
+A title and descriptive text.
+An illustration of the Interactable.
+A list of possible actions a player can take, along with the corresponding stat to be used.
+Tapping on an action will bring up the "dice roll projection" view, showing the Position and Effect before the player confirms the roll.
+
+6.2. Main Screens
+Main Menu: Start New Run, Continue Run, Unlocks/Meta-Progression, Settings.
+Party View: Shows the status of the three party members, including their stats, Stress, Harm, and equipment.
+Dungeon Map View: Displays the node map, the party's current location, and known connections.
+Node View: The primary gameplay screen, displaying the Interactable cards for the current node.
+Dice Roll Projection View: A modal view that appears before a roll, detailing the Position, Effect, and any modifiers.
+7. Content
+7.1. Character Classes
+Each class will have a unique set of starting Action Ratings and a special ability. Examples include:
+
+The Archaeologist: High in Study and Tinker. Special Ability: Once per run, can automatically succeed at a roll to decipher ancient texts.
+The Brawler: High in Wreck and Finesse. Special Ability: Can take an extra level of Harm before being taken out.
+The Mystic: High in Attune and Survey. Special Ability: Can spend Stress to have a vision about a nearby node.
+7.2. Action Ratings
+Action Ratings will be simplified from the full FitD set to better suit the non-combat focus. Examples include:
+
+Study: Deciphering texts, understanding mechanisms.
+Survey: Spotting hidden dangers, finding secret passages.
+Tinker: Disarming traps, repairing gear.
+Finesse: Delicate movements, sleight of hand.
+Wreck: Applying brute force.
+Attune: Sensing supernatural energies, resisting curses.
+7.3. Interactables
+Interactables will be the core of the gameplay. They will be designed to present interesting choices and challenges that can be overcome in multiple ways, depending on the chosen character and action. Examples:
+
+A Pressure Plate: Can be Tinkered with to disarm, Finessed across to avoid, or Wrecked to trigger from a safe distance.
+A Cursed Idol: Can be Attuned with to understand the curse, Studied to find a weakness, or Wrecked from afar.
+8. Technical Considerations
+Engine: SwiftUI. The declarative nature of SwiftUI is well-suited for the card-based UI and displaying dynamic information like the dice roll projection.
+Architecture: A Model-View-ViewModel (MVVM) architecture is recommended to separate the game logic from the UI.
+Data Persistence: Player progress, unlocks, and run state will be saved locally using Swift's Codable and UserDefaults or a more robust solution like Core Data if necessary.
+Procedural Generation: The dungeon layout, node connections, and Interactable placement will be procedurally generated at the start of each run to enhance replayability.
+9. Future Development
+Content Expansion: New character classes, dungeon types, Interactables, and enemy factions (though not in a traditional combat sense) can be added as updates.
+9.1. The "Clocks" Mechanic (Addendum to PRD)
+Clocks are visual progress trackers used for complex or ongoing challenges that cannot be resolved with a single action. Examples include: "The Guards' Suspicion," "Disarming the Complex Trap," or "Deciphering the Ancient Mural."
+
+Structure: A clock is represented as a segmented circle (e.g., 4, 6, or 8 segments).
+Progression: Successful actions can fill in one or more segments of a clock. The Effect level of the roll determines how many segments are filled (e.g., Limited = 1, Standard = 2, Great = 3).
+Complications: Partial successes or failures might add segments to a negative clock (e.g., "Reinforcements Arrive") or introduce a new, linked clock.
+Resolution: When a clock is completely filled, the event it represents comes to pass. This can be positive (the trap is disarmed) or negative (the alarm is raised).
+UI Implementation: A dedicated, non-intrusive view will display all currently active clocks, allowing the player to track ongoing progress and threats at a glance.
+Leaderboards: Integration with Game Center for high score tracking.
+iCloud Sync: Allowing players to continue their runs across multiple devices.
+Accessibility: Implementing features like Dynamic Type and VoiceOver to ensure the game is playable by a wider audience.
+```
+
+### `Docs/S10_ContentPipelineAndGenerationPolish/2-EnhanceDungeonGenerator.md`
+
+```
+
+Task 2: Enhance DungeonGenerator.swift
+Now we make the generator smarter and use our new content.
+
+Action: Refactor DungeonGenerator.generate(level: Int) to incorporate more sophisticated logic.
+Implementation Plan:
+Node Theming/Tagging (Optional but Recommended):
+In your MapNode model, consider adding var theme: String? or var tags: [String]?.
+The DungeonGenerator can then assign themes (e.g., "corridor," "trap_chamber," "shrine," "antechamber") to nodes as it creates them.
+Content Selection based on Theme:
+When populating a node, filter content.interactableTemplates based on the node's theme/tags. This makes room content more logical. (e.g., a "trap_chamber" is more likely to get template_pressure_plate).
+Clock Generation:
+Define a few placeholder clock names/segment counts (e.g., in DungeonGenerator or a new simple JSON like clocks_templates.json).
+At the start of generate(), randomly select 1-2 of these and add them to the GameState.activeClocks.
+Dynamic Connection Locking & Unlocking:
+When creating connections, randomly decide for some of them to set isUnlocked = false.
+Crucially: For each locked connection, ensure the generator also places an interactable somewhere in the dungeon (perhaps in a preceding or adjacent node) that has an unlockConnection consequence in its outcomes targeting that specific locked connection's fromNodeID and toNodeID. This requires the generator to keep track of locked doors and the interactables that can unlock them.
+Pathfinding Check (Simplified): To ensure the dungeon is solvable, always ensure there's at least one path from startingNodeID to a designated "exit node" (e.g., the last node in your linear generation) that is either initially unlocked or has its unlocking interactable placed in an accessible location. For now, you could just ensure the main chain of nodes is always unlockable.
+Treasure Distribution:
+Ensure your new Interactable templates with gainTreasure consequences are part of the pool the generator picks from. The current random selection should handle this if the templates exist.
+Varying Node Count & Branching (Stretch Goal):
+Instead of a purely linear nodeCount, consider a simple branching algorithm. For example, some nodes could have two forward connections instead of one, leading to small dead-end branches with special rewards or dangers.
+Updated GameViewModel.startNewRun():
+No major changes expected here other than potentially passing more parameters to generator.generate() if you add complexity like a "dungeon seed" or "target difficulty." The primary work is within the DungeonGenerator itself.
+```
+
+### `Docs/S10_ContentPipelineAndGenerationPolish/1-ExpandPlaceholderContentJsons.md`
+
+```
+
+Task 1: Expand Placeholder Content Definitions (JSON)
+The goal here is not final writing, but to create a diverse set of templates that exercise all your systems.
+
+harm_families.json:
+
+Action: Add 2-3 new HarmFamily definitions.
+Details:
+One family focused on mental or sensory effects (e.g., "Growing Dread" -> "Hallucinations" -> "Maddening Visions"). Penalties could include increaseStressCost or actionPenalty on Attune or Survey.
+One family focused on equipment damage or loss (e.g., "Frayed Rope" -> "Broken Tools" -> "Lost Map"). Penalties could banAction for Tinker or make certain Finesse checks automatically result in limited effect.
+Example Snippet (to add to your existing JSON structure):
+JSON
+
+{
+  "id": "mental_anguish",
+  "lesser": { "description": "Unease", "penalty": { "type": "increaseStressCost", "amount": 1 } },
+  "moderate": { "description": "Fleeting Shadows", "penalty": { "type": "actionPenalty", "actionType": "Survey" } },
+  "severe": { "description": "Terror", "penalty": { "type": "reduceEffect" } },
+  "fatal": { "description": "Mind Broken" }
+}
+treasures.json:
+
+Action: Add 3-5 new Treasure definitions.
+Details: Aim for variety in the grantedModifier.
+One that grants bonusDice to a specific action type.
+One that improvePosition for one use.
+One that grants a temporary (1-2 uses) resistance to a specific HarmFamily (this would require a new Modifier type or a very specific description and manual check in applyHarm if we want to avoid model changes for now). For simplicity this sprint, let's stick to existing modifier types.
+One that is purely narrative or unlocks a specific, rare interactable if we want to go complex (can be just text for now).
+Example Snippet:
+JSON
+
+{
+  "id": "treasure_steadying_herbs",
+  "name": "Steadying Herbs",
+  "description": "Chewing these calms the nerves, for a time.",
+  "grantedModifier": {
+    "improvePosition": true,
+    "uses": 1,
+    "description": "from Steadying Herbs"
+  }
+}
+interactables.json:
+
+Action: Add 5-7 new Interactable templates. This is where we test the breadth of the Consequence system.
+Details: Each template should vary:
+Action Types Used: Ensure all your action types (Study, Wreck, Finesse, Tinker, Attune, Survey) are used.
+Position/Effect Defaults: Mix these up.
+Consequences:
+Have outcomes that apply the new Harm Families.
+Have outcomes that tickClock on different named clocks (e.g., "Ancient Machinery Grinds," "The Walls Are Closing In").
+Have outcomes that gainTreasure using your new treasure templates.
+Have outcomes that unlockConnection (we'll make the generator use this).
+Have outcomes that removeInteractable (itself or another specific placeholder ID if we want linked interactables).
+Have outcomes that addInteractable (e.g., successfully disarming a trap reveals a treasure chest interactable).
+Example Snippet (for one new interactable):
+JSON
+
+{
+  "id": "template_crumbling_ledge",
+  "title": "Crumbling Ledge",
+  "description": "A narrow ledge over a dark chasm. It looks unstable.",
+  "availableActions": [
+    {
+      "name": "Cross Carefully",
+      "actionType": "Finesse",
+      "position": "desperate",
+      "effect": "standard",
+      "outcomes": {
+        "success": [
+          { "type": "removeInteractable", "id": "self" } // Ledge is crossed
+        ],
+        "partial": [
+          { "type": "gainStress", "amount": 2 },
+          { "type": "sufferHarm", "level": "lesser", "familyId": "leg_injury" }
+        ],
+        "failure": [
+          { "type": "sufferHarm", "level": "moderate", "familyId": "leg_injury" },
+          { "type": "tickClock", "clockName": "Chasm Peril", "amount": 2 }
+        ]
+      }
+    },
+    {
+      "name": "Test its Stability",
+      "actionType": "Survey",
+      "position": "risky",
+      "effect": "limited",
+      "outcomes": {
+        "success": [
+          // Could add a temporary modifier: "Insight: Ledge is weak" +1d Finesse
+        ],
+        "failure": [
+           { "type": "gainStress", "amount": 1 }
+        ]
+      }
+    }
+  ]
+}
+```
+
+### `Docs/S10_ContentPipelineAndGenerationPolish/Side-ModelAndLoaderTweaks.md`
+
+```
+
+Minor Model/Loader Adjustments
+Action: As you define new content, if you realize a new type of Consequence, Penalty, or Modifier is essential for a placeholder idea, update Models.swift accordingly.
+Details: Ensure any new enum cases or struct properties are Codable and that ContentLoader.swift and your custom init(from decoder: Decoder) / encode(to encoder: Encoder) methods can handle them. The goal is to support the content, not to add entirely new game systems unless absolutely necessary for variety.
+```
+
+### `Docs/S9_GameJuice/1-AmbientWorld.md`
+
+```
+
+Ticket 1: Ambient World
+Description: Make the dungeon feel like a real place by giving each room a subtle, looping ambient soundscape. We'll also replace the default view transition with a more thematic "sliding stone door" effect when moving between nodes.
+
+Implementation Plan:
+
+Ambient Audio:
+Create a simple AudioManager singleton class to handle playback of background audio. It will need functions like play(sound: String, loop: Bool) and stop().
+In GameViewModel.swift, when calling move(to:), also call AudioManager.shared.play(sound: "ambient_\(newNode.soundProfile).wav", loop: true).
+We'll add a new property to our MapNode model, var soundProfile: String, which we can set in our content files (e.g., "cave_drips", "chasm_wind").
+Thematic Transition:
+Instead of the default .transition(.opacity) on the content VStack in ContentView, we will use a .matchedGeometryEffect.
+We will create a "door" view that slides across the screen. We can achieve this with a ZStack in ContentView. When a move is initiated, we'll show a black rectangle (our door) that animates its width from 0 to the screen's full width, and then back to 0, revealing the new content underneath.
+Asset Callouts:
+
+Audio (Ambient Loops):
+ambient_cave_drips.wav: A quiet, sparse loop of echoing water drips.
+ambient_chasm_wind.wav: A low, windy rumble with an occasional pebble-skittering sound.
+ambient_silent_tomb.wav: Mostly silence, with a very faint, deep hum.
+Audio (Transitions):
+sfx_stone_door_slide.wav: A heavy, scraping sound of stone on stone to play during the screen transition.
+Visual:
+texture_stone_door.png: A full-screen tiling image of dithered, retro-style stone. This will be used for the transition view instead of a plain black color.
+Canvas Size: 256x256 pixels. (A square, power-of-two texture is efficient for tiling.)
+```
+
+### `Docs/S9_GameJuice/3-ThematicStatusVisualization.md`
+
+```
+
+Ticket 3: Thematic Status Visualization
+Description: Replace the default ProgressView bars for Stress and Harm with custom-drawn, thematic icons that better reflect the game's aesthetic and provide clearer at-a-glance information.
+
+Implementation Plan:
+
+Stress Pips: In PartyStatusView.swift, remove the ProgressView for Stress. Replace it with an HStack that iterates from 1 to 9. For each number, draw a "pip" icon. If the character's stress is greater than or equal to the pip's number, the pip is "lit"; otherwise, it's "unlit."
+Harm Icons: Remove the three harm ProgressViews. Replace them with a single HStack.
+Draw two "Lesser" icons. For each filled lesser harm slot, draw the "cracked" version of the icon.
+Draw two "Moderate" icons. For each filled moderate harm slot, draw its cracked version.
+Draw one "Severe" icon. If the severe slot is filled, draw its cracked version.
+Asset Callouts:
+
+Visual (Stress):
+icon_stress_pip_unlit.png: A small, dithered gray or dark purple circle or rune.
+Canvas Size: 48x48 pixels.
+icon_stress_pip_lit.png: The same icon, but with a bright, ominous purple or red dithered glow.
+Canvas Size: 48x48 pixels.
+Visual (Harm): We'll use a "cracked skull" motif.
+icon_harm_lesser_empty.png: A small, simple, dithered skull icon.
+Canvas Size: 64x64 pixels.
+icon_harm_lesser_full.png: The same skull with a single, dithered crack on it.
+Canvas Size: 64x64 pixels.
+icon_harm_moderate_empty.png: A slightly more detailed/angular skull icon.
+Canvas Size: 64x64 pixels.
+icon_harm_moderate_full.png: The moderate skull with more severe, branching cracks.
+Canvas Size: 64x64 pixels.
+icon_harm_severe_empty.png: A stylized, grim-looking skull.
+Canvas Size: 64x64 pixels.
+icon_harm_severe_full.png: The severe skull, heavily cracked and possibly with a red dithered glow in one eye socket.
+Canvas Size: 64x64 pixels.
+```
+
+### `Docs/S9_GameJuice/2-HighStakesDiceRolls.md`
+
+```
+
+Ticket 2: The High-Stakes Dice Roll
+Description: The dice roll is the moment of truth. We'll make it a physical, multi-stage animation with clear visual feedback, combining several ideas from your brainstorm.
+
+Implementation Plan:
+
+Shake & Roll: In DiceRollView, on button press, trigger a 1-second animation where the dice images are given small, random x/y offsets and rotation effects to "shake."
+Highlight Result: After the performAction logic runs, instead of just showing the text, we'll start a new animation.
+The dice that did not contribute to the highest roll will have their opacity animated to 0.5.
+The single highest-rolling die will animate its scale to 1.3x and back down to 1.0x (a "pop" effect) and gain a temporary glow using .shadow(color: .cyan, radius: 10).
+Animate Outcome Text: The Text(result.outcome) view will be modified with .transition(.scale.combined(with: .opacity)) and we will wrap its appearance in a withAnimation(.spring(response: 0.4, dampingFraction: 0.5)) block to make it pop onto the screen.
+Asset Callouts:
+
+Audio:
+sfx_dice_shake.wav: A short, lo-fi rattling sound.
+sfx_dice_land.wav: A single sharp "clack" sound.
+sfx_ui_pop.wav: A satisfying "pop" to accompany the highest die and result text scaling up.
+Visual:
+vfx_damage_vignette.png: A full-screen, mostly transparent PNG. The edges should have a dithered red or black pattern. We can flash this on screen for a split second along with the shake to amplify the effect.
+Canvas Size: 1024x1024 pixels. (A large square allows it to be scaled to fit any device screen without distortion.)
+```
+
+### `Docs/S4_FullGameLoop/1-DynamicActionConsequences.md`
+
+```
+
+Task 1: Create Dynamic Action Consequences
+Right now, succeeding at an action only adds ticks to a clock. We need a system where actions can have specific, tangible outcomes, like unlocking a path or disabling an interactable.
+
+Action: Introduce a Consequence model and link it to roll outcomes.
+Action: Refactor performAction to process these new consequences.
+Models.swift (Additions)
+
+Swift
+
+// In Models.swift
+
+// Add an optional ID to Interactable to make it easier to find and remove
+struct Interactable: Codable, Identifiable {
+    let id: UUID = UUID() // NEW
+    var title: String
+    //...
+}
+
+// Define the types of consequences an action can have
+enum Consequence: Codable {
+    case gainStress(amount: Int)
+    case sufferHarm(level: HarmLevel, description: String)
+    case tickClock(clockName: String, amount: Int)
+    case unlockConnection(fromNodeID: UUID, toNodeID: UUID)
+    case removeInteractable(id: UUID)
+    case addInteractable(inNodeID: UUID, interactable: Interactable)
+    // We can add many more types later (gain item, etc.)
+}
+
+enum HarmLevel: String, Codable { case lesser, moderate, severe }
+
+// Update ActionOption to include specific consequences for each outcome
+struct ActionOption: Codable {
+    // ... existing properties
+    var outcomes: [RollOutcome: [Consequence]]
+}
+
+// Define a key for the dictionary
+enum RollOutcome: String, Codable { case success, partial, failure }
+GameViewModel.swift (Major Refactor)
+This is the key task. We'll update an interactable to use this new system and refactor performAction to be a generic consequence processor.
+
+Swift
+
+// In generateDungeon(), update the "Sealed Stone Door" interactable
+let stoneDoorID = UUID()
+let doorInteractable = Interactable(
+    id: stoneDoorID,
+    title: "Sealed Stone Door",
+    description: "A massive circular door covered in dust.",
+    availableActions: [
+        ActionOption(
+            name: "Examine the Mechanism",
+            actionType: "Study",
+            position: .controlled,
+            effect: .standard,
+            outcomes: [ // The new outcomes dictionary
+                .success: [
+                    .unlockConnection(fromNodeID: startNodeID, toNodeID: secondNodeID),
+                    .removeInteractable(id: stoneDoorID)
+                ],
+                .partial: [.gainStress(amount: 1)],
+                .failure: [.tickClock(clockName: "The Guardian Wakes", amount: 1)]
+            ]
+        )
+    ]
+)
+
+// In GameViewModel, refactor performAction
+func performAction(for action: ActionOption, with character: Character) -> DiceRollResult {
+    // ... (keep the dice rolling logic) ...
+
+    var consequencesToApply: [Consequence] = []
+    var outcomeString = ""
+
+    switch highestRoll {
+    case 6:
+        outcomeString = "Full Success!"
+        consequencesToApply = action.outcomes[.success] ?? []
+    case 4...5:
+        outcomeString = "Partial Success..."
+        consequencesToApply = action.outcomes[.partial] ?? []
+    default:
+        outcomeString = "Failure."
+        consequencesToApply = action.outcomes[.failure] ?? []
+    }
+    
+    // Process the consequences
+    let consequencesDescription = processConsequences(consequencesToApply, forCharacter: character)
+
+    return DiceRollResult(highestRoll: highestRoll, outcome: outcomeString, consequences: consequencesDescription)
+}
+
+private func processConsequences(_ consequences: [Consequence], forCharacter character: Character) -> String {
+    var descriptions: [String] = []
+    for consequence in consequences {
+        switch consequence {
+        case .gainStress(let amount):
+            if let charIndex = gameState.party.firstIndex(where: { $0.id == character.id }) {
+                gameState.party[charIndex].stress += amount
+                descriptions.append("Gained \(amount) Stress.")
+            }
+        // ... Implement cases for .sufferHarm, .tickClock, etc.
+        case .unlockConnection(let fromNodeID, let toNodeID):
+            if let fromNodeIndex = gameState.dungeon?.nodes.firstIndex(where: { $0.key == fromNodeID }),
+               let connIndex = gameState.dungeon?.nodes[fromNodeID]?.connections.firstIndex(where: { $0.toNodeID == toNodeID }) {
+                gameState.dungeon?.nodes[fromNodeID]?.connections[connIndex].isUnlocked = true
+                descriptions.append("A path has opened!")
+            }
+        case .removeInteractable(let id):
+            if let nodeID = gameState.currentNodeID {
+                gameState.dungeon?.nodes[nodeID]?.interactables.removeAll(where: { $0.id == id })
+                descriptions.append("The way is clear.")
+            }
+        default:
+            break
+        }
+    }
+    return descriptions.joined(separator: "\n")
+}
+
+```
+
+### `Docs/S4_FullGameLoop/3-ImplementRoguelikeRuns.md`
+
+```
+
+Task 3: Implement the Roguelite Run Loop
+Finally, let's wrap our experience in a proper "run."
+
+Action: Create a "Game Over" condition and view.
+Action: Add a "New Run" button to restart the GameViewModel.
+GameViewModel.swift (Additions)
+
+Swift
+
+// Add a new GameStatus enum
+enum GameStatus { case playing, gameOver }
+
+// Add to GameState
+struct GameState: Codable {
+    //...
+    var status: GameStatus = .playing
+}
+
+// Modify performAction to check for game over conditions
+// For example, in processConsequences for .sufferHarm:
+// if character has too much harm { gameState.status = .gameOver }
+
+// Add a function to restart the game
+func startNewRun() {
+    // This re-initializes the entire game state, just like init()
+    self.gameState = GameState(/*... fresh party/clocks ...*/)
+    generateDungeon()
+}
+ContentView.swift (Updates)
+
+Swift
+
+struct ContentView: View {
+    //...
+    var body: some View {
+        ZStack { // Use a ZStack to overlay the Game Over view
+            NavigationView {
+                // ... your existing VStack with all the game views
+            }
+            
+            if viewModel.gameState.status == .gameOver {
+                Color.black.opacity(0.75).ignoresSafeArea()
+                VStack(spacing: 20) {
+                    Text("Game Over").font(.largeTitle).bold().foregroundColor(.red)
+                    Text("The tomb claims another party.").foregroundColor(.white)
+                    Button("Try Again") {
+                        viewModel.startNewRun()
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.large)
+                }
+            }
+        }
+    }
+}
+```
+
+### `Docs/S4_FullGameLoop/2-ImproveUIFeedback.md`
+
+```
+
+Task 2: Improve UI Feedback
+Let's make our status displays more visually appealing than plain text.
+
+Action: Create a proper, graphical ClockView that shows a segmented circle.
+Action: Enhance PartyStatusView to show stress/harm bars.
+ClockView.swift (Graphical Update)
+There are many ways to draw a clock. Here's a simple approach using Circle and trim.
+
+Swift
+
+// In ClocksView.swift, replace the Text with a graphical representation
+struct GraphicalClockView: View {
+    let clock: GameClock
+    
+    var body: some View {
+        VStack {
+            Text(clock.name).font(.caption)
+            ZStack {
+                Circle().stroke(lineWidth: 10).opacity(0.3)
+                Circle()
+                    .trim(from: 0.0, to: min(CGFloat(clock.progress) / CGFloat(clock.segments), 1.0))
+                    .stroke(style: StrokeStyle(lineWidth: 10, lineCap: .round, lineJoin: .round))
+                    .foregroundColor(.red)
+                    .rotationEffect(Angle(degrees: 270.0))
+                Text("\(clock.progress)/\(clock.segments)")
+            }
+            .frame(width: 60, height: 60)
+        }
+    }
+}
+// Then in ClocksView, use this in a ScrollView:
+// ScrollView(.horizontal) { HStack { ForEach(...) { GraphicalClockView(...) } } }
+```
+
+### `Docs/S1_CoreSlice/3-BasicUI.md`
+
+```
+
+Task 3: Building the UI (The "View")
+Action: Create the most basic possible views to display the state and trigger actions. Use placeholder UI and minimal styling for now.
+
+PartyStatusView.swift:
+
+Displays a list of the characters.
+For each character, shows their name, stress, and harm levels.
+This view will read from the GameViewModel.
+ClocksView.swift:
+
+Displays a list of active clocks.
+For each clock, shows its name and a simple text representation of its progress (e.g., "2 / 6").
+ContentView.swift (Main Game Screen):
+
+Instantiate the @StateObject var viewModel = GameViewModel().
+Display the PartyStatusView and ClocksView.
+Display a single, hardcoded "Interactable Card" for a "Trapped Pedestal".
+The card will have buttons for its availableActions (e.g., "Tinker with it," "Study the Glyphs").
+Tapping an action button will:
+Present a simple Alert or modal sheet showing the output from viewModel.calculateProjection().
+The alert will have a "Roll" button that calls viewModel.performAction().
+```
+
+### `Docs/S1_CoreSlice/1-ProjectSetupAndCoreDataModels.md`
+
+```
+
+Task 1: Project Setup & Core Data Models (The "Model" part of MVVM)
+Action: Set up a new SwiftUI project in Xcode.
+
+Action: Create the initial data model structs. These should be simple, Codable, and Identifiable where appropriate.
+
+Swift
+
+// In a file named Models.swift
+
+struct GameState {
+    var party: [Character] = []
+    var activeClocks: [GameClock] = []
+    // ... other global state
+}
+
+struct Character: Identifiable {
+    let id = UUID()
+    var name: String
+    var characterClass: String
+    var stress: Int
+    var harm: HarmState
+    var actions: [String: Int] // e.g., ["Study": 2, "Tinker": 1]
+}
+
+struct HarmState {
+    var lesser: [String] = []
+    var moderate: [String] = []
+    var severe: [String] = []
+}
+
+struct GameClock: Identifiable {
+    let id = UUID()
+    var name: String
+    var segments: Int // e.g., 6
+    var progress: Int
+}
+
+// Models for the interactable itself
+struct Interactable {
+    var title: String
+    var description: String
+    var availableActions: [ActionOption]
+}
+
+struct ActionOption {
+    var name: String
+    var actionType: String // Corresponds to a key in Character.actions, e.g., "Tinker"
+    var position: RollPosition
+    var effect: RollEffect
+}
+
+enum RollPosition { case controlled, risky, desperate }
+enum RollEffect { case limited, standard, great }
+```
+
+### `Docs/S1_CoreSlice/2-ViewModelGameLogicEngine.md`
+
+```
+
+Task 2: The Game Logic Engine (The "ViewModel")
+Action: Create the main GameViewModel. This will be the heart of our sprint.
+
+Swift
+
+// In a file named GameViewModel.swift
+import SwiftUI
+
+@MainActor
+class GameViewModel: ObservableObject {
+    @Published var gameState: GameState
+
+    init() {
+        // For the sprint, we'll use hardcoded starting data.
+        self.gameState = GameState(
+            party: [
+                Character(name: "Indy", characterClass: "Archaeologist", stress: 0, harm: HarmState(), actions: ["Study": 3, "Wreck": 1]),
+                Character(name: "Sallah", characterClass: "Brawler", stress: 0, harm: HarmState(), actions: ["Finesse": 2, "Survey": 2]),
+                Character(name: "Marion", characterClass: "Survivor", stress: 0, harm: HarmState(), actions: ["Tinker": 2, "Attune": 1])
+            ],
+            activeClocks: [
+                GameClock(name: "The Guardian Wakes", segments: 6, progress: 0)
+            ]
+        )
+    }
+
+    // --- Core Logic Functions for the Sprint ---
+
+    // Calculates the projection before the roll
+    func calculateProjection(for action: ActionOption, with character: Character) -> String {
+        // Logic to determine base dice pool from character.actions[action.actionType]
+        // For now, just return a descriptive string.
+        let diceCount = character.actions[action.actionType] ?? 0
+        return "Roll \(diceCount)d6. Position: \(action.position), Effect: \(action.effect)"
+    }
+
+    // The main dice roll function
+    func performAction(for action: ActionOption, with character: Character, onClock clockID: UUID?) {
+        // 1. Get dice pool from character stats.
+        // 2. Roll the dice (Int.random(in: 1...6)).
+        // 3. Determine outcome (Success, Partial, Failure).
+        // 4. Apply consequences/rewards based on Position & Effect.
+        //    - On a 4-5 (Partial): self.gameState.party[characterIndex].stress += 2
+        //    - On a 1-3 (Failure): self.gameState.party[characterIndex].harm.lesser.append("Bruised")
+        //    - On a 6 (Success): Update the clock if a clockID was provided.
+        //       if let clockID = clockID { updateClock(id: clockID, ticks: 2) } // 2 for standard effect
+        // 5. Ensure the UI updates by modifying the @Published gameState.
+    }
+
+    private func updateClock(id: UUID, ticks: Int) {
+        if let index = gameState.activeClocks.firstIndex(where: { $0.id == id }) {
+            gameState.activeClocks[index].progress = min(gameState.activeClocks[index].segments, gameState.activeClocks[index].progress + ticks)
+        }
+    }
+}
+```
+
+### `Docs/S7_AdvancedFitDMechanics/2-ImplementPushYourselfMechanic.md`
+
+```
+
+Task 2: Implement the "Push Yourself" Mechanic
+Let's give players a way to spend Stress for a bonus die, a core tactical choice in FitD.
+
+Action: Add a pushYourself function to the GameViewModel.
+Action: Add a "Push Yourself" button to the DiceRollView.
+DiceRollView.swift (UI Updates)
+
+Swift
+
+// In DiceRollView
+
+struct DiceRollView: View {
+    // ... existing properties
+    @State private var extraDiceFromPush = 0
+    @State private var hasPushed = false // Prevent pushing multiple times
+
+    var body: some View {
+        VStack(spacing: 20) {
+            // ... existing header text ...
+
+            Spacer()
+
+            if let result = result {
+                // ... result view ...
+            } else {
+                // Pre-roll view
+                VStack(spacing: 20) {
+                    HStack(spacing: 10) {
+                        let totalDice = (diceValues.count + extraDiceFromPush)
+                        ForEach(0..<totalDice, id: \.self) { index in
+                            Image(systemName: "die.face.\(diceValues.indices.contains(index) ? diceValues[index] : 1).fill")
+                                .font(.largeTitle)
+                                .foregroundColor(index >= diceValues.count ? .cyan : .primary) // Highlight the pushed die
+                                .rotationEffect(.degrees(isRolling ? 360 : 0))
+                        }
+                    }
+
+                    // The new button!
+                    Button {
+                        viewModel.pushYourself(forCharacter: character)
+                        extraDiceFromPush += 1
+                        hasPushed = true
+                    } label: {
+                        Text("Push Yourself (+1d for 2 Stress)")
+                    }
+                    .disabled(hasPushed) // Disable after one push
+                    .buttonStyle(.bordered)
+                }
+            }
+
+            Spacer()
+            
+            // ... Roll/Done buttons ...
+        }
+        // ...
+    }
+}
+GameViewModel.swift (New Function)
+
+Swift
+
+// In GameViewModel
+
+func pushYourself(forCharacter character: Character) {
+    if let charIndex = gameState.party.firstIndex(where: { $0.id == character.id }) {
+        let currentStress = gameState.party[charIndex].stress
+        // FitD rules: Pushing costs 2 stress. If you don't have enough, you can still do it, but you take Trauma.
+        if currentStress + 2 > 9 {
+            // Handle Trauma case later
+        }
+        gameState.party[charIndex].stress += 2
+        // We can add logic here for other types of pushing later.
+    }
+}
+```
+
+### `Docs/S7_AdvancedFitDMechanics/3-HarmEscalation.md`
+
+```
+
+Task 3: Implement Harm Escalation Logic
+This is the most critical part. When harm is applied, we need to check if the slots are full and upgrade it if necessary.
+
+Action: Create a new, dedicated applyHarm function in the GameViewModel that encapsulates this complex logic.
+Action: Update the processConsequences function to call this new helper.
+GameViewModel.swift (Logic Updates)
+
+Swift
+
+// In GameViewModel
+
+// This new function handles all the complex escalation logic.
+private func applyHarm(familyId: String, level: HarmLevel, toCharacter characterId: UUID) -> String {
+    guard let charIndex = gameState.party.firstIndex(where: { $0.id == characterId }) else { return "" }
+    guard let harmFamily = HarmLibrary.families[familyId] else { return "" }
+    
+    var currentLevel = level
+
+    // The Escalation Loop
+    while true {
+        switch currentLevel {
+        case .lesser:
+            if gameState.party[charIndex].harm.lesser.count < HarmState.lesserSlots {
+                let harm = harmFamily.lesser
+                gameState.party[charIndex].harm.lesser.append((familyId, harm.description))
+                return "Suffered Lesser Harm: \(harm.description)."
+            } else {
+                currentLevel = .moderate // Upgrade!
+            }
+        case .moderate:
+            if gameState.party[charIndex].harm.moderate.count < HarmState.moderateSlots {
+                let harm = harmFamily.moderate
+                gameState.party[charIndex].harm.moderate.append((familyId, harm.description))
+                return "Suffered Moderate Harm: \(harm.description)."
+            } else {
+                currentLevel = .severe // Upgrade!
+            }
+        case .severe:
+            if gameState.party[charIndex].harm.severe.count < HarmState.severeSlots {
+                let harm = harmFamily.severe
+                gameState.party[charIndex].harm.severe.append((familyId, harm.description))
+                return "Suffered SEVERE Harm: \(harm.description)."
+            } else {
+                // FATAL HARM!
+                gameState.status = .gameOver
+                let fatalDescription = harmFamily.fatal.description
+                return "Suffered FATAL Harm: \(fatalDescription)."
+            }
+        }
+    }
+}
+
+// Refactor processConsequences to use the new system.
+private func processConsequences(_ consequences: [Consequence], forCharacter character: Character) -> String {
+    var descriptions: [String] = []
+    for consequence in consequences {
+        switch consequence {
+        // ... other cases ...
+        case .sufferHarm(let level, let familyId): // We now pass the family ID
+            let description = applyHarm(familyId: familyId, level: level, toCharacter: character.id)
+            descriptions.append(description)
+        // ...
+        }
+    }
+    return descriptions.joined(separator: "\n")
+}
+```
+
+### `Docs/S7_AdvancedFitDMechanics/1-HarmFamiliesAndSlots.md`
+
+```
+
+Task 1: Model Harm Families and Slots
+We need to evolve our data models to understand the concept of a "family" of related harms and the limited slots at each tier.
+
+Action: Create a HarmFamily model to define the progression of a specific injury.
+Action: Refactor HarmState to use these families and respect the slot limits.
+Models.swift (Updates)
+
+Swift
+
+// In Models.swift
+
+// Defines a single tier of a harm family.
+struct HarmTier: Codable {
+    var description: String
+    var penalty: Penalty? // Penalty is optional for the "Fatal" tier
+}
+
+// Defines a full "family" of related harms, from minor to fatal.
+struct HarmFamily: Codable, Identifiable {
+    let id: String // e.g., "head_trauma", "leg_injury"
+    var lesser: HarmTier
+    var moderate: HarmTier
+    var severe: HarmTier
+    var fatal: HarmTier // The "game over" description
+}
+
+// Overhaul HarmState to use slots.
+struct HarmState: Codable {
+    // We now store the FAMILY ID and the specific DESCRIPTION of the harm taken.
+    // The number of slots is defined by the array's capacity.
+    var lesser: [(familyId: String, description: String)] = []
+    var moderate: [(familyId: String, description: String)] = []
+    var severe: [(familyId: String, description: String)] = []
+
+    // Define the capacity of each tier.
+    static let lesserSlots = 2
+    static let moderateSlots = 2
+    static let severeSlots = 1
+}
+
+// We'll also need a central place to define all our harm families.
+// This could be a static property or loaded from a JSON file.
+struct HarmLibrary {
+    static let families: [String: HarmFamily] = [
+        "head_trauma": HarmFamily(
+            id: "head_trauma",
+            lesser: HarmTier(description: "Headache", penalty: .actionPenalty(actionType: "Study")),
+            moderate: HarmTier(description: "Migraine", penalty: .reduceEffect),
+            severe: HarmTier(description: "Brain Lightning", penalty: .banAction(actionType: "Study")),
+            fatal: HarmTier(description: "Head Explosion")
+        ),
+        "leg_injury": HarmFamily(
+            id: "leg_injury",
+            lesser: HarmTier(description: "Twisted Ankle", penalty: .actionPenalty(actionType: "Finesse")),
+            moderate: HarmTier(description: "Torn Muscle", penalty: .reduceEffect),
+            severe: HarmTier(description: "Shattered Knee", penalty: .banAction(actionType: "Finesse")),
+            fatal: HarmTier(description: "Crippled Beyond Recovery")
+        )
+        // ... add more families
+    ]
+}
+
+// Add the new penalty type to the Penalty enum
+enum Penalty: Codable {
+    // ... existing cases
+    case banAction(actionType: String) // An action is impossible without a special effort
+}
+```
+
+### `Docs/S5_VisualPolishAndRefactor/2-ReorganizeStatusViewsIntoPartySheet.md`
+
+```
+
+Task 2: Reorganize Status Views into a "Party Sheet"
+The PartyStatusView and ClocksView provide crucial information, but they take up a lot of permanent screen real estate. Let's move them into a secondary, accessible sheet that the player can pull up when needed. This declutters the main view, focusing the player on the current node's interactables.
+
+Action: Combine PartyStatusView and ClocksView into a new StatusSheetView.swift.
+Action: Add a persistent "Party" button to ContentView that presents this sheet.
+StatusSheetView.swift (New File)
+
+Swift
+
+import SwiftUI
+
+struct StatusSheetView: View {
+    @ObservedObject var viewModel: GameViewModel
+
+    var body: some View {
+        VStack(spacing: 20) {
+            PartyStatusView(viewModel: viewModel)
+            Divider()
+            ClocksView(viewModel: viewModel)
+            Spacer()
+        }
+        .padding()
+    }
+}
+ContentView.swift (Sheet Implementation)
+
+Swift
+
+struct ContentView: View {
+    // ...
+    @State private var showingStatusSheet = false // New state to control the sheet
+
+    var body: some View {
+        ZStack {
+            VStack(spacing: 0) {
+                // ... HeaderView ...
+
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 16) {
+                        // The PartyStatusView and ClocksView are REMOVED from here
+                        
+                        // ... Interactables and NodeConnections ...
+                    }
+                    .padding()
+                }
+            }
+            // ...
+
+            // Add a floating button to show the status sheet
+            VStack {
+                Spacer()
+                HStack {
+                    Spacer()
+                    Button {
+                        showingStatusSheet.toggle()
+                    } label: {
+                        Image(systemName: "person.3.fill")
+                        Text("Party")
+                    }
+                    .padding()
+                    .background(.thinMaterial, in: Capsule())
+                    .padding()
+                }
+            }
+        }
+        .sheet(isPresented: $showingStatusSheet) {
+            StatusSheetView(viewModel: viewModel)
+                .presentationDetents([.medium, .large]) // Allow a half-sheet
+        }
+        //...
+    }
+}
+```
+
+### `Docs/S5_VisualPolishAndRefactor/3-SubtleAnimationsAndTransitions.md`
+
+```
+
+Task 3: Add Subtle Animations & Transitions
+With the layout fixed, let's add a touch of "juice" to make the game feel more alive.
+
+Action: Animate node transitions.
+Action: Animate the appearance of interactables.
+ContentView.swift (Animation Updates)
+
+Swift
+
+// In the ScrollView's VStack
+if let node = viewModel.currentNode {
+    ForEach(node.interactables, id: \.id) { interactable in
+        InteractableCardView(interactable: interactable) { action in
+            // ...
+        }
+        .transition(.scale(scale: 0.9).combined(with: .opacity)) // Card fade-in
+    }
+    
+    // ...
+}
+
+// And apply an animation modifier to the main content area
+.animation(.default, value: viewModel.currentNode?.id) // Animate when the current node ID changes
+```
+
+### `Docs/S5_VisualPolishAndRefactor/1-IsolatedHeader.md`
+
+```
+
+Task 1: Isolate the Header
+Let's fix the overlap bugs by creating a dedicated, self-contained view for the top part of the screen.
+
+Action: Create a new HeaderView.swift.
+Action: Move the Navigation Title, CharacterSelectorView, and any other top-level status indicators into this new view.
+HeaderView.swift (New File)
+
+Swift
+
+import SwiftUI
+
+struct HeaderView: View {
+    let title: String
+    let characters: [Character]
+    @Binding var selectedCharacterID: UUID?
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(title)
+                .font(.largeTitle)
+                .bold()
+                .frame(maxWidth: .infinity, alignment: .leading) // Ensure it takes space
+            
+            CharacterSelectorView(characters: characters,
+                                  selectedCharacterID: $selectedCharacterID)
+        }
+        .padding(.horizontal)
+        .padding(.bottom) // Give it some breathing room from the content below
+    }
+}
+ContentView.swift (Updates)
+We will remove the NavigationView and its .navigationTitle modifier, instead treating the HeaderView as our custom title area. This gives us more control.
+
+Swift
+
+struct ContentView: View {
+    // ... existing properties
+
+    var body: some View {
+        ZStack {
+            // Main game view
+            VStack(spacing: 0) { // Use spacing: 0 for more control
+                HeaderView(
+                    title: viewModel.currentNode?.name ?? "Unknown Location",
+                    characters: viewModel.gameState.party,
+                    selectedCharacterID: $selectedCharacterID
+                )
+
+                // Use a ScrollView for the main content to prevent overflow
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 16) {
+                        // All other views go here
+                        PartyStatusView(viewModel: viewModel)
+                        ClocksView(viewModel: viewModel)
+                        Divider()
+                        // ... Interactables and NodeConnections
+                    }
+                    .padding()
+                }
+            }
+            .disabled(viewModel.gameState.status == .gameOver) // Disable interaction behind overlay
+
+            // Game Over overlay remains the same
+            if viewModel.gameState.status == .gameOver {
+                // ...
+            }
+        }
+        .ignoresSafeArea(.all, edges: .bottom) // Let content go to the bottom
+    }
+}
+```
+
+### `Docs/S2_ImproveDynamicism/1-DynamicCharacterSelection.md`
+
+```
+
+Task 1: Implement Dynamic Character Selection
+The current implementation in ContentView.swift always uses the first character in the party (viewModel.gameState.party.first). We need to let the player choose which character to use for an action.
+
+Action: Modify ContentView to manage a selected character.
+Action: Create a CharacterSelectorView.
+CharacterSelectorView.swift (New File)
+
+Swift
+
+import SwiftUI
+
+struct CharacterSelectorView: View {
+    let characters: [Character]
+    @Binding var selectedCharacterID: UUID?
+
+    var body: some View {
+        VStack(alignment: .leading) {
+            Text("Choose a Character")
+                .font(.headline)
+            Picker("Select Character", selection: $selectedCharacterID) {
+                ForEach(characters) { character in
+                    Text(character.name).tag(character.id as UUID?)
+                }
+            }
+            .pickerStyle(.segmented)
+        }
+    }
+}
+ContentView.swift (Updates)
+
+Swift
+
+struct ContentView: View {
+    @StateObject var viewModel = GameViewModel()
+    // ... (other @State properties)
+    @State private var selectedCharacterID: UUID? // New state to track selection
+
+    // Helper to get the full character object
+    private var selectedCharacter: Character? {
+        viewModel.gameState.party.first { $0.id == selectedCharacterID }
+    }
+
+    var body: some View {
+        NavigationView {
+            VStack(alignment: .leading, spacing: 16) {
+                // We'll initialize the selected character ID on appear
+                .onAppear {
+                    if selectedCharacterID == nil {
+                        selectedCharacterID = viewModel.gameState.party.first?.id
+                    }
+                }
+
+                CharacterSelectorView(characters: viewModel.gameState.party,
+                                      selectedCharacterID: $selectedCharacterID) // Add the new view
+
+                PartyStatusView(viewModel: viewModel)
+                // ...
+                // Update the Button's action closure
+                Button(action.name) {
+                    pendingAction = action
+                    // Use the new selectedCharacter property
+                    if let character = selectedCharacter {
+                        projectionText = viewModel.calculateProjection(for: action, with: character)
+                        showingAlert = true
+                    }
+                }
+                // ...
+            }
+            // ...
+            // Update the Alert's Roll button action
+            Button("Roll") {
+                if let action = pendingAction,
+                   let character = selectedCharacter { // Use the selected character
+                    let clockID = viewModel.gameState.activeClocks.first?.id
+                    viewModel.performAction(for: action, with: character, onClock: clockID)
+                }
+            }
+            // ...
+        }
+    }
+}
+```
+
+### `Docs/S2_ImproveDynamicism/3-DesignDedicatedDiceRollView.md`
+
+```
+
+Task 3: Design a Dedicated DiceRollView
+The Alert is functional but not thematic. A dedicated modal view for the dice roll will significantly improve the game's feel.
+
+Action: Create a new view DiceRollView.swift.
+Action: Change ContentView to present this view as a sheet instead of an alert.
+DiceRollView.swift (New File)
+
+Swift
+
+import SwiftUI
+
+struct DiceRollResult {
+    let highestRoll: Int
+    let outcome: String // e.g., "Success", "Partial Success"
+    let consequences: String
+}
+
+struct DiceRollView: View {
+    @ObservedObject var viewModel: GameViewModel
+    let action: ActionOption
+    let character: Character
+    let clockID: UUID?
+
+    // Internal state for the animation
+    @State private var diceValues: [Int] = []
+    @State private var result: DiceRollResult? = nil
+    @State private var isRolling = false
+
+    @Environment(\.dismiss) var dismiss
+
+    var body: some View {
+        VStack(spacing: 20) {
+            Text(character.name).font(.title)
+            Text("is attempting to...").font(.subheadline).foregroundColor(.secondary)
+            Text(action.name).font(.title2).bold()
+            
+            Spacer()
+
+            if let result = result {
+                // View to show after the roll
+                VStack {
+                    Text(result.outcome).font(.largeTitle).bold()
+                    Text("Rolled a \(result.highestRoll)").font(.title3)
+                    Text(result.consequences).padding()
+                }
+            } else {
+                // View to show before the roll
+                HStack(spacing: 10) {
+                    ForEach(0..<diceValues.count, id: \.self) { index in
+                        Image(systemName: "die.face.\(diceValues[index]).fill")
+                            .font(.largeTitle)
+                            .rotationEffect(.degrees(isRolling ? 360 : 0))
+                    }
+                }
+            }
+
+            Spacer()
+
+            if result == nil {
+                Button("Roll the Dice!") {
+                    // This is where we call the VM logic.
+                    // For a better UX, we'd add animation.
+                    withAnimation {
+                        isRolling = true
+                        // The actual logic is now moved here!
+                        self.result = viewModel.performAction(for: action, with: character, onClock: clockID)
+                    }
+                }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.large)
+            } else {
+                Button("Done") {
+                    dismiss()
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.large)
+            }
+        }
+        .padding(30)
+        .onAppear {
+            let diceCount = max(character.actions[action.actionType] ?? 0, 1)
+            self.diceValues = Array(repeating: 1, count: diceCount)
+        }
+    }
+}
+To make this work, we'll need to refactor GameViewModel.performAction to return the result instead of just modifying the state directly. This makes the logic more testable and reusable.
+
+GameViewModel.swift (Refactor)
+
+Swift
+
+/// The main dice roll function, now returns the result for the UI.
+func performAction(for action: ActionOption, with character: Character, onClock clockID: UUID?) -> DiceRollResult {
+    guard let characterIndex = gameState.party.firstIndex(where: { $0.id == character.id }) else {
+        // This should not happen in a controlled environment
+        return DiceRollResult(highestRoll: 0, outcome: "Error", consequences: "Character not found.")
+    }
+
+    let dicePool = max(character.actions[action.actionType] ?? 0, 1)
+    var highestRoll = 0
+    for _ in 0..<dicePool {
+        highestRoll = max(highestRoll, Int.random(in: 1...6))
+    }
+
+    var outcome: String
+    var consequences: String
+
+    switch highestRoll {
+    case 6:
+        outcome = "Full Success!"
+        consequences = "You master the situation."
+        if let clockID = clockID {
+            let ticks = 2 // Standard effect
+            updateClock(id: clockID, ticks: ticks)
+            consequences += "\nThe '\(gameState.activeClocks.first(where: {$0.id == clockID})?.name ?? "")' clock progresses by \(ticks)."
+        }
+    case 4...5:
+        outcome = "Partial Success..."
+        gameState.party[characterIndex].stress += 2
+        consequences = "You do it, but at a cost. Gained 2 Stress."
+    default:
+        outcome = "Failure."
+        gameState.party[characterIndex].harm.lesser.append("Bruised")
+        consequences = "Things go wrong. You suffer minor harm."
+    }
+    
+    return DiceRollResult(highestRoll: highestRoll, outcome: outcome, consequences: consequences)
+}
+```
+
+### `Docs/S2_ImproveDynamicism/2-CreateReusableInteractableCardView.md`
+
+```
+
+Task 2: Create a Reusable InteractableCardView
+Let's move the hardcoded interactable into a proper, reusable SwiftUI view. This makes the ContentView cleaner and prepares us for having multiple interactables in a node.
+
+InteractableCardView.swift (New File)
+
+Swift
+
+import SwiftUI
+
+struct InteractableCardView: View {
+    let interactable: Interactable
+    let onActionTapped: (ActionOption) -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(interactable.title)
+                .font(.title2).bold()
+            Text(interactable.description)
+                .font(.body)
+            Divider()
+            ForEach(interactable.availableActions, id: \.name) { action in
+                Button(action.name) {
+                    onActionTapped(action)
+                }
+                .buttonStyle(.bordered)
+                .frame(maxWidth: .infinity)
+            }
+        }
+        .padding()
+        .background(Color(UIColor.secondarySystemBackground))
+        .cornerRadius(12)
+        .shadow(radius: 4)
+    }
+}
+ContentView.swift (Updates)
+
+Swift
+
+// ... inside ContentView body
+Divider()
+InteractableCardView(interactable: interactable) { action in
+    pendingAction = action
+    if let character = selectedCharacter {
+        projectionText = viewModel.calculateProjection(for: action, with: character)
+        showingAlert = true
+    }
+}
+Spacer()
+// ...
+```
+
+### `Docs/S8_ContentAndGenerationArchitecture/2-ArchitectDungeonGenerator.md`
+
+```
+
+Task 2: Architect the Dungeon Generator
+This is the engine that will create variety. It will be a dedicated service that takes the loaded content and outputs a complete DungeonMap.
+
+Action: Create a new DungeonGenerator.swift file.
+Action: Design a basic generation algorithm.
+Action: Update GameViewModel to call this generator instead of using its own hardcoded generateDungeon method.
+DungeonGenerator.swift (New File)
+
+Swift
+
+import Foundation
+
+class DungeonGenerator {
+    private let content: ContentLoader
+
+    init(content: ContentLoader = .shared) {
+        self.content = content
+    }
+
+    func generate(level: Int) -> DungeonMap {
+        var nodes: [UUID: MapNode] = [:]
+        let nodeCount = 5 + level // Simple scaling: the deeper you go, the bigger the dungeon
+
+        // 1. Create a chain of nodes
+        var previousNodeID: UUID?
+        var nodeIDs: [UUID] = []
+
+        for i in 0..<nodeCount {
+            let newNodeID = UUID()
+            var connections: [NodeConnection] = []
+            if let prevID = previousNodeID {
+                // Connect back to the previous node
+                connections.append(NodeConnection(toNodeID: prevID, description: "Go back"))
+            }
+
+            let newNode = MapNode(
+                id: newNodeID,
+                name: "Forgotten Antechamber \(i+1)",
+                interactables: [], // We'll populate these next
+                connections: connections
+            )
+            nodes[newNodeID] = newNode
+            nodeIDs.append(newNodeID)
+
+            // Connect the previous node forward to this one
+            if let prevID = previousNodeID {
+                let desc = i == nodeCount - 1 ? "Path to the final chamber" : "Deeper into the tomb"
+                nodes[prevID]?.connections.append(NodeConnection(toNodeID: newNodeID, description: desc))
+            }
+            previousNodeID = newNodeID
+        }
+
+        // 2. Populate nodes with interactables
+        for id in nodeIDs.dropFirst() { // Don't put interactables in the very first room
+            if var node = nodes[id] {
+                let numberOfInteractables = Int.random(in: 1...2)
+                for _ in 0..<numberOfInteractables {
+                    if let randomTemplate = content.interactableTemplates.randomElement() {
+                        node.interactables.append(randomTemplate)
+                    }
+                }
+                nodes[id] = node
+            }
+        }
+
+        // For now, the start is the first node we made.
+        let startingNodeID = nodeIDs.first!
+        nodes[startingNodeID]?.isDiscovered = true
+        
+        return DungeonMap(nodes: nodes, startingNodeID: startingNodeID)
+    }
+}
+GameViewModel.swift (Updates)
+
+Swift
+
+// In GameViewModel
+
+// The old generateDungeon is removed entirely.
+func startNewRun() {
+    let generator = DungeonGenerator()
+    let newDungeon = generator.generate(level: 1) // Start with a level 1 dungeon
+
+    self.gameState = GameState(
+        party: [/* ... generate random party ... */],
+        activeClocks: [/* ... starting clocks ... */],
+        dungeon: newDungeon,
+        currentNodeID: newDungeon.startingNodeID,
+        status: .playing
+    )
+}
+```
+
+### `Docs/S8_ContentAndGenerationArchitecture/1-ExternalizeContentToJson.md`
+
+```
+
+Task 1: Externalize Content to JSON
+Currently, our HarmLibrary and Interactable definitions live directly in the code. This is inflexible. By moving them to JSON files, we can edit, add, and balance content without recompiling the app.
+
+Action: Create a Content directory in your project to hold new JSON files.
+Action: Create harm_families.json, interactables.json, and treasures.json.
+Action: Create a ContentLoader service to parse these files at launch.
+Example: interactables.json
+
+JSON
+
+{
+  "common_traps": [
+    {
+      "id": "template_pressure_plate",
+      "title": "Pressure Plate",
+      "description": "A slightly raised stone tile looks suspicious.",
+      "availableActions": [
+        {
+          "name": "Deftly step over it",
+          "actionType": "Finesse",
+          "position": "risky",
+          "effect": "standard",
+          "outcomes": {
+            "success": [
+              { "type": "removeInteractable", "id": "self" }
+            ],
+            "failure": [
+              { "type": "sufferHarm", "level": "lesser", "familyId": "leg_injury" }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "template_cursed_idol",
+      "title": "Cursed Idol",
+      "description": "A small, unnerving idol of a forgotten god.",
+      "availableActions": [
+        {
+          "name": "Smash it",
+          "actionType": "Wreck",
+          "position": "desperate",
+          "effect": "great",
+          "outcomes": {
+            "success": [
+              { "type": "removeInteractable", "id": "self" },
+              { "type": "gainTreasure", "treasureId": "treasure_purified_idol_shard" }
+            ],
+            "failure": [
+              { "type": "sufferHarm", "level": "moderate", "familyId": "head_trauma" }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
+(Note: We'll need to update our Consequence and ActionOption models to be initializable from these dictionary structures, often by adding a custom init(from decoder: Decoder) implementation that looks at a "type" field.)
+
+ContentLoader.swift (New File)
+
+Swift
+
+import Foundation
+
+class ContentLoader {
+    static let shared = ContentLoader()
+
+    let interactableTemplates: [Interactable]
+    let harmFamilies: [HarmFamily]
+    let treasureTemplates: [Treasure]
+
+    private init() {
+        // In a real app, you'd handle errors gracefully.
+        self.interactableTemplates = Self.load("interactables.json")
+        self.harmFamilies = Self.load("harm_families.json")
+        self.treasureTemplates = Self.load("treasures.json")
+    }
+
+    static func load<T: Decodable>(_ filename: String) -> [T] {
+        // Standard JSON file loading and decoding logic...
+        // ...
+        return [] // return decoded data
+    }
+}
+```
+
+### `Docs/S3_DungeonCrawl/1-DungeonModel.md`
+
+```
+
+Task 1: Model the Dungeon
+We need new data structures in Models.swift to represent the dungeon map, its nodes, and the connections between them.
+
+Action: Add DungeonMap, MapNode, and NodeConnection structs to Models.swift.
+Models.swift (Additions)
+
+Swift
+
+// ... existing models
+
+// Represents the entire dungeon layout
+struct DungeonMap: Codable {
+    var nodes: [UUID: MapNode] // Use a dictionary for quick node lookup by ID
+    var startingNodeID: UUID
+}
+
+// Represents a single room or location on the map
+struct MapNode: Identifiable, Codable {
+    let id: UUID = UUID()
+    var name: String
+    var interactables: [Interactable]
+    var connections: [NodeConnection]
+    var isDiscovered: Bool = false // To support fog of war
+}
+
+// Represents a path from one node to another
+struct NodeConnection: Codable {
+    var toNodeID: UUID
+    var isUnlocked: Bool = true // A path could be locked initially
+    var description: String // e.g., "A dark tunnel", "A rickety bridge"
+}
+```
+
+### `Docs/S3_DungeonCrawl/2-GenerateAndManageDungeonState.md`
+
+```
+
+Task 2: Generate and Manage the Dungeon State
+The GameViewModel needs to be updated to create, store, and manage the state of the dungeon map and the player's current location.
+
+Action: Update GameState to include the map and the party's location.
+Action: Add logic to GameViewModel to generate a simple, static map for this sprint.
+Action: Create a new function in GameViewModel for moving between nodes.
+Models.swift (GameState update)
+
+Swift
+
+struct GameState: Codable {
+    var party: [Character] = []
+    var activeClocks: [GameClock] = []
+    var dungeon: DungeonMap? // The full map
+    var currentNodeID: UUID? // The party's current location
+}
+GameViewModel.swift (Updates)
+
+Swift
+
+@MainActor
+class GameViewModel: ObservableObject {
+    @Published var gameState: GameState
+
+    // Helper to get the current node
+    var currentNode: MapNode? {
+        guard let map = gameState.dungeon, let currentNodeID = gameState.currentNodeID else { return nil }
+        return map.nodes[currentNodeID]
+    }
+
+    init() {
+        // ... existing party/clock setup
+        self.gameState = GameState(/*...party/clocks...*/)
+        generateDungeon() // Call the new map generation function
+    }
+
+    func generateDungeon() {
+        // For this sprint, we'll create a static 3-node map.
+        // In the future, this will be procedural.
+        var nodes: [UUID: MapNode] = [:]
+
+        // Create Nodes
+        let startNodeID = UUID()
+        let secondNodeID = UUID()
+        let thirdNodeID = UUID()
+
+        let startNode = MapNode(
+            name: "Entrance Chamber",
+            interactables: [
+                Interactable(title: "Sealed Stone Door", description: "A massive circular door covered in dust.", availableActions: [
+                    ActionOption(name: "Examine the Mechanism", actionType: "Study", position: .controlled, effect: .standard),
+                    ActionOption(name: "Push with all your might", actionType: "Wreck", position: .desperate, effect: .great)
+                ])
+            ],
+            connections: [NodeConnection(toNodeID: secondNodeID, isUnlocked: false, description: "The Stone Door")],
+            isDiscovered: true
+        )
+
+        let secondNode = MapNode(
+            name: "The Trap Room",
+            interactables: [
+                Interactable(title: "Trapped Pedestal", description: "An ancient pedestal covered in suspicious glyphs.", availableActions: [
+                    ActionOption(name: "Tinker with it", actionType: "Tinker", position: .risky, effect: .standard)
+                ])
+            ],
+            connections: [
+                NodeConnection(toNodeID: startNodeID, description: "Back to the entrance"),
+                NodeConnection(toNodeID: thirdNodeID, description: "A narrow corridor")
+            ]
+        )
+        
+        let thirdNode = MapNode(name: "The Echoing Chasm", interactables: [], connections: [])
+
+        nodes[startNodeID] = startNode
+        nodes[secondNodeID] = secondNode
+        nodes[thirdNodeID] = thirdNode
+
+        let map = DungeonMap(nodes: nodes, startingNodeID: startNodeID)
+        self.gameState.dungeon = map
+        self.gameState.currentNodeID = startNodeID
+    }
+
+    func move(to newConnection: NodeConnection) {
+        if newConnection.isUnlocked {
+            self.gameState.currentNodeID = newConnection.toNodeID
+            // Mark the new node as discovered
+            self.gameState.dungeon?.nodes[newConnection.toNodeID]?.isDiscovered = true
+        }
+        // In the future, we can handle locked doors here.
+    }
+}
+```
+
+### `Docs/S3_DungeonCrawl/3-BuildDungeonViews.md`
+
+```
+
+Task 3: Build the Dungeon Views
+We need a view to display the node connections for the current room and another (optional, for this sprint) to show the full map.
+
+Action: Create a NodeConnectionsView.
+Action: Update ContentView to display the interactables for the current node.
+NodeConnectionsView.swift (New File)
+
+Swift
+
+import SwiftUI
+
+struct NodeConnectionsView: View {
+    var currentNode: MapNode?
+    let onMove: (NodeConnection) -> Void
+
+    var body: some View {
+        VStack(alignment: .leading) {
+            Text("Paths from this room").font(.headline)
+            if let node = currentNode {
+                ForEach(node.connections, id: \.toNodeID) { connection in
+                    Button {
+                        onMove(connection)
+                    } label: {
+                        HStack {
+                            Text(connection.description)
+                            Spacer()
+                            if !connection.isUnlocked {
+                                Image(systemName: "lock.fill")
+                            }
+                            Image(systemName: "arrow.right.circle.fill")
+                        }
+                    }
+                    .buttonStyle(.bordered)
+                    .disabled(!connection.isUnlocked)
+                }
+            }
+        }
+    }
+}
+ContentView.swift (Major Updates)
+
+Swift
+
+struct ContentView: View {
+    // ... existing @State properties
+
+    var body: some View {
+        NavigationView {
+            VStack(alignment: .leading, spacing: 16) {
+                // CharacterSelectorView, PartyStatusView, ClocksView (no changes)
+                // ...
+
+                Divider()
+
+                // NEW: Show interactables from the CURRENT node
+                if let node = viewModel.currentNode {
+                    // This loop replaces the single hardcoded InteractableCardView
+                    ForEach(node.interactables, id: \.title) { interactable in
+                        InteractableCardView(interactable: interactable) { action in
+                            // The logic for showing the dice sheet remains the same
+                            pendingAction = action
+                            if selectedCharacter != nil {
+                                showingDiceSheet = true
+                            }
+                        }
+                    }
+
+                    Divider()
+
+                    // NEW: Show the connections for the current node
+                    NodeConnectionsView(currentNode: viewModel.currentNode) { connection in
+                        viewModel.move(to: connection)
+                    }
+                } else {
+                    Text("Loading dungeon...")
+                }
+
+                Spacer()
+            }
+            .padding()
+            .navigationTitle(viewModel.currentNode?.name ?? "Unknown Location") // Dynamic title!
+            // ... sheet modifier remains the same
+        }
+    }
+}
 ```
 
