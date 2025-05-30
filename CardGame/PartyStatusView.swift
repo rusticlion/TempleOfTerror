@@ -53,6 +53,19 @@ struct PartyStatusView: View {
                                     .frame(width: 16, height: 16)
                             }
                         }
+                        // Display the names of each suffered Harm for clarity
+                        ForEach(Array(character.harm.lesser.enumerated()), id: \.offset) { _, entry in
+                            Text("Lesser - \(entry.description)")
+                                .font(.caption2)
+                        }
+                        ForEach(Array(character.harm.moderate.enumerated()), id: \.offset) { _, entry in
+                            Text("Moderate - \(entry.description)")
+                                .font(.caption2)
+                        }
+                        ForEach(Array(character.harm.severe.enumerated()), id: \.offset) { _, entry in
+                            Text("Severe - \(entry.description)")
+                                .font(.caption2)
+                        }
                     }
 
                     // Action ratings
