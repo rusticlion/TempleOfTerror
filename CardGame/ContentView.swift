@@ -9,8 +9,8 @@ struct ContentView: View {
     @State private var showingMap = false // Controls the map sheet
     @State private var doorProgress: CGFloat = 0 // For sliding door transition
 
-    init() {
-        let vm = GameViewModel()
+    init(scenario: String = "tomb") {
+        let vm = GameViewModel(scenario: scenario)
         _viewModel = StateObject(wrappedValue: vm)
         _selectedCharacterID = State(initialValue: vm.gameState.party.first?.id)
     }

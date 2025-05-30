@@ -1,7 +1,7 @@
 import Foundation
 
 /// Basic information about a scenario.
-struct ScenarioManifest: Codable {
+struct ScenarioManifest: Codable, Identifiable {
     var id: String
     var title: String
     var description: String
@@ -9,8 +9,10 @@ struct ScenarioManifest: Codable {
 }
 
 class ContentLoader {
-    /// Shared loader using the default scenario ("tomb").
-    static let shared = ContentLoader()
+    /// Shared loader using the default scenario ("tomb"). This can be
+    /// reassigned when the player selects a different scenario from the
+    /// main menu.
+    static var shared = ContentLoader()
 
     let scenarioName: String
     let scenarioManifest: ScenarioManifest?
@@ -49,6 +51,27 @@ class ContentLoader {
             print("Failed to decode scenario.json for \(scenario): \(error)")
             return nil
         }
+    }
+
+    /// Retrieve all scenario manifests packaged with the app.
+    static func availableScenarios() -> [ScenarioManifest] {
+        guard let baseURL = Bundle.main.resourceURL?.appendingPathComponent("Content/Scenarios") else {
+            return []
+        }
+        let fm = FileManager.default
+        guard let contents = try? fm.contentsOfDirectory(at: baseURL, includingPropertiesForKeys: nil, options: [.skipsHiddenFiles]) else {
+            return []
+        }
+        var manifests: [ScenarioManifest] = []
+        for dir in contents where dir.hasDirectoryPath {
+            let name = dir.lastPathComponent
+            if let url = Bundle.main.url(forResource: "scenario.json", withExtension: nil, subdirectory: "Content/Scenarios/\(name)"),
+               let data = try? Data(contentsOf: url),
+               let manifest = try? JSONDecoder().decode(ScenarioManifest.self, from: data) {
+                manifests.append(manifest)
+            }
+        }
+        return manifests.sorted { $0.title < $1.title }
     }
 
     private static func load<T: Decodable>(_ filename: String, for scenario: String) -> [T] {
