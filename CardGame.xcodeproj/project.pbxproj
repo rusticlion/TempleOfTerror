@@ -30,6 +30,7 @@
 		464B59CB2DE817190002EA59 /* AssetPlaceholders in Resources */ = {isa = PBXBuildFile; fileRef = 464B59CA2DE817190002EA59 /* AssetPlaceholders */; };
 		464B59CD2DEA1A850002EA59 /* CharacterSheetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 464B59CC2DEA1A850002EA59 /* CharacterSheetView.swift */; };
 		464B59CF2DEA1EF30002EA59 /* MapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 464B59CE2DEA1EF30002EA59 /* MapView.swift */; };
+		464B59D12DEA27510002EA59 /* MainMenuView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 464B59D02DEA27510002EA59 /* MainMenuView.swift */; };
 		46A9D2292DE7D14C00FE459E /* HeaderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46A9D2282DE7D14C00FE459E /* HeaderView.swift */; };
 		46A9D22B2DE7D2E500FE459E /* StatusSheetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46A9D22A2DE7D2E500FE459E /* StatusSheetView.swift */; };
 		46A9D22D2DE7F82000FE459E /* ContentLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46A9D22C2DE7F81F00FE459E /* ContentLoader.swift */; };
@@ -87,6 +88,7 @@
 		464B59CA2DE817190002EA59 /* AssetPlaceholders */ = {isa = PBXFileReference; lastKnownFileType = folder; path = AssetPlaceholders; sourceTree = "<group>"; };
 		464B59CC2DEA1A850002EA59 /* CharacterSheetView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CharacterSheetView.swift; sourceTree = "<group>"; };
 		464B59CE2DEA1EF30002EA59 /* MapView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MapView.swift; sourceTree = "<group>"; };
+		464B59D02DEA27510002EA59 /* MainMenuView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MainMenuView.swift; sourceTree = "<group>"; };
 		46A9D2282DE7D14C00FE459E /* HeaderView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = HeaderView.swift; sourceTree = "<group>"; };
 		46A9D22A2DE7D2E500FE459E /* StatusSheetView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StatusSheetView.swift; sourceTree = "<group>"; };
 		46A9D22C2DE7F81F00FE459E /* ContentLoader.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ContentLoader.swift; sourceTree = "<group>"; };
@@ -144,6 +146,7 @@
 		460D624C2DE7934300D50D0C /* CardGame */ = {
 			isa = PBXGroup;
 			children = (
+				464B59D02DEA27510002EA59 /* MainMenuView.swift */,
 				464B59CE2DEA1EF30002EA59 /* MapView.swift */,
 				464B59CC2DEA1A850002EA59 /* CharacterSheetView.swift */,
 				464B59CA2DE817190002EA59 /* AssetPlaceholders */,
@@ -344,6 +347,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				46A9D2322DE7FAF100FE459E /* DungeonGenerator.swift in Sources */,
+				464B59D12DEA27510002EA59 /* MainMenuView.swift in Sources */,
 				460D62922DE7AA3900D50D0C /* Persistence.swift in Sources */,
 				460D629A2DE7BD4200D50D0C /* NodeConnectionsView.swift in Sources */,
 				464B59CF2DEA1EF30002EA59 /* MapView.swift in Sources */,

@@ -1,7 +1,7 @@
 import Foundation
 
 /// Basic information about a scenario.
-struct ScenarioManifest: Codable, Identifiable {
+struct ScenarioManifest: Codable, Identifiable, Hashable {
     var id: String
     var title: String
     var description: String
