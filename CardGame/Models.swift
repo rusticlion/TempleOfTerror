@@ -77,7 +77,7 @@ struct Treasure: Codable, Identifiable {
 }
 
 struct Character: Identifiable, Codable {
-    let id: UUID = UUID()
+    let id: UUID
     var name: String
     var characterClass: String
     var stress: Int
@@ -499,7 +499,7 @@ struct DungeonMap: Codable {
 
 // Represents a single room or location on the map
 struct MapNode: Identifiable, Codable {
-    let id: UUID = UUID()
+    let id: UUID
     var name: String
     var soundProfile: String
     var interactables: [Interactable]

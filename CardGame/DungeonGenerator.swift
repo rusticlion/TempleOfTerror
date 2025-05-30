@@ -34,6 +34,7 @@ class DungeonGenerator {
             let theme = themes.randomElement()
 
             var newNode = MapNode(
+                id: UUID(),
                 name: "Forgotten Antechamber \(i + 1)",
                 soundProfile: soundProfiles.randomElement() ?? "silent_tomb",
                 interactables: [],
