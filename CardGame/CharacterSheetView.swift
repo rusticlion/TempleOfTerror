@@ -114,11 +114,24 @@ struct CharacterSheetView: View {
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 8) {
                             ForEach(character.treasures) { treasure in
-                                Text(treasure.name)
-                                    .font(.caption2)
-                                    .padding(4)
-                                    .background(Color(UIColor.systemBackground).opacity(0.5))
-                                    .cornerRadius(6)
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(treasure.name)
+                                    if !treasure.tags.isEmpty {
+                                        HStack(spacing: 2) {
+                                            ForEach(treasure.tags, id: \.self) { tag in
+                                                Text(tag)
+                                                    .font(.caption3)
+                                                    .padding(2)
+                                                    .background(Color(UIColor.systemGray5))
+                                                    .cornerRadius(4)
+                                            }
+                                        }
+                                    }
+                                }
+                                .font(.caption2)
+                                .padding(4)
+                                .background(Color(UIColor.systemBackground).opacity(0.5))
+                                .cornerRadius(6)
                             }
                         }
                     }

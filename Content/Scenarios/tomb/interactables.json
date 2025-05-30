@@ -207,6 +207,25 @@
           }
         }
       ]
+    },
+    {
+      "id": "template_shadowy_corner",
+      "title": "Shadowy Corner",
+      "description": "Darkness conceals something here.",
+      "tags": ["Dark"],
+      "availableActions": [
+        {
+          "name": "Illuminate",
+          "actionType": "Survey",
+          "position": "controlled",
+          "effect": "standard",
+          "requiresTest": false,
+          "requiredTag": "Light Source",
+          "outcomes": {
+            "success": [ { "type": "gainTreasure", "treasureId": "treasure_ancient_coin" }, { "type": "removeInteractable", "id": "self" } ]
+          }
+        }
+      ]
     }
   ],
   "threats": [
