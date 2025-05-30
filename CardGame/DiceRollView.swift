@@ -104,13 +104,13 @@ struct DiceRollView: View {
                         .bold()
                         .transition(.scale.combined(with: .opacity))
                     if result.isCritical == true {
-                        Text("Critical Success!")
+                        Text("CRITICAL SUCCESS!")
                             .font(.headline)
                             .foregroundColor(.orange)
-                        if let eff = result.finalEffect {
-                            Text("Effect: \(eff.rawValue.capitalized)")
-                                .font(.subheadline)
-                        }
+                    }
+                    if let eff = result.finalEffect {
+                        Text("Effect: \(eff.rawValue.capitalized)")
+                            .font(.subheadline)
                     }
                     Text("Rolled a \(result.highestRoll)").font(.title3)
                     Text(result.consequences).padding()
@@ -124,7 +124,10 @@ struct DiceRollView: View {
                     ForEach(proj.notes, id: \.self) { note in
                         Text(note)
                             .font(.caption)
-                            .foregroundColor(note.contains("-") || note.contains("Cannot") ? .red : .blue)
+                            .foregroundColor(
+                                note.contains("0 rating") ? .orange :
+                                (note.contains("-") || note.contains("Cannot") ? .red : .blue)
+                            )
                     }
                 }
             }
