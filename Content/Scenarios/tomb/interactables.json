@@ -1,0 +1,252 @@
+{
+  "common_traps": [
+    {
+      "id": "template_pressure_plate",
+      "title": "Pressure Plate",
+      "description": "A slightly raised stone tile looks suspicious.",
+      "availableActions": [
+        {
+          "name": "Deftly step over it",
+          "actionType": "Finesse",
+          "position": "risky",
+          "effect": "standard",
+          "outcomes": {
+            "success": [
+              { "type": "removeInteractable", "id": "self" }
+            ],
+            "failure": [
+              { "type": "sufferHarm", "level": "lesser", "familyId": "leg_injury" }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "template_cursed_idol",
+      "title": "Cursed Idol",
+      "description": "A small, unnerving idol of a forgotten god.",
+      "availableActions": [
+        {
+          "name": "Smash it",
+          "actionType": "Wreck",
+          "position": "desperate",
+          "effect": "great",
+          "outcomes": {
+            "success": [
+              { "type": "removeInteractable", "id": "self" },
+              { "type": "gainTreasure", "treasureId": "treasure_purified_idol_shard" }
+            ],
+            "failure": [
+              { "type": "sufferHarm", "level": "moderate", "familyId": "head_trauma" }
+            ]
+          }
+        }
+      ]
+    }
+    ,
+    {
+      "id": "template_crumbling_ledge",
+      "title": "Crumbling Ledge",
+      "description": "A narrow ledge over a dark chasm. It looks unstable.",
+      "availableActions": [
+        {
+          "name": "Cross Carefully",
+          "actionType": "Finesse",
+          "position": "desperate",
+          "effect": "standard",
+          "isGroupAction": true,
+          "outcomes": {
+            "success": [ { "type": "removeInteractable", "id": "self" } ],
+            "partial": [
+              { "type": "gainStress", "amount": 2 },
+              { "type": "sufferHarm", "level": "lesser", "familyId": "leg_injury" }
+            ],
+            "failure": [
+              { "type": "sufferHarm", "level": "moderate", "familyId": "leg_injury" },
+              { "type": "tickClock", "clockName": "Chasm Peril", "amount": 2 }
+            ]
+          }
+        },
+        {
+          "name": "Test its Stability",
+          "actionType": "Survey",
+          "position": "risky",
+          "effect": "limited",
+          "outcomes": {
+            "success": [],
+            "failure": [ { "type": "gainStress", "amount": 1 } ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "template_mysterious_whispers",
+      "title": "Mysterious Whispers",
+      "description": "Voices echo softly from unseen sources.",
+      "availableActions": [
+        {
+          "name": "Listen Closely",
+          "actionType": "Attune",
+          "position": "risky",
+          "effect": "standard",
+          "outcomes": {
+            "success": [ { "type": "gainTreasure", "treasureId": "treasure_map_fragment" } ],
+            "partial": [ { "type": "sufferHarm", "level": "lesser", "familyId": "mental_anguish" } ],
+            "failure": [ { "type": "sufferHarm", "level": "moderate", "familyId": "mental_anguish" } ]
+          }
+        },
+        {
+          "name": "Block Out Noise",
+          "actionType": "Study",
+          "position": "controlled",
+          "effect": "limited",
+          "outcomes": {
+            "success": [ { "type": "removeInteractable", "id": "self" } ],
+            "failure": [ { "type": "gainStress", "amount": 1 } ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "template_jammed_lock",
+      "title": "Jammed Lock",
+      "description": "A sturdy door with a rusted mechanism.",
+      "availableActions": [
+        {
+          "name": "Pick the Lock",
+          "actionType": "Tinker",
+          "position": "risky",
+          "effect": "standard",
+          "outcomes": {
+            "success": [ { "type": "gainTreasure", "treasureId": "treasure_precise_tools" } ],
+            "partial": [ { "type": "tickClock", "clockName": "Lockdown Approaches", "amount": 1 } ],
+            "failure": [ { "type": "sufferHarm", "level": "moderate", "familyId": "gear_damage" } ]
+          }
+        },
+        {
+          "name": "Force it",
+          "actionType": "Wreck",
+          "position": "desperate",
+          "effect": "great",
+          "outcomes": {
+            "success": [ { "type": "removeInteractable", "id": "self" } ],
+            "failure": [ { "type": "sufferHarm", "level": "lesser", "familyId": "gear_damage" } ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "template_unstable_rune",
+      "title": "Unstable Rune",
+      "description": "A glowing rune pulsates with dangerous energy.",
+      "availableActions": [
+        {
+          "name": "Decode Glyphs",
+          "actionType": "Study",
+          "position": "controlled",
+          "effect": "limited",
+          "outcomes": {
+            "success": [ { "type": "removeInteractable", "id": "self" } ],
+            "partial": [ { "type": "tickClock", "clockName": "Rune Overload", "amount": 1 } ],
+            "failure": [ { "type": "sufferHarm", "level": "moderate", "familyId": "electric_shock" } ]
+          }
+        },
+        {
+          "name": "Shatter it",
+          "actionType": "Wreck",
+          "position": "risky",
+          "effect": "standard",
+          "outcomes": {
+            "success": [ { "type": "removeInteractable", "id": "self" } ],
+            "failure": [ { "type": "sufferHarm", "level": "severe", "familyId": "electric_shock" } ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "template_hidden_niche",
+      "title": "Hidden Niche",
+      "description": "A faint outline hints at a recess in the wall.",
+      "availableActions": [
+        {
+          "name": "Search Carefully",
+          "actionType": "Survey",
+          "position": "controlled",
+          "effect": "standard",
+          "outcomes": {
+            "success": [ { "type": "addInteractable", "inNodeID": "current", "interactable": { "id": "template_small_chest", "title": "Small Chest", "description": "Dusty but intact.", "availableActions": [ { "name": "Open", "actionType": "Finesse", "position": "risky", "effect": "standard", "outcomes": { "success": [ { "type": "gainTreasure", "treasureId": "treasure_charmed_talisman" }, { "type": "removeInteractable", "id": "self" } ], "failure": [ { "type": "tickClock", "clockName": "Chest Trap", "amount": 1 } ] } } ] } } ],
+            "failure": [ { "type": "gainStress", "amount": 1 } ]
+          }
+        },
+        {
+          "name": "Force it Open",
+          "actionType": "Wreck",
+          "position": "risky",
+          "effect": "limited",
+          "outcomes": {
+            "success": [ { "type": "addInteractable", "inNodeID": "current", "interactable": { "id": "template_small_chest", "title": "Small Chest", "description": "Dusty but intact.", "availableActions": [ { "name": "Open", "actionType": "Wreck", "position": "risky", "effect": "standard", "outcomes": { "success": [ { "type": "gainTreasure", "treasureId": "treasure_charmed_talisman" }, { "type": "removeInteractable", "id": "self" } ], "failure": [ { "type": "sufferHarm", "level": "lesser", "familyId": "gear_damage" } ] } } ] } } ],
+            "failure": [ { "type": "sufferHarm", "level": "lesser", "familyId": "gear_damage" } ]
+          }
+        }
+      ]
+    }
+  ],
+  "threats": [
+    {
+      "id": "threat_hungry_ghoul",
+      "title": "Hungry Ghoul",
+      "description": "A ravenous ghoul lurches from the shadows.",
+      "isThreat": true,
+      "availableActions": [
+        {
+          "name": "Drive it back",
+          "actionType": "Skirmish",
+          "position": "risky",
+          "effect": "standard",
+          "outcomes": {
+            "success": [ { "type": "removeInteractable", "id": "self" } ],
+            "failure": [ { "type": "sufferHarm", "level": "moderate", "familyId": "leg_injury" } ]
+          }
+        },
+        {
+          "name": "Flee",
+          "actionType": "Finesse",
+          "position": "desperate",
+          "effect": "limited",
+          "outcomes": {
+            "success": [ { "type": "removeInteractable", "id": "self" } ],
+            "failure": [ { "type": "tickClock", "clockName": "Ghoul Pursuit", "amount": 1 } ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "threat_reactor_breach",
+      "title": "Reactor Breach",
+      "description": "Alarms blare as a reactor begins to overload.",
+      "isThreat": true,
+      "availableActions": [
+        {
+          "name": "Stabilize Reactor",
+          "actionType": "Tinker",
+          "position": "risky",
+          "effect": "standard",
+          "outcomes": {
+            "success": [ { "type": "removeInteractable", "id": "self" } ],
+            "failure": [ { "type": "sufferHarm", "level": "severe", "familyId": "electric_shock" } ]
+          }
+        },
+        {
+          "name": "Evacuate",
+          "actionType": "Finesse",
+          "position": "desperate",
+          "effect": "limited",
+          "outcomes": {
+            "success": [ { "type": "removeInteractable", "id": "self" } ],
+            "failure": [ { "type": "gainStress", "amount": 2 } ]
+          }
+        }
+      ]
+    }
+  ]
+}
