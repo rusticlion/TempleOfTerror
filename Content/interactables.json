@@ -285,5 +285,41 @@
         }
       ]
     }
+  ],
+  "examples_dynamic": [
+    {
+      "id": "example_simple_lever",
+      "title": "Simple Lever",
+      "description": "A lever with warning signs.",
+      "availableActions": [
+        {
+          "name": "Throw the Lever",
+          "actionType": "Tinker",
+          "position": "risky",
+          "effect": "standard",
+          "outcomes": {
+            "success": [
+              {
+                "type": "gainTreasure",
+                "treasureId": "treasure_test_gem",
+                "conditions": [
+                  { "type": "requiresMinEffectLevel", "effectParam": "great" }
+                ]
+              }
+            ],
+            "failure": [
+              {
+                "type": "sufferHarm",
+                "level": "lesser",
+                "familyId": "gear_damage",
+                "conditions": [
+                  { "type": "requiresMinPositionLevel", "positionParam": "desperate" }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    }
   ]
 }

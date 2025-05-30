@@ -550,7 +550,8 @@ class GameViewModel: ObservableObject {
                 Character(id: UUID(), name: "Marion", characterClass: "Survivor", stress: 0, harm: HarmState(), actions: ["Tinker": 2, "Attune": 1])
             ],
             activeClocks: [
-                GameClock(name: "The Guardian Wakes", segments: 6, progress: 0)
+                GameClock(name: "The Guardian Wakes", segments: 6, progress: 0),
+                GameClock(name: "Test Clock", segments: 4, progress: 0)
             ] + generatedClocks,
             dungeon: newDungeon,
             characterLocations: [:],

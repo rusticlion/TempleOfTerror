@@ -50,3 +50,41 @@ Interactables in `interactables.json` may also define `tags`.
 ```
 
 * `tags` — Optional array of strings describing properties scenario logic can query.
+
+## Consequence
+
+`Consequence` objects live inside the `outcomes` dictionaries for an `ActionOption`.
+
+```json
+{
+  "type": "gainStress",
+  "amount": 1,
+  "conditions": [
+    { "type": "requiresMinPositionLevel", "positionParam": "desperate" }
+  ]
+}
+```
+
+* `type` — The effect to apply (e.g. `gainStress`, `sufferHarm`, `tickClock`, `gainTreasure`).
+* Additional parameters such as `amount`, `level`, `familyId`, or `clockName` are included only when required by the chosen `type`.
+* `conditions` — Optional array of `GameCondition` objects. If provided, the consequence is only eligible when **all** conditions evaluate to true.
+
+Multiple consequences can be listed for a single outcome. A single entry forms a *shallow* pool while several entries form a *deeper* pool that the system can draw from based on roll quality.
+
+## GameCondition
+
+`GameCondition` objects gate consequences based on roll results or game state.
+
+```json
+{ "type": "requiresMinEffectLevel", "effectParam": "great" }
+```
+
+Available `type` values and their parameters:
+
+* `requiresMinEffectLevel` – `effectParam` (`limited|standard|great`)
+* `requiresExactEffectLevel` – `effectParam`
+* `requiresMinPositionLevel` – `positionParam` (`controlled|risky|desperate`)
+* `requiresExactPositionLevel` – `positionParam`
+* `characterHasTreasureId` – `stringParam` (treasure id)
+* `partyHasTreasureWithTag` – `stringParam` (treasure tag)
+* `clockProgress` – `stringParam` (clock name), `intParam` (min progress), optional `intParamMax` (max progress)

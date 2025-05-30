@@ -285,5 +285,51 @@
         }
       ]
     }
+  ],
+  "examples_dynamic": [
+    {
+      "id": "example_setpiece_machine",
+      "title": "Arcane Machine",
+      "description": "Cables snake from a humming device.",
+      "availableActions": [
+        {
+          "name": "Experiment with Device",
+          "actionType": "Study",
+          "position": "risky",
+          "effect": "standard",
+          "outcomes": {
+            "success": [
+              { "type": "gainTreasure", "treasureId": "treasure_test_gem" },
+              {
+                "type": "gainStress",
+                "amount": 1,
+                "conditions": [
+                  { "type": "clockProgress", "stringParam": "Test Clock", "intParam": 2 }
+                ]
+              },
+              {
+                "type": "gainTreasure",
+                "treasureId": "treasure_test_gem",
+                "conditions": [
+                  { "type": "characterHasTreasureId", "stringParam": "treasure_test_gem" }
+                ]
+              }
+            ],
+            "failure": [
+              { "type": "sufferHarm", "level": "moderate", "familyId": "electric_shock" },
+              { "type": "tickClock", "clockName": "Test Clock", "amount": 1 },
+              {
+                "type": "sufferHarm",
+                "level": "lesser",
+                "familyId": "electric_shock",
+                "conditions": [
+                  { "type": "characterHasTreasureId", "stringParam": "treasure_test_gem" }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    }
   ]
 }
