@@ -39,6 +39,7 @@ struct MapView: View {
                                         path.addLine(to: target)
                                     }
                                     .stroke(Color.gray, lineWidth: 2)
+                                    .zIndex(0) // ensure connectors are beneath nodes
                                 }
                             }
                         }
@@ -55,6 +56,7 @@ struct MapView: View {
                                         .frame(width: 36, height: 36)
                                         .position(pos)
                                 )
+                                .zIndex(1) // draw nodes above connectors
                         }
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
