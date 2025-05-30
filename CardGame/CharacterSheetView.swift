@@ -120,7 +120,7 @@ struct CharacterSheetView: View {
                                         HStack(spacing: 2) {
                                             ForEach(treasure.tags, id: \.self) { tag in
                                                 Text(tag)
-                                                    .font(.caption3)
+                                                    .font(.caption2)
                                                     .padding(2)
                                                     .background(Color(UIColor.systemGray5))
                                                     .cornerRadius(4)
