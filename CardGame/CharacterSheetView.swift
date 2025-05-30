@@ -3,6 +3,7 @@ import SwiftUI
 struct CharacterSheetView: View {
     let character: Character
     var locationName: String? = nil
+    @State private var selectedTreasure: Treasure? = nil
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -114,24 +115,29 @@ struct CharacterSheetView: View {
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 8) {
                             ForEach(character.treasures) { treasure in
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text(treasure.name)
-                                    if !treasure.tags.isEmpty {
-                                        HStack(spacing: 2) {
-                                            ForEach(treasure.tags, id: \.self) { tag in
-                                                Text(tag)
-                                                    .font(.caption2)
-                                                    .padding(2)
-                                                    .background(Color(UIColor.systemGray5))
-                                                    .cornerRadius(4)
+                                Button {
+                                    selectedTreasure = treasure
+                                } label: {
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text(treasure.name)
+                                        if !treasure.tags.isEmpty {
+                                            HStack(spacing: 2) {
+                                                ForEach(treasure.tags, id: \.self) { tag in
+                                                    Text(tag)
+                                                        .font(.caption2)
+                                                        .padding(2)
+                                                        .background(Color(UIColor.systemGray5))
+                                                        .cornerRadius(4)
+                                                }
                                             }
                                         }
                                     }
+                                    .font(.caption2)
+                                    .padding(4)
+                                    .background(Color(UIColor.systemBackground).opacity(0.5))
+                                    .cornerRadius(6)
                                 }
-                                .font(.caption2)
-                                .padding(4)
-                                .background(Color(UIColor.systemBackground).opacity(0.5))
-                                .cornerRadius(6)
+                                .buttonStyle(.plain)
                             }
                         }
                     }
@@ -142,5 +148,8 @@ struct CharacterSheetView: View {
         .background(Color(UIColor.secondarySystemBackground))
         .cornerRadius(12)
         .shadow(radius: 3)
+        .popover(item: $selectedTreasure) { treasure in
+            TreasureTooltipView(treasure: treasure)
+        }
     }
 }
