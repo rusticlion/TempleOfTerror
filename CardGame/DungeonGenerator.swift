@@ -14,7 +14,7 @@ class DungeonGenerator {
     }
 
     func generate(level: Int) -> (DungeonMap, [GameClock]) {
-        var nodes: [UUID: MapNode] = [:]
+        var nodes: [String: MapNode] = [:]
         let nodeCount = 5 + level // Simple scaling
 
         var previousNode: MapNode? = nil
@@ -40,13 +40,13 @@ class DungeonGenerator {
                 connections: connections,
                 theme: theme
             )
-            nodes[newNode.id] = newNode
+            nodes[newNode.id.uuidString] = newNode
             nodeIDs.append(newNode.id)
 
             if let prev = previousNode {
                 let desc = i == nodeCount - 1 ? "Path to the final chamber" : "Deeper into the tomb"
                 let connection = NodeConnection(toNodeID: newNode.id, description: desc)
-                nodes[prev.id]?.connections.append(connection)
+                nodes[prev.id.uuidString]?.connections.append(connection)
             }
             previousNode = newNode
         }
@@ -56,21 +56,21 @@ class DungeonGenerator {
             let lockIndex = Int.random(in: 1..<(nodeIDs.count - 1))
             let fromID = nodeIDs[lockIndex]
             let toID = nodeIDs[lockIndex + 1]
-            if let idx = nodes[fromID]?.connections.firstIndex(where: { $0.toNodeID == toID }) {
-                nodes[fromID]?.connections[idx].isUnlocked = false
+            if let idx = nodes[fromID.uuidString]?.connections.firstIndex(where: { $0.toNodeID == toID }) {
+                nodes[fromID.uuidString]?.connections[idx].isUnlocked = false
                 lockedConnection = (from: fromID, to: toID)
             }
         }
 
         for id in nodeIDs {
-            if var node = nodes[id] {
+            if var node = nodes[id.uuidString] {
                 let number = Int.random(in: 1...2)
                 for _ in 0..<number {
                     if let template = content.interactableTemplates.randomElement() {
                         node.interactables.append(template)
                     }
                 }
-                nodes[id] = node
+                nodes[id.uuidString] = node
             }
         }
 
@@ -94,11 +94,11 @@ class DungeonGenerator {
                     )
                 ]
             )
-            nodes[lock.from]?.interactables.append(lever)
+            nodes[lock.from.uuidString]?.interactables.append(lever)
         }
 
         let startingNodeID = nodeIDs.first!
-        nodes[startingNodeID]?.isDiscovered = true
+        nodes[startingNodeID.uuidString]?.isDiscovered = true
 
         let clockCount = Int.random(in: 1...2)
         let clocks = Array(clockTemplates.shuffled().prefix(clockCount))

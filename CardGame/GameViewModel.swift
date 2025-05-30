@@ -35,9 +35,9 @@ class GameViewModel: ObservableObject {
     // Retrieve the node a specific character is currently in
     func node(for characterID: UUID?) -> MapNode? {
         guard let id = characterID,
-              let nodeID = gameState.characterLocations[id],
+              let nodeID = gameState.characterLocations[id.uuidString],
               let map = gameState.dungeon else { return nil }
-        return map.nodes[nodeID]
+        return map.nodes[nodeID.uuidString]
     }
 
 
@@ -63,7 +63,7 @@ class GameViewModel: ObservableObject {
             self.gameState = loaded
             ContentLoader.shared = ContentLoader(scenario: loaded.scenarioName)
             if let anyID = loaded.characterLocations.first?.value,
-               let node = loaded.dungeon?.nodes[anyID] {
+               let node = loaded.dungeon?.nodes[anyID.uuidString] {
                 AudioManager.shared.play(sound: "ambient_\(node.soundProfile).wav", loop: true)
             }
             return true
@@ -287,26 +287,26 @@ class GameViewModel: ObservableObject {
                     descriptions.append("The '\(clockName)' clock progresses by \(amount).")
                 }
             case .unlockConnection(let fromNodeID, let toNodeID):
-                if let connIndex = gameState.dungeon?.nodes[fromNodeID]?.connections.firstIndex(where: { $0.toNodeID == toNodeID }) {
-                    gameState.dungeon?.nodes[fromNodeID]?.connections[connIndex].isUnlocked = true
+                if let connIndex = gameState.dungeon?.nodes[fromNodeID.uuidString]?.connections.firstIndex(where: { $0.toNodeID == toNodeID }) {
+                    gameState.dungeon?.nodes[fromNodeID.uuidString]?.connections[connIndex].isUnlocked = true
                     descriptions.append("A path has opened!")
                 }
             case .removeInteractable(let id):
-                if let nodeID = gameState.characterLocations[partyMemberId] {
-                    gameState.dungeon?.nodes[nodeID]?.interactables.removeAll(where: { $0.id == id })
+                if let nodeID = gameState.characterLocations[partyMemberId.uuidString] {
+                    gameState.dungeon?.nodes[nodeID.uuidString]?.interactables.removeAll(where: { $0.id == id })
                     descriptions.append("The way is clear.")
                 }
             case .removeSelfInteractable:
-                if let nodeID = gameState.characterLocations[partyMemberId], let interactableStrID = interactableID {
-                    gameState.dungeon?.nodes[nodeID]?.interactables.removeAll(where: { $0.id == interactableStrID })
+                if let nodeID = gameState.characterLocations[partyMemberId.uuidString], let interactableStrID = interactableID {
+                    gameState.dungeon?.nodes[nodeID.uuidString]?.interactables.removeAll(where: { $0.id == interactableStrID })
                     descriptions.append("The way is clear.")
                 }
             case .addInteractable(let inNodeID, let interactable):
-                gameState.dungeon?.nodes[inNodeID]?.interactables.append(interactable)
+                gameState.dungeon?.nodes[inNodeID.uuidString]?.interactables.append(interactable)
                 descriptions.append("Something new appears.")
             case .addInteractableHere(let interactable):
-                if let nodeID = gameState.characterLocations[partyMemberId] {
-                    gameState.dungeon?.nodes[nodeID]?.interactables.append(interactable)
+                if let nodeID = gameState.characterLocations[partyMemberId.uuidString] {
+                    gameState.dungeon?.nodes[nodeID.uuidString]?.interactables.append(interactable)
                     descriptions.append("Something new appears.")
                 }
             case .gainTreasure(let treasureId):
@@ -418,10 +418,10 @@ class GameViewModel: ObservableObject {
         )
 
         for id in gameState.party.map({ $0.id }) {
-            gameState.characterLocations[id] = newDungeon.startingNodeID
+            gameState.characterLocations[id.uuidString] = newDungeon.startingNodeID
         }
 
-        if let startingNode = newDungeon.nodes[newDungeon.startingNodeID] {
+        if let startingNode = newDungeon.nodes[newDungeon.startingNodeID.uuidString] {
             AudioManager.shared.play(sound: "ambient_\(startingNode.soundProfile).wav", loop: true)
         }
 
@@ -434,15 +434,15 @@ class GameViewModel: ObservableObject {
         guard connection.isUnlocked else { return }
 
         if partyMovementMode == .solo {
-            gameState.characterLocations[characterID] = connection.toNodeID
+            gameState.characterLocations[characterID.uuidString] = connection.toNodeID
         } else {
             for id in gameState.party.map({ $0.id }) {
-                gameState.characterLocations[id] = connection.toNodeID
+                gameState.characterLocations[id.uuidString] = connection.toNodeID
             }
         }
 
-        if let node = gameState.dungeon?.nodes[connection.toNodeID] {
-            gameState.dungeon?.nodes[connection.toNodeID]?.isDiscovered = true
+        if let node = gameState.dungeon?.nodes[connection.toNodeID.uuidString] {
+            gameState.dungeon?.nodes[connection.toNodeID.uuidString]?.isDiscovered = true
             AudioManager.shared.play(sound: "ambient_\(node.soundProfile).wav", loop: true)
         }
 
@@ -451,8 +451,8 @@ class GameViewModel: ObservableObject {
 
     func getNodeName(for characterID: UUID?) -> String? {
         guard let id = characterID,
-              let nodeID = gameState.characterLocations[id],
-              let node = gameState.dungeon?.nodes[nodeID] else { return nil }
+              let nodeID = gameState.characterLocations[id.uuidString],
+              let node = gameState.dungeon?.nodes[nodeID.uuidString] else { return nil }
         return node.name
     }
 

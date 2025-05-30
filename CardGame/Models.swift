@@ -14,7 +14,8 @@ struct GameState: Codable {
     var activeClocks: [GameClock] = []
     var dungeon: DungeonMap? // The full map
     var currentNodeID: UUID? // The party's current location (legacy)
-    var characterLocations: [UUID: UUID] = [:] // Individual character locations
+    // Use String keys for JSON compatibility
+    var characterLocations: [String: UUID] = [:] // Individual character locations
     var status: GameStatus = .playing
     // ... other global state can be added later
 }
@@ -491,7 +492,8 @@ enum RollEffect: String, Codable {
 
 // Represents the entire dungeon layout
 struct DungeonMap: Codable {
-    var nodes: [UUID: MapNode] // Use a dictionary for quick node lookup by ID
+    // Store node IDs as strings so JSONEncoder produces a valid object
+    var nodes: [String: MapNode] // Use a dictionary for quick node lookup by ID
     var startingNodeID: UUID
 }
 
