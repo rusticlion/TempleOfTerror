@@ -49,6 +49,7 @@ class GameViewModel: ObservableObject {
     /// Persist the current game state to disk.
     func saveGame() {
         do {
+            print("Attempting to save game to: \(Self.saveURL.path)")
             try gameState.save(to: Self.saveURL)
         } catch {
             print("Failed to save game: \(error)")

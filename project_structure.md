@@ -7,9 +7,11 @@ CardGame
 |____DiceRollView.swift
 |____NodeConnectionsView.swift
 |____.DS_Store
+|____MainMenuView.swift
 |____Persistence.swift
 |____StatusSheetView.swift
 |____CardGameApp.swift
+|____MapView.swift
 |____CharacterSelectorView.swift
 |____Assets.xcassets
 | |____icon_harm_lesser_empty.imageset
@@ -94,6 +96,7 @@ CardGame
 | |____icon_stress_pip_lit.md
 | |____icon_harm_lesser_empty.png
 | |____icon_harm_lesser_full.md
+|____CharacterSheetView.swift
 |____GameViewModel.swift
 |____ContentView.swift
 |____Info.plist
@@ -105,6 +108,17 @@ Content
 |____treasures.json
 |____interactables.json
 |____harm_families.json
+|____Scenarios
+| |____tomb
+| |____|____treasures.json
+| |____|____interactables.json
+| |____|____harm_families.json
+| |____|____scenario.json
+| |____test_lab
+| |____|____treasures.json
+| |____|____interactables.json
+| |____|____harm_families.json
+| |____|____scenario.json
 ```
 
 ## Directory Tree for Docs
@@ -114,6 +128,12 @@ Docs
 | |____1-HarmSystemOverhaul.md
 | |____3-Treasures.md
 | |____2-GeneralPurposeModifiers.md
+|____S12_ThreatAndScenarioInfrastructure
+| |____4-MainMenuAndScenarioSelect.md
+| |____1-ImplementThreatInteractables.md
+| |____2-AddDungeonMap.md
+| |____5-SaveAndLoadSystem.md
+| |____3-ModularizeScenarioLoading.md
 |____S11_UIClarity
 | |____2-IntegrateModiferAndPenaltyInfoInDiceRollView.md
 | |____1-EnhanceCharacterStatDisplay.md
@@ -173,87 +193,13 @@ struct PartyStatusView: View {
                 .font(.headline)
 
             ForEach(viewModel.gameState.party) { character in
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(character.name)
-                        .font(.subheadline)
-                        .bold()
+                let loc: String? = {
                     if viewModel.partyMovementMode == .solo && viewModel.isPartyActuallySplit() {
-                        if let locName = viewModel.getNodeName(for: character.id) {
-                            Text("At: \(locName)")
-                                .font(.caption)
-                                .foregroundColor(.gray)
-                        }
+                        return viewModel.getNodeName(for: character.id)
                     }
-
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Stress \(character.stress)/9")
-                            .font(.caption2)
-                        HStack(spacing: 2) {
-                            ForEach(1...9, id: \.self) { index in
-                                Image(character.stress >= index ? "icon_stress_pip_lit" : "icon_stress_pip_unlit")
-                                    .resizable()
-                                    .frame(width: 12, height: 12)
-                            }
-                        }
-                    }
-
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Harm")
-                            .font(.caption2)
-                        HStack {
-                            ForEach(0..<HarmState.lesserSlots, id: \.self) { index in
-                                Image(index < character.harm.lesser.count ? "icon_harm_lesser_full" : "icon_harm_lesser_empty")
-                                    .resizable()
-                                    .frame(width: 16, height: 16)
-                            }
-                            ForEach(0..<HarmState.moderateSlots, id: \.self) { index in
-                                Image(index < character.harm.moderate.count ? "icon_harm_moderate_full" : "icon_harm_moderate_empty")
-                                    .resizable()
-                                    .frame(width: 16, height: 16)
-                            }
-                            ForEach(0..<HarmState.severeSlots, id: \.self) { index in
-                                Image(index < character.harm.severe.count ? "icon_harm_severe_full" : "icon_harm_severe_empty")
-                                    .resizable()
-                                    .frame(width: 16, height: 16)
-                            }
-                        }
-                    }
-
-                    // Action ratings
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Actions")
-                            .font(.caption2)
-                        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], alignment: .leading, spacing: 2) {
-                            ForEach(character.actions.sorted(by: { $0.key < $1.key }), id: \.key) { action, rating in
-                                HStack(spacing: 2) {
-                                    Text(action)
-                                    HStack(spacing: 1) {
-                                        ForEach(0..<rating, id: \.self) { _ in
-                                            Image("icon_stress_pip_lit")
-                                                .resizable()
-                                                .frame(width: 8, height: 8)
-                                        }
-                                    }
-                                }
-                                .font(.caption2)
-                            }
-                        }
-                    }
-
-                    // Active modifiers
-                    if !character.modifiers.isEmpty {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("Modifiers")
-                                .font(.caption2)
-                            ForEach(Array(character.modifiers.enumerated()), id: \.offset) { index, modifier in
-                                Text("\(modifier.description) (\(modifier.uses) use\(modifier.uses == 1 ? "" : "s") left)")
-                                    .font(.caption2)
-                                    .foregroundColor(.purple)
-                            }
-                        }
-                    }
-                }
-                .padding(.vertical, 2)
+                    return nil
+                }()
+                CharacterSheetView(character: character, locationName: loc)
             }
         }
     }
@@ -502,6 +448,105 @@ struct NodeConnectionsView: View {
 
 ```
 
+### `CardGame/MainMenuView.swift`
+
+```
+
+import SwiftUI
+
+struct MainMenuView: View {
+    @State private var showingScenarioSelect = false
+    @State private var availableScenarios: [ScenarioManifest] = ContentLoader.availableScenarios()
+    @State private var path = NavigationPath()
+    @State private var continueVM: GameViewModel?
+    @State private var continueActive = false
+
+    var body: some View {
+        NavigationStack(path: $path) {
+            VStack(spacing: 20) {
+                Text("Temple of Terror")
+                    .font(.largeTitle)
+                    .bold()
+
+                Button("Start New Game") {
+                    if let scenario = availableScenarios.first(where: { $0.id == "tomb" }) ?? availableScenarios.first {
+                        path.append(scenario)
+                    }
+                }
+                .buttonStyle(.borderedProminent)
+
+                Button("Continue") {
+                    let vm = GameViewModel()
+                    if vm.loadGame() {
+                        continueVM = vm
+                        continueActive = true
+                    }
+                }
+                .disabled(!GameViewModel.saveExists)
+
+                Button("Scenario Select") {
+                    showingScenarioSelect = true
+                }
+                .buttonStyle(.bordered)
+
+                Button("Settings") { }
+                    .disabled(true)
+            }
+            .padding()
+            .navigationDestination(for: ScenarioManifest.self) { manifest in
+                ContentView(scenario: manifest.id)
+            }
+            NavigationLink("", isActive: $continueActive) {
+                if let vm = continueVM {
+                    ContentView(viewModel: vm)
+                }
+            }
+            .hidden()
+            .sheet(isPresented: $showingScenarioSelect) {
+                ScenarioSelectView(available: availableScenarios) { manifest in
+                    path.append(manifest)
+                    showingScenarioSelect = false
+                }
+            }
+        }
+    }
+}
+
+private struct ScenarioSelectView: View {
+    var available: [ScenarioManifest]
+    var onSelect: (ScenarioManifest) -> Void
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            List(available, id: \.id) { scenario in
+                VStack(alignment: .leading) {
+                    Text(scenario.title).font(.headline)
+                    Text(scenario.description).font(.subheadline)
+                }
+                .onTapGesture {
+                    onSelect(scenario)
+                    dismiss()
+                }
+            }
+            .navigationTitle("Scenarios")
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Close") { dismiss() }
+                }
+            }
+        }
+    }
+}
+
+struct MainMenuView_Previews: PreviewProvider {
+    static var previews: some View {
+        MainMenuView()
+    }
+}
+
+```
+
 ### `CardGame/Persistence.swift`
 
 ```
@@ -603,8 +648,93 @@ import SwiftUI
 struct CardSwipeDemoApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            MainMenuView()
         }
+    }
+}
+
+```
+
+### `CardGame/MapView.swift`
+
+```
+
+import SwiftUI
+
+struct MapView: View {
+    @ObservedObject var viewModel: GameViewModel
+
+    private func orderedNodes(from map: DungeonMap) -> [MapNode] {
+        var result: [MapNode] = []
+        var queue: [UUID] = [map.startingNodeID]
+        var visited: Set<UUID> = []
+        while let id = queue.first {
+            queue.removeFirst()
+            guard visited.insert(id).inserted else { continue }
+            if let node = map.nodes[id] {
+                result.append(node)
+                queue.append(contentsOf: node.connections.map { $0.toNodeID })
+            }
+        }
+        return result
+    }
+
+    private func isCurrentLocation(nodeID: UUID) -> Bool {
+        viewModel.gameState.characterLocations.values.contains(nodeID)
+    }
+
+    var body: some View {
+        NavigationStack {
+            GeometryReader { geo in
+                if let map = viewModel.gameState.dungeon {
+                    let nodes = orderedNodes(from: map)
+                    let spacing = geo.size.width / CGFloat(max(nodes.count, 1) + 1)
+                    ZStack {
+                        ForEach(Array(nodes.enumerated()), id: \.1.id) { index, node in
+                            let pos = CGPoint(x: spacing * CGFloat(index + 1), y: geo.size.height / 2)
+                            ForEach(node.connections, id: \.toNodeID) { conn in
+                                if let targetIdx = nodes.firstIndex(where: { $0.id == conn.toNodeID }) {
+                                    let target = CGPoint(x: spacing * CGFloat(targetIdx + 1), y: geo.size.height / 2)
+                                    Path { path in
+                                        path.move(to: pos)
+                                        path.addLine(to: target)
+                                    }
+                                    .stroke(Color.gray, lineWidth: 2)
+                                    .zIndex(0) // ensure connectors are beneath nodes
+                                }
+                            }
+                        }
+                        ForEach(Array(nodes.enumerated()), id: \.1.id) { index, node in
+                            let pos = CGPoint(x: spacing * CGFloat(index + 1), y: geo.size.height / 2)
+                            Circle()
+                                .fill(node.isDiscovered ? Color.blue : Color.gray.opacity(0.3))
+                                .frame(width: 30, height: 30)
+                                .position(pos)
+                                .overlay(
+                                    Circle()
+                                        .stroke(Color.green, lineWidth: 3)
+                                        .opacity(isCurrentLocation(nodeID: node.id) ? 1 : 0)
+                                        .frame(width: 36, height: 36)
+                                        .position(pos)
+                                )
+                                .zIndex(1) // draw nodes above connectors
+                        }
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else {
+                    Text("No Map")
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                }
+            }
+            .padding()
+            .navigationTitle("Dungeon Map")
+        }
+    }
+}
+
+struct MapView_Previews: PreviewProvider {
+    static var previews: some View {
+        MapView(viewModel: GameViewModel())
     }
 }
 
@@ -899,29 +1029,83 @@ struct ClocksView_Previews: PreviewProvider {
 
 import Foundation
 
-class ContentLoader {
-    static let shared = ContentLoader()
+/// Basic information about a scenario.
+struct ScenarioManifest: Codable, Identifiable, Hashable {
+    var id: String
+    var title: String
+    var description: String
+    var entryNode: String?
+}
 
+class ContentLoader {
+    /// Shared loader using the default scenario ("tomb"). This can be
+    /// reassigned when the player selects a different scenario from the
+    /// main menu.
+    static var shared = ContentLoader()
+
+    let scenarioName: String
+    let scenarioManifest: ScenarioManifest?
     let interactableTemplates: [Interactable]
     let harmFamilies: [HarmFamily]
     let harmFamilyDict: [String: HarmFamily]
     let treasureTemplates: [Treasure]
 
-    private init() {
-        self.interactableTemplates = Self.load("interactables.json")
-        self.harmFamilies = Self.load("harm_families.json")
+    /// Initialize a loader for a specific scenario directory.
+    init(scenario: String = "tomb") {
+        self.scenarioName = scenario
+        self.scenarioManifest = Self.loadManifest(for: scenario)
+        self.interactableTemplates = Self.load("interactables.json", for: scenario)
+        self.harmFamilies = Self.load("harm_families.json", for: scenario)
         self.harmFamilyDict = Dictionary(uniqueKeysWithValues: harmFamilies.map { ($0.id, $0) })
-        self.treasureTemplates = Self.load("treasures.json")
+        self.treasureTemplates = Self.load("treasures.json", for: scenario)
     }
 
-    private static func load<T: Decodable>(_ filename: String) -> [T] {
-        // The JSON files are stored within the "Content" folder reference in the
-        // Xcode project. When bundled, this folder becomes a subdirectory in the
-        // app bundle, so we must specify it when looking up the resource.
-        guard let url = Bundle.main.url(forResource: filename,
-                                        withExtension: nil,
-                                        subdirectory: "Content") else {
-            print("Failed to locate \(filename)")
+    private static func url(for filename: String, scenario: String) -> URL? {
+        if let url = Bundle.main.url(forResource: filename,
+                                     withExtension: nil,
+                                     subdirectory: "Content/Scenarios/\(scenario)") {
+            return url
+        }
+        return Bundle.main.url(forResource: filename,
+                               withExtension: nil,
+                               subdirectory: "Content")
+    }
+
+    private static func loadManifest(for scenario: String) -> ScenarioManifest? {
+        guard let url = url(for: "scenario.json", scenario: scenario) else { return nil }
+        do {
+            let data = try Data(contentsOf: url)
+            return try JSONDecoder().decode(ScenarioManifest.self, from: data)
+        } catch {
+            print("Failed to decode scenario.json for \(scenario): \(error)")
+            return nil
+        }
+    }
+
+    /// Retrieve all scenario manifests packaged with the app.
+    static func availableScenarios() -> [ScenarioManifest] {
+        guard let baseURL = Bundle.main.resourceURL?.appendingPathComponent("Content/Scenarios") else {
+            return []
+        }
+        let fm = FileManager.default
+        guard let contents = try? fm.contentsOfDirectory(at: baseURL, includingPropertiesForKeys: nil, options: [.skipsHiddenFiles]) else {
+            return []
+        }
+        var manifests: [ScenarioManifest] = []
+        for dir in contents where dir.hasDirectoryPath {
+            let name = dir.lastPathComponent
+            if let url = Bundle.main.url(forResource: "scenario.json", withExtension: nil, subdirectory: "Content/Scenarios/\(name)"),
+               let data = try? Data(contentsOf: url),
+               let manifest = try? JSONDecoder().decode(ScenarioManifest.self, from: data) {
+                manifests.append(manifest)
+            }
+        }
+        return manifests.sorted { $0.title < $1.title }
+    }
+
+    private static func load<T: Decodable>(_ filename: String, for scenario: String) -> [T] {
+        guard let url = url(for: filename, scenario: scenario) else {
+            print("Failed to locate \(filename) for scenario \(scenario)")
             return []
         }
         do {
@@ -994,6 +1178,10 @@ enum GameStatus: String, Codable {
 }
 
 struct GameState: Codable {
+    /// Identifier for the scenario that generated this run. Used when loading
+    /// to reinitialize the `ContentLoader` with the correct data bundle.
+    var scenarioName: String = "tomb"
+
     var party: [Character] = []
     var activeClocks: [GameClock] = []
     var dungeon: DungeonMap? // The full map
@@ -1182,10 +1370,10 @@ struct HarmState: Codable {
 /// Central catalog of all harm families available in the game.
 /// This dictionary is populated from the JSON content loaded by `ContentLoader`.
 struct HarmLibrary {
-    static let families: [String: HarmFamily] = {
-        let families = ContentLoader.shared.harmFamilies
-        return Dictionary(uniqueKeysWithValues: families.map { ($0.id, $0) })
-    }()
+    /// Access the harm families for the currently loaded scenario.
+    static var families: [String: HarmFamily] {
+        return ContentLoader.shared.harmFamilyDict
+    }
 }
 
 struct GameClock: Identifiable, Codable {
@@ -1201,6 +1389,43 @@ struct Interactable: Codable, Identifiable {
     var title: String
     var description: String
     var availableActions: [ActionOption]
+    var isThreat: Bool = false
+
+    enum CodingKeys: String, CodingKey {
+        case id, title, description, availableActions, isThreat
+    }
+
+    init(id: String,
+         title: String,
+         description: String,
+         availableActions: [ActionOption],
+         isThreat: Bool = false) {
+        self.id = id
+        self.title = title
+        self.description = description
+        self.availableActions = availableActions
+        self.isThreat = isThreat
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(String.self, forKey: .id)
+        title = try container.decode(String.self, forKey: .title)
+        description = try container.decode(String.self, forKey: .description)
+        availableActions = try container.decode([ActionOption].self, forKey: .availableActions)
+        isThreat = try container.decodeIfPresent(Bool.self, forKey: .isThreat) ?? false
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(title, forKey: .title)
+        try container.encode(description, forKey: .description)
+        try container.encode(availableActions, forKey: .availableActions)
+        if isThreat {
+            try container.encode(isThreat, forKey: .isThreat)
+        }
+    }
 }
 
 struct ActionOption: Codable {
@@ -1460,6 +1685,22 @@ struct NodeConnection: Codable {
     var description: String // e.g., "A dark tunnel", "A rickety bridge"
 }
 
+// MARK: - Persistence Helpers
+
+extension GameState {
+    /// Encode the game state and write it to the specified URL.
+    func save(to url: URL) throws {
+        let data = try JSONEncoder().encode(self)
+        try data.write(to: url)
+    }
+
+    /// Load a `GameState` from the given file URL.
+    static func load(from url: URL) throws -> GameState {
+        let data = try Data(contentsOf: url)
+        return try JSONDecoder().decode(GameState.self, from: data)
+    }
+}
+
 
 ```
 
@@ -1536,7 +1777,158 @@ struct InteractableCardView: View {
         .padding()
         .background(Color(UIColor.secondarySystemBackground))
         .cornerRadius(12)
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(interactable.isThreat ? Color.red : Color.clear, lineWidth: 3)
+        )
+        .overlay(alignment: .topLeading) {
+            if interactable.isThreat {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .foregroundColor(.red)
+                    .padding(4)
+            }
+        }
         .shadow(radius: 4)
+    }
+}
+
+```
+
+### `CardGame/CharacterSheetView.swift`
+
+```
+
+import SwiftUI
+
+struct CharacterSheetView: View {
+    let character: Character
+    var locationName: String? = nil
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            // Identity
+            HStack(alignment: .firstTextBaseline) {
+                Text(character.name)
+                    .font(.headline)
+                    .bold()
+                Spacer()
+                Text(character.characterClass)
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+            }
+
+            if let locationName {
+                Text("At: \(locationName)")
+                    .font(.caption)
+                    .foregroundColor(.gray)
+            }
+
+            // Vital stats block
+            VStack(alignment: .center, spacing: 6) {
+                // Stress
+                VStack(alignment: .center, spacing: 2) {
+                    Text("Stress \(character.stress)/9")
+                        .font(.caption2)
+                    HStack(spacing: 2) {
+                        ForEach(1...9, id: \.self) { index in
+                            Image(character.stress >= index ? "icon_stress_pip_lit" : "icon_stress_pip_unlit")
+                                .resizable()
+                                .frame(width: 12, height: 12)
+                        }
+                    }
+                }
+
+                // Harm
+                VStack(alignment: .center, spacing: 4) {
+                    Text("Harm")
+                        .font(.caption2)
+
+                    // Lesser Harms
+                    HStack(spacing: 4) {
+                        ForEach(0..<HarmState.lesserSlots, id: \.self) { index in
+                            Text(index < character.harm.lesser.count ? character.harm.lesser[index].description : "None")
+                                .font(.caption2)
+                                .foregroundColor(index < character.harm.lesser.count ? .primary : .gray)
+                                .padding(4)
+                                .frame(minWidth: 0, maxWidth: .infinity, alignment: .center)
+                                .background(Color(UIColor.systemBackground))
+                                .cornerRadius(4)
+                        }
+                    }
+
+                    // Moderate Harms
+                    HStack(spacing: 4) {
+                        ForEach(0..<HarmState.moderateSlots, id: \.self) { index in
+                            Text(index < character.harm.moderate.count ? character.harm.moderate[index].description : "None")
+                                .font(.caption2)
+                                .foregroundColor(index < character.harm.moderate.count ? .primary : .gray)
+                                .padding(4)
+                                .frame(minWidth: 0, maxWidth: .infinity, alignment: .center)
+                                .background(Color(UIColor.systemBackground))
+                                .cornerRadius(4)
+                        }
+                    }
+
+                    // Severe Harm
+                    Text(character.harm.severe.first?.description ?? "None")
+                        .font(.caption2)
+                        .foregroundColor(character.harm.severe.isEmpty ? .gray : .primary)
+                        .padding(4)
+                        .frame(minWidth: 0, maxWidth: .infinity, alignment: .center)
+                        .background(Color(UIColor.systemBackground))
+                        .cornerRadius(4)
+                }
+                .padding(.top, 8)
+            }
+            .padding(6)
+            .background(Color(UIColor.secondarySystemFill))
+            .cornerRadius(8)
+
+            // Actions
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Actions")
+                    .font(.caption2)
+                LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], alignment: .leading, spacing: 4) {
+                    ForEach(character.actions.sorted(by: { $0.key < $1.key }), id: \.key) { action, rating in
+                        HStack(spacing: 4) {
+                            Text(action)
+                            HStack(spacing: 1) {
+                                ForEach(0..<rating, id: \.self) { _ in
+                                    Image("icon_stress_pip_lit")
+                                        .resizable()
+                                        .frame(width: 8, height: 8)
+                                }
+                            }
+                            Spacer()
+                        }
+                        .font(.caption2)
+                    }
+                }
+            }
+
+            // Treasures
+            if !character.treasures.isEmpty {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Treasures")
+                        .font(.caption2)
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 8) {
+                            ForEach(character.treasures) { treasure in
+                                Text(treasure.name)
+                                    .font(.caption2)
+                                    .padding(4)
+                                    .background(Color(UIColor.systemBackground).opacity(0.5))
+                                    .cornerRadius(6)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        .padding()
+        .background(Color(UIColor.secondarySystemBackground))
+        .cornerRadius(12)
+        .shadow(radius: 3)
     }
 }
 
@@ -1568,6 +1960,17 @@ class GameViewModel: ObservableObject {
     @Published var gameState: GameState
     @Published var partyMovementMode: PartyMovementMode = .grouped
 
+    /// Location of the save file within the app's Documents directory.
+    private static var saveURL: URL {
+        FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("savegame.json")
+    }
+
+    /// Whether a saved game exists on disk.
+    static var saveExists: Bool {
+        FileManager.default.fileExists(atPath: saveURL.path)
+    }
+
 
     // Retrieve the node a specific character is currently in
     func node(for characterID: UUID?) -> MapNode? {
@@ -1578,9 +1981,36 @@ class GameViewModel: ObservableObject {
     }
 
 
-    init() {
+    init(scenario: String = "tomb") {
         self.gameState = GameState()
-        startNewRun()
+        startNewRun(scenario: scenario)
+    }
+
+    /// Persist the current game state to disk.
+    func saveGame() {
+        do {
+            try gameState.save(to: Self.saveURL)
+        } catch {
+            print("Failed to save game: \(error)")
+        }
+    }
+
+    /// Attempt to load a saved game from disk. Returns `true` on success.
+    func loadGame() -> Bool {
+        guard Self.saveExists else { return false }
+        do {
+            let loaded = try GameState.load(from: Self.saveURL)
+            self.gameState = loaded
+            ContentLoader.shared = ContentLoader(scenario: loaded.scenarioName)
+            if let anyID = loaded.characterLocations.first?.value,
+               let node = loaded.dungeon?.nodes[anyID] {
+                AudioManager.shared.play(sound: "ambient_\(node.soundProfile).wav", loop: true)
+            }
+            return true
+        } catch {
+            print("Failed to load game: \(error)")
+            return false
+        }
     }
 
     // --- Core Logic Functions for the Sprint ---
@@ -1728,6 +2158,7 @@ class GameViewModel: ObservableObject {
                 }
             }
         }
+        saveGame()
 
         return DiceRollResult(highestRoll: highestRoll, outcome: outcomeString, consequences: consequencesDescription)
     }
@@ -1773,6 +2204,7 @@ class GameViewModel: ObservableObject {
             }
         }
 
+        saveGame()
         return DiceRollResult(highestRoll: bestRoll, outcome: outcomeString, consequences: description)
     }
 
@@ -1894,18 +2326,24 @@ class GameViewModel: ObservableObject {
                 } else {
                     gameState.status = .gameOver
                     let fatalDescription = harmFamily.fatal.description
+                    saveGame()
                     return "Suffered FATAL Harm: \(fatalDescription)."
                 }
             }
         }
     }
 
-    /// Starts a brand new run, resetting the game state
-    func startNewRun() {
-        let generator = DungeonGenerator()
+    /// Starts a brand new run, resetting the game state. The scenario id
+    /// corresponds to a folder within `Content/Scenarios`.
+    func startNewRun(scenario: String = "tomb") {
+        // Recreate the shared content loader so subsequent lookups use the
+        // selected scenario.
+        ContentLoader.shared = ContentLoader(scenario: scenario)
+        let generator = DungeonGenerator(content: ContentLoader.shared)
         let (newDungeon, generatedClocks) = generator.generate(level: 1)
 
         self.gameState = GameState(
+            scenarioName: scenario,
             party: [
                 Character(name: "Indy", characterClass: "Archaeologist", stress: 0, harm: HarmState(), actions: ["Study": 3, "Wreck": 1]),
                 Character(name: "Sallah", characterClass: "Brawler", stress: 0, harm: HarmState(), actions: ["Finesse": 2, "Survey": 2]),
@@ -1926,6 +2364,8 @@ class GameViewModel: ObservableObject {
         if let startingNode = newDungeon.nodes[newDungeon.startingNodeID] {
             AudioManager.shared.play(sound: "ambient_\(startingNode.soundProfile).wav", loop: true)
         }
+
+        saveGame()
     }
 
 
@@ -1945,6 +2385,8 @@ class GameViewModel: ObservableObject {
             gameState.dungeon?.nodes[connection.toNodeID]?.isDiscovered = true
             AudioManager.shared.play(sound: "ambient_\(node.soundProfile).wav", loop: true)
         }
+
+        saveGame()
     }
 
     func getNodeName(for characterID: UUID?) -> String? {
@@ -1979,12 +2421,19 @@ struct ContentView: View {
     @State private var pendingInteractableID: String?
     @State private var selectedCharacterID: UUID? // Track selected character
     @State private var showingStatusSheet = false // Controls the party sheet
+    @State private var showingMap = false // Controls the map sheet
     @State private var doorProgress: CGFloat = 0 // For sliding door transition
+    @Environment(\.scenePhase) private var scenePhase
 
-    init() {
-        let vm = GameViewModel()
+    init(scenario: String = "tomb") {
+        let vm = GameViewModel(scenario: scenario)
         _viewModel = StateObject(wrappedValue: vm)
         _selectedCharacterID = State(initialValue: vm.gameState.party.first?.id)
+    }
+
+    init(viewModel: GameViewModel) {
+        _viewModel = StateObject(wrappedValue: viewModel)
+        _selectedCharacterID = State(initialValue: viewModel.gameState.party.first?.id)
     }
 
     // Helper to retrieve the selected character object
@@ -2020,9 +2469,17 @@ struct ContentView: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 16) {
 
+                        if let character = selectedCharacter {
+                            CharacterSheetView(character: character)
+                            Divider()
+                        }
+
                         if let node = viewModel.node(for: selectedCharacterID) {
                             VStack(alignment: .leading, spacing: 16) {
-                                ForEach(node.interactables, id: \.id) { interactable in
+                                let threats = node.interactables.filter { $0.isThreat }
+                                let items = threats.isEmpty ? node.interactables : threats
+
+                                ForEach(items, id: \.id) { interactable in
                                     InteractableCardView(interactable: interactable, selectedCharacter: selectedCharacter) { action in
                                         if selectedCharacter != nil {
                                             pendingAction = action
@@ -2032,10 +2489,12 @@ struct ContentView: View {
                                     .transition(.scale(scale: 0.9).combined(with: .opacity))
                                 }
 
-                                Divider()
+                                if threats.isEmpty {
+                                    Divider()
 
-                                NodeConnectionsView(currentNode: viewModel.node(for: selectedCharacterID)) { connection in
-                                    performTransition(to: connection)
+                                    NodeConnectionsView(currentNode: viewModel.node(for: selectedCharacterID)) { connection in
+                                        performTransition(to: connection)
+                                    }
                                 }
                             }
                             .id(node.id)
@@ -2085,6 +2544,15 @@ struct ContentView: View {
                     }
                     .padding()
                     .background(.thinMaterial, in: Capsule())
+
+                    Button {
+                        showingMap.toggle()
+                    } label: {
+                        Image(systemName: "map")
+                        Text("Map")
+                    }
+                    .padding()
+                    .background(.thinMaterial, in: Capsule())
                 }
                 .padding()
             }
@@ -2112,7 +2580,15 @@ struct ContentView: View {
             StatusSheetView(viewModel: viewModel)
                 .presentationDetents([.medium, .large])
         }
+        .sheet(isPresented: $showingMap) {
+            MapView(viewModel: viewModel)
+        }
         .ignoresSafeArea(.all, edges: .bottom)
+        .onChange(of: scenePhase) { phase in
+            if phase != .active {
+                viewModel.saveGame()
+            }
+        }
     }
 }
 
@@ -2424,6 +2900,64 @@ struct SlidingDoor: View {
         }
       ]
     }
+  ],
+  "threats": [
+    {
+      "id": "threat_hungry_ghoul",
+      "title": "Hungry Ghoul",
+      "description": "A ravenous ghoul lurches from the shadows.",
+      "isThreat": true,
+      "availableActions": [
+        {
+          "name": "Drive it back",
+          "actionType": "Skirmish",
+          "position": "risky",
+          "effect": "standard",
+          "outcomes": {
+            "success": [ { "type": "removeInteractable", "id": "self" } ],
+            "failure": [ { "type": "sufferHarm", "level": "moderate", "familyId": "leg_injury" } ]
+          }
+        },
+        {
+          "name": "Flee",
+          "actionType": "Finesse",
+          "position": "desperate",
+          "effect": "limited",
+          "outcomes": {
+            "success": [ { "type": "removeInteractable", "id": "self" } ],
+            "failure": [ { "type": "tickClock", "clockName": "Ghoul Pursuit", "amount": 1 } ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "threat_reactor_breach",
+      "title": "Reactor Breach",
+      "description": "Alarms blare as a reactor begins to overload.",
+      "isThreat": true,
+      "availableActions": [
+        {
+          "name": "Stabilize Reactor",
+          "actionType": "Tinker",
+          "position": "risky",
+          "effect": "standard",
+          "outcomes": {
+            "success": [ { "type": "removeInteractable", "id": "self" } ],
+            "failure": [ { "type": "sufferHarm", "level": "severe", "familyId": "electric_shock" } ]
+          }
+        },
+        {
+          "name": "Evacuate",
+          "actionType": "Finesse",
+          "position": "desperate",
+          "effect": "limited",
+          "outcomes": {
+            "success": [ { "type": "removeInteractable", "id": "self" } ],
+            "failure": [ { "type": "gainStress", "amount": 2 } ]
+          }
+        }
+      ]
+    }
   ]
 }
 
@@ -2471,6 +3005,780 @@ struct SlidingDoor: View {
       "fatal": { "description": "Stranded and Helpless" }
     }
   ]
+}
+
+```
+
+### `Content/Scenarios/tomb/treasures.json`
+
+```
+
+[
+  {
+    "id": "treasure_purified_idol_shard",
+    "name": "Purified Idol Shard",
+    "description": "A fragment of the idol, cleansed of its curse.",
+    "grantedModifier": {
+      "bonusDice": 1,
+      "description": "Blessing of the Idol"
+    }
+  },
+  {
+    "id": "treasure_ancient_coin",
+    "name": "Ancient Coin",
+    "description": "A coin from a forgotten empire.",
+    "grantedModifier": {
+      "improveEffect": true,
+      "description": "Lucky Find"
+    }
+  },
+  {
+    "id": "treasure_steadying_herbs",
+    "name": "Steadying Herbs",
+    "description": "Chewing these calms the nerves, for a time.",
+    "grantedModifier": {
+      "improvePosition": true,
+      "uses": 1,
+      "description": "from Steadying Herbs"
+    }
+  },
+  {
+    "id": "treasure_precise_tools",
+    "name": "Set of Precise Tools",
+    "description": "Ideal instruments for delicate work.",
+    "grantedModifier": {
+      "bonusDice": 1,
+      "applicableToAction": "Tinker",
+      "uses": 2,
+      "description": "from Precise Tools"
+    }
+  },
+  {
+    "id": "treasure_charmed_talisman",
+    "name": "Charmed Talisman",
+    "description": "Offers fleeting protection from dark thoughts.",
+    "grantedModifier": {
+      "bonusDice": 1,
+      "applicableToAction": "Attune",
+      "uses": 1,
+      "description": "from Charmed Talisman"
+    }
+  },
+  {
+    "id": "treasure_map_fragment",
+    "name": "Map Fragment",
+    "description": "Hints at a secret room somewhere in the tomb.",
+    "grantedModifier": {
+      "improveEffect": true,
+      "uses": 1,
+      "description": "from Map Fragment"
+    }
+  }
+]
+
+```
+
+### `Content/Scenarios/tomb/interactables.json`
+
+```
+
+{
+  "common_traps": [
+    {
+      "id": "template_pressure_plate",
+      "title": "Pressure Plate",
+      "description": "A slightly raised stone tile looks suspicious.",
+      "availableActions": [
+        {
+          "name": "Deftly step over it",
+          "actionType": "Finesse",
+          "position": "risky",
+          "effect": "standard",
+          "outcomes": {
+            "success": [
+              { "type": "removeInteractable", "id": "self" }
+            ],
+            "failure": [
+              { "type": "sufferHarm", "level": "lesser", "familyId": "leg_injury" }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "template_cursed_idol",
+      "title": "Cursed Idol",
+      "description": "A small, unnerving idol of a forgotten god.",
+      "availableActions": [
+        {
+          "name": "Smash it",
+          "actionType": "Wreck",
+          "position": "desperate",
+          "effect": "great",
+          "outcomes": {
+            "success": [
+              { "type": "removeInteractable", "id": "self" },
+              { "type": "gainTreasure", "treasureId": "treasure_purified_idol_shard" }
+            ],
+            "failure": [
+              { "type": "sufferHarm", "level": "moderate", "familyId": "head_trauma" }
+            ]
+          }
+        }
+      ]
+    }
+    ,
+    {
+      "id": "template_crumbling_ledge",
+      "title": "Crumbling Ledge",
+      "description": "A narrow ledge over a dark chasm. It looks unstable.",
+      "availableActions": [
+        {
+          "name": "Cross Carefully",
+          "actionType": "Finesse",
+          "position": "desperate",
+          "effect": "standard",
+          "isGroupAction": true,
+          "outcomes": {
+            "success": [ { "type": "removeInteractable", "id": "self" } ],
+            "partial": [
+              { "type": "gainStress", "amount": 2 },
+              { "type": "sufferHarm", "level": "lesser", "familyId": "leg_injury" }
+            ],
+            "failure": [
+              { "type": "sufferHarm", "level": "moderate", "familyId": "leg_injury" },
+              { "type": "tickClock", "clockName": "Chasm Peril", "amount": 2 }
+            ]
+          }
+        },
+        {
+          "name": "Test its Stability",
+          "actionType": "Survey",
+          "position": "risky",
+          "effect": "limited",
+          "outcomes": {
+            "success": [],
+            "failure": [ { "type": "gainStress", "amount": 1 } ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "template_mysterious_whispers",
+      "title": "Mysterious Whispers",
+      "description": "Voices echo softly from unseen sources.",
+      "availableActions": [
+        {
+          "name": "Listen Closely",
+          "actionType": "Attune",
+          "position": "risky",
+          "effect": "standard",
+          "outcomes": {
+            "success": [ { "type": "gainTreasure", "treasureId": "treasure_map_fragment" } ],
+            "partial": [ { "type": "sufferHarm", "level": "lesser", "familyId": "mental_anguish" } ],
+            "failure": [ { "type": "sufferHarm", "level": "moderate", "familyId": "mental_anguish" } ]
+          }
+        },
+        {
+          "name": "Block Out Noise",
+          "actionType": "Study",
+          "position": "controlled",
+          "effect": "limited",
+          "outcomes": {
+            "success": [ { "type": "removeInteractable", "id": "self" } ],
+            "failure": [ { "type": "gainStress", "amount": 1 } ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "template_jammed_lock",
+      "title": "Jammed Lock",
+      "description": "A sturdy door with a rusted mechanism.",
+      "availableActions": [
+        {
+          "name": "Pick the Lock",
+          "actionType": "Tinker",
+          "position": "risky",
+          "effect": "standard",
+          "outcomes": {
+            "success": [ { "type": "gainTreasure", "treasureId": "treasure_precise_tools" } ],
+            "partial": [ { "type": "tickClock", "clockName": "Lockdown Approaches", "amount": 1 } ],
+            "failure": [ { "type": "sufferHarm", "level": "moderate", "familyId": "gear_damage" } ]
+          }
+        },
+        {
+          "name": "Force it",
+          "actionType": "Wreck",
+          "position": "desperate",
+          "effect": "great",
+          "outcomes": {
+            "success": [ { "type": "removeInteractable", "id": "self" } ],
+            "failure": [ { "type": "sufferHarm", "level": "lesser", "familyId": "gear_damage" } ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "template_unstable_rune",
+      "title": "Unstable Rune",
+      "description": "A glowing rune pulsates with dangerous energy.",
+      "availableActions": [
+        {
+          "name": "Decode Glyphs",
+          "actionType": "Study",
+          "position": "controlled",
+          "effect": "limited",
+          "outcomes": {
+            "success": [ { "type": "removeInteractable", "id": "self" } ],
+            "partial": [ { "type": "tickClock", "clockName": "Rune Overload", "amount": 1 } ],
+            "failure": [ { "type": "sufferHarm", "level": "moderate", "familyId": "electric_shock" } ]
+          }
+        },
+        {
+          "name": "Shatter it",
+          "actionType": "Wreck",
+          "position": "risky",
+          "effect": "standard",
+          "outcomes": {
+            "success": [ { "type": "removeInteractable", "id": "self" } ],
+            "failure": [ { "type": "sufferHarm", "level": "severe", "familyId": "electric_shock" } ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "template_hidden_niche",
+      "title": "Hidden Niche",
+      "description": "A faint outline hints at a recess in the wall.",
+      "availableActions": [
+        {
+          "name": "Search Carefully",
+          "actionType": "Survey",
+          "position": "controlled",
+          "effect": "standard",
+          "outcomes": {
+            "success": [ { "type": "addInteractable", "inNodeID": "current", "interactable": { "id": "template_small_chest", "title": "Small Chest", "description": "Dusty but intact.", "availableActions": [ { "name": "Open", "actionType": "Finesse", "position": "risky", "effect": "standard", "outcomes": { "success": [ { "type": "gainTreasure", "treasureId": "treasure_charmed_talisman" }, { "type": "removeInteractable", "id": "self" } ], "failure": [ { "type": "tickClock", "clockName": "Chest Trap", "amount": 1 } ] } } ] } } ],
+            "failure": [ { "type": "gainStress", "amount": 1 } ]
+          }
+        },
+        {
+          "name": "Force it Open",
+          "actionType": "Wreck",
+          "position": "risky",
+          "effect": "limited",
+          "outcomes": {
+            "success": [ { "type": "addInteractable", "inNodeID": "current", "interactable": { "id": "template_small_chest", "title": "Small Chest", "description": "Dusty but intact.", "availableActions": [ { "name": "Open", "actionType": "Wreck", "position": "risky", "effect": "standard", "outcomes": { "success": [ { "type": "gainTreasure", "treasureId": "treasure_charmed_talisman" }, { "type": "removeInteractable", "id": "self" } ], "failure": [ { "type": "sufferHarm", "level": "lesser", "familyId": "gear_damage" } ] } } ] } } ],
+            "failure": [ { "type": "sufferHarm", "level": "lesser", "familyId": "gear_damage" } ]
+          }
+        }
+      ]
+    }
+  ],
+  "threats": [
+    {
+      "id": "threat_hungry_ghoul",
+      "title": "Hungry Ghoul",
+      "description": "A ravenous ghoul lurches from the shadows.",
+      "isThreat": true,
+      "availableActions": [
+        {
+          "name": "Drive it back",
+          "actionType": "Skirmish",
+          "position": "risky",
+          "effect": "standard",
+          "outcomes": {
+            "success": [ { "type": "removeInteractable", "id": "self" } ],
+            "failure": [ { "type": "sufferHarm", "level": "moderate", "familyId": "leg_injury" } ]
+          }
+        },
+        {
+          "name": "Flee",
+          "actionType": "Finesse",
+          "position": "desperate",
+          "effect": "limited",
+          "outcomes": {
+            "success": [ { "type": "removeInteractable", "id": "self" } ],
+            "failure": [ { "type": "tickClock", "clockName": "Ghoul Pursuit", "amount": 1 } ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "threat_reactor_breach",
+      "title": "Reactor Breach",
+      "description": "Alarms blare as a reactor begins to overload.",
+      "isThreat": true,
+      "availableActions": [
+        {
+          "name": "Stabilize Reactor",
+          "actionType": "Tinker",
+          "position": "risky",
+          "effect": "standard",
+          "outcomes": {
+            "success": [ { "type": "removeInteractable", "id": "self" } ],
+            "failure": [ { "type": "sufferHarm", "level": "severe", "familyId": "electric_shock" } ]
+          }
+        },
+        {
+          "name": "Evacuate",
+          "actionType": "Finesse",
+          "position": "desperate",
+          "effect": "limited",
+          "outcomes": {
+            "success": [ { "type": "removeInteractable", "id": "self" } ],
+            "failure": [ { "type": "gainStress", "amount": 2 } ]
+          }
+        }
+      ]
+    }
+  ]
+}
+
+```
+
+### `Content/Scenarios/tomb/harm_families.json`
+
+```
+
+{
+  "families": [
+    {
+      "id": "head_trauma",
+      "lesser": { "description": "Headache", "penalty": { "type": "actionPenalty", "actionType": "Study" } },
+      "moderate": { "description": "Migraine", "penalty": { "type": "reduceEffect" } },
+      "severe": { "description": "Brain Lightning", "penalty": { "type": "banAction", "actionType": "Study" } },
+      "fatal": { "description": "Head Explosion" }
+    },
+    {
+      "id": "leg_injury",
+      "lesser": { "description": "Twisted Ankle", "penalty": { "type": "actionPenalty", "actionType": "Finesse" } },
+      "moderate": { "description": "Torn Muscle", "penalty": { "type": "reduceEffect" } },
+      "severe": { "description": "Shattered Knee", "penalty": { "type": "banAction", "actionType": "Finesse" } },
+      "fatal": { "description": "Crippled Beyond Recovery" }
+    },
+    {
+      "id": "electric_shock",
+      "lesser": { "description": "Electric Jolt" },
+      "moderate": { "description": "Seared Nerves", "penalty": { "type": "reduceEffect" } },
+      "severe": { "description": "Nerve Damage", "penalty": { "type": "banAction", "actionType": "Tinker" } },
+      "fatal": { "description": "Heart Stops" }
+    },
+    {
+      "id": "mental_anguish",
+      "lesser": { "description": "Unease", "penalty": { "type": "increaseStressCost", "amount": 1 } },
+      "moderate": { "description": "Fleeting Shadows", "penalty": { "type": "actionPenalty", "actionType": "Survey" } },
+      "severe": { "description": "Terror", "penalty": { "type": "reduceEffect" } },
+      "fatal": { "description": "Mind Broken" }
+    },
+    {
+      "id": "gear_damage",
+      "lesser": { "description": "Frayed Rope", "penalty": { "type": "actionPenalty", "actionType": "Finesse" } },
+      "moderate": { "description": "Broken Tools", "penalty": { "type": "banAction", "actionType": "Tinker" } },
+      "severe": { "description": "Lost Map", "penalty": { "type": "increaseStressCost", "amount": 1 } },
+      "fatal": { "description": "Stranded and Helpless" }
+    }
+  ]
+}
+
+```
+
+### `Content/Scenarios/tomb/scenario.json`
+
+```
+
+{
+  "id": "tomb",
+  "title": "Forgotten Tomb",
+  "description": "Explore the depths of an ancient tomb.",
+  "entryNode": "start"
+}
+
+```
+
+### `Content/Scenarios/test_lab/treasures.json`
+
+```
+
+[
+  {
+    "id": "treasure_purified_idol_shard",
+    "name": "Purified Idol Shard",
+    "description": "A fragment of the idol, cleansed of its curse.",
+    "grantedModifier": {
+      "bonusDice": 1,
+      "description": "Blessing of the Idol"
+    }
+  },
+  {
+    "id": "treasure_ancient_coin",
+    "name": "Ancient Coin",
+    "description": "A coin from a forgotten empire.",
+    "grantedModifier": {
+      "improveEffect": true,
+      "description": "Lucky Find"
+    }
+  },
+  {
+    "id": "treasure_steadying_herbs",
+    "name": "Steadying Herbs",
+    "description": "Chewing these calms the nerves, for a time.",
+    "grantedModifier": {
+      "improvePosition": true,
+      "uses": 1,
+      "description": "from Steadying Herbs"
+    }
+  },
+  {
+    "id": "treasure_precise_tools",
+    "name": "Set of Precise Tools",
+    "description": "Ideal instruments for delicate work.",
+    "grantedModifier": {
+      "bonusDice": 1,
+      "applicableToAction": "Tinker",
+      "uses": 2,
+      "description": "from Precise Tools"
+    }
+  },
+  {
+    "id": "treasure_charmed_talisman",
+    "name": "Charmed Talisman",
+    "description": "Offers fleeting protection from dark thoughts.",
+    "grantedModifier": {
+      "bonusDice": 1,
+      "applicableToAction": "Attune",
+      "uses": 1,
+      "description": "from Charmed Talisman"
+    }
+  },
+  {
+    "id": "treasure_map_fragment",
+    "name": "Map Fragment",
+    "description": "Hints at a secret room somewhere in the tomb.",
+    "grantedModifier": {
+      "improveEffect": true,
+      "uses": 1,
+      "description": "from Map Fragment"
+    }
+  }
+]
+
+```
+
+### `Content/Scenarios/test_lab/interactables.json`
+
+```
+
+{
+  "common_traps": [
+    {
+      "id": "template_pressure_plate",
+      "title": "Pressure Plate",
+      "description": "A slightly raised stone tile looks suspicious.",
+      "availableActions": [
+        {
+          "name": "Deftly step over it",
+          "actionType": "Finesse",
+          "position": "risky",
+          "effect": "standard",
+          "outcomes": {
+            "success": [
+              { "type": "removeInteractable", "id": "self" }
+            ],
+            "failure": [
+              { "type": "sufferHarm", "level": "lesser", "familyId": "leg_injury" }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "template_cursed_idol",
+      "title": "Cursed Idol",
+      "description": "A small, unnerving idol of a forgotten god.",
+      "availableActions": [
+        {
+          "name": "Smash it",
+          "actionType": "Wreck",
+          "position": "desperate",
+          "effect": "great",
+          "outcomes": {
+            "success": [
+              { "type": "removeInteractable", "id": "self" },
+              { "type": "gainTreasure", "treasureId": "treasure_purified_idol_shard" }
+            ],
+            "failure": [
+              { "type": "sufferHarm", "level": "moderate", "familyId": "head_trauma" }
+            ]
+          }
+        }
+      ]
+    }
+    ,
+    {
+      "id": "template_crumbling_ledge",
+      "title": "Crumbling Ledge",
+      "description": "A narrow ledge over a dark chasm. It looks unstable.",
+      "availableActions": [
+        {
+          "name": "Cross Carefully",
+          "actionType": "Finesse",
+          "position": "desperate",
+          "effect": "standard",
+          "isGroupAction": true,
+          "outcomes": {
+            "success": [ { "type": "removeInteractable", "id": "self" } ],
+            "partial": [
+              { "type": "gainStress", "amount": 2 },
+              { "type": "sufferHarm", "level": "lesser", "familyId": "leg_injury" }
+            ],
+            "failure": [
+              { "type": "sufferHarm", "level": "moderate", "familyId": "leg_injury" },
+              { "type": "tickClock", "clockName": "Chasm Peril", "amount": 2 }
+            ]
+          }
+        },
+        {
+          "name": "Test its Stability",
+          "actionType": "Survey",
+          "position": "risky",
+          "effect": "limited",
+          "outcomes": {
+            "success": [],
+            "failure": [ { "type": "gainStress", "amount": 1 } ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "template_mysterious_whispers",
+      "title": "Mysterious Whispers",
+      "description": "Voices echo softly from unseen sources.",
+      "availableActions": [
+        {
+          "name": "Listen Closely",
+          "actionType": "Attune",
+          "position": "risky",
+          "effect": "standard",
+          "outcomes": {
+            "success": [ { "type": "gainTreasure", "treasureId": "treasure_map_fragment" } ],
+            "partial": [ { "type": "sufferHarm", "level": "lesser", "familyId": "mental_anguish" } ],
+            "failure": [ { "type": "sufferHarm", "level": "moderate", "familyId": "mental_anguish" } ]
+          }
+        },
+        {
+          "name": "Block Out Noise",
+          "actionType": "Study",
+          "position": "controlled",
+          "effect": "limited",
+          "outcomes": {
+            "success": [ { "type": "removeInteractable", "id": "self" } ],
+            "failure": [ { "type": "gainStress", "amount": 1 } ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "template_jammed_lock",
+      "title": "Jammed Lock",
+      "description": "A sturdy door with a rusted mechanism.",
+      "availableActions": [
+        {
+          "name": "Pick the Lock",
+          "actionType": "Tinker",
+          "position": "risky",
+          "effect": "standard",
+          "outcomes": {
+            "success": [ { "type": "gainTreasure", "treasureId": "treasure_precise_tools" } ],
+            "partial": [ { "type": "tickClock", "clockName": "Lockdown Approaches", "amount": 1 } ],
+            "failure": [ { "type": "sufferHarm", "level": "moderate", "familyId": "gear_damage" } ]
+          }
+        },
+        {
+          "name": "Force it",
+          "actionType": "Wreck",
+          "position": "desperate",
+          "effect": "great",
+          "outcomes": {
+            "success": [ { "type": "removeInteractable", "id": "self" } ],
+            "failure": [ { "type": "sufferHarm", "level": "lesser", "familyId": "gear_damage" } ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "template_unstable_rune",
+      "title": "Unstable Rune",
+      "description": "A glowing rune pulsates with dangerous energy.",
+      "availableActions": [
+        {
+          "name": "Decode Glyphs",
+          "actionType": "Study",
+          "position": "controlled",
+          "effect": "limited",
+          "outcomes": {
+            "success": [ { "type": "removeInteractable", "id": "self" } ],
+            "partial": [ { "type": "tickClock", "clockName": "Rune Overload", "amount": 1 } ],
+            "failure": [ { "type": "sufferHarm", "level": "moderate", "familyId": "electric_shock" } ]
+          }
+        },
+        {
+          "name": "Shatter it",
+          "actionType": "Wreck",
+          "position": "risky",
+          "effect": "standard",
+          "outcomes": {
+            "success": [ { "type": "removeInteractable", "id": "self" } ],
+            "failure": [ { "type": "sufferHarm", "level": "severe", "familyId": "electric_shock" } ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "template_hidden_niche",
+      "title": "Hidden Niche",
+      "description": "A faint outline hints at a recess in the wall.",
+      "availableActions": [
+        {
+          "name": "Search Carefully",
+          "actionType": "Survey",
+          "position": "controlled",
+          "effect": "standard",
+          "outcomes": {
+            "success": [ { "type": "addInteractable", "inNodeID": "current", "interactable": { "id": "template_small_chest", "title": "Small Chest", "description": "Dusty but intact.", "availableActions": [ { "name": "Open", "actionType": "Finesse", "position": "risky", "effect": "standard", "outcomes": { "success": [ { "type": "gainTreasure", "treasureId": "treasure_charmed_talisman" }, { "type": "removeInteractable", "id": "self" } ], "failure": [ { "type": "tickClock", "clockName": "Chest Trap", "amount": 1 } ] } } ] } } ],
+            "failure": [ { "type": "gainStress", "amount": 1 } ]
+          }
+        },
+        {
+          "name": "Force it Open",
+          "actionType": "Wreck",
+          "position": "risky",
+          "effect": "limited",
+          "outcomes": {
+            "success": [ { "type": "addInteractable", "inNodeID": "current", "interactable": { "id": "template_small_chest", "title": "Small Chest", "description": "Dusty but intact.", "availableActions": [ { "name": "Open", "actionType": "Wreck", "position": "risky", "effect": "standard", "outcomes": { "success": [ { "type": "gainTreasure", "treasureId": "treasure_charmed_talisman" }, { "type": "removeInteractable", "id": "self" } ], "failure": [ { "type": "sufferHarm", "level": "lesser", "familyId": "gear_damage" } ] } } ] } } ],
+            "failure": [ { "type": "sufferHarm", "level": "lesser", "familyId": "gear_damage" } ]
+          }
+        }
+      ]
+    }
+  ],
+  "threats": [
+    {
+      "id": "threat_hungry_ghoul",
+      "title": "Hungry Ghoul",
+      "description": "A ravenous ghoul lurches from the shadows.",
+      "isThreat": true,
+      "availableActions": [
+        {
+          "name": "Drive it back",
+          "actionType": "Skirmish",
+          "position": "risky",
+          "effect": "standard",
+          "outcomes": {
+            "success": [ { "type": "removeInteractable", "id": "self" } ],
+            "failure": [ { "type": "sufferHarm", "level": "moderate", "familyId": "leg_injury" } ]
+          }
+        },
+        {
+          "name": "Flee",
+          "actionType": "Finesse",
+          "position": "desperate",
+          "effect": "limited",
+          "outcomes": {
+            "success": [ { "type": "removeInteractable", "id": "self" } ],
+            "failure": [ { "type": "tickClock", "clockName": "Ghoul Pursuit", "amount": 1 } ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "threat_reactor_breach",
+      "title": "Reactor Breach",
+      "description": "Alarms blare as a reactor begins to overload.",
+      "isThreat": true,
+      "availableActions": [
+        {
+          "name": "Stabilize Reactor",
+          "actionType": "Tinker",
+          "position": "risky",
+          "effect": "standard",
+          "outcomes": {
+            "success": [ { "type": "removeInteractable", "id": "self" } ],
+            "failure": [ { "type": "sufferHarm", "level": "severe", "familyId": "electric_shock" } ]
+          }
+        },
+        {
+          "name": "Evacuate",
+          "actionType": "Finesse",
+          "position": "desperate",
+          "effect": "limited",
+          "outcomes": {
+            "success": [ { "type": "removeInteractable", "id": "self" } ],
+            "failure": [ { "type": "gainStress", "amount": 2 } ]
+          }
+        }
+      ]
+    }
+  ]
+}
+
+```
+
+### `Content/Scenarios/test_lab/harm_families.json`
+
+```
+
+{
+  "families": [
+    {
+      "id": "head_trauma",
+      "lesser": { "description": "Headache", "penalty": { "type": "actionPenalty", "actionType": "Study" } },
+      "moderate": { "description": "Migraine", "penalty": { "type": "reduceEffect" } },
+      "severe": { "description": "Brain Lightning", "penalty": { "type": "banAction", "actionType": "Study" } },
+      "fatal": { "description": "Head Explosion" }
+    },
+    {
+      "id": "leg_injury",
+      "lesser": { "description": "Twisted Ankle", "penalty": { "type": "actionPenalty", "actionType": "Finesse" } },
+      "moderate": { "description": "Torn Muscle", "penalty": { "type": "reduceEffect" } },
+      "severe": { "description": "Shattered Knee", "penalty": { "type": "banAction", "actionType": "Finesse" } },
+      "fatal": { "description": "Crippled Beyond Recovery" }
+    },
+    {
+      "id": "electric_shock",
+      "lesser": { "description": "Electric Jolt" },
+      "moderate": { "description": "Seared Nerves", "penalty": { "type": "reduceEffect" } },
+      "severe": { "description": "Nerve Damage", "penalty": { "type": "banAction", "actionType": "Tinker" } },
+      "fatal": { "description": "Heart Stops" }
+    },
+    {
+      "id": "mental_anguish",
+      "lesser": { "description": "Unease", "penalty": { "type": "increaseStressCost", "amount": 1 } },
+      "moderate": { "description": "Fleeting Shadows", "penalty": { "type": "actionPenalty", "actionType": "Survey" } },
+      "severe": { "description": "Terror", "penalty": { "type": "reduceEffect" } },
+      "fatal": { "description": "Mind Broken" }
+    },
+    {
+      "id": "gear_damage",
+      "lesser": { "description": "Frayed Rope", "penalty": { "type": "actionPenalty", "actionType": "Finesse" } },
+      "moderate": { "description": "Broken Tools", "penalty": { "type": "banAction", "actionType": "Tinker" } },
+      "severe": { "description": "Lost Map", "penalty": { "type": "increaseStressCost", "amount": 1 } },
+      "fatal": { "description": "Stranded and Helpless" }
+    }
+  ]
+}
+
+```
+
+### `Content/Scenarios/test_lab/scenario.json`
+
+```
+
+{
+  "id": "test_lab",
+  "title": "Test Lab",
+  "description": "A sterile testing environment.",
+  "entryNode": "entry"
 }
 
 ```
@@ -2666,6 +3974,86 @@ struct Character: Identifiable, Codable {
     // ... existing properties
     var modifiers: [Modifier] = []
 }
+```
+
+### `Docs/S12_ThreatAndScenarioInfrastructure/4-MainMenuAndScenarioSelect.md`
+
+```
+
+## Task 4: Main Menu & Scenario Selection
+
+**Goal:** Create a welcoming main menu, support starting a new game, continuing a saved run, and scenario selection.
+
+**Actions:**
+- Implement `MainMenuView.swift`:
+    - Buttons for "Start New Game", "Continue", "Scenario Select", "Settings" (placeholder).
+    - Scenario Select: Reads scenario list from content folder, displays with title and blurb.
+- Wire up navigation to game, scenario loader, and save system.
+```
+
+### `Docs/S12_ThreatAndScenarioInfrastructure/1-ImplementThreatInteractables.md`
+
+```
+
+## Task 1: Implement Threat Interactables (Enemy/Hazard Encounters)
+
+**Goal:** Allow rooms to contain "Threats" that must be resolved before any other actions or movement can be taken. Expresses enemies, environmental hazards, or narrative crises without requiring a combat subsystem.
+
+**Actions:**
+- Add a `subtype: "threat"` (or `isThreat: true`) property to Interactable model and content schema.
+- Update node rendering logic: If a Threat is present in the current node, disable/hide all other interactables and navigation.
+- In UI, visually differentiate Threats from normal interactables (e.g., red border, warning icon).
+- Update InteractableCardView to render threat status.
+- Playtest with sample Threats (e.g., monster, reactor breach).
+```
+
+### `Docs/S12_ThreatAndScenarioInfrastructure/2-AddDungeonMap.md`
+
+```
+
+## Task 2: Add Dungeon Map Screen
+
+**Goal:** Provide a map UI so the player can see explored nodes, connections, and their current location.
+
+**Actions:**
+- Create `MapView.swift`:  
+  - Draw nodes as circles/squares, connections as lines.
+  - Show discovered vs. undiscovered nodes.
+  - Highlight current party location.
+- Add "Show Map" button to main game UI to present MapView as a modal/sheet.
+- Wire MapView to read from GameState’s dungeon model.
+```
+
+### `Docs/S12_ThreatAndScenarioInfrastructure/5-SaveAndLoadSystem.md`
+
+```
+
+## Task 5: Save & Load System
+
+**Goal:** Persist and restore game state, allowing “Continue” after quitting.
+
+**Actions:**
+- Add serialization helpers to GameState (Codable).
+- Implement `saveGame()` and `loadGame()` methods using UserDefaults or local file storage.
+- Save after significant actions, auto-save at game over, and on quit.
+- "Continue" loads saved state and resumes scenario.
+- Main menu disables Continue if no save exists.
+```
+
+### `Docs/S12_ThreatAndScenarioInfrastructure/3-ModularizeScenarioLoading.md`
+
+```
+
+## Task 3: Modularize Scenario Loading
+
+**Goal:** Support multiple scenarios as discrete content bundles, with plug-and-play architecture for scenario selection and loading.
+
+**Actions:**
+- Refactor ContentLoader:
+    - Accept a scenario id/name and load content (`interactables.json`, `harm_families.json`, etc.) from a scenario-specific directory.
+    - Add a `scenario.json` manifest with metadata: title, description, entry node, etc.
+- Support fallback/default content for missing fields (for backwards compatibility).
+- Playtest with two scenario folders ("tomb", "test_lab").
 ```
 
 ### `Docs/S11_UIClarity/2-IntegrateModiferAndPenaltyInfoInDiceRollView.md`
