@@ -547,6 +547,16 @@ enum RollEffect: String, Codable {
     }
 }
 
+/// Result information returned after performing a dice roll.
+struct DiceRollResult {
+    let highestRoll: Int
+    let outcome: String
+    let consequences: String
+    let actualDiceRolled: [Int]?
+    let isCritical: Bool?
+    let finalEffect: RollEffect?
+}
+
 
 // Represents the entire dungeon layout
 struct DungeonMap: Codable {
