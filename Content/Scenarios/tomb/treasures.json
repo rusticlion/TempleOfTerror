@@ -58,5 +58,15 @@
       "uses": 1,
       "description": "from Map Fragment"
     }
+  },
+  {
+    "id": "treasure_cursed_lantern",
+    "name": "Cursed Lantern",
+    "description": "An old lantern that glows with an eerie light.",
+    "grantedModifier": {
+      "bonusDice": 1,
+      "description": "from Cursed Lantern"
+    },
+    "tags": ["Haunted", "Light Source"]
   }
 ]

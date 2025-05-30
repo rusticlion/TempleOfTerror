@@ -444,6 +444,16 @@ class GameViewModel: ObservableObject {
         saveGame()
     }
 
+    /// Check if any party member possesses a treasure with the given tag.
+    func partyHasTreasureTag(_ tag: String) -> Bool {
+        for member in gameState.party {
+            for treasure in member.treasures {
+                if treasure.tags.contains(tag) { return true }
+            }
+        }
+        return false
+    }
+
 
     /// Move one or all party members depending on the current movement mode.
     func move(characterID: UUID, to connection: NodeConnection) {

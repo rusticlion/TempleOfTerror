@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct InteractableCardView: View {
+    @ObservedObject var viewModel: GameViewModel
     let interactable: Interactable
     let selectedCharacter: Character?
     let onActionTapped: (ActionOption) -> Void
@@ -38,12 +39,30 @@ struct InteractableCardView: View {
         return false
     }
 
+    private func actionDisabled(_ action: ActionOption) -> Bool {
+        if let tag = action.requiredTag {
+            return !viewModel.partyHasTreasureTag(tag)
+        }
+        return false
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text(interactable.title)
                 .font(.title2).bold()
             Text(interactable.description)
                 .font(.body)
+            if !interactable.tags.isEmpty {
+                HStack(spacing: 4) {
+                    ForEach(interactable.tags, id: \.self) { tag in
+                        Text(tag)
+                            .font(.caption2)
+                            .padding(2)
+                            .background(Color(UIColor.systemGray5))
+                            .cornerRadius(4)
+                    }
+                }
+            }
             Divider()
             ForEach(interactable.availableActions, id: \.name) { action in
                 let title = action.requiresTest ? action.name : "\(action.name) (Auto)"
@@ -52,6 +71,7 @@ struct InteractableCardView: View {
                 }
                 .buttonStyle(.bordered)
                 .frame(maxWidth: .infinity)
+                .disabled(actionDisabled(action))
                 .overlay(alignment: .topTrailing) {
                     if hasPenalty(for: action) {
                         Image("icon_penalty_action")

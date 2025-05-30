@@ -74,6 +74,43 @@ struct Treasure: Codable, Identifiable {
     var name: String
     var description: String
     var grantedModifier: Modifier
+    var tags: [String] = []
+
+    enum CodingKeys: String, CodingKey {
+        case id, name, description, grantedModifier, tags
+    }
+
+    init(id: String,
+         name: String,
+         description: String,
+         grantedModifier: Modifier,
+         tags: [String] = []) {
+        self.id = id
+        self.name = name
+        self.description = description
+        self.grantedModifier = grantedModifier
+        self.tags = tags
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(String.self, forKey: .id)
+        name = try container.decode(String.self, forKey: .name)
+        description = try container.decode(String.self, forKey: .description)
+        grantedModifier = try container.decode(Modifier.self, forKey: .grantedModifier)
+        tags = try container.decodeIfPresent([String].self, forKey: .tags) ?? []
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(name, forKey: .name)
+        try container.encode(description, forKey: .description)
+        try container.encode(grantedModifier, forKey: .grantedModifier)
+        if !tags.isEmpty {
+            try container.encode(tags, forKey: .tags)
+        }
+    }
 }
 
 struct Character: Identifiable, Codable {
@@ -219,21 +256,24 @@ struct Interactable: Codable, Identifiable {
     var description: String
     var availableActions: [ActionOption]
     var isThreat: Bool = false
+    var tags: [String] = []
 
     enum CodingKeys: String, CodingKey {
-        case id, title, description, availableActions, isThreat
+        case id, title, description, availableActions, isThreat, tags
     }
 
     init(id: String,
          title: String,
          description: String,
          availableActions: [ActionOption],
-         isThreat: Bool = false) {
+         isThreat: Bool = false,
+         tags: [String] = []) {
         self.id = id
         self.title = title
         self.description = description
         self.availableActions = availableActions
         self.isThreat = isThreat
+        self.tags = tags
     }
 
     init(from decoder: Decoder) throws {
@@ -243,6 +283,7 @@ struct Interactable: Codable, Identifiable {
         description = try container.decode(String.self, forKey: .description)
         availableActions = try container.decode([ActionOption].self, forKey: .availableActions)
         isThreat = try container.decodeIfPresent(Bool.self, forKey: .isThreat) ?? false
+        tags = try container.decodeIfPresent([String].self, forKey: .tags) ?? []
     }
 
     func encode(to encoder: Encoder) throws {
@@ -253,6 +294,9 @@ struct Interactable: Codable, Identifiable {
         try container.encode(availableActions, forKey: .availableActions)
         if isThreat {
             try container.encode(isThreat, forKey: .isThreat)
+        }
+        if !tags.isEmpty {
+            try container.encode(tags, forKey: .tags)
         }
     }
 }
@@ -266,10 +310,11 @@ struct ActionOption: Codable {
     /// are applied immediately when tapped.
     var requiresTest: Bool = true
     var isGroupAction: Bool = false
+    var requiredTag: String? = nil
     var outcomes: [RollOutcome: [Consequence]] = [:]
 
     enum CodingKeys: String, CodingKey {
-        case name, actionType, position, effect, requiresTest, isGroupAction, outcomes
+        case name, actionType, position, effect, requiresTest, isGroupAction, requiredTag, outcomes
     }
 
     init(name: String,
@@ -278,6 +323,7 @@ struct ActionOption: Codable {
          effect: RollEffect,
          isGroupAction: Bool = false,
          requiresTest: Bool = true,
+         requiredTag: String? = nil,
          outcomes: [RollOutcome: [Consequence]] = [:]) {
         self.name = name
         self.actionType = actionType
@@ -285,6 +331,7 @@ struct ActionOption: Codable {
         self.effect = effect
         self.requiresTest = requiresTest
         self.isGroupAction = isGroupAction
+        self.requiredTag = requiredTag
         self.outcomes = outcomes
     }
 
@@ -296,6 +343,7 @@ struct ActionOption: Codable {
         effect = try container.decode(RollEffect.self, forKey: .effect)
         isGroupAction = try container.decodeIfPresent(Bool.self, forKey: .isGroupAction) ?? false
         requiresTest = try container.decodeIfPresent(Bool.self, forKey: .requiresTest) ?? true
+        requiredTag = try container.decodeIfPresent(String.self, forKey: .requiredTag)
         let rawOutcomes = try container.decodeIfPresent([String: [Consequence]].self, forKey: .outcomes) ?? [:]
         var mapped: [RollOutcome: [Consequence]] = [:]
         for (key, value) in rawOutcomes {
@@ -318,6 +366,7 @@ struct ActionOption: Codable {
         if isGroupAction {
             try container.encode(isGroupAction, forKey: .isGroupAction)
         }
+        try container.encodeIfPresent(requiredTag, forKey: .requiredTag)
         var raw: [String: [Consequence]] = [:]
         for (key, value) in outcomes { raw[key.rawValue] = value }
         try container.encode(raw, forKey: .outcomes)
