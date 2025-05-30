@@ -2,18 +2,20 @@ import SwiftUI
 
 struct MainMenuView: View {
     @State private var showingScenarioSelect = false
-    @State private var startScenario: ScenarioManifest?
     @State private var availableScenarios: [ScenarioManifest] = ContentLoader.availableScenarios()
+    @State private var path = NavigationPath()
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $path) {
             VStack(spacing: 20) {
                 Text("Temple of Terror")
                     .font(.largeTitle)
                     .bold()
 
                 Button("Start New Game") {
-                    startScenario = availableScenarios.first { $0.id == "tomb" } ?? availableScenarios.first
+                    if let scenario = availableScenarios.first(where: { $0.id == "tomb" }) ?? availableScenarios.first {
+                        path.append(scenario)
+                    }
                 }
                 .buttonStyle(.borderedProminent)
 
@@ -29,12 +31,12 @@ struct MainMenuView: View {
                     .disabled(true)
             }
             .padding()
-            .navigationDestination(item: $startScenario) { manifest in
+            .navigationDestination(for: ScenarioManifest.self) { manifest in
                 ContentView(scenario: manifest.id)
             }
             .sheet(isPresented: $showingScenarioSelect) {
                 ScenarioSelectView(available: availableScenarios) { manifest in
-                    startScenario = manifest
+                    path.append(manifest)
                     showingScenarioSelect = false
                 }
             }
