@@ -30,9 +30,9 @@ class GameViewModel: ObservableObject {
     }
 
 
-    init() {
+    init(scenario: String = "tomb") {
         self.gameState = GameState()
-        startNewRun()
+        startNewRun(scenario: scenario)
     }
 
     // --- Core Logic Functions for the Sprint ---
@@ -352,9 +352,13 @@ class GameViewModel: ObservableObject {
         }
     }
 
-    /// Starts a brand new run, resetting the game state
-    func startNewRun() {
-        let generator = DungeonGenerator()
+    /// Starts a brand new run, resetting the game state. The scenario id
+    /// corresponds to a folder within `Content/Scenarios`.
+    func startNewRun(scenario: String = "tomb") {
+        // Recreate the shared content loader so subsequent lookups use the
+        // selected scenario.
+        ContentLoader.shared = ContentLoader(scenario: scenario)
+        let generator = DungeonGenerator(content: ContentLoader.shared)
         let (newDungeon, generatedClocks) = generator.generate(level: 1)
 
         self.gameState = GameState(

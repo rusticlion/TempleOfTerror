@@ -194,10 +194,10 @@ struct HarmState: Codable {
 /// Central catalog of all harm families available in the game.
 /// This dictionary is populated from the JSON content loaded by `ContentLoader`.
 struct HarmLibrary {
-    static let families: [String: HarmFamily] = {
-        let families = ContentLoader.shared.harmFamilies
-        return Dictionary(uniqueKeysWithValues: families.map { ($0.id, $0) })
-    }()
+    /// Access the harm families for the currently loaded scenario.
+    static var families: [String: HarmFamily] {
+        return ContentLoader.shared.harmFamilyDict
+    }
 }
 
 struct GameClock: Identifiable, Codable {

@@ -4,7 +4,7 @@ import SwiftUI
 struct CardSwipeDemoApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            MainMenuView()
         }
     }
 }
