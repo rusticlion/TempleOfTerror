@@ -1,0 +1,6 @@
+{
+  "id": "test_lab",
+  "title": "Test Lab",
+  "description": "A sterile testing environment.",
+  "entryNode": "entry"
+}
