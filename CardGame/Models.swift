@@ -6,6 +6,10 @@ enum GameStatus: String, Codable {
 }
 
 struct GameState: Codable {
+    /// Identifier for the scenario that generated this run. Used when loading
+    /// to reinitialize the `ContentLoader` with the correct data bundle.
+    var scenarioName: String = "tomb"
+
     var party: [Character] = []
     var activeClocks: [GameClock] = []
     var dungeon: DungeonMap? // The full map
@@ -507,5 +511,21 @@ struct NodeConnection: Codable {
     var toNodeID: UUID
     var isUnlocked: Bool = true // A path could be locked initially
     var description: String // e.g., "A dark tunnel", "A rickety bridge"
+}
+
+// MARK: - Persistence Helpers
+
+extension GameState {
+    /// Encode the game state and write it to the specified URL.
+    func save(to url: URL) throws {
+        let data = try JSONEncoder().encode(self)
+        try data.write(to: url)
+    }
+
+    /// Load a `GameState` from the given file URL.
+    static func load(from url: URL) throws -> GameState {
+        let data = try Data(contentsOf: url)
+        return try JSONDecoder().decode(GameState.self, from: data)
+    }
 }
 

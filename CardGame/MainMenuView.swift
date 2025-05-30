@@ -4,6 +4,8 @@ struct MainMenuView: View {
     @State private var showingScenarioSelect = false
     @State private var availableScenarios: [ScenarioManifest] = ContentLoader.availableScenarios()
     @State private var path = NavigationPath()
+    @State private var continueVM: GameViewModel?
+    @State private var continueActive = false
 
     var body: some View {
         NavigationStack(path: $path) {
@@ -19,8 +21,14 @@ struct MainMenuView: View {
                 }
                 .buttonStyle(.borderedProminent)
 
-                Button("Continue") { }
-                    .disabled(true)
+                Button("Continue") {
+                    let vm = GameViewModel()
+                    if vm.loadGame() {
+                        continueVM = vm
+                        continueActive = true
+                    }
+                }
+                .disabled(!GameViewModel.saveExists)
 
                 Button("Scenario Select") {
                     showingScenarioSelect = true
@@ -34,6 +42,12 @@ struct MainMenuView: View {
             .navigationDestination(for: ScenarioManifest.self) { manifest in
                 ContentView(scenario: manifest.id)
             }
+            NavigationLink("", isActive: $continueActive) {
+                if let vm = continueVM {
+                    ContentView(viewModel: vm)
+                }
+            }
+            .hidden()
             .sheet(isPresented: $showingScenarioSelect) {
                 ScenarioSelectView(available: availableScenarios) { manifest in
                     path.append(manifest)
