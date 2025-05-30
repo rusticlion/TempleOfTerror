@@ -11,6 +11,7 @@ struct ContentView: View {
     @Environment(\.scenePhase) private var scenePhase
 
     init(scenario: String = "tomb") {
+        // Start a new game using the provided scenario
         let vm = GameViewModel(startNewWithScenario: scenario)
         _viewModel = StateObject(wrappedValue: vm)
         _selectedCharacterID = State(initialValue: vm.gameState.party.first?.id)
@@ -64,8 +65,9 @@ struct ContentView: View {
                                 let threats = node.interactables.filter { $0.isThreat }
                                 let items = threats.isEmpty ? node.interactables : threats
 
+                                let vm = viewModel
                                 ForEach(items, id: \.id) { interactable in
-                                    InteractableCardView(viewModel: viewModel,
+                                    InteractableCardView(viewModel: vm,
                                                         interactable: interactable,
                                                         selectedCharacter: selectedCharacter) { action in
                                         if let character = selectedCharacter {
@@ -73,7 +75,8 @@ struct ContentView: View {
                                                 pendingAction = action
                                                 pendingInteractableID = interactable.id
                                             } else {
-                                                _ = viewModel.performFreeAction(for: action, with: character, interactableID: interactable.id)
+                                                // Directly apply the free-action consequences
+                                                _ = vm.performFreeAction(for: action, with: character, interactableID: interactable.id)
                                             }
                                         }
                                     }
