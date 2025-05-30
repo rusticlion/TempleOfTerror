@@ -340,27 +340,36 @@ class GameViewModel: ObservableObject {
         var descriptions: [String] = []
         let partyMemberId = character.id
         for consequence in consequences {
-            switch consequence {
-            case .gainStress(let amount):
-                if let charIndex = gameState.party.firstIndex(where: { $0.id == character.id }) {
+            switch consequence.kind {
+            case .gainStress:
+                if let amount = consequence.amount,
+                   let charIndex = gameState.party.firstIndex(where: { $0.id == character.id }) {
                     gameState.party[charIndex].stress += amount
                     descriptions.append("Gained \(amount) Stress.")
                 }
-            case .sufferHarm(let level, let familyId):
-                let description = applyHarm(familyId: familyId, level: level, toCharacter: character.id)
-                descriptions.append(description)
-            case .tickClock(let clockName, let amount):
-                if let clockIndex = gameState.activeClocks.firstIndex(where: { $0.name == clockName }) {
+            case .sufferHarm:
+                if let level = consequence.level,
+                   let familyId = consequence.familyId {
+                    let description = applyHarm(familyId: familyId, level: level, toCharacter: character.id)
+                    descriptions.append(description)
+                }
+            case .tickClock:
+                if let clockName = consequence.clockName,
+                   let amount = consequence.amount,
+                   let clockIndex = gameState.activeClocks.firstIndex(where: { $0.name == clockName }) {
                     updateClock(id: gameState.activeClocks[clockIndex].id, ticks: amount)
                     descriptions.append("The '\(clockName)' clock progresses by \(amount).")
                 }
-            case .unlockConnection(let fromNodeID, let toNodeID):
-                if let connIndex = gameState.dungeon?.nodes[fromNodeID.uuidString]?.connections.firstIndex(where: { $0.toNodeID == toNodeID }) {
+            case .unlockConnection:
+                if let fromNodeID = consequence.fromNodeID,
+                   let toNodeID = consequence.toNodeID,
+                   let connIndex = gameState.dungeon?.nodes[fromNodeID.uuidString]?.connections.firstIndex(where: { $0.toNodeID == toNodeID }) {
                     gameState.dungeon?.nodes[fromNodeID.uuidString]?.connections[connIndex].isUnlocked = true
                     descriptions.append("A path has opened!")
                 }
-            case .removeInteractable(let id):
-                if let nodeID = gameState.characterLocations[partyMemberId.uuidString] {
+            case .removeInteractable:
+                if let id = consequence.interactableId,
+                   let nodeID = gameState.characterLocations[partyMemberId.uuidString] {
                     gameState.dungeon?.nodes[nodeID.uuidString]?.interactables.removeAll(where: { $0.id == id })
                     descriptions.append("The way is clear.")
                 }
@@ -369,16 +378,20 @@ class GameViewModel: ObservableObject {
                     gameState.dungeon?.nodes[nodeID.uuidString]?.interactables.removeAll(where: { $0.id == interactableStrID })
                     descriptions.append("The way is clear.")
                 }
-            case .addInteractable(let inNodeID, let interactable):
-                gameState.dungeon?.nodes[inNodeID.uuidString]?.interactables.append(interactable)
-                descriptions.append("Something new appears.")
-            case .addInteractableHere(let interactable):
-                if let nodeID = gameState.characterLocations[partyMemberId.uuidString] {
+            case .addInteractable:
+                if let inNodeID = consequence.inNodeID, let interactable = consequence.newInteractable {
+                    gameState.dungeon?.nodes[inNodeID.uuidString]?.interactables.append(interactable)
+                    descriptions.append("Something new appears.")
+                }
+            case .addInteractableHere:
+                if let interactable = consequence.newInteractable,
+                   let nodeID = gameState.characterLocations[partyMemberId.uuidString] {
                     gameState.dungeon?.nodes[nodeID.uuidString]?.interactables.append(interactable)
                     descriptions.append("Something new appears.")
                 }
-            case .gainTreasure(let treasureId):
-                if let treasure = ContentLoader.shared.treasureTemplates.first(where: { $0.id == treasureId }),
+            case .gainTreasure:
+                if let treasureId = consequence.treasureId,
+                   let treasure = ContentLoader.shared.treasureTemplates.first(where: { $0.id == treasureId }),
                    let charIndex = gameState.party.firstIndex(where: { $0.id == character.id }) {
                     gameState.party[charIndex].treasures.append(treasure)
                     gameState.party[charIndex].modifiers.append(treasure.grantedModifier)

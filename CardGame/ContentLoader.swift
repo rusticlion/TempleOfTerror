@@ -82,6 +82,9 @@ class ContentLoader {
         do {
             let data = try Data(contentsOf: url)
             let decoder = JSONDecoder()
+            // Explicitly use default keys so optional fields like `conditions`
+            // in `Consequence` decode without additional configuration.
+            decoder.keyDecodingStrategy = .useDefaultKeys
             if let array = try? decoder.decode([T].self, from: data) {
                 return array
             } else if let dict = try? decoder.decode([String: [T]].self, from: data) {
