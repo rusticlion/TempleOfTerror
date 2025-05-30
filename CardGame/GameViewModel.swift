@@ -41,7 +41,13 @@ class GameViewModel: ObservableObject {
     }
 
 
-    init(scenario: String = "tomb") {
+    /// Initialize a blank view model intended for loading a game.
+    init() {
+        self.gameState = GameState()
+    }
+
+    /// Initialize and immediately start a new game with the given scenario.
+    init(startNewWithScenario scenario: String) {
         self.gameState = GameState()
         startNewRun(scenario: scenario)
     }
@@ -406,9 +412,9 @@ class GameViewModel: ObservableObject {
         self.gameState = GameState(
             scenarioName: scenario,
             party: [
-                Character(name: "Indy", characterClass: "Archaeologist", stress: 0, harm: HarmState(), actions: ["Study": 3, "Wreck": 1]),
-                Character(name: "Sallah", characterClass: "Brawler", stress: 0, harm: HarmState(), actions: ["Finesse": 2, "Survey": 2]),
-                Character(name: "Marion", characterClass: "Survivor", stress: 0, harm: HarmState(), actions: ["Tinker": 2, "Attune": 1])
+                Character(id: UUID(), name: "Indy", characterClass: "Archaeologist", stress: 0, harm: HarmState(), actions: ["Study": 3, "Wreck": 1]),
+                Character(id: UUID(), name: "Sallah", characterClass: "Brawler", stress: 0, harm: HarmState(), actions: ["Finesse": 2, "Survey": 2]),
+                Character(id: UUID(), name: "Marion", characterClass: "Survivor", stress: 0, harm: HarmState(), actions: ["Tinker": 2, "Attune": 1])
             ],
             activeClocks: [
                 GameClock(name: "The Guardian Wakes", segments: 6, progress: 0)

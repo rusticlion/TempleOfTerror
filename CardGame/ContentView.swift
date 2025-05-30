@@ -11,7 +11,7 @@ struct ContentView: View {
     @Environment(\.scenePhase) private var scenePhase
 
     init(scenario: String = "tomb") {
-        let vm = GameViewModel(scenario: scenario)
+        let vm = GameViewModel(startNewWithScenario: scenario)
         _viewModel = StateObject(wrappedValue: vm)
         _selectedCharacterID = State(initialValue: vm.gameState.party.first?.id)
     }
