@@ -195,6 +195,7 @@ class GameViewModel: ObservableObject {
 
         let projection = calculateProjection(for: action, with: character)
         var finalEffect = projection.finalEffect
+        let finalPosition = projection.finalPosition
         var actualDiceRolled: [Int] = []
         var highestRoll: Int
         var isCritical = false
@@ -229,11 +230,22 @@ class GameViewModel: ObservableObject {
             outcomeString = "Failure."
             consequencesToApply = action.outcomes[.failure] ?? []
         }
-
-        var consequencesDescription = processConsequences(consequencesToApply, forCharacter: character, interactableID: interactableID)
+        var consequencesDescription = ""
 
         if isCritical && highestRoll >= 4 {
             finalEffect = finalEffect.increased()
+        }
+
+        let eligible = consequencesToApply.filter { cons in
+            areConditionsMet(conditions: cons.conditions,
+                             forCharacter: character,
+                             finalEffect: finalEffect,
+                             finalPosition: finalPosition)
+        }
+
+        consequencesDescription = processConsequences(eligible, forCharacter: character, interactableID: interactableID)
+
+        if isCritical && highestRoll >= 4 {
             let critMsg = "Critical Success! Effect increased to \(finalEffect.rawValue.capitalized)."
             if consequencesDescription.isEmpty {
                 consequencesDescription = critMsg
@@ -400,6 +412,53 @@ class GameViewModel: ObservableObject {
             }
         }
         return descriptions.joined(separator: "\n")
+    }
+
+    /// Check if a list of conditions are satisfied for the given character and roll results.
+    private func areConditionsMet(
+        conditions: [GameCondition]?,
+        forCharacter character: Character,
+        finalEffect: RollEffect,
+        finalPosition: RollPosition
+    ) -> Bool {
+        guard let conditions = conditions, !conditions.isEmpty else { return true }
+
+        for condition in conditions {
+            var conditionMet = false
+            switch condition.type {
+            case .requiresMinEffectLevel:
+                if let req = condition.effectParam {
+                    conditionMet = finalEffect.isBetterThanOrEqualTo(req)
+                }
+            case .requiresExactEffectLevel:
+                conditionMet = (condition.effectParam == finalEffect)
+            case .requiresMinPositionLevel:
+                if let req = condition.positionParam {
+                    conditionMet = finalPosition.isWorseThanOrEqualTo(req)
+                }
+            case .requiresExactPositionLevel:
+                conditionMet = (condition.positionParam == finalPosition)
+            case .characterHasTreasureId:
+                if let tId = condition.stringParam {
+                    conditionMet = character.treasures.contains(where: { $0.id == tId })
+                }
+            case .partyHasTreasureWithTag:
+                // TODO: Implement party tag check when treasures support tags
+                print("WARN: partyHasTreasureWithTag condition not fully implemented yet.")
+            case .clockProgress:
+                if let name = condition.stringParam,
+                   let min = condition.intParam,
+                   let clock = gameState.activeClocks.first(where: { $0.name == name }) {
+                    var metMin = clock.progress >= min
+                    if let max = condition.intParamMax {
+                        metMin = metMin && clock.progress <= max
+                    }
+                    conditionMet = metMin
+                }
+            }
+            if !conditionMet { return false }
+        }
+        return true
     }
 
     private func apply(penalty: Penalty, description: String, to actionType: String, diceCount: inout Int, effect: inout RollEffect, notes: inout [String]) {

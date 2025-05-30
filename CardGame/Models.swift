@@ -564,6 +564,20 @@ enum RollPosition: String, Codable {
         case .controlled: return .controlled
         }
     }
+
+    /// Numeric ordering used for comparisons (desperate > risky > controlled).
+    var orderValue: Int {
+        switch self {
+        case .controlled: return 0
+        case .risky: return 1
+        case .desperate: return 2
+        }
+    }
+
+    /// Returns `true` if `self` is worse (>=) than the provided position.
+    func isWorseThanOrEqualTo(_ other: RollPosition) -> Bool {
+        return self.orderValue >= other.orderValue
+    }
 }
 
 enum RollEffect: String, Codable {
@@ -587,6 +601,20 @@ enum RollEffect: String, Codable {
         case .standard: return .great
         case .great: return .great
         }
+    }
+
+    /// Numeric ordering used for comparisons (great > standard > limited).
+    var orderValue: Int {
+        switch self {
+        case .limited: return 0
+        case .standard: return 1
+        case .great: return 2
+        }
+    }
+
+    /// Returns `true` if `self` is better (>=) than the provided effect.
+    func isBetterThanOrEqualTo(_ other: RollEffect) -> Bool {
+        return self.orderValue >= other.orderValue
     }
 }
 
