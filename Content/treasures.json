@@ -77,6 +77,13 @@
       "bonusDice": 1,
       "description": "from Silver Key"
     },
-    "tags": ["Key"]
+  "tags": ["Key"]
+  },
+  {
+    "id": "treasure_test_gem",
+    "name": "Test Gem",
+    "description": "Glows with uncertain power.",
+    "grantedModifier": { "bonusDice": 1, "description": "from Test Gem" },
+    "tags": ["Test"]
   }
 ]

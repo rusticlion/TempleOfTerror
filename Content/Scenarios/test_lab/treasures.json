@@ -67,6 +67,13 @@
       "bonusDice": 1,
       "description": "from Cursed Lantern"
     },
-    "tags": ["Haunted", "Light Source"]
+  "tags": ["Haunted", "Light Source"]
+  },
+  {
+    "id": "treasure_test_gem",
+    "name": "Test Gem",
+    "description": "Glows with uncertain power.",
+    "grantedModifier": { "bonusDice": 1, "description": "from Test Gem" },
+    "tags": ["Test"]
   }
 ]
