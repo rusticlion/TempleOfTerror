@@ -1,9 +1,16 @@
 import SwiftUI
 
 struct CharacterSheetView: View {
+    struct SelectedHarm: Identifiable {
+        let familyId: String
+        let level: HarmLevel
+        var id: String { familyId + level.rawValue }
+    }
+
     let character: Character
     var locationName: String? = nil
     @State private var selectedTreasure: Treasure? = nil
+    @State private var selectedHarm: SelectedHarm? = nil
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -47,37 +54,84 @@ struct CharacterSheetView: View {
                     // Lesser Harms
                     HStack(spacing: 4) {
                         ForEach(0..<HarmState.lesserSlots, id: \.self) { index in
-                            Text(index < character.harm.lesser.count ? character.harm.lesser[index].description : "None")
-                                .font(.caption2)
-                                .foregroundColor(index < character.harm.lesser.count ? .primary : .gray)
-                                .padding(4)
-                                .frame(minWidth: 0, maxWidth: .infinity, alignment: .center)
-                                .background(Color(UIColor.systemBackground))
-                                .cornerRadius(4)
+                            if index < character.harm.lesser.count {
+                                let harm = character.harm.lesser[index]
+                                Button {
+                                    selectedHarm = SelectedHarm(familyId: harm.familyId, level: .lesser)
+                                } label: {
+                                    Text(harm.description)
+                                        .font(.caption2)
+                                        .foregroundColor(.primary)
+                                        .padding(4)
+                                        .frame(minWidth: 0, maxWidth: .infinity, alignment: .center)
+                                        .background(Color(UIColor.systemBackground))
+                                        .cornerRadius(4)
+                                }
+                                .buttonStyle(.plain)
+                            } else {
+                                Text("None")
+                                    .font(.caption2)
+                                    .foregroundColor(.gray)
+                                    .padding(4)
+                                    .frame(minWidth: 0, maxWidth: .infinity, alignment: .center)
+                                    .background(Color(UIColor.systemBackground))
+                                    .cornerRadius(4)
+                            }
                         }
                     }
 
                     // Moderate Harms
                     HStack(spacing: 4) {
                         ForEach(0..<HarmState.moderateSlots, id: \.self) { index in
-                            Text(index < character.harm.moderate.count ? character.harm.moderate[index].description : "None")
+                            if index < character.harm.moderate.count {
+                                let harm = character.harm.moderate[index]
+                                Button {
+                                    selectedHarm = SelectedHarm(familyId: harm.familyId, level: .moderate)
+                                } label: {
+                                    Text(harm.description)
+                                        .font(.caption2)
+                                        .foregroundColor(.primary)
+                                        .padding(4)
+                                        .frame(minWidth: 0, maxWidth: .infinity, alignment: .center)
+                                        .background(Color(UIColor.systemBackground))
+                                        .cornerRadius(4)
+                                }
+                                .buttonStyle(.plain)
+                            } else {
+                                Text("None")
+                                    .font(.caption2)
+                                    .foregroundColor(.gray)
+                                    .padding(4)
+                                    .frame(minWidth: 0, maxWidth: .infinity, alignment: .center)
+                                    .background(Color(UIColor.systemBackground))
+                                    .cornerRadius(4)
+                            }
+                        }
+                    }
+
+                    // Severe Harm
+                    if let harm = character.harm.severe.first {
+                        Button {
+                            selectedHarm = SelectedHarm(familyId: harm.familyId, level: .severe)
+                        } label: {
+                            Text(harm.description)
                                 .font(.caption2)
-                                .foregroundColor(index < character.harm.moderate.count ? .primary : .gray)
+                                .foregroundColor(.primary)
                                 .padding(4)
                                 .frame(minWidth: 0, maxWidth: .infinity, alignment: .center)
                                 .background(Color(UIColor.systemBackground))
                                 .cornerRadius(4)
                         }
+                        .buttonStyle(.plain)
+                    } else {
+                        Text("None")
+                            .font(.caption2)
+                            .foregroundColor(.gray)
+                            .padding(4)
+                            .frame(minWidth: 0, maxWidth: .infinity, alignment: .center)
+                            .background(Color(UIColor.systemBackground))
+                            .cornerRadius(4)
                     }
-
-                    // Severe Harm
-                    Text(character.harm.severe.first?.description ?? "None")
-                        .font(.caption2)
-                        .foregroundColor(character.harm.severe.isEmpty ? .gray : .primary)
-                        .padding(4)
-                        .frame(minWidth: 0, maxWidth: .infinity, alignment: .center)
-                        .background(Color(UIColor.systemBackground))
-                        .cornerRadius(4)
                 }
                 .padding(.top, 8)
             }
@@ -150,6 +204,9 @@ struct CharacterSheetView: View {
         .shadow(radius: 3)
         .popover(item: $selectedTreasure) { treasure in
             TreasureTooltipView(treasure: treasure)
+        }
+        .popover(item: $selectedHarm) { harm in
+            HarmTooltipView(familyId: harm.familyId, level: harm.level)
         }
     }
 }
