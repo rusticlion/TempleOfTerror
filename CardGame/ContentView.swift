@@ -66,9 +66,13 @@ struct ContentView: View {
 
                                 ForEach(items, id: \.id) { interactable in
                                     InteractableCardView(interactable: interactable, selectedCharacter: selectedCharacter) { action in
-                                        if selectedCharacter != nil {
-                                            pendingAction = action
-                                            pendingInteractableID = interactable.id
+                                        if let character = selectedCharacter {
+                                            if action.requiresTest {
+                                                pendingAction = action
+                                                pendingInteractableID = interactable.id
+                                            } else {
+                                                _ = viewModel.performFreeAction(for: action, with: character, interactableID: interactable.id)
+                                            }
                                         }
                                     }
                                     .transition(.scale(scale: 0.9).combined(with: .opacity))

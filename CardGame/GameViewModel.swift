@@ -164,6 +164,15 @@ class GameViewModel: ObservableObject {
         )
     }
 
+    /// Executes a free action that does not require a roll, applying its success
+    /// consequences immediately.
+    func performFreeAction(for action: ActionOption, with character: Character, interactableID: String?) -> String {
+        let consequences = action.outcomes[.success] ?? []
+        let description = processConsequences(consequences, forCharacter: character, interactableID: interactableID)
+        saveGame()
+        return description
+    }
+
     /// The main dice roll function, now returns the result for the UI.
     func performAction(for action: ActionOption, with character: Character, interactableID: String?) -> DiceRollResult {
         if action.isGroupAction {

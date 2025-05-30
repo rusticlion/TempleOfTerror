@@ -86,6 +86,7 @@ class DungeonGenerator {
                         actionType: "Tinker",
                         position: .risky,
                         effect: .standard,
+                        requiresTest: false,
                         outcomes: [
                             .success: [
                                 .unlockConnection(fromNodeID: lock.from, toNodeID: lock.to),

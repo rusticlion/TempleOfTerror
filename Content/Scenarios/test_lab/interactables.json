@@ -190,6 +190,24 @@
         }
       ]
     }
+    ,
+    {
+      "id": "template_wall_switch",
+      "title": "Wall Switch",
+      "description": "A lever that seems safe to pull.",
+      "availableActions": [
+        {
+          "name": "Flip the switch",
+          "actionType": "Tinker",
+          "position": "controlled",
+          "effect": "standard",
+          "requiresTest": false,
+          "outcomes": {
+            "success": [ { "type": "gainTreasure", "treasureId": "treasure_ancient_coin" }, { "type": "removeInteractable", "id": "self" } ]
+          }
+        }
+      ]
+    }
   ],
   "threats": [
     {
