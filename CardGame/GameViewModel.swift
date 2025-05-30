@@ -20,6 +20,17 @@ class GameViewModel: ObservableObject {
     @Published var gameState: GameState
     @Published var partyMovementMode: PartyMovementMode = .grouped
 
+    /// Location of the save file within the app's Documents directory.
+    private static var saveURL: URL {
+        FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("savegame.json")
+    }
+
+    /// Whether a saved game exists on disk.
+    static var saveExists: Bool {
+        FileManager.default.fileExists(atPath: saveURL.path)
+    }
+
 
     // Retrieve the node a specific character is currently in
     func node(for characterID: UUID?) -> MapNode? {
@@ -33,6 +44,33 @@ class GameViewModel: ObservableObject {
     init(scenario: String = "tomb") {
         self.gameState = GameState()
         startNewRun(scenario: scenario)
+    }
+
+    /// Persist the current game state to disk.
+    func saveGame() {
+        do {
+            try gameState.save(to: Self.saveURL)
+        } catch {
+            print("Failed to save game: \(error)")
+        }
+    }
+
+    /// Attempt to load a saved game from disk. Returns `true` on success.
+    func loadGame() -> Bool {
+        guard Self.saveExists else { return false }
+        do {
+            let loaded = try GameState.load(from: Self.saveURL)
+            self.gameState = loaded
+            ContentLoader.shared = ContentLoader(scenario: loaded.scenarioName)
+            if let anyID = loaded.characterLocations.first?.value,
+               let node = loaded.dungeon?.nodes[anyID] {
+                AudioManager.shared.play(sound: "ambient_\(node.soundProfile).wav", loop: true)
+            }
+            return true
+        } catch {
+            print("Failed to load game: \(error)")
+            return false
+        }
     }
 
     // --- Core Logic Functions for the Sprint ---
@@ -180,6 +218,7 @@ class GameViewModel: ObservableObject {
                 }
             }
         }
+        saveGame()
 
         return DiceRollResult(highestRoll: highestRoll, outcome: outcomeString, consequences: consequencesDescription)
     }
@@ -225,6 +264,7 @@ class GameViewModel: ObservableObject {
             }
         }
 
+        saveGame()
         return DiceRollResult(highestRoll: bestRoll, outcome: outcomeString, consequences: description)
     }
 
@@ -346,6 +386,7 @@ class GameViewModel: ObservableObject {
                 } else {
                     gameState.status = .gameOver
                     let fatalDescription = harmFamily.fatal.description
+                    saveGame()
                     return "Suffered FATAL Harm: \(fatalDescription)."
                 }
             }
@@ -362,6 +403,7 @@ class GameViewModel: ObservableObject {
         let (newDungeon, generatedClocks) = generator.generate(level: 1)
 
         self.gameState = GameState(
+            scenarioName: scenario,
             party: [
                 Character(name: "Indy", characterClass: "Archaeologist", stress: 0, harm: HarmState(), actions: ["Study": 3, "Wreck": 1]),
                 Character(name: "Sallah", characterClass: "Brawler", stress: 0, harm: HarmState(), actions: ["Finesse": 2, "Survey": 2]),
@@ -382,6 +424,8 @@ class GameViewModel: ObservableObject {
         if let startingNode = newDungeon.nodes[newDungeon.startingNodeID] {
             AudioManager.shared.play(sound: "ambient_\(startingNode.soundProfile).wav", loop: true)
         }
+
+        saveGame()
     }
 
 
@@ -401,6 +445,8 @@ class GameViewModel: ObservableObject {
             gameState.dungeon?.nodes[connection.toNodeID]?.isDiscovered = true
             AudioManager.shared.play(sound: "ambient_\(node.soundProfile).wav", loop: true)
         }
+
+        saveGame()
     }
 
     func getNodeName(for characterID: UUID?) -> String? {

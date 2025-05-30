@@ -8,11 +8,17 @@ struct ContentView: View {
     @State private var showingStatusSheet = false // Controls the party sheet
     @State private var showingMap = false // Controls the map sheet
     @State private var doorProgress: CGFloat = 0 // For sliding door transition
+    @Environment(\.scenePhase) private var scenePhase
 
     init(scenario: String = "tomb") {
         let vm = GameViewModel(scenario: scenario)
         _viewModel = StateObject(wrappedValue: vm)
         _selectedCharacterID = State(initialValue: vm.gameState.party.first?.id)
+    }
+
+    init(viewModel: GameViewModel) {
+        _viewModel = StateObject(wrappedValue: viewModel)
+        _selectedCharacterID = State(initialValue: viewModel.gameState.party.first?.id)
     }
 
     // Helper to retrieve the selected character object
@@ -163,6 +169,11 @@ struct ContentView: View {
             MapView(viewModel: viewModel)
         }
         .ignoresSafeArea(.all, edges: .bottom)
+        .onChange(of: scenePhase) { phase in
+            if phase != .active {
+                viewModel.saveGame()
+            }
+        }
     }
 }
 
