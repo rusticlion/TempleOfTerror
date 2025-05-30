@@ -100,25 +100,8 @@ struct ContentView: View {
                     .padding()
                     .animation(.default, value: viewModel.node(for: selectedCharacterID)?.id)
                 }
-            }
-            .disabled(viewModel.gameState.status == .gameOver)
-            .sheet(item: $pendingAction) { action in
-                if let character = selectedCharacter {
-                    let clockID = viewModel.gameState.activeClocks.first?.id
-                    DiceRollView(viewModel: viewModel,
-                                 action: action,
-                                 character: character,
-                                 clockID: clockID,
-                                 interactableID: pendingInteractableID)
-                } else {
-                    Text("No action selected")
-                }
-            }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
 
-            SlidingDoor(progress: doorProgress)
-
-            VStack {
-                Spacer()
                 HStack {
                     Button {
                         viewModel.toggleMovementMode()
@@ -150,6 +133,21 @@ struct ContentView: View {
                 }
                 .padding()
             }
+            .disabled(viewModel.gameState.status == .gameOver)
+            .sheet(item: $pendingAction) { action in
+                if let character = selectedCharacter {
+                    let clockID = viewModel.gameState.activeClocks.first?.id
+                    DiceRollView(viewModel: viewModel,
+                                 action: action,
+                                 character: character,
+                                 clockID: clockID,
+                                 interactableID: pendingInteractableID)
+                } else {
+                    Text("No action selected")
+                }
+            }
+
+            SlidingDoor(progress: doorProgress)
 
 
             if viewModel.gameState.status == .gameOver {
@@ -177,7 +175,6 @@ struct ContentView: View {
         .sheet(isPresented: $showingMap) {
             MapView(viewModel: viewModel)
         }
-        .ignoresSafeArea(.all, edges: .bottom)
         .onChange(of: scenePhase) { phase in
             if phase != .active {
                 viewModel.saveGame()
