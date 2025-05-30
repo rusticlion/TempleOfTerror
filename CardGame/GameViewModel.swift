@@ -153,9 +153,15 @@ class GameViewModel: ObservableObject {
 
         diceCount = max(diceCount, 0) // Can't roll negative dice
 
+        if baseDice == 0 {
+            notes.append("\(character.name) has 0 rating in \(action.actionType): Rolling 2d6, taking lowest.")
+        }
+
+        let displayDice = (baseDice == 0) ? 2 : diceCount
+
         return RollProjectionDetails(
             baseDiceCount: baseDice,
-            finalDiceCount: diceCount,
+            finalDiceCount: displayDice,
             basePosition: basePosition,
             finalPosition: position,
             baseEffect: baseEffect,
@@ -179,13 +185,34 @@ class GameViewModel: ObservableObject {
             return performGroupAction(for: action, leader: character, interactableID: interactableID)
         }
         guard gameState.party.contains(where: { $0.id == character.id }) else {
-            return DiceRollResult(highestRoll: 0, outcome: "Error", consequences: "Character not found.")
+            return DiceRollResult(highestRoll: 0,
+                                  outcome: "Error",
+                                  consequences: "Character not found.",
+                                  actualDiceRolled: nil,
+                                  isCritical: nil,
+                                  finalEffect: nil)
         }
 
-        let dicePool = max(character.actions[action.actionType] ?? 0, 1)
-        var highestRoll = 0
-        for _ in 0..<dicePool {
-            highestRoll = max(highestRoll, Int.random(in: 1...6))
+        let projection = calculateProjection(for: action, with: character)
+        var finalEffect = projection.finalEffect
+        var actualDiceRolled: [Int] = []
+        var highestRoll: Int
+        var isCritical = false
+
+        if character.actions[action.actionType] ?? 0 == 0 {
+            let d1 = Int.random(in: 1...6)
+            let d2 = Int.random(in: 1...6)
+            actualDiceRolled = [d1, d2]
+            highestRoll = min(d1, d2)
+            if d1 == 6 && d2 == 6 { isCritical = true }
+        } else {
+            let dicePool = max(projection.finalDiceCount, 1)
+            for _ in 0..<dicePool {
+                actualDiceRolled.append(Int.random(in: 1...6))
+            }
+            highestRoll = actualDiceRolled.max() ?? 0
+            let sixes = actualDiceRolled.filter { $0 == 6 }.count
+            if sixes > 1 { isCritical = true }
         }
 
         var consequencesToApply: [Consequence] = []
@@ -204,6 +231,16 @@ class GameViewModel: ObservableObject {
         }
 
         var consequencesDescription = processConsequences(consequencesToApply, forCharacter: character, interactableID: interactableID)
+
+        if isCritical && highestRoll >= 4 {
+            finalEffect = finalEffect.increased()
+            let critMsg = "Critical Success! Effect increased to \(finalEffect.rawValue.capitalized)."
+            if consequencesDescription.isEmpty {
+                consequencesDescription = critMsg
+            } else {
+                consequencesDescription += "\n" + critMsg
+            }
+        }
 
         if let charIndex = gameState.party.firstIndex(where: { $0.id == character.id }) {
             var updatedModifiers: [Modifier] = []
@@ -236,12 +273,22 @@ class GameViewModel: ObservableObject {
         }
         saveGame()
 
-        return DiceRollResult(highestRoll: highestRoll, outcome: outcomeString, consequences: consequencesDescription)
+        return DiceRollResult(highestRoll: highestRoll,
+                              outcome: outcomeString,
+                              consequences: consequencesDescription,
+                              actualDiceRolled: actualDiceRolled,
+                              isCritical: isCritical,
+                              finalEffect: finalEffect)
     }
 
     private func performGroupAction(for action: ActionOption, leader: Character, interactableID: String?) -> DiceRollResult {
         guard partyMovementMode == .grouped, !isPartyActuallySplit() else {
-            return DiceRollResult(highestRoll: 0, outcome: "Cannot", consequences: "Party must be together for a group action.")
+            return DiceRollResult(highestRoll: 0,
+                                  outcome: "Cannot",
+                                  consequences: "Party must be together for a group action.",
+                                  actualDiceRolled: nil,
+                                  isCritical: nil,
+                                  finalEffect: nil)
         }
 
         var bestRoll = 0
@@ -281,7 +328,12 @@ class GameViewModel: ObservableObject {
         }
 
         saveGame()
-        return DiceRollResult(highestRoll: bestRoll, outcome: outcomeString, consequences: description)
+        return DiceRollResult(highestRoll: bestRoll,
+                              outcome: outcomeString,
+                              consequences: description,
+                              actualDiceRolled: nil,
+                              isCritical: nil,
+                              finalEffect: nil)
     }
 
     private func processConsequences(_ consequences: [Consequence], forCharacter character: Character, interactableID: String?) -> String {

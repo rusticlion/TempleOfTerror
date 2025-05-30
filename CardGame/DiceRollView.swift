@@ -1,11 +1,5 @@
 import SwiftUI
 
-struct DiceRollResult {
-    let highestRoll: Int
-    let outcome: String
-    let consequences: String
-}
-
 struct DiceRollView: View {
     @ObservedObject var viewModel: GameViewModel
     let action: ActionOption
@@ -58,11 +52,20 @@ struct DiceRollView: View {
         AudioManager.shared.play(sound: "sfx_dice_land.wav")
         let rollResult = viewModel.performAction(for: action, with: character, interactableID: interactableID)
         self.result = rollResult
-        let totalDice = diceValues.count
-        highlightIndex = Int.random(in: 0..<totalDice)
-        diceValues = (0..<totalDice).map { idx in
-            if idx == highlightIndex { return rollResult.highestRoll }
-            return Int.random(in: 1...max(1, min(rollResult.highestRoll, 5)))
+        if let rolled = rollResult.actualDiceRolled {
+            self.diceValues = rolled
+            if let idx = rolled.firstIndex(of: rollResult.highestRoll) {
+                self.highlightIndex = idx
+            } else {
+                self.highlightIndex = nil
+            }
+        } else {
+            let totalDice = diceValues.count
+            highlightIndex = Int.random(in: 0..<totalDice)
+            diceValues = (0..<totalDice).map { idx in
+                if idx == highlightIndex { return rollResult.highestRoll }
+                return Int.random(in: 1...max(1, min(rollResult.highestRoll, 5)))
+            }
         }
         fadeOthers = true
         popDie()
@@ -100,6 +103,15 @@ struct DiceRollView: View {
                         .font(.largeTitle)
                         .bold()
                         .transition(.scale.combined(with: .opacity))
+                    if result.isCritical == true {
+                        Text("Critical Success!")
+                            .font(.headline)
+                            .foregroundColor(.orange)
+                        if let eff = result.finalEffect {
+                            Text("Effect: \(eff.rawValue.capitalized)")
+                                .font(.subheadline)
+                        }
+                    }
                     Text("Rolled a \(result.highestRoll)").font(.title3)
                     Text(result.consequences).padding()
                 }
