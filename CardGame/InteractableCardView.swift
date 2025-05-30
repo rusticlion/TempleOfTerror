@@ -67,6 +67,17 @@ struct InteractableCardView: View {
         .padding()
         .background(Color(UIColor.secondarySystemBackground))
         .cornerRadius(12)
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(interactable.isThreat ? Color.red : Color.clear, lineWidth: 3)
+        )
+        .overlay(alignment: .topLeading) {
+            if interactable.isThreat {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .foregroundColor(.red)
+                    .padding(4)
+            }
+        }
         .shadow(radius: 4)
     }
 }

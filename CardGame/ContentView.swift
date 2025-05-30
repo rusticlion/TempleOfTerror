@@ -49,7 +49,10 @@ struct ContentView: View {
 
                         if let node = viewModel.node(for: selectedCharacterID) {
                             VStack(alignment: .leading, spacing: 16) {
-                                ForEach(node.interactables, id: \.id) { interactable in
+                                let threats = node.interactables.filter { $0.isThreat }
+                                let items = threats.isEmpty ? node.interactables : threats
+
+                                ForEach(items, id: \.id) { interactable in
                                     InteractableCardView(interactable: interactable, selectedCharacter: selectedCharacter) { action in
                                         if selectedCharacter != nil {
                                             pendingAction = action
@@ -59,10 +62,12 @@ struct ContentView: View {
                                     .transition(.scale(scale: 0.9).combined(with: .opacity))
                                 }
 
-                                Divider()
+                                if threats.isEmpty {
+                                    Divider()
 
-                                NodeConnectionsView(currentNode: viewModel.node(for: selectedCharacterID)) { connection in
-                                    performTransition(to: connection)
+                                    NodeConnectionsView(currentNode: viewModel.node(for: selectedCharacterID)) { connection in
+                                        performTransition(to: connection)
+                                    }
                                 }
                             }
                             .id(node.id)
