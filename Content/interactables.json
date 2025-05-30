@@ -209,6 +209,23 @@
           }
         }
       ]
+    },
+    {
+      "id": "template_locked_door",
+      "title": "Locked Door",
+      "description": "A heavy door with a silver keyhole.",
+      "tags": ["Door"],
+      "availableActions": [
+        {
+          "name": "Use Silver Key",
+          "actionType": "Tinker",
+          "position": "controlled",
+          "effect": "standard",
+          "requiresTest": false,
+          "requiredTag": "Key",
+          "outcomes": { "success": [ { "type": "removeInteractable", "id": "self" } ] }
+        }
+      ]
     }
   ],
   "threats": [

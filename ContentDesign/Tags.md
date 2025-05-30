@@ -31,3 +31,12 @@ Example snippet:
 }
 ```
 Use tags to gate hidden options or trigger special consequences.
+
+## Checking Tags in Scenario Code
+Use the view model's helper to query the party's treasures:
+```swift
+if viewModel.partyHasTreasureTag("Key") {
+    // unlock a branch or reveal a secret
+}
+```
+This allows scenarios to react dynamically to items the players have found.
