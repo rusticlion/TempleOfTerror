@@ -383,24 +383,43 @@ enum RollOutcome: String, Codable {
     case failure
 }
 
-enum Consequence: Codable {
-    case gainStress(amount: Int)
-    case sufferHarm(level: HarmLevel, familyId: String)
-    case tickClock(clockName: String, amount: Int)
-    case unlockConnection(fromNodeID: UUID, toNodeID: UUID)
-    case removeInteractable(id: String)
-    case removeSelfInteractable
-    case addInteractable(inNodeID: UUID, interactable: Interactable)
-    case addInteractableHere(interactable: Interactable)
-    case gainTreasure(treasureId: String)
+// MARK: - Conditional Consequences Support
 
-    private enum CodingKeys: String, CodingKey {
-        case type, amount, level, familyId, clockName
-        case fromNodeID, toNodeID, id, inNodeID
-        case interactable, treasure, treasureId
+struct GameCondition: Codable {
+    enum ConditionType: String, Codable {
+        case requiresMinEffectLevel
+        case requiresExactEffectLevel
+        case requiresMinPositionLevel
+        case requiresExactPositionLevel
+        case characterHasTreasureId
+        case partyHasTreasureWithTag
+        case clockProgress
     }
 
-    private enum Kind: String, Codable {
+    let type: ConditionType
+    let stringParam: String?
+    let intParam: Int?
+    let intParamMax: Int?
+    let effectParam: RollEffect?
+    let positionParam: RollPosition?
+
+    init(type: ConditionType,
+         stringParam: String? = nil,
+         intParam: Int? = nil,
+         intParamMax: Int? = nil,
+         effectParam: RollEffect? = nil,
+         positionParam: RollPosition? = nil) {
+        self.type = type
+        self.stringParam = stringParam
+        self.intParam = intParam
+        self.intParamMax = intParamMax
+        self.effectParam = effectParam
+        self.positionParam = positionParam
+    }
+}
+
+struct Consequence: Codable {
+    enum ConsequenceKind: String, Codable {
         case gainStress
         case sufferHarm
         case tickClock
@@ -412,93 +431,117 @@ enum Consequence: Codable {
         case gainTreasure
     }
 
+    var kind: ConsequenceKind
+
+    // Parameters for the consequence itself
+    var amount: Int?
+    var level: HarmLevel?
+    var familyId: String?
+    var clockName: String?
+    var fromNodeID: UUID?
+    var toNodeID: UUID?
+    var interactableId: String?
+    var inNodeID: UUID?
+    var newInteractable: Interactable?
+    var treasureId: String?
+
+    // Gating Conditions
+    var conditions: [GameCondition]?
+
+    private enum CodingKeys: String, CodingKey {
+        case type, amount, level, familyId, clockName
+        case fromNodeID, toNodeID, id, inNodeID
+        case interactable, treasure, treasureId
+        case conditions
+    }
+
+    init(kind: ConsequenceKind) {
+        self.kind = kind
+    }
+
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        let kind = try container.decode(Kind.self, forKey: .type)
-        switch kind {
-        case .gainStress:
-            let amount = try container.decode(Int.self, forKey: .amount)
-            self = .gainStress(amount: amount)
-        case .sufferHarm:
-            let level = try container.decode(HarmLevel.self, forKey: .level)
-            let family = try container.decode(String.self, forKey: .familyId)
-            self = .sufferHarm(level: level, familyId: family)
-        case .tickClock:
-            let name = try container.decode(String.self, forKey: .clockName)
-            let amount = try container.decode(Int.self, forKey: .amount)
-            self = .tickClock(clockName: name, amount: amount)
-        case .unlockConnection:
-            let from = try container.decode(UUID.self, forKey: .fromNodeID)
-            let to = try container.decode(UUID.self, forKey: .toNodeID)
-            self = .unlockConnection(fromNodeID: from, toNodeID: to)
-        case .removeInteractable:
-            let idString = try container.decode(String.self, forKey: .id)
-            if idString == "self" {
-                self = .removeSelfInteractable
-            } else {
-                self = .removeInteractable(id: idString)
-            }
-        case .removeSelfInteractable:
-            self = .removeSelfInteractable
-        case .addInteractable:
+        var resolvedKind = try container.decode(ConsequenceKind.self, forKey: .type)
+
+        amount = try container.decodeIfPresent(Int.self, forKey: .amount)
+        level = try container.decodeIfPresent(HarmLevel.self, forKey: .level)
+        familyId = try container.decodeIfPresent(String.self, forKey: .familyId)
+        clockName = try container.decodeIfPresent(String.self, forKey: .clockName)
+        fromNodeID = try container.decodeIfPresent(UUID.self, forKey: .fromNodeID)
+        toNodeID = try container.decodeIfPresent(UUID.self, forKey: .toNodeID)
+        interactableId = try container.decodeIfPresent(String.self, forKey: .id)
+        inNodeID = nil
+        newInteractable = nil
+        treasureId = nil
+
+        if resolvedKind == .removeInteractable, interactableId == "self" {
+            resolvedKind = .removeSelfInteractable
+            interactableId = nil
+        }
+
+        if resolvedKind == .addInteractable {
             if let nodeString = try? container.decode(String.self, forKey: .inNodeID), nodeString == "current" {
-                let interactable = try container.decode(Interactable.self, forKey: .interactable)
-                self = .addInteractableHere(interactable: interactable)
+                newInteractable = try container.decodeIfPresent(Interactable.self, forKey: .interactable)
+                resolvedKind = .addInteractableHere
             } else {
-                let node = try container.decode(UUID.self, forKey: .inNodeID)
-                let interactable = try container.decode(Interactable.self, forKey: .interactable)
-                self = .addInteractable(inNodeID: node, interactable: interactable)
+                inNodeID = try container.decodeIfPresent(UUID.self, forKey: .inNodeID)
+                newInteractable = try container.decodeIfPresent(Interactable.self, forKey: .interactable)
             }
-        case .addInteractableHere:
-            let interactable = try container.decode(Interactable.self, forKey: .interactable)
-            self = .addInteractableHere(interactable: interactable)
-        case .gainTreasure:
-            if let treasureId = try? container.decode(String.self, forKey: .treasureId) {
-                self = .gainTreasure(treasureId: treasureId)
-            } else if let treasure = try? container.decode(Treasure.self, forKey: .treasure) {
-                // Fallback to embedded treasure object
-                self = .gainTreasure(treasureId: treasure.id)
-            } else {
-                self = .gainTreasure(treasureId: "")
+        } else if resolvedKind == .addInteractableHere {
+            newInteractable = try container.decodeIfPresent(Interactable.self, forKey: .interactable)
+        }
+
+        if resolvedKind == .gainTreasure {
+            if let tid = try container.decodeIfPresent(String.self, forKey: .treasureId) {
+                treasureId = tid
+            } else if let treasure = try container.decodeIfPresent(Treasure.self, forKey: .treasure) {
+                treasureId = treasure.id
             }
         }
+
+        conditions = try container.decodeIfPresent([GameCondition].self, forKey: .conditions)
+        kind = resolvedKind
     }
 
     func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        switch self {
-        case .gainStress(let amount):
-            try container.encode(Kind.gainStress, forKey: .type)
-            try container.encode(amount, forKey: .amount)
-        case .sufferHarm(let level, let family):
-            try container.encode(Kind.sufferHarm, forKey: .type)
-            try container.encode(level, forKey: .level)
-            try container.encode(family, forKey: .familyId)
-        case .tickClock(let name, let amount):
-            try container.encode(Kind.tickClock, forKey: .type)
-            try container.encode(name, forKey: .clockName)
-            try container.encode(amount, forKey: .amount)
-        case .unlockConnection(let from, let to):
-            try container.encode(Kind.unlockConnection, forKey: .type)
-            try container.encode(from, forKey: .fromNodeID)
-            try container.encode(to, forKey: .toNodeID)
-        case .removeInteractable(let id):
-            try container.encode(Kind.removeInteractable, forKey: .type)
-            try container.encode(id, forKey: .id)
+
+        switch kind {
+        case .gainStress:
+            try container.encode(ConsequenceKind.gainStress, forKey: .type)
+            try container.encodeIfPresent(amount, forKey: .amount)
+        case .sufferHarm:
+            try container.encode(ConsequenceKind.sufferHarm, forKey: .type)
+            try container.encodeIfPresent(level, forKey: .level)
+            try container.encodeIfPresent(familyId, forKey: .familyId)
+        case .tickClock:
+            try container.encode(ConsequenceKind.tickClock, forKey: .type)
+            try container.encodeIfPresent(clockName, forKey: .clockName)
+            try container.encodeIfPresent(amount, forKey: .amount)
+        case .unlockConnection:
+            try container.encode(ConsequenceKind.unlockConnection, forKey: .type)
+            try container.encodeIfPresent(fromNodeID, forKey: .fromNodeID)
+            try container.encodeIfPresent(toNodeID, forKey: .toNodeID)
+        case .removeInteractable:
+            try container.encode(ConsequenceKind.removeInteractable, forKey: .type)
+            try container.encodeIfPresent(interactableId, forKey: .id)
         case .removeSelfInteractable:
-            try container.encode(Kind.removeSelfInteractable, forKey: .type)
-        case .addInteractable(let node, let interactable):
-            try container.encode(Kind.addInteractable, forKey: .type)
-            try container.encode(node, forKey: .inNodeID)
-            try container.encode(interactable, forKey: .interactable)
-        case .addInteractableHere(let interactable):
-            try container.encode(Kind.addInteractable, forKey: .type)
+            try container.encode(ConsequenceKind.removeInteractable, forKey: .type)
+            try container.encode("self", forKey: .id)
+        case .addInteractable:
+            try container.encode(ConsequenceKind.addInteractable, forKey: .type)
+            try container.encodeIfPresent(inNodeID, forKey: .inNodeID)
+            try container.encodeIfPresent(newInteractable, forKey: .interactable)
+        case .addInteractableHere:
+            try container.encode(ConsequenceKind.addInteractable, forKey: .type)
             try container.encode("current", forKey: .inNodeID)
-            try container.encode(interactable, forKey: .interactable)
-        case .gainTreasure(let treasureId):
-            try container.encode(Kind.gainTreasure, forKey: .type)
-            try container.encode(treasureId, forKey: .treasureId)
+            try container.encodeIfPresent(newInteractable, forKey: .interactable)
+        case .gainTreasure:
+            try container.encode(ConsequenceKind.gainTreasure, forKey: .type)
+            try container.encodeIfPresent(treasureId, forKey: .treasureId)
         }
+
+        try container.encodeIfPresent(conditions, forKey: .conditions)
     }
 }
 
