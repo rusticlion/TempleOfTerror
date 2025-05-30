@@ -4,13 +4,15 @@ struct StatusSheetView: View {
     @ObservedObject var viewModel: GameViewModel
 
     var body: some View {
-        VStack(spacing: 20) {
-            PartyStatusView(viewModel: viewModel)
-            Divider()
-            ClocksView(viewModel: viewModel)
-            Spacer()
+        ScrollView {
+            VStack(spacing: 20) {
+                PartyStatusView(viewModel: viewModel)
+                Divider()
+                ClocksView(viewModel: viewModel)
+                Spacer()
+            }
+            .padding()
         }
-        .padding()
     }
 }
 
