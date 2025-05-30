@@ -46,7 +46,8 @@ struct InteractableCardView: View {
                 .font(.body)
             Divider()
             ForEach(interactable.availableActions, id: \.name) { action in
-                Button(action.name) {
+                let title = action.requiresTest ? action.name : "\(action.name) (Auto)"
+                Button(title) {
                     onActionTapped(action)
                 }
                 .buttonStyle(.bordered)

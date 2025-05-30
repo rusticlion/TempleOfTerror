@@ -262,11 +262,14 @@ struct ActionOption: Codable {
     var actionType: String // Corresponds to a key in Character.actions, e.g., "Tinker"
     var position: RollPosition
     var effect: RollEffect
+    /// Whether this action requires a dice roll. If false, success consequences
+    /// are applied immediately when tapped.
+    var requiresTest: Bool = true
     var isGroupAction: Bool = false
     var outcomes: [RollOutcome: [Consequence]] = [:]
 
     enum CodingKeys: String, CodingKey {
-        case name, actionType, position, effect, isGroupAction, outcomes
+        case name, actionType, position, effect, requiresTest, isGroupAction, outcomes
     }
 
     init(name: String,
@@ -274,11 +277,13 @@ struct ActionOption: Codable {
          position: RollPosition,
          effect: RollEffect,
          isGroupAction: Bool = false,
+         requiresTest: Bool = true,
          outcomes: [RollOutcome: [Consequence]] = [:]) {
         self.name = name
         self.actionType = actionType
         self.position = position
         self.effect = effect
+        self.requiresTest = requiresTest
         self.isGroupAction = isGroupAction
         self.outcomes = outcomes
     }
@@ -290,6 +295,7 @@ struct ActionOption: Codable {
         position = try container.decode(RollPosition.self, forKey: .position)
         effect = try container.decode(RollEffect.self, forKey: .effect)
         isGroupAction = try container.decodeIfPresent(Bool.self, forKey: .isGroupAction) ?? false
+        requiresTest = try container.decodeIfPresent(Bool.self, forKey: .requiresTest) ?? true
         let rawOutcomes = try container.decodeIfPresent([String: [Consequence]].self, forKey: .outcomes) ?? [:]
         var mapped: [RollOutcome: [Consequence]] = [:]
         for (key, value) in rawOutcomes {
@@ -306,6 +312,9 @@ struct ActionOption: Codable {
         try container.encode(actionType, forKey: .actionType)
         try container.encode(position, forKey: .position)
         try container.encode(effect, forKey: .effect)
+        if !requiresTest {
+            try container.encode(requiresTest, forKey: .requiresTest)
+        }
         if isGroupAction {
             try container.encode(isGroupAction, forKey: .isGroupAction)
         }
