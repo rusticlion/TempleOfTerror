@@ -545,6 +545,22 @@ struct Consequence: Codable {
     }
 }
 
+extension Consequence {
+    /// Convenience constructor for unlocking a connection between two nodes.
+    static func unlockConnection(fromNodeID: UUID, toNodeID: UUID) -> Consequence {
+        var consequence = Consequence(kind: .unlockConnection)
+        consequence.fromNodeID = fromNodeID
+        consequence.toNodeID = toNodeID
+        return consequence
+    }
+
+    /// Convenience value used when an action removes the interactable that
+    /// triggered it.
+    static var removeSelfInteractable: Consequence {
+        Consequence(kind: .removeSelfInteractable)
+    }
+}
+
 enum HarmLevel: String, Codable {
     case lesser
     case moderate
