@@ -47,6 +47,11 @@ struct ContentView: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 16) {
 
+                        if let character = selectedCharacter {
+                            CharacterSheetView(character: character)
+                            Divider()
+                        }
+
                         if let node = viewModel.node(for: selectedCharacterID) {
                             VStack(alignment: .leading, spacing: 16) {
                                 ForEach(node.interactables, id: \.id) { interactable in
