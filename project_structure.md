@@ -147,6 +147,10 @@ Docs
 | |____1-AmbientWorld.md
 | |____3-ThematicStatusVisualization.md
 | |____2-HighStakesDiceRolls.md
+|____S13_ExpressiveActionsAndTags
+| |____1-ImplementFreeActions.md
+| |____2-AddTagSystem.md
+| |____3-DocumentationAndExamples.md
 |____S4_FullGameLoop
 | |____1-DynamicActionConsequences.md
 | |____3-ImplementRoguelikeRuns.md
@@ -671,7 +675,7 @@ struct MapView: View {
         while let id = queue.first {
             queue.removeFirst()
             guard visited.insert(id).inserted else { continue }
-            if let node = map.nodes[id] {
+            if let node = map.nodes[id.uuidString] {
                 result.append(node)
                 queue.append(contentsOf: node.connections.map { $0.toNodeID })
             }
@@ -767,8 +771,8 @@ struct CharacterSelectorView: View {
 struct CharacterSelectorView_Previews: PreviewProvider {
     static var previews: some View {
         CharacterSelectorView(characters: [
-            Character(name: "Indy", characterClass: "Archaeologist", stress: 0, harm: HarmState(), actions: ["Study": 3]),
-            Character(name: "Sallah", characterClass: "Brawler", stress: 0, harm: HarmState(), actions: ["Wreck": 2])
+            Character(id: UUID(), name: "Indy", characterClass: "Archaeologist", stress: 0, harm: HarmState(), actions: ["Study": 3]),
+            Character(id: UUID(), name: "Sallah", characterClass: "Brawler", stress: 0, harm: HarmState(), actions: ["Wreck": 2])
         ], selectedCharacterID: .constant(nil))
     }
 }
@@ -828,7 +832,7 @@ class DungeonGenerator {
     }
 
     func generate(level: Int) -> (DungeonMap, [GameClock]) {
-        var nodes: [UUID: MapNode] = [:]
+        var nodes: [String: MapNode] = [:]
         let nodeCount = 5 + level // Simple scaling
 
         var previousNode: MapNode? = nil
@@ -848,19 +852,20 @@ class DungeonGenerator {
             let theme = themes.randomElement()
 
             var newNode = MapNode(
+                id: UUID(),
                 name: "Forgotten Antechamber \(i + 1)",
                 soundProfile: soundProfiles.randomElement() ?? "silent_tomb",
                 interactables: [],
                 connections: connections,
                 theme: theme
             )
-            nodes[newNode.id] = newNode
+            nodes[newNode.id.uuidString] = newNode
             nodeIDs.append(newNode.id)
 
             if let prev = previousNode {
                 let desc = i == nodeCount - 1 ? "Path to the final chamber" : "Deeper into the tomb"
                 let connection = NodeConnection(toNodeID: newNode.id, description: desc)
-                nodes[prev.id]?.connections.append(connection)
+                nodes[prev.id.uuidString]?.connections.append(connection)
             }
             previousNode = newNode
         }
@@ -870,21 +875,21 @@ class DungeonGenerator {
             let lockIndex = Int.random(in: 1..<(nodeIDs.count - 1))
             let fromID = nodeIDs[lockIndex]
             let toID = nodeIDs[lockIndex + 1]
-            if let idx = nodes[fromID]?.connections.firstIndex(where: { $0.toNodeID == toID }) {
-                nodes[fromID]?.connections[idx].isUnlocked = false
+            if let idx = nodes[fromID.uuidString]?.connections.firstIndex(where: { $0.toNodeID == toID }) {
+                nodes[fromID.uuidString]?.connections[idx].isUnlocked = false
                 lockedConnection = (from: fromID, to: toID)
             }
         }
 
         for id in nodeIDs {
-            if var node = nodes[id] {
+            if var node = nodes[id.uuidString] {
                 let number = Int.random(in: 1...2)
                 for _ in 0..<number {
                     if let template = content.interactableTemplates.randomElement() {
                         node.interactables.append(template)
                     }
                 }
-                nodes[id] = node
+                nodes[id.uuidString] = node
             }
         }
 
@@ -908,11 +913,11 @@ class DungeonGenerator {
                     )
                 ]
             )
-            nodes[lock.from]?.interactables.append(lever)
+            nodes[lock.from.uuidString]?.interactables.append(lever)
         }
 
         let startingNodeID = nodeIDs.first!
-        nodes[startingNodeID]?.isDiscovered = true
+        nodes[startingNodeID.uuidString]?.isDiscovered = true
 
         let clockCount = Int.random(in: 1...2)
         let clocks = Array(clockTemplates.shuffled().prefix(clockCount))
@@ -1186,7 +1191,8 @@ struct GameState: Codable {
     var activeClocks: [GameClock] = []
     var dungeon: DungeonMap? // The full map
     var currentNodeID: UUID? // The party's current location (legacy)
-    var characterLocations: [UUID: UUID] = [:] // Individual character locations
+    // Use String keys for JSON compatibility
+    var characterLocations: [String: UUID] = [:] // Individual character locations
     var status: GameStatus = .playing
     // ... other global state can be added later
 }
@@ -1248,7 +1254,7 @@ struct Treasure: Codable, Identifiable {
 }
 
 struct Character: Identifiable, Codable {
-    let id: UUID = UUID()
+    let id: UUID
     var name: String
     var characterClass: String
     var stress: Int
@@ -1663,13 +1669,14 @@ enum RollEffect: String, Codable {
 
 // Represents the entire dungeon layout
 struct DungeonMap: Codable {
-    var nodes: [UUID: MapNode] // Use a dictionary for quick node lookup by ID
+    // Store node IDs as strings so JSONEncoder produces a valid object
+    var nodes: [String: MapNode] // Use a dictionary for quick node lookup by ID
     var startingNodeID: UUID
 }
 
 // Represents a single room or location on the map
 struct MapNode: Identifiable, Codable {
-    let id: UUID = UUID()
+    let id: UUID
     var name: String
     var soundProfile: String
     var interactables: [Interactable]
@@ -1975,13 +1982,19 @@ class GameViewModel: ObservableObject {
     // Retrieve the node a specific character is currently in
     func node(for characterID: UUID?) -> MapNode? {
         guard let id = characterID,
-              let nodeID = gameState.characterLocations[id],
+              let nodeID = gameState.characterLocations[id.uuidString],
               let map = gameState.dungeon else { return nil }
-        return map.nodes[nodeID]
+        return map.nodes[nodeID.uuidString]
     }
 
 
-    init(scenario: String = "tomb") {
+    /// Initialize a blank view model intended for loading a game.
+    init() {
+        self.gameState = GameState()
+    }
+
+    /// Initialize and immediately start a new game with the given scenario.
+    init(startNewWithScenario scenario: String) {
         self.gameState = GameState()
         startNewRun(scenario: scenario)
     }
@@ -1989,6 +2002,7 @@ class GameViewModel: ObservableObject {
     /// Persist the current game state to disk.
     func saveGame() {
         do {
+            print("Attempting to save game to: \(Self.saveURL.path)")
             try gameState.save(to: Self.saveURL)
         } catch {
             print("Failed to save game: \(error)")
@@ -2003,7 +2017,7 @@ class GameViewModel: ObservableObject {
             self.gameState = loaded
             ContentLoader.shared = ContentLoader(scenario: loaded.scenarioName)
             if let anyID = loaded.characterLocations.first?.value,
-               let node = loaded.dungeon?.nodes[anyID] {
+               let node = loaded.dungeon?.nodes[anyID.uuidString] {
                 AudioManager.shared.play(sound: "ambient_\(node.soundProfile).wav", loop: true)
             }
             return true
@@ -2227,26 +2241,26 @@ class GameViewModel: ObservableObject {
                     descriptions.append("The '\(clockName)' clock progresses by \(amount).")
                 }
             case .unlockConnection(let fromNodeID, let toNodeID):
-                if let connIndex = gameState.dungeon?.nodes[fromNodeID]?.connections.firstIndex(where: { $0.toNodeID == toNodeID }) {
-                    gameState.dungeon?.nodes[fromNodeID]?.connections[connIndex].isUnlocked = true
+                if let connIndex = gameState.dungeon?.nodes[fromNodeID.uuidString]?.connections.firstIndex(where: { $0.toNodeID == toNodeID }) {
+                    gameState.dungeon?.nodes[fromNodeID.uuidString]?.connections[connIndex].isUnlocked = true
                     descriptions.append("A path has opened!")
                 }
             case .removeInteractable(let id):
-                if let nodeID = gameState.characterLocations[partyMemberId] {
-                    gameState.dungeon?.nodes[nodeID]?.interactables.removeAll(where: { $0.id == id })
+                if let nodeID = gameState.characterLocations[partyMemberId.uuidString] {
+                    gameState.dungeon?.nodes[nodeID.uuidString]?.interactables.removeAll(where: { $0.id == id })
                     descriptions.append("The way is clear.")
                 }
             case .removeSelfInteractable:
-                if let nodeID = gameState.characterLocations[partyMemberId], let interactableStrID = interactableID {
-                    gameState.dungeon?.nodes[nodeID]?.interactables.removeAll(where: { $0.id == interactableStrID })
+                if let nodeID = gameState.characterLocations[partyMemberId.uuidString], let interactableStrID = interactableID {
+                    gameState.dungeon?.nodes[nodeID.uuidString]?.interactables.removeAll(where: { $0.id == interactableStrID })
                     descriptions.append("The way is clear.")
                 }
             case .addInteractable(let inNodeID, let interactable):
-                gameState.dungeon?.nodes[inNodeID]?.interactables.append(interactable)
+                gameState.dungeon?.nodes[inNodeID.uuidString]?.interactables.append(interactable)
                 descriptions.append("Something new appears.")
             case .addInteractableHere(let interactable):
-                if let nodeID = gameState.characterLocations[partyMemberId] {
-                    gameState.dungeon?.nodes[nodeID]?.interactables.append(interactable)
+                if let nodeID = gameState.characterLocations[partyMemberId.uuidString] {
+                    gameState.dungeon?.nodes[nodeID.uuidString]?.interactables.append(interactable)
                     descriptions.append("Something new appears.")
                 }
             case .gainTreasure(let treasureId):
@@ -2345,9 +2359,9 @@ class GameViewModel: ObservableObject {
         self.gameState = GameState(
             scenarioName: scenario,
             party: [
-                Character(name: "Indy", characterClass: "Archaeologist", stress: 0, harm: HarmState(), actions: ["Study": 3, "Wreck": 1]),
-                Character(name: "Sallah", characterClass: "Brawler", stress: 0, harm: HarmState(), actions: ["Finesse": 2, "Survey": 2]),
-                Character(name: "Marion", characterClass: "Survivor", stress: 0, harm: HarmState(), actions: ["Tinker": 2, "Attune": 1])
+                Character(id: UUID(), name: "Indy", characterClass: "Archaeologist", stress: 0, harm: HarmState(), actions: ["Study": 3, "Wreck": 1]),
+                Character(id: UUID(), name: "Sallah", characterClass: "Brawler", stress: 0, harm: HarmState(), actions: ["Finesse": 2, "Survey": 2]),
+                Character(id: UUID(), name: "Marion", characterClass: "Survivor", stress: 0, harm: HarmState(), actions: ["Tinker": 2, "Attune": 1])
             ],
             activeClocks: [
                 GameClock(name: "The Guardian Wakes", segments: 6, progress: 0)
@@ -2358,10 +2372,10 @@ class GameViewModel: ObservableObject {
         )
 
         for id in gameState.party.map({ $0.id }) {
-            gameState.characterLocations[id] = newDungeon.startingNodeID
+            gameState.characterLocations[id.uuidString] = newDungeon.startingNodeID
         }
 
-        if let startingNode = newDungeon.nodes[newDungeon.startingNodeID] {
+        if let startingNode = newDungeon.nodes[newDungeon.startingNodeID.uuidString] {
             AudioManager.shared.play(sound: "ambient_\(startingNode.soundProfile).wav", loop: true)
         }
 
@@ -2374,15 +2388,15 @@ class GameViewModel: ObservableObject {
         guard connection.isUnlocked else { return }
 
         if partyMovementMode == .solo {
-            gameState.characterLocations[characterID] = connection.toNodeID
+            gameState.characterLocations[characterID.uuidString] = connection.toNodeID
         } else {
             for id in gameState.party.map({ $0.id }) {
-                gameState.characterLocations[id] = connection.toNodeID
+                gameState.characterLocations[id.uuidString] = connection.toNodeID
             }
         }
 
-        if let node = gameState.dungeon?.nodes[connection.toNodeID] {
-            gameState.dungeon?.nodes[connection.toNodeID]?.isDiscovered = true
+        if let node = gameState.dungeon?.nodes[connection.toNodeID.uuidString] {
+            gameState.dungeon?.nodes[connection.toNodeID.uuidString]?.isDiscovered = true
             AudioManager.shared.play(sound: "ambient_\(node.soundProfile).wav", loop: true)
         }
 
@@ -2391,8 +2405,8 @@ class GameViewModel: ObservableObject {
 
     func getNodeName(for characterID: UUID?) -> String? {
         guard let id = characterID,
-              let nodeID = gameState.characterLocations[id],
-              let node = gameState.dungeon?.nodes[nodeID] else { return nil }
+              let nodeID = gameState.characterLocations[id.uuidString],
+              let node = gameState.dungeon?.nodes[nodeID.uuidString] else { return nil }
         return node.name
     }
 
@@ -2426,7 +2440,7 @@ struct ContentView: View {
     @Environment(\.scenePhase) private var scenePhase
 
     init(scenario: String = "tomb") {
-        let vm = GameViewModel(scenario: scenario)
+        let vm = GameViewModel(startNewWithScenario: scenario)
         _viewModel = StateObject(wrappedValue: vm)
         _selectedCharacterID = State(initialValue: vm.gameState.party.first?.id)
     }
@@ -4493,6 +4507,59 @@ sfx_ui_pop.wav: A satisfying "pop" to accompany the highest die and result text 
 Visual:
 vfx_damage_vignette.png: A full-screen, mostly transparent PNG. The edges should have a dithered red or black pattern. We can flash this on screen for a split second along with the shake to amplify the effect.
 Canvas Size: 1024x1024 pixels. (A large square allows it to be scaled to fit any device screen without distortion.)
+```
+
+### `Docs/S13_ExpressiveActionsAndTags/1-ImplementFreeActions.md`
+
+```
+
+## Task 1: Implement Free Actions (Non-Test Actions)
+
+**Goal:** Allow Interactables to present actions that do **not require a dice roll**, but simply execute their Consequences—unlocking narrative, utility, or environmental interactions without unnecessary randomness.
+
+### Actions:
+- Add a `requiresTest: Bool = true` property to the `ActionOption` model (defaulting to `true` for backwards compatibility).
+- Update InteractableCardView:
+    - If `requiresTest` is `false`, skip DiceRollView and process the `.success` consequences directly when the button is tapped.
+    - Optionally, visually distinguish free actions (e.g., special icon, color, or label like “Automatic”).
+- Update content schema and loader to allow `requiresTest: false` in JSON.
+- Add/test example interactables such as levers, switches, readable inscriptions, or safe item pickups.
+- (Optional stretch) Allow for consequences with costs (e.g., “Spend 1 Stress” for an automatic action).
+```
+
+### `Docs/S13_ExpressiveActionsAndTags/2-AddTagSystem.md`
+
+```
+
+## Task 2: Add a Tag System for Treasures (and Interactables)
+
+**Goal:** Make Treasures and Interactables richer by supporting a flexible, composable “tags” system—enabling scenario logic and emergent design patterns without hardcoding.
+
+### Actions:
+- Add a `tags: [String] = []` property to the `Treasure` struct.
+    - Update `treasures.json` format to allow a `"tags": [...]` array.
+- Add an optional `tags: [String] = []` property to the `Interactable` struct.
+    - Update `interactables.json` accordingly.
+- Expose tags in the UI (as icon chips or small labels) for treasures (and optionally interactables).
+- Update the scenario design language:
+    - Document how to check for tags on treasures when evaluating interactable options or consequences.
+    - Support action gating or bonuses in interactables based on tag presence (e.g., “If any party member has a Treasure tagged Light Source, reveal secret passage”).
+- (Optional stretch) Allow tags to gate additional ActionOptions or Consequence branches in future scenario logic.
+- Add a few test treasures (e.g., “Cursed Lantern” with tags `[“Haunted”, “Light Source”]`) and at least one interactable or scenario effect that checks tags.
+```
+
+### `Docs/S13_ExpressiveActionsAndTags/3-DocumentationAndExamples.md`
+
+```
+
+## Task 3: Documentation and Content Examples
+
+**Goal:** Make these systems self-documenting for future contributors or content designers.
+
+### Actions:
+- Add JSON schema/documentation for ActionOption’s `requiresTest`, and for Treasure/Interactable `tags` fields.
+- Add example entries to `treasures.json` and `interactables.json` demonstrating proper usage.
+- Write a brief “how to use tags” guide or sample code for checking tags in scenario logic.
 ```
 
 ### `Docs/S4_FullGameLoop/1-DynamicActionConsequences.md`
