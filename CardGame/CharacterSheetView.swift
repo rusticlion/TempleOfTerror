@@ -100,7 +100,3 @@ struct CharacterSheetView: View {
         .padding(.vertical, 4)
     }
 }
-
-#Preview {
-    CharacterSheetView(character: GameViewModel().gameState.party.first!)
-}
