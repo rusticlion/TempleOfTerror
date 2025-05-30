@@ -68,5 +68,15 @@
       "description": "from Cursed Lantern"
     },
     "tags": ["Haunted", "Light Source"]
+  },
+  {
+    "id": "treasure_silver_key",
+    "name": "Silver Key",
+    "description": "Opens a locked door somewhere in the tomb.",
+    "grantedModifier": {
+      "bonusDice": 1,
+      "description": "from Silver Key"
+    },
+    "tags": ["Key"]
   }
 ]
