@@ -10,8 +10,10 @@ CardGame
 |____MainMenuView.swift
 |____Persistence.swift
 |____StatusSheetView.swift
+|____TreasureTooltipView.swift
 |____CardGameApp.swift
 |____MapView.swift
+|____HarmTooltipView.swift
 |____CharacterSelectorView.swift
 |____Assets.xcassets
 | |____icon_harm_lesser_empty.imageset
@@ -151,6 +153,12 @@ Docs
 | |____1-ImplementFreeActions.md
 | |____2-AddTagSystem.md
 | |____3-DocumentationAndExamples.md
+|____S14_DynamicConsequencesAndRolls
+| |____4-UpdateContentSchemaAndCreateExampleContent.md
+| |____1-CoreRollMechanicEnhancements.md
+| |____3-ImplementConsequenceGatingAndPositionEffectModulation.md
+| |____5-UIPolishForProjectionsAndResults.md
+| |____2-ModelConditionalConsequences.md
 |____S4_FullGameLoop
 | |____1-DynamicActionConsequences.md
 | |____3-ImplementRoguelikeRuns.md
@@ -223,12 +231,6 @@ struct PartyStatusView_Previews: PreviewProvider {
 
 import SwiftUI
 
-struct DiceRollResult {
-    let highestRoll: Int
-    let outcome: String
-    let consequences: String
-}
-
 struct DiceRollView: View {
     @ObservedObject var viewModel: GameViewModel
     let action: ActionOption
@@ -281,11 +283,20 @@ struct DiceRollView: View {
         AudioManager.shared.play(sound: "sfx_dice_land.wav")
         let rollResult = viewModel.performAction(for: action, with: character, interactableID: interactableID)
         self.result = rollResult
-        let totalDice = diceValues.count
-        highlightIndex = Int.random(in: 0..<totalDice)
-        diceValues = (0..<totalDice).map { idx in
-            if idx == highlightIndex { return rollResult.highestRoll }
-            return Int.random(in: 1...max(1, min(rollResult.highestRoll, 5)))
+        if let rolled = rollResult.actualDiceRolled {
+            self.diceValues = rolled
+            if let idx = rolled.firstIndex(of: rollResult.highestRoll) {
+                self.highlightIndex = idx
+            } else {
+                self.highlightIndex = nil
+            }
+        } else {
+            let totalDice = diceValues.count
+            highlightIndex = Int.random(in: 0..<totalDice)
+            diceValues = (0..<totalDice).map { idx in
+                if idx == highlightIndex { return rollResult.highestRoll }
+                return Int.random(in: 1...max(1, min(rollResult.highestRoll, 5)))
+            }
         }
         fadeOthers = true
         popDie()
@@ -323,6 +334,15 @@ struct DiceRollView: View {
                         .font(.largeTitle)
                         .bold()
                         .transition(.scale.combined(with: .opacity))
+                    if result.isCritical == true {
+                        Text("CRITICAL SUCCESS!")
+                            .font(.headline)
+                            .foregroundColor(.orange)
+                    }
+                    if let eff = result.finalEffect {
+                        Text("Effect: \(eff.rawValue.capitalized)")
+                            .font(.subheadline)
+                    }
                     Text("Rolled a \(result.highestRoll)").font(.title3)
                     Text(result.consequences).padding()
                 }
@@ -335,7 +355,10 @@ struct DiceRollView: View {
                     ForEach(proj.notes, id: \.self) { note in
                         Text(note)
                             .font(.caption)
-                            .foregroundColor(note.contains("-") || note.contains("Cannot") ? .red : .blue)
+                            .foregroundColor(
+                                note.contains("0 rating") ? .orange :
+                                (note.contains("-") || note.contains("Cannot") ? .red : .blue)
+                            )
                     }
                 }
             }
@@ -624,19 +647,57 @@ struct StatusSheetView: View {
     @ObservedObject var viewModel: GameViewModel
 
     var body: some View {
-        VStack(spacing: 20) {
-            PartyStatusView(viewModel: viewModel)
-            Divider()
-            ClocksView(viewModel: viewModel)
-            Spacer()
+        ScrollView {
+            VStack(spacing: 20) {
+                PartyStatusView(viewModel: viewModel)
+                Divider()
+                ClocksView(viewModel: viewModel)
+                Spacer()
+            }
+            .padding()
         }
-        .padding()
     }
 }
 
 struct StatusSheetView_Previews: PreviewProvider {
     static var previews: some View {
         StatusSheetView(viewModel: GameViewModel())
+    }
+}
+
+```
+
+### `CardGame/TreasureTooltipView.swift`
+
+```
+
+import SwiftUI
+
+struct TreasureTooltipView: View {
+    let treasure: Treasure
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(treasure.name)
+                .font(.headline)
+            Text(treasure.description)
+                .font(.body)
+            Text(treasure.grantedModifier.description)
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+            if !treasure.tags.isEmpty {
+                HStack(spacing: 4) {
+                    ForEach(treasure.tags, id: \.self) { tag in
+                        Text(tag)
+                            .font(.caption2)
+                            .padding(2)
+                            .background(Color(UIColor.systemGray5))
+                            .cornerRadius(4)
+                    }
+                }
+            }
+        }
+        .padding()
     }
 }
 
@@ -739,6 +800,58 @@ struct MapView: View {
 struct MapView_Previews: PreviewProvider {
     static var previews: some View {
         MapView(viewModel: GameViewModel())
+    }
+}
+
+```
+
+### `CardGame/HarmTooltipView.swift`
+
+```
+
+import SwiftUI
+
+struct HarmTooltipView: View {
+    let familyId: String
+    let level: HarmLevel
+
+    private var tier: HarmTier? {
+        guard let family = HarmLibrary.families[familyId] else { return nil }
+        switch level {
+        case .lesser: return family.lesser
+        case .moderate: return family.moderate
+        case .severe: return family.severe
+        }
+    }
+
+    private func penaltyDescription(_ penalty: Penalty) -> String {
+        switch penalty {
+        case .reduceEffect:
+            return "All actions suffer -1 Effect."
+        case .increaseStressCost(let amount):
+            return "Stress costs are increased by \(amount)."
+        case .actionPenalty(let actionType):
+            return "\(actionType) rolls -1 die."
+        case .banAction(let actionType):
+            return "Cannot perform \(actionType)."
+        }
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            if let tier = tier {
+                Text(tier.description)
+                    .font(.headline)
+                if let penalty = tier.penalty {
+                    Text(penaltyDescription(penalty))
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                }
+            } else {
+                Text("Unknown Harm")
+            }
+        }
+        .padding()
     }
 }
 
@@ -904,6 +1017,7 @@ class DungeonGenerator {
                         actionType: "Tinker",
                         position: .risky,
                         effect: .standard,
+                        requiresTest: false,
                         outcomes: [
                             .success: [
                                 .unlockConnection(fromNodeID: lock.from, toNodeID: lock.to),
@@ -1116,6 +1230,9 @@ class ContentLoader {
         do {
             let data = try Data(contentsOf: url)
             let decoder = JSONDecoder()
+            // Explicitly use default keys so optional fields like `conditions`
+            // in `Consequence` decode without additional configuration.
+            decoder.keyDecodingStrategy = .useDefaultKeys
             if let array = try? decoder.decode([T].self, from: data) {
                 return array
             } else if let dict = try? decoder.decode([String: [T]].self, from: data) {
@@ -1251,6 +1368,43 @@ struct Treasure: Codable, Identifiable {
     var name: String
     var description: String
     var grantedModifier: Modifier
+    var tags: [String] = []
+
+    enum CodingKeys: String, CodingKey {
+        case id, name, description, grantedModifier, tags
+    }
+
+    init(id: String,
+         name: String,
+         description: String,
+         grantedModifier: Modifier,
+         tags: [String] = []) {
+        self.id = id
+        self.name = name
+        self.description = description
+        self.grantedModifier = grantedModifier
+        self.tags = tags
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(String.self, forKey: .id)
+        name = try container.decode(String.self, forKey: .name)
+        description = try container.decode(String.self, forKey: .description)
+        grantedModifier = try container.decode(Modifier.self, forKey: .grantedModifier)
+        tags = try container.decodeIfPresent([String].self, forKey: .tags) ?? []
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(name, forKey: .name)
+        try container.encode(description, forKey: .description)
+        try container.encode(grantedModifier, forKey: .grantedModifier)
+        if !tags.isEmpty {
+            try container.encode(tags, forKey: .tags)
+        }
+    }
 }
 
 struct Character: Identifiable, Codable {
@@ -1396,21 +1550,24 @@ struct Interactable: Codable, Identifiable {
     var description: String
     var availableActions: [ActionOption]
     var isThreat: Bool = false
+    var tags: [String] = []
 
     enum CodingKeys: String, CodingKey {
-        case id, title, description, availableActions, isThreat
+        case id, title, description, availableActions, isThreat, tags
     }
 
     init(id: String,
          title: String,
          description: String,
          availableActions: [ActionOption],
-         isThreat: Bool = false) {
+         isThreat: Bool = false,
+         tags: [String] = []) {
         self.id = id
         self.title = title
         self.description = description
         self.availableActions = availableActions
         self.isThreat = isThreat
+        self.tags = tags
     }
 
     init(from decoder: Decoder) throws {
@@ -1420,6 +1577,7 @@ struct Interactable: Codable, Identifiable {
         description = try container.decode(String.self, forKey: .description)
         availableActions = try container.decode([ActionOption].self, forKey: .availableActions)
         isThreat = try container.decodeIfPresent(Bool.self, forKey: .isThreat) ?? false
+        tags = try container.decodeIfPresent([String].self, forKey: .tags) ?? []
     }
 
     func encode(to encoder: Encoder) throws {
@@ -1431,6 +1589,9 @@ struct Interactable: Codable, Identifiable {
         if isThreat {
             try container.encode(isThreat, forKey: .isThreat)
         }
+        if !tags.isEmpty {
+            try container.encode(tags, forKey: .tags)
+        }
     }
 }
 
@@ -1439,11 +1600,15 @@ struct ActionOption: Codable {
     var actionType: String // Corresponds to a key in Character.actions, e.g., "Tinker"
     var position: RollPosition
     var effect: RollEffect
+    /// Whether this action requires a dice roll. If false, success consequences
+    /// are applied immediately when tapped.
+    var requiresTest: Bool = true
     var isGroupAction: Bool = false
+    var requiredTag: String? = nil
     var outcomes: [RollOutcome: [Consequence]] = [:]
 
     enum CodingKeys: String, CodingKey {
-        case name, actionType, position, effect, isGroupAction, outcomes
+        case name, actionType, position, effect, requiresTest, isGroupAction, requiredTag, outcomes
     }
 
     init(name: String,
@@ -1451,12 +1616,16 @@ struct ActionOption: Codable {
          position: RollPosition,
          effect: RollEffect,
          isGroupAction: Bool = false,
+         requiresTest: Bool = true,
+         requiredTag: String? = nil,
          outcomes: [RollOutcome: [Consequence]] = [:]) {
         self.name = name
         self.actionType = actionType
         self.position = position
         self.effect = effect
+        self.requiresTest = requiresTest
         self.isGroupAction = isGroupAction
+        self.requiredTag = requiredTag
         self.outcomes = outcomes
     }
 
@@ -1467,6 +1636,8 @@ struct ActionOption: Codable {
         position = try container.decode(RollPosition.self, forKey: .position)
         effect = try container.decode(RollEffect.self, forKey: .effect)
         isGroupAction = try container.decodeIfPresent(Bool.self, forKey: .isGroupAction) ?? false
+        requiresTest = try container.decodeIfPresent(Bool.self, forKey: .requiresTest) ?? true
+        requiredTag = try container.decodeIfPresent(String.self, forKey: .requiredTag)
         let rawOutcomes = try container.decodeIfPresent([String: [Consequence]].self, forKey: .outcomes) ?? [:]
         var mapped: [RollOutcome: [Consequence]] = [:]
         for (key, value) in rawOutcomes {
@@ -1483,9 +1654,13 @@ struct ActionOption: Codable {
         try container.encode(actionType, forKey: .actionType)
         try container.encode(position, forKey: .position)
         try container.encode(effect, forKey: .effect)
+        if !requiresTest {
+            try container.encode(requiresTest, forKey: .requiresTest)
+        }
         if isGroupAction {
             try container.encode(isGroupAction, forKey: .isGroupAction)
         }
+        try container.encodeIfPresent(requiredTag, forKey: .requiredTag)
         var raw: [String: [Consequence]] = [:]
         for (key, value) in outcomes { raw[key.rawValue] = value }
         try container.encode(raw, forKey: .outcomes)
@@ -1502,24 +1677,43 @@ enum RollOutcome: String, Codable {
     case failure
 }
 
-enum Consequence: Codable {
-    case gainStress(amount: Int)
-    case sufferHarm(level: HarmLevel, familyId: String)
-    case tickClock(clockName: String, amount: Int)
-    case unlockConnection(fromNodeID: UUID, toNodeID: UUID)
-    case removeInteractable(id: String)
-    case removeSelfInteractable
-    case addInteractable(inNodeID: UUID, interactable: Interactable)
-    case addInteractableHere(interactable: Interactable)
-    case gainTreasure(treasureId: String)
+// MARK: - Conditional Consequences Support
 
-    private enum CodingKeys: String, CodingKey {
-        case type, amount, level, familyId, clockName
-        case fromNodeID, toNodeID, id, inNodeID
-        case interactable, treasure, treasureId
+struct GameCondition: Codable {
+    enum ConditionType: String, Codable {
+        case requiresMinEffectLevel
+        case requiresExactEffectLevel
+        case requiresMinPositionLevel
+        case requiresExactPositionLevel
+        case characterHasTreasureId
+        case partyHasTreasureWithTag
+        case clockProgress
     }
 
-    private enum Kind: String, Codable {
+    let type: ConditionType
+    let stringParam: String?
+    let intParam: Int?
+    let intParamMax: Int?
+    let effectParam: RollEffect?
+    let positionParam: RollPosition?
+
+    init(type: ConditionType,
+         stringParam: String? = nil,
+         intParam: Int? = nil,
+         intParamMax: Int? = nil,
+         effectParam: RollEffect? = nil,
+         positionParam: RollPosition? = nil) {
+        self.type = type
+        self.stringParam = stringParam
+        self.intParam = intParam
+        self.intParamMax = intParamMax
+        self.effectParam = effectParam
+        self.positionParam = positionParam
+    }
+}
+
+struct Consequence: Codable {
+    enum ConsequenceKind: String, Codable {
         case gainStress
         case sufferHarm
         case tickClock
@@ -1531,93 +1725,133 @@ enum Consequence: Codable {
         case gainTreasure
     }
 
+    var kind: ConsequenceKind
+
+    // Parameters for the consequence itself
+    var amount: Int?
+    var level: HarmLevel?
+    var familyId: String?
+    var clockName: String?
+    var fromNodeID: UUID?
+    var toNodeID: UUID?
+    var interactableId: String?
+    var inNodeID: UUID?
+    var newInteractable: Interactable?
+    var treasureId: String?
+
+    // Gating Conditions
+    var conditions: [GameCondition]?
+
+    private enum CodingKeys: String, CodingKey {
+        case type, amount, level, familyId, clockName
+        case fromNodeID, toNodeID, id, inNodeID
+        case interactable, treasure, treasureId
+        case conditions
+    }
+
+    init(kind: ConsequenceKind) {
+        self.kind = kind
+    }
+
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        let kind = try container.decode(Kind.self, forKey: .type)
-        switch kind {
-        case .gainStress:
-            let amount = try container.decode(Int.self, forKey: .amount)
-            self = .gainStress(amount: amount)
-        case .sufferHarm:
-            let level = try container.decode(HarmLevel.self, forKey: .level)
-            let family = try container.decode(String.self, forKey: .familyId)
-            self = .sufferHarm(level: level, familyId: family)
-        case .tickClock:
-            let name = try container.decode(String.self, forKey: .clockName)
-            let amount = try container.decode(Int.self, forKey: .amount)
-            self = .tickClock(clockName: name, amount: amount)
-        case .unlockConnection:
-            let from = try container.decode(UUID.self, forKey: .fromNodeID)
-            let to = try container.decode(UUID.self, forKey: .toNodeID)
-            self = .unlockConnection(fromNodeID: from, toNodeID: to)
-        case .removeInteractable:
-            let idString = try container.decode(String.self, forKey: .id)
-            if idString == "self" {
-                self = .removeSelfInteractable
-            } else {
-                self = .removeInteractable(id: idString)
-            }
-        case .removeSelfInteractable:
-            self = .removeSelfInteractable
-        case .addInteractable:
+        var resolvedKind = try container.decode(ConsequenceKind.self, forKey: .type)
+
+        amount = try container.decodeIfPresent(Int.self, forKey: .amount)
+        level = try container.decodeIfPresent(HarmLevel.self, forKey: .level)
+        familyId = try container.decodeIfPresent(String.self, forKey: .familyId)
+        clockName = try container.decodeIfPresent(String.self, forKey: .clockName)
+        fromNodeID = try container.decodeIfPresent(UUID.self, forKey: .fromNodeID)
+        toNodeID = try container.decodeIfPresent(UUID.self, forKey: .toNodeID)
+        interactableId = try container.decodeIfPresent(String.self, forKey: .id)
+        inNodeID = nil
+        newInteractable = nil
+        treasureId = nil
+
+        if resolvedKind == .removeInteractable, interactableId == "self" {
+            resolvedKind = .removeSelfInteractable
+            interactableId = nil
+        }
+
+        if resolvedKind == .addInteractable {
             if let nodeString = try? container.decode(String.self, forKey: .inNodeID), nodeString == "current" {
-                let interactable = try container.decode(Interactable.self, forKey: .interactable)
-                self = .addInteractableHere(interactable: interactable)
+                newInteractable = try container.decodeIfPresent(Interactable.self, forKey: .interactable)
+                resolvedKind = .addInteractableHere
             } else {
-                let node = try container.decode(UUID.self, forKey: .inNodeID)
-                let interactable = try container.decode(Interactable.self, forKey: .interactable)
-                self = .addInteractable(inNodeID: node, interactable: interactable)
+                inNodeID = try container.decodeIfPresent(UUID.self, forKey: .inNodeID)
+                newInteractable = try container.decodeIfPresent(Interactable.self, forKey: .interactable)
             }
-        case .addInteractableHere:
-            let interactable = try container.decode(Interactable.self, forKey: .interactable)
-            self = .addInteractableHere(interactable: interactable)
-        case .gainTreasure:
-            if let treasureId = try? container.decode(String.self, forKey: .treasureId) {
-                self = .gainTreasure(treasureId: treasureId)
-            } else if let treasure = try? container.decode(Treasure.self, forKey: .treasure) {
-                // Fallback to embedded treasure object
-                self = .gainTreasure(treasureId: treasure.id)
-            } else {
-                self = .gainTreasure(treasureId: "")
+        } else if resolvedKind == .addInteractableHere {
+            newInteractable = try container.decodeIfPresent(Interactable.self, forKey: .interactable)
+        }
+
+        if resolvedKind == .gainTreasure {
+            if let tid = try container.decodeIfPresent(String.self, forKey: .treasureId) {
+                treasureId = tid
+            } else if let treasure = try container.decodeIfPresent(Treasure.self, forKey: .treasure) {
+                treasureId = treasure.id
             }
         }
+
+        conditions = try container.decodeIfPresent([GameCondition].self, forKey: .conditions)
+        kind = resolvedKind
     }
 
     func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        switch self {
-        case .gainStress(let amount):
-            try container.encode(Kind.gainStress, forKey: .type)
-            try container.encode(amount, forKey: .amount)
-        case .sufferHarm(let level, let family):
-            try container.encode(Kind.sufferHarm, forKey: .type)
-            try container.encode(level, forKey: .level)
-            try container.encode(family, forKey: .familyId)
-        case .tickClock(let name, let amount):
-            try container.encode(Kind.tickClock, forKey: .type)
-            try container.encode(name, forKey: .clockName)
-            try container.encode(amount, forKey: .amount)
-        case .unlockConnection(let from, let to):
-            try container.encode(Kind.unlockConnection, forKey: .type)
-            try container.encode(from, forKey: .fromNodeID)
-            try container.encode(to, forKey: .toNodeID)
-        case .removeInteractable(let id):
-            try container.encode(Kind.removeInteractable, forKey: .type)
-            try container.encode(id, forKey: .id)
+
+        switch kind {
+        case .gainStress:
+            try container.encode(ConsequenceKind.gainStress, forKey: .type)
+            try container.encodeIfPresent(amount, forKey: .amount)
+        case .sufferHarm:
+            try container.encode(ConsequenceKind.sufferHarm, forKey: .type)
+            try container.encodeIfPresent(level, forKey: .level)
+            try container.encodeIfPresent(familyId, forKey: .familyId)
+        case .tickClock:
+            try container.encode(ConsequenceKind.tickClock, forKey: .type)
+            try container.encodeIfPresent(clockName, forKey: .clockName)
+            try container.encodeIfPresent(amount, forKey: .amount)
+        case .unlockConnection:
+            try container.encode(ConsequenceKind.unlockConnection, forKey: .type)
+            try container.encodeIfPresent(fromNodeID, forKey: .fromNodeID)
+            try container.encodeIfPresent(toNodeID, forKey: .toNodeID)
+        case .removeInteractable:
+            try container.encode(ConsequenceKind.removeInteractable, forKey: .type)
+            try container.encodeIfPresent(interactableId, forKey: .id)
         case .removeSelfInteractable:
-            try container.encode(Kind.removeSelfInteractable, forKey: .type)
-        case .addInteractable(let node, let interactable):
-            try container.encode(Kind.addInteractable, forKey: .type)
-            try container.encode(node, forKey: .inNodeID)
-            try container.encode(interactable, forKey: .interactable)
-        case .addInteractableHere(let interactable):
-            try container.encode(Kind.addInteractable, forKey: .type)
+            try container.encode(ConsequenceKind.removeInteractable, forKey: .type)
+            try container.encode("self", forKey: .id)
+        case .addInteractable:
+            try container.encode(ConsequenceKind.addInteractable, forKey: .type)
+            try container.encodeIfPresent(inNodeID, forKey: .inNodeID)
+            try container.encodeIfPresent(newInteractable, forKey: .interactable)
+        case .addInteractableHere:
+            try container.encode(ConsequenceKind.addInteractable, forKey: .type)
             try container.encode("current", forKey: .inNodeID)
-            try container.encode(interactable, forKey: .interactable)
-        case .gainTreasure(let treasureId):
-            try container.encode(Kind.gainTreasure, forKey: .type)
-            try container.encode(treasureId, forKey: .treasureId)
+            try container.encodeIfPresent(newInteractable, forKey: .interactable)
+        case .gainTreasure:
+            try container.encode(ConsequenceKind.gainTreasure, forKey: .type)
+            try container.encodeIfPresent(treasureId, forKey: .treasureId)
         }
+
+        try container.encodeIfPresent(conditions, forKey: .conditions)
+    }
+}
+
+extension Consequence {
+    /// Convenience constructor for unlocking a connection between two nodes.
+    static func unlockConnection(fromNodeID: UUID, toNodeID: UUID) -> Consequence {
+        var consequence = Consequence(kind: .unlockConnection)
+        consequence.fromNodeID = fromNodeID
+        consequence.toNodeID = toNodeID
+        return consequence
+    }
+
+    /// Convenience value used when an action removes the interactable that
+    /// triggered it.
+    static var removeSelfInteractable: Consequence {
+        Consequence(kind: .removeSelfInteractable)
     }
 }
 
@@ -1639,6 +1873,20 @@ enum RollPosition: String, Codable {
         case .risky: return .controlled
         case .controlled: return .controlled
         }
+    }
+
+    /// Numeric ordering used for comparisons (desperate > risky > controlled).
+    var orderValue: Int {
+        switch self {
+        case .controlled: return 0
+        case .risky: return 1
+        case .desperate: return 2
+        }
+    }
+
+    /// Returns `true` if `self` is worse (>=) than the provided position.
+    func isWorseThanOrEqualTo(_ other: RollPosition) -> Bool {
+        return self.orderValue >= other.orderValue
     }
 }
 
@@ -1664,6 +1912,30 @@ enum RollEffect: String, Codable {
         case .great: return .great
         }
     }
+
+    /// Numeric ordering used for comparisons (great > standard > limited).
+    var orderValue: Int {
+        switch self {
+        case .limited: return 0
+        case .standard: return 1
+        case .great: return 2
+        }
+    }
+
+    /// Returns `true` if `self` is better (>=) than the provided effect.
+    func isBetterThanOrEqualTo(_ other: RollEffect) -> Bool {
+        return self.orderValue >= other.orderValue
+    }
+}
+
+/// Result information returned after performing a dice roll.
+struct DiceRollResult {
+    let highestRoll: Int
+    let outcome: String
+    let consequences: String
+    let actualDiceRolled: [Int]?
+    let isCritical: Bool?
+    let finalEffect: RollEffect?
 }
 
 
@@ -1718,6 +1990,7 @@ extension GameState {
 import SwiftUI
 
 struct InteractableCardView: View {
+    @ObservedObject var viewModel: GameViewModel
     let interactable: Interactable
     let selectedCharacter: Character?
     let onActionTapped: (ActionOption) -> Void
@@ -1755,19 +2028,39 @@ struct InteractableCardView: View {
         return false
     }
 
+    private func actionDisabled(_ action: ActionOption) -> Bool {
+        if let tag = action.requiredTag {
+            return !viewModel.partyHasTreasureTag(tag)
+        }
+        return false
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text(interactable.title)
                 .font(.title2).bold()
             Text(interactable.description)
                 .font(.body)
+            if !interactable.tags.isEmpty {
+                HStack(spacing: 4) {
+                    ForEach(interactable.tags, id: \.self) { tag in
+                        Text(tag)
+                            .font(.caption2)
+                            .padding(2)
+                            .background(Color(UIColor.systemGray5))
+                            .cornerRadius(4)
+                    }
+                }
+            }
             Divider()
             ForEach(interactable.availableActions, id: \.name) { action in
-                Button(action.name) {
+                let title = action.requiresTest ? action.name : "\(action.name) (Auto)"
+                Button(title) {
                     onActionTapped(action)
                 }
                 .buttonStyle(.bordered)
                 .frame(maxWidth: .infinity)
+                .disabled(actionDisabled(action))
                 .overlay(alignment: .topTrailing) {
                     if hasPenalty(for: action) {
                         Image("icon_penalty_action")
@@ -1808,8 +2101,16 @@ struct InteractableCardView: View {
 import SwiftUI
 
 struct CharacterSheetView: View {
+    struct SelectedHarm: Identifiable {
+        let familyId: String
+        let level: HarmLevel
+        var id: String { familyId + level.rawValue }
+    }
+
     let character: Character
     var locationName: String? = nil
+    @State private var selectedTreasure: Treasure? = nil
+    @State private var selectedHarm: SelectedHarm? = nil
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -1853,37 +2154,84 @@ struct CharacterSheetView: View {
                     // Lesser Harms
                     HStack(spacing: 4) {
                         ForEach(0..<HarmState.lesserSlots, id: \.self) { index in
-                            Text(index < character.harm.lesser.count ? character.harm.lesser[index].description : "None")
-                                .font(.caption2)
-                                .foregroundColor(index < character.harm.lesser.count ? .primary : .gray)
-                                .padding(4)
-                                .frame(minWidth: 0, maxWidth: .infinity, alignment: .center)
-                                .background(Color(UIColor.systemBackground))
-                                .cornerRadius(4)
+                            if index < character.harm.lesser.count {
+                                let harm = character.harm.lesser[index]
+                                Button {
+                                    selectedHarm = SelectedHarm(familyId: harm.familyId, level: .lesser)
+                                } label: {
+                                    Text(harm.description)
+                                        .font(.caption2)
+                                        .foregroundColor(.primary)
+                                        .padding(4)
+                                        .frame(minWidth: 0, maxWidth: .infinity, alignment: .center)
+                                        .background(Color(UIColor.systemBackground))
+                                        .cornerRadius(4)
+                                }
+                                .buttonStyle(.plain)
+                            } else {
+                                Text("None")
+                                    .font(.caption2)
+                                    .foregroundColor(.gray)
+                                    .padding(4)
+                                    .frame(minWidth: 0, maxWidth: .infinity, alignment: .center)
+                                    .background(Color(UIColor.systemBackground))
+                                    .cornerRadius(4)
+                            }
                         }
                     }
 
                     // Moderate Harms
                     HStack(spacing: 4) {
                         ForEach(0..<HarmState.moderateSlots, id: \.self) { index in
-                            Text(index < character.harm.moderate.count ? character.harm.moderate[index].description : "None")
+                            if index < character.harm.moderate.count {
+                                let harm = character.harm.moderate[index]
+                                Button {
+                                    selectedHarm = SelectedHarm(familyId: harm.familyId, level: .moderate)
+                                } label: {
+                                    Text(harm.description)
+                                        .font(.caption2)
+                                        .foregroundColor(.primary)
+                                        .padding(4)
+                                        .frame(minWidth: 0, maxWidth: .infinity, alignment: .center)
+                                        .background(Color(UIColor.systemBackground))
+                                        .cornerRadius(4)
+                                }
+                                .buttonStyle(.plain)
+                            } else {
+                                Text("None")
+                                    .font(.caption2)
+                                    .foregroundColor(.gray)
+                                    .padding(4)
+                                    .frame(minWidth: 0, maxWidth: .infinity, alignment: .center)
+                                    .background(Color(UIColor.systemBackground))
+                                    .cornerRadius(4)
+                            }
+                        }
+                    }
+
+                    // Severe Harm
+                    if let harm = character.harm.severe.first {
+                        Button {
+                            selectedHarm = SelectedHarm(familyId: harm.familyId, level: .severe)
+                        } label: {
+                            Text(harm.description)
                                 .font(.caption2)
-                                .foregroundColor(index < character.harm.moderate.count ? .primary : .gray)
+                                .foregroundColor(.primary)
                                 .padding(4)
                                 .frame(minWidth: 0, maxWidth: .infinity, alignment: .center)
                                 .background(Color(UIColor.systemBackground))
                                 .cornerRadius(4)
                         }
+                        .buttonStyle(.plain)
+                    } else {
+                        Text("None")
+                            .font(.caption2)
+                            .foregroundColor(.gray)
+                            .padding(4)
+                            .frame(minWidth: 0, maxWidth: .infinity, alignment: .center)
+                            .background(Color(UIColor.systemBackground))
+                            .cornerRadius(4)
                     }
-
-                    // Severe Harm
-                    Text(character.harm.severe.first?.description ?? "None")
-                        .font(.caption2)
-                        .foregroundColor(character.harm.severe.isEmpty ? .gray : .primary)
-                        .padding(4)
-                        .frame(minWidth: 0, maxWidth: .infinity, alignment: .center)
-                        .background(Color(UIColor.systemBackground))
-                        .cornerRadius(4)
                 }
                 .padding(.top, 8)
             }
@@ -1921,11 +2269,29 @@ struct CharacterSheetView: View {
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 8) {
                             ForEach(character.treasures) { treasure in
-                                Text(treasure.name)
+                                Button {
+                                    selectedTreasure = treasure
+                                } label: {
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text(treasure.name)
+                                        if !treasure.tags.isEmpty {
+                                            HStack(spacing: 2) {
+                                                ForEach(treasure.tags, id: \.self) { tag in
+                                                    Text(tag)
+                                                        .font(.caption2)
+                                                        .padding(2)
+                                                        .background(Color(UIColor.systemGray5))
+                                                        .cornerRadius(4)
+                                                }
+                                            }
+                                        }
+                                    }
                                     .font(.caption2)
                                     .padding(4)
                                     .background(Color(UIColor.systemBackground).opacity(0.5))
                                     .cornerRadius(6)
+                                }
+                                .buttonStyle(.plain)
                             }
                         }
                     }
@@ -1936,6 +2302,12 @@ struct CharacterSheetView: View {
         .background(Color(UIColor.secondarySystemBackground))
         .cornerRadius(12)
         .shadow(radius: 3)
+        .popover(item: $selectedTreasure) { treasure in
+            TreasureTooltipView(treasure: treasure)
+        }
+        .popover(item: $selectedHarm) { harm in
+            HarmTooltipView(familyId: harm.familyId, level: harm.level)
+        }
     }
 }
 
@@ -2100,9 +2472,15 @@ class GameViewModel: ObservableObject {
 
         diceCount = max(diceCount, 0) // Can't roll negative dice
 
+        if baseDice == 0 {
+            notes.append("\(character.name) has 0 rating in \(action.actionType): Rolling 2d6, taking lowest.")
+        }
+
+        let displayDice = (baseDice == 0) ? 2 : diceCount
+
         return RollProjectionDetails(
             baseDiceCount: baseDice,
-            finalDiceCount: diceCount,
+            finalDiceCount: displayDice,
             basePosition: basePosition,
             finalPosition: position,
             baseEffect: baseEffect,
@@ -2111,19 +2489,50 @@ class GameViewModel: ObservableObject {
         )
     }
 
+    /// Executes a free action that does not require a roll, applying its success
+    /// consequences immediately.
+    func performFreeAction(for action: ActionOption, with character: Character, interactableID: String?) -> String {
+        let consequences = action.outcomes[.success] ?? []
+        let description = processConsequences(consequences, forCharacter: character, interactableID: interactableID)
+        saveGame()
+        return description
+    }
+
     /// The main dice roll function, now returns the result for the UI.
     func performAction(for action: ActionOption, with character: Character, interactableID: String?) -> DiceRollResult {
         if action.isGroupAction {
             return performGroupAction(for: action, leader: character, interactableID: interactableID)
         }
         guard gameState.party.contains(where: { $0.id == character.id }) else {
-            return DiceRollResult(highestRoll: 0, outcome: "Error", consequences: "Character not found.")
+            return DiceRollResult(highestRoll: 0,
+                                  outcome: "Error",
+                                  consequences: "Character not found.",
+                                  actualDiceRolled: nil,
+                                  isCritical: nil,
+                                  finalEffect: nil)
         }
 
-        let dicePool = max(character.actions[action.actionType] ?? 0, 1)
-        var highestRoll = 0
-        for _ in 0..<dicePool {
-            highestRoll = max(highestRoll, Int.random(in: 1...6))
+        let projection = calculateProjection(for: action, with: character)
+        var finalEffect = projection.finalEffect
+        let finalPosition = projection.finalPosition
+        var actualDiceRolled: [Int] = []
+        var highestRoll: Int
+        var isCritical = false
+
+        if character.actions[action.actionType] ?? 0 == 0 {
+            let d1 = Int.random(in: 1...6)
+            let d2 = Int.random(in: 1...6)
+            actualDiceRolled = [d1, d2]
+            highestRoll = min(d1, d2)
+            if d1 == 6 && d2 == 6 { isCritical = true }
+        } else {
+            let dicePool = max(projection.finalDiceCount, 1)
+            for _ in 0..<dicePool {
+                actualDiceRolled.append(Int.random(in: 1...6))
+            }
+            highestRoll = actualDiceRolled.max() ?? 0
+            let sixes = actualDiceRolled.filter { $0 == 6 }.count
+            if sixes > 1 { isCritical = true }
         }
 
         var consequencesToApply: [Consequence] = []
@@ -2140,8 +2549,29 @@ class GameViewModel: ObservableObject {
             outcomeString = "Failure."
             consequencesToApply = action.outcomes[.failure] ?? []
         }
+        var consequencesDescription = ""
 
-        var consequencesDescription = processConsequences(consequencesToApply, forCharacter: character, interactableID: interactableID)
+        if isCritical && highestRoll >= 4 {
+            finalEffect = finalEffect.increased()
+        }
+
+        let eligible = consequencesToApply.filter { cons in
+            areConditionsMet(conditions: cons.conditions,
+                             forCharacter: character,
+                             finalEffect: finalEffect,
+                             finalPosition: finalPosition)
+        }
+
+        consequencesDescription = processConsequences(eligible, forCharacter: character, interactableID: interactableID)
+
+        if isCritical && highestRoll >= 4 {
+            let critMsg = "Critical Success! Effect increased to \(finalEffect.rawValue.capitalized)."
+            if consequencesDescription.isEmpty {
+                consequencesDescription = critMsg
+            } else {
+                consequencesDescription += "\n" + critMsg
+            }
+        }
 
         if let charIndex = gameState.party.firstIndex(where: { $0.id == character.id }) {
             var updatedModifiers: [Modifier] = []
@@ -2174,12 +2604,22 @@ class GameViewModel: ObservableObject {
         }
         saveGame()
 
-        return DiceRollResult(highestRoll: highestRoll, outcome: outcomeString, consequences: consequencesDescription)
+        return DiceRollResult(highestRoll: highestRoll,
+                              outcome: outcomeString,
+                              consequences: consequencesDescription,
+                              actualDiceRolled: actualDiceRolled,
+                              isCritical: isCritical,
+                              finalEffect: finalEffect)
     }
 
     private func performGroupAction(for action: ActionOption, leader: Character, interactableID: String?) -> DiceRollResult {
         guard partyMovementMode == .grouped, !isPartyActuallySplit() else {
-            return DiceRollResult(highestRoll: 0, outcome: "Cannot", consequences: "Party must be together for a group action.")
+            return DiceRollResult(highestRoll: 0,
+                                  outcome: "Cannot",
+                                  consequences: "Party must be together for a group action.",
+                                  actualDiceRolled: nil,
+                                  isCritical: nil,
+                                  finalEffect: nil)
         }
 
         var bestRoll = 0
@@ -2219,34 +2659,48 @@ class GameViewModel: ObservableObject {
         }
 
         saveGame()
-        return DiceRollResult(highestRoll: bestRoll, outcome: outcomeString, consequences: description)
+        return DiceRollResult(highestRoll: bestRoll,
+                              outcome: outcomeString,
+                              consequences: description,
+                              actualDiceRolled: nil,
+                              isCritical: nil,
+                              finalEffect: nil)
     }
 
     private func processConsequences(_ consequences: [Consequence], forCharacter character: Character, interactableID: String?) -> String {
         var descriptions: [String] = []
         let partyMemberId = character.id
         for consequence in consequences {
-            switch consequence {
-            case .gainStress(let amount):
-                if let charIndex = gameState.party.firstIndex(where: { $0.id == character.id }) {
+            switch consequence.kind {
+            case .gainStress:
+                if let amount = consequence.amount,
+                   let charIndex = gameState.party.firstIndex(where: { $0.id == character.id }) {
                     gameState.party[charIndex].stress += amount
                     descriptions.append("Gained \(amount) Stress.")
                 }
-            case .sufferHarm(let level, let familyId):
-                let description = applyHarm(familyId: familyId, level: level, toCharacter: character.id)
-                descriptions.append(description)
-            case .tickClock(let clockName, let amount):
-                if let clockIndex = gameState.activeClocks.firstIndex(where: { $0.name == clockName }) {
+            case .sufferHarm:
+                if let level = consequence.level,
+                   let familyId = consequence.familyId {
+                    let description = applyHarm(familyId: familyId, level: level, toCharacter: character.id)
+                    descriptions.append(description)
+                }
+            case .tickClock:
+                if let clockName = consequence.clockName,
+                   let amount = consequence.amount,
+                   let clockIndex = gameState.activeClocks.firstIndex(where: { $0.name == clockName }) {
                     updateClock(id: gameState.activeClocks[clockIndex].id, ticks: amount)
                     descriptions.append("The '\(clockName)' clock progresses by \(amount).")
                 }
-            case .unlockConnection(let fromNodeID, let toNodeID):
-                if let connIndex = gameState.dungeon?.nodes[fromNodeID.uuidString]?.connections.firstIndex(where: { $0.toNodeID == toNodeID }) {
+            case .unlockConnection:
+                if let fromNodeID = consequence.fromNodeID,
+                   let toNodeID = consequence.toNodeID,
+                   let connIndex = gameState.dungeon?.nodes[fromNodeID.uuidString]?.connections.firstIndex(where: { $0.toNodeID == toNodeID }) {
                     gameState.dungeon?.nodes[fromNodeID.uuidString]?.connections[connIndex].isUnlocked = true
                     descriptions.append("A path has opened!")
                 }
-            case .removeInteractable(let id):
-                if let nodeID = gameState.characterLocations[partyMemberId.uuidString] {
+            case .removeInteractable:
+                if let id = consequence.interactableId,
+                   let nodeID = gameState.characterLocations[partyMemberId.uuidString] {
                     gameState.dungeon?.nodes[nodeID.uuidString]?.interactables.removeAll(where: { $0.id == id })
                     descriptions.append("The way is clear.")
                 }
@@ -2255,16 +2709,20 @@ class GameViewModel: ObservableObject {
                     gameState.dungeon?.nodes[nodeID.uuidString]?.interactables.removeAll(where: { $0.id == interactableStrID })
                     descriptions.append("The way is clear.")
                 }
-            case .addInteractable(let inNodeID, let interactable):
-                gameState.dungeon?.nodes[inNodeID.uuidString]?.interactables.append(interactable)
-                descriptions.append("Something new appears.")
-            case .addInteractableHere(let interactable):
-                if let nodeID = gameState.characterLocations[partyMemberId.uuidString] {
+            case .addInteractable:
+                if let inNodeID = consequence.inNodeID, let interactable = consequence.newInteractable {
+                    gameState.dungeon?.nodes[inNodeID.uuidString]?.interactables.append(interactable)
+                    descriptions.append("Something new appears.")
+                }
+            case .addInteractableHere:
+                if let interactable = consequence.newInteractable,
+                   let nodeID = gameState.characterLocations[partyMemberId.uuidString] {
                     gameState.dungeon?.nodes[nodeID.uuidString]?.interactables.append(interactable)
                     descriptions.append("Something new appears.")
                 }
-            case .gainTreasure(let treasureId):
-                if let treasure = ContentLoader.shared.treasureTemplates.first(where: { $0.id == treasureId }),
+            case .gainTreasure:
+                if let treasureId = consequence.treasureId,
+                   let treasure = ContentLoader.shared.treasureTemplates.first(where: { $0.id == treasureId }),
                    let charIndex = gameState.party.firstIndex(where: { $0.id == character.id }) {
                     gameState.party[charIndex].treasures.append(treasure)
                     gameState.party[charIndex].modifiers.append(treasure.grantedModifier)
@@ -2273,6 +2731,53 @@ class GameViewModel: ObservableObject {
             }
         }
         return descriptions.joined(separator: "\n")
+    }
+
+    /// Check if a list of conditions are satisfied for the given character and roll results.
+    private func areConditionsMet(
+        conditions: [GameCondition]?,
+        forCharacter character: Character,
+        finalEffect: RollEffect,
+        finalPosition: RollPosition
+    ) -> Bool {
+        guard let conditions = conditions, !conditions.isEmpty else { return true }
+
+        for condition in conditions {
+            var conditionMet = false
+            switch condition.type {
+            case .requiresMinEffectLevel:
+                if let req = condition.effectParam {
+                    conditionMet = finalEffect.isBetterThanOrEqualTo(req)
+                }
+            case .requiresExactEffectLevel:
+                conditionMet = (condition.effectParam == finalEffect)
+            case .requiresMinPositionLevel:
+                if let req = condition.positionParam {
+                    conditionMet = finalPosition.isWorseThanOrEqualTo(req)
+                }
+            case .requiresExactPositionLevel:
+                conditionMet = (condition.positionParam == finalPosition)
+            case .characterHasTreasureId:
+                if let tId = condition.stringParam {
+                    conditionMet = character.treasures.contains(where: { $0.id == tId })
+                }
+            case .partyHasTreasureWithTag:
+                // TODO: Implement party tag check when treasures support tags
+                print("WARN: partyHasTreasureWithTag condition not fully implemented yet.")
+            case .clockProgress:
+                if let name = condition.stringParam,
+                   let min = condition.intParam,
+                   let clock = gameState.activeClocks.first(where: { $0.name == name }) {
+                    var metMin = clock.progress >= min
+                    if let max = condition.intParamMax {
+                        metMin = metMin && clock.progress <= max
+                    }
+                    conditionMet = metMin
+                }
+            }
+            if !conditionMet { return false }
+        }
+        return true
     }
 
     private func apply(penalty: Penalty, description: String, to actionType: String, diceCount: inout Int, effect: inout RollEffect, notes: inout [String]) {
@@ -2364,7 +2869,8 @@ class GameViewModel: ObservableObject {
                 Character(id: UUID(), name: "Marion", characterClass: "Survivor", stress: 0, harm: HarmState(), actions: ["Tinker": 2, "Attune": 1])
             ],
             activeClocks: [
-                GameClock(name: "The Guardian Wakes", segments: 6, progress: 0)
+                GameClock(name: "The Guardian Wakes", segments: 6, progress: 0),
+                GameClock(name: "Test Clock", segments: 4, progress: 0)
             ] + generatedClocks,
             dungeon: newDungeon,
             characterLocations: [:],
@@ -2380,6 +2886,16 @@ class GameViewModel: ObservableObject {
         }
 
         saveGame()
+    }
+
+    /// Check if any party member possesses a treasure with the given tag.
+    func partyHasTreasureTag(_ tag: String) -> Bool {
+        for member in gameState.party {
+            for treasure in member.treasures {
+                if treasure.tags.contains(tag) { return true }
+            }
+        }
+        return false
     }
 
 
@@ -2440,6 +2956,7 @@ struct ContentView: View {
     @Environment(\.scenePhase) private var scenePhase
 
     init(scenario: String = "tomb") {
+        // Start a new game using the provided scenario
         let vm = GameViewModel(startNewWithScenario: scenario)
         _viewModel = StateObject(wrappedValue: vm)
         _selectedCharacterID = State(initialValue: vm.gameState.party.first?.id)
@@ -2493,11 +3010,19 @@ struct ContentView: View {
                                 let threats = node.interactables.filter { $0.isThreat }
                                 let items = threats.isEmpty ? node.interactables : threats
 
+                                let vm = viewModel
                                 ForEach(items, id: \.id) { interactable in
-                                    InteractableCardView(interactable: interactable, selectedCharacter: selectedCharacter) { action in
-                                        if selectedCharacter != nil {
-                                            pendingAction = action
-                                            pendingInteractableID = interactable.id
+                                    InteractableCardView(viewModel: vm,
+                                                        interactable: interactable,
+                                                        selectedCharacter: selectedCharacter) { action in
+                                        if let character = selectedCharacter {
+                                            if action.requiresTest {
+                                                pendingAction = action
+                                                pendingInteractableID = interactable.id
+                                            } else {
+                                                // Directly apply the free-action consequences
+                                                _ = vm.performFreeAction(for: action, with: character, interactableID: interactable.id)
+                                            }
                                         }
                                     }
                                     .transition(.scale(scale: 0.9).combined(with: .opacity))
@@ -2520,25 +3045,8 @@ struct ContentView: View {
                     .padding()
                     .animation(.default, value: viewModel.node(for: selectedCharacterID)?.id)
                 }
-            }
-            .disabled(viewModel.gameState.status == .gameOver)
-            .sheet(item: $pendingAction) { action in
-                if let character = selectedCharacter {
-                    let clockID = viewModel.gameState.activeClocks.first?.id
-                    DiceRollView(viewModel: viewModel,
-                                 action: action,
-                                 character: character,
-                                 clockID: clockID,
-                                 interactableID: pendingInteractableID)
-                } else {
-                    Text("No action selected")
-                }
-            }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
 
-            SlidingDoor(progress: doorProgress)
-
-            VStack {
-                Spacer()
                 HStack {
                     Button {
                         viewModel.toggleMovementMode()
@@ -2570,6 +3078,21 @@ struct ContentView: View {
                 }
                 .padding()
             }
+            .disabled(viewModel.gameState.status == .gameOver)
+            .sheet(item: $pendingAction) { action in
+                if let character = selectedCharacter {
+                    let clockID = viewModel.gameState.activeClocks.first?.id
+                    DiceRollView(viewModel: viewModel,
+                                 action: action,
+                                 character: character,
+                                 clockID: clockID,
+                                 interactableID: pendingInteractableID)
+                } else {
+                    Text("No action selected")
+                }
+            }
+
+            SlidingDoor(progress: doorProgress)
 
 
             if viewModel.gameState.status == .gameOver {
@@ -2597,7 +3120,6 @@ struct ContentView: View {
         .sheet(isPresented: $showingMap) {
             MapView(viewModel: viewModel)
         }
-        .ignoresSafeArea(.all, edges: .bottom)
         .onChange(of: scenePhase) { phase in
             if phase != .active {
                 viewModel.saveGame()
@@ -2713,6 +3235,33 @@ struct SlidingDoor: View {
       "uses": 1,
       "description": "from Map Fragment"
     }
+  },
+  {
+    "id": "treasure_cursed_lantern",
+    "name": "Cursed Lantern",
+    "description": "An old lantern that glows with an eerie light.",
+    "grantedModifier": {
+      "bonusDice": 1,
+      "description": "from Cursed Lantern"
+    },
+    "tags": ["Haunted", "Light Source"]
+  },
+  {
+    "id": "treasure_silver_key",
+    "name": "Silver Key",
+    "description": "Opens a locked door somewhere in the tomb.",
+    "grantedModifier": {
+      "bonusDice": 1,
+      "description": "from Silver Key"
+    },
+  "tags": ["Key"]
+  },
+  {
+    "id": "treasure_test_gem",
+    "name": "Test Gem",
+    "description": "Glows with uncertain power.",
+    "grantedModifier": { "bonusDice": 1, "description": "from Test Gem" },
+    "tags": ["Test"]
   }
 ]
 
@@ -2914,6 +3463,43 @@ struct SlidingDoor: View {
         }
       ]
     }
+    ,
+    {
+      "id": "template_shadowy_corner",
+      "title": "Shadowy Corner",
+      "description": "Darkness conceals something here.",
+      "tags": ["Dark"],
+      "availableActions": [
+        {
+          "name": "Illuminate",
+          "actionType": "Survey",
+          "position": "controlled",
+          "effect": "standard",
+          "requiresTest": false,
+          "requiredTag": "Light Source",
+          "outcomes": {
+            "success": [ { "type": "gainTreasure", "treasureId": "treasure_ancient_coin" }, { "type": "removeInteractable", "id": "self" } ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "template_locked_door",
+      "title": "Locked Door",
+      "description": "A heavy door with a silver keyhole.",
+      "tags": ["Door"],
+      "availableActions": [
+        {
+          "name": "Use Silver Key",
+          "actionType": "Tinker",
+          "position": "controlled",
+          "effect": "standard",
+          "requiresTest": false,
+          "requiredTag": "Key",
+          "outcomes": { "success": [ { "type": "removeInteractable", "id": "self" } ] }
+        }
+      ]
+    }
   ],
   "threats": [
     {
@@ -2968,6 +3554,42 @@ struct SlidingDoor: View {
           "outcomes": {
             "success": [ { "type": "removeInteractable", "id": "self" } ],
             "failure": [ { "type": "gainStress", "amount": 2 } ]
+          }
+        }
+      ]
+    }
+  ],
+  "examples_dynamic": [
+    {
+      "id": "example_simple_lever",
+      "title": "Simple Lever",
+      "description": "A lever with warning signs.",
+      "availableActions": [
+        {
+          "name": "Throw the Lever",
+          "actionType": "Tinker",
+          "position": "risky",
+          "effect": "standard",
+          "outcomes": {
+            "success": [
+              {
+                "type": "gainTreasure",
+                "treasureId": "treasure_test_gem",
+                "conditions": [
+                  { "type": "requiresMinEffectLevel", "effectParam": "great" }
+                ]
+              }
+            ],
+            "failure": [
+              {
+                "type": "sufferHarm",
+                "level": "lesser",
+                "familyId": "gear_damage",
+                "conditions": [
+                  { "type": "requiresMinPositionLevel", "positionParam": "desperate" }
+                ]
+              }
+            ]
           }
         }
       ]
@@ -3087,6 +3709,16 @@ struct SlidingDoor: View {
       "uses": 1,
       "description": "from Map Fragment"
     }
+  },
+  {
+    "id": "treasure_cursed_lantern",
+    "name": "Cursed Lantern",
+    "description": "An old lantern that glows with an eerie light.",
+    "grantedModifier": {
+      "bonusDice": 1,
+      "description": "from Cursed Lantern"
+    },
+    "tags": ["Haunted", "Light Source"]
   }
 ]
 
@@ -3288,6 +3920,43 @@ struct SlidingDoor: View {
         }
       ]
     }
+    ,
+    {
+      "id": "template_wall_switch",
+      "title": "Wall Switch",
+      "description": "A lever that seems safe to pull.",
+      "availableActions": [
+        {
+          "name": "Flip the switch",
+          "actionType": "Tinker",
+          "position": "controlled",
+          "effect": "standard",
+          "requiresTest": false,
+          "outcomes": {
+            "success": [ { "type": "gainTreasure", "treasureId": "treasure_ancient_coin" }, { "type": "removeInteractable", "id": "self" } ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "template_shadowy_corner",
+      "title": "Shadowy Corner",
+      "description": "Darkness conceals something here.",
+      "tags": ["Dark"],
+      "availableActions": [
+        {
+          "name": "Illuminate",
+          "actionType": "Survey",
+          "position": "controlled",
+          "effect": "standard",
+          "requiresTest": false,
+          "requiredTag": "Light Source",
+          "outcomes": {
+            "success": [ { "type": "gainTreasure", "treasureId": "treasure_ancient_coin" }, { "type": "removeInteractable", "id": "self" } ]
+          }
+        }
+      ]
+    }
   ],
   "threats": [
     {
@@ -3474,6 +4143,23 @@ struct SlidingDoor: View {
       "uses": 1,
       "description": "from Map Fragment"
     }
+  },
+  {
+    "id": "treasure_cursed_lantern",
+    "name": "Cursed Lantern",
+    "description": "An old lantern that glows with an eerie light.",
+    "grantedModifier": {
+      "bonusDice": 1,
+      "description": "from Cursed Lantern"
+    },
+  "tags": ["Haunted", "Light Source"]
+  },
+  {
+    "id": "treasure_test_gem",
+    "name": "Test Gem",
+    "description": "Glows with uncertain power.",
+    "grantedModifier": { "bonusDice": 1, "description": "from Test Gem" },
+    "tags": ["Test"]
   }
 ]
 
@@ -3675,6 +4361,43 @@ struct SlidingDoor: View {
         }
       ]
     }
+    ,
+    {
+      "id": "template_wall_switch",
+      "title": "Wall Switch",
+      "description": "A lever that seems safe to pull.",
+      "availableActions": [
+        {
+          "name": "Flip the switch",
+          "actionType": "Tinker",
+          "position": "controlled",
+          "effect": "standard",
+          "requiresTest": false,
+          "outcomes": {
+            "success": [ { "type": "gainTreasure", "treasureId": "treasure_ancient_coin" }, { "type": "removeInteractable", "id": "self" } ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "template_shadowy_corner",
+      "title": "Shadowy Corner",
+      "description": "Darkness conceals something here.",
+      "tags": ["Dark"],
+      "availableActions": [
+        {
+          "name": "Illuminate",
+          "actionType": "Survey",
+          "position": "controlled",
+          "effect": "standard",
+          "requiresTest": false,
+          "requiredTag": "Light Source",
+          "outcomes": {
+            "success": [ { "type": "gainTreasure", "treasureId": "treasure_ancient_coin" }, { "type": "removeInteractable", "id": "self" } ]
+          }
+        }
+      ]
+    }
   ],
   "threats": [
     {
@@ -3729,6 +4452,52 @@ struct SlidingDoor: View {
           "outcomes": {
             "success": [ { "type": "removeInteractable", "id": "self" } ],
             "failure": [ { "type": "gainStress", "amount": 2 } ]
+          }
+        }
+      ]
+    }
+  ],
+  "examples_dynamic": [
+    {
+      "id": "example_setpiece_machine",
+      "title": "Arcane Machine",
+      "description": "Cables snake from a humming device.",
+      "availableActions": [
+        {
+          "name": "Experiment with Device",
+          "actionType": "Study",
+          "position": "risky",
+          "effect": "standard",
+          "outcomes": {
+            "success": [
+              { "type": "gainTreasure", "treasureId": "treasure_test_gem" },
+              {
+                "type": "gainStress",
+                "amount": 1,
+                "conditions": [
+                  { "type": "clockProgress", "stringParam": "Test Clock", "intParam": 2 }
+                ]
+              },
+              {
+                "type": "gainTreasure",
+                "treasureId": "treasure_test_gem",
+                "conditions": [
+                  { "type": "characterHasTreasureId", "stringParam": "treasure_test_gem" }
+                ]
+              }
+            ],
+            "failure": [
+              { "type": "sufferHarm", "level": "moderate", "familyId": "electric_shock" },
+              { "type": "tickClock", "clockName": "Test Clock", "amount": 1 },
+              {
+                "type": "sufferHarm",
+                "level": "lesser",
+                "familyId": "electric_shock",
+                "conditions": [
+                  { "type": "characterHasTreasureId", "stringParam": "treasure_test_gem" }
+                ]
+              }
+            ]
           }
         }
       ]
@@ -4560,6 +5329,293 @@ Canvas Size: 1024x1024 pixels. (A large square allows it to be scaled to fit any
 - Add JSON schema/documentation for ActionOption’s `requiresTest`, and for Treasure/Interactable `tags` fields.
 - Add example entries to `treasures.json` and `interactables.json` demonstrating proper usage.
 - Write a brief “how to use tags” guide or sample code for checking tags in scenario logic.
+```
+
+### `Docs/S14_DynamicConsequencesAndRolls/4-UpdateContentSchemaAndCreateExampleContent.md`
+
+```
+
+### Task 4: Update Content Schema & Create Example Interactables
+
+**Goal:** Document the new JSON capabilities for `interactables.json`, `treasures.json`, and create test content demonstrating the new conditional consequence system and roll dynamics.
+
+**Actions:**
+
+1.  **Update JSON Schema Documentation:**
+    * For `interactables.json`: Detail the new `Consequence` struct format, including the `conditions` array and `GameCondition` objects, and parameters for each `ConditionType`. Specify how shallow vs. deep pools would be structured if there's a formal distinction (e.g., a flag, or just by the number of consequences listed).
+    * For `treasures.json`: Add `tags: [String]?` to the `Treasure` schema if implementing `partyHasTreasureWithTag`.
+2.  **Create Example Content in `Content/` & `Content/Scenarios/`:**
+    * **Simple Interactable:** In `interactables.json` (or a scenario-specific version), define an interactable with:
+        * An action leading to shallow consequence pools.
+        * A negative consequence gated by `requiresMinPositionLevel: "desperate"`.
+        * A positive consequence gated by `requiresMinEffectLevel: "great"`.
+    * **Set-Piece Interactable (Template):**
+        * Define an action with deeper pools of potential positive and negative consequences.
+        * Include consequences gated by `characterHasTreasureId` (referencing a test treasure).
+        * Include consequences gated by `clockProgress` (referencing a test clock).
+    * **Test Treasure:** Add a treasure in `treasures.json` with a specific ID and optionally a tag, to be used by the gating conditions.
+3.  **Initialize Test Clocks:** In `DungeonGenerator.swift` or `GameViewModel.startNewRun()`, ensure a test clock mentioned in a gated consequence can be initialized.
+```
+
+### `Docs/S14_DynamicConsequencesAndRolls/1-CoreRollMechanicEnhancements.md`
+
+```
+
+### Task 1: Core Roll Mechanic Enhancements (Zero Rating & Criticals)
+
+**Goal:** Implement foundational changes to dice roll processing for zero action ratings and critical successes, making rolls more varied and their extreme outcomes more meaningful.
+
+**Actions:**
+
+1.  **Modify `GameViewModel.swift` - `performAction()`:**
+    * **Zero Action Rating:** If a character's rating for the `action.actionType` is 0, roll 2d6 and set `effectiveHighestRoll` to the *minimum* of the two dice. Store both dice rolled.
+    * **Critical Success:** After rolling all dice for any action (including the two for a zero-rating roll), count the number of 6s. If `sixes > 1` (or your chosen threshold), set an `isCritical` flag to true.
+        * **Benefit:** For now, a critical success will increase the `finalEffect` by one step (e.g., Standard to Great). This can be logged in the `consequencesDescription`.
+    * Store all `actualDiceRolled` from any roll.
+
+    ```swift
+    // In GameViewModel.swift - performAction()
+
+    // ... Determine base characterActionRating, bonusDice ...
+    var actualDiceRolled: [Int] = []
+    var effectiveHighestRoll: Int
+    var isCritical = false
+    // let projection = calculateProjection(for: action, with: character) // Call this to get final dice, position, effect
+    // let initialDiceCount = projection.finalDiceCount // Or however you determine actual dice to roll
+    // let finalPosition = projection.finalPosition
+    // var finalEffect = projection.finalEffect
+
+
+    if character.actions[action.actionType] ?? 0 == 0 { // Check original rating for zero-roll mechanic
+        let d1 = Int.random(in: 1...6)
+        let d2 = Int.random(in: 1...6)
+        actualDiceRolled = [d1, d2]
+        effectiveHighestRoll = min(d1, d2)
+        // Check for critical on 0-rating roll (e.g. double 6s still a crit, but outcome based on lowest)
+        // This might be rare/impossible for 0-rating to be a "success" crit.
+        // For now, focus criticals on positive outcomes from normal rolls.
+    } else {
+        let dicePool = max(projection.finalDiceCount, 1) // Use finalDiceCount from projection
+        for _ in 0..<dicePool {
+            actualDiceRolled.append(Int.random(in: 1...6))
+        }
+        effectiveHighestRoll = actualDiceRolled.max() ?? 0
+        let sixes = actualDiceRolled.filter { $0 == 6 }.count
+        if sixes > 1 { // Or your preferred critical condition
+            isCritical = true
+        }
+    }
+
+    if isCritical {
+        // Example: Improve effect on critical, if the outcome is already positive
+        if effectiveHighestRoll >= 4 { // Only boost effect on partial or full success crits
+             finalEffect = finalEffect.increased()
+             // Add note to consequences string later
+        }
+    }
+
+    // ... determine outcomeString, consequencesToApply based on effectiveHighestRoll ...
+    // ... consequencesDescription = processConsequences(...)
+
+    // Ensure DiceRollResult includes these new fields
+    return DiceRollResult(
+        highestRoll: effectiveHighestRoll,
+        outcome: outcomeString,
+        consequences: consequencesDescription,
+        actualDiceRolled: actualDiceRolled, // New
+        isCritical: isCritical,             // New
+        finalEffect: finalEffect            // New or ensure it's passed if modified
+    )
+    ```
+
+2.  **Update `Models.swift` - `DiceRollResult` (defined in `CardGame/DiceRollView.swift` currently):**
+    * Add `let actualDiceRolled: [Int]?`
+    * Add `let isCritical: Bool?`
+    * Add `let finalEffect: RollEffect?` (if not already there or to ensure it carries modifications).
+
+3.  **Update `GameViewModel.swift` - `calculateProjection()`:**
+    * If character's action rating is 0, add a specific note to `RollProjectionDetails.notes` (e.g., "`\(character.name)` has 0 rating in `\(action.actionType)`: Rolling 2d6, taking lowest.").
+    * `RollProjectionDetails.finalDiceCount` could be set to `2` for display purposes in `DiceRollView` for 0-rating rolls.
+
+4.  **Update `CardGame/DiceRollView.swift`:**
+    * Modify `onAppear` to set initial `diceValues` count to 2 if `projection.notes` indicates a 0-rating roll (or if `projection.finalDiceCount` signals it).
+    * In `stopShaking()`, use `result.actualDiceRolled` to populate `self.diceValues`.
+    * Set `self.highlightIndex` to the index of `result.highestRoll` within `self.diceValues`.
+    * Display "Critical Success!" and the `result.finalEffect` if `result.isCritical` is true.
+```
+
+### `Docs/S14_DynamicConsequencesAndRolls/3-ImplementConsequenceGatingAndPositionEffectModulation.md`
+
+```
+
+### Task 3: Implement Consequence Gating and Position/Effect Modulation
+
+**Goal:** Refactor `GameViewModel.performAction` to filter consequences based on their new conditions and to use `finalEffect` and `finalPosition` to determine the quantity/potency of actual applied consequences.
+
+**Actions:**
+
+1.  **Create `areConditionsMet()` helper in `GameViewModel.swift`:**
+    ```swift
+    private func areConditionsMet(
+        conditions: [GameCondition]?,
+        forCharacter character: Character,
+        finalEffect: RollEffect,
+        finalPosition: RollPosition
+        // Pass gameState directly or access self.gameState
+    ) -> Bool {
+        guard let conditions = conditions, !conditions.isEmpty else { return true } // No conditions means eligible
+
+        for condition in conditions {
+            var conditionMet = false
+            switch condition.type {
+            case .requiresMinEffectLevel:
+                if let reqEffect = condition.effectParam { conditionMet = finalEffect.isBetterThanOrEqualTo(reqEffect) } //
+            case .requiresExactEffectLevel:
+                conditionMet = (condition.effectParam == finalEffect)
+            case .requiresMinPositionLevel:
+                if let reqPos = condition.positionParam { conditionMet = finalPosition.isWorseThanOrEqualTo(reqPos) } // Assuming Position enum gets an orderValue
+            case .requiresExactPositionLevel:
+                conditionMet = (condition.positionParam == finalPosition)
+            case .characterHasTreasureId:
+                if let tId = condition.stringParam { conditionMet = character.treasures.contains(where: { $0.id == tId }) } //
+            case .partyHasTreasureWithTag:
+                // Assuming Treasure struct gets a `tags: [String]?` field.
+                // And GameCondition stringParam holds the tag.
+                // conditionMet = gameState.party.flatMap { $0.treasures }.contains(where: { $0.tags?.contains(condition.stringParam ?? "") == true })
+                print("WARN: partyHasTreasureWithTag condition not fully implemented yet.")
+            case .clockProgress:
+                if let cName = condition.stringParam, let minProg = condition.intParam {
+                    if let clock = gameState.activeClocks.first(where: { $0.name == cName }) { //
+                        var metMin = clock.progress >= minProg
+                        if let maxProg = condition.intParamMax { // Optional max check
+                            metMin = metMin && clock.progress <= maxProg
+                        }
+                        conditionMet = metMin
+                    }
+                }
+            }
+            if !conditionMet { return false } // All conditions must be met
+        }
+        return true
+    }
+    ```
+    *(Note: `RollPosition` will need an `orderValue` and `isWorseThanOrEqualTo` similar to `RollEffect` for min/max checks: Desperate > Risky > Controlled).*
+
+2.  **Refactor `GameViewModel.performAction()` processing logic:**
+    * After determining `finalRollOutcome`, `isCritical`, `finalPosition`, `finalEffect`:
+    * Get the base list of `Consequence` structs for the `finalRollOutcome` from `action.outcomes`.
+    * Filter this list using `areConditionsMet()` to create a new list of *eligibleConsequences*.
+    * **Apply Consequences based on Pools & Modulation:**
+        * **Success Outcome:**
+            * From *eligibleConsequences* that are positive:
+                * Shallow pool: Apply defined consequence(s). `finalEffect` might increase potency/quantity if defined (e.g., an "amount" field in Consequence struct could be base, and `finalEffect` applies a multiplier or adds to it).
+                * Deep pool: Draw N positive consequences based on `finalEffect`. `isCritical` could allow an extra draw or access to special crit-only gated consequences.
+        * **Partial Success Outcome:**
+            * Positive side: From *eligibleConsequences*, apply/draw based on `finalEffect`.
+            * Negative side: From *eligibleConsequences*, apply/draw based on `finalPosition`.
+        * **Failure Outcome:**
+            * From *eligibleConsequences* that are negative: Apply/draw based on `finalPosition`.
+    * The `processConsequences` method will then take this *final, filtered, and selected* list of consequences to apply to the `gameState`.
+
+```
+
+### `Docs/S14_DynamicConsequencesAndRolls/5-UIPolishForProjectionsAndResults.md`
+
+```
+
+### Task 5: UI Polish for Projections and Results
+
+**Goal:** Ensure the `DiceRollView` clearly communicates the new dynamics introduced by zero-rating rolls, criticals, and the final impact of Position/Effect on outcomes.
+
+**Actions:**
+
+1.  **Verify `CardGame/DiceRollView.swift` - `projection.notes`:**
+    * Ensure notes for 0-rating rolls are clearly displayed.
+    * Consider if other active gates (e.g., "carrying X, special outcome possible!") should be hinted at in projection notes if determinable beforehand (this can be complex).
+2.  **Display Critical & Final Effect:**
+    * When `result.isCritical` is true, display a "CRITICAL SUCCESS!" message.
+    * Display the `result.finalEffect` achieved on the roll.
+3.  **Accurate Consequence Display:**
+    * The existing logic of displaying `result.consequences` (the string description) should naturally reflect the actually applied consequences. Double-check this description is accurately built by `processConsequences` from the final list.
+```
+
+### `Docs/S14_DynamicConsequencesAndRolls/2-ModelConditionalConsequences.md`
+
+```
+
+### Task 2: Model Conditional Consequences (Gating Logic)
+
+**Goal:** Define the data structures in `Models.swift` that allow consequences to have prerequisites (conditions) for their application, based on game state, roll position/effect, or player inventory.
+
+**Actions:**
+
+1.  **Define `GameCondition` struct/enum in `CardGame/Models.swift`:**
+    ```swift
+    struct GameCondition: Codable {
+        enum ConditionType: String, Codable {
+            case requiresMinEffectLevel
+            case requiresExactEffectLevel
+            case requiresMinPositionLevel
+            case requiresExactPositionLevel
+            case characterHasTreasureId   // Param: treasureId (String)
+            case partyHasTreasureWithTag  // Param: treasureTag (String)
+            case clockProgress           // Params: clockName (String), minProgress (Int), maxProgress (Int, optional)
+            // Future: characterHasHarm, characterClass, etc.
+        }
+
+        let type: ConditionType
+        // Using a dictionary for flexible parameters, or add specific optional fields
+        let stringParam: String?   // e.g., treasureId, clockName, tag
+        let intParam: Int?         // e.g., clock minProgress
+        let intParamMax: Int?      // e.g., clock maxProgress
+        let effectParam: RollEffect? // For requiresMinEffectLevel, requiresExactEffectLevel
+        let positionParam: RollPosition? // For requiresMinPositionLevel, requiresExactPositionLevel
+
+        // Example Initializer (you'll need custom Codable conformance if params are too varied)
+        init(type: ConditionType, stringParam: String? = nil, intParam: Int? = nil, intParamMax: Int? = nil, effectParam: RollEffect? = nil, positionParam: RollPosition? = nil) {
+            self.type = type
+            self.stringParam = stringParam
+            self.intParam = intParam
+            self.intParamMax = intParamMax
+            self.effectParam = effectParam
+            self.positionParam = positionParam
+        }
+    }
+    ```
+
+2.  **Refactor `Consequence` in `CardGame/Models.swift`:**
+    * It's highly recommended to refactor `Consequence` from an `enum` with associated values to a `struct`. This makes it much easier to add common properties like `conditions`.
+    ```swift
+    struct Consequence: Codable {
+        // Define the actual effect of the consequence
+        enum ConsequenceKind: String, Codable {
+            case gainStress, sufferHarm, tickClock, unlockConnection, removeInteractable, removeSelfInteractable, addInteractable, addInteractableHere, gainTreasure
+        }
+        let kind: ConsequenceKind
+        // Parameters for the consequence itself
+        let amount: Int?
+        let level: HarmLevel?
+        let familyId: String?
+        let clockName: String?
+        let fromNodeID: UUID?
+        let toNodeID: UUID?
+        let interactableId: String? // For removeInteractable
+        let inNodeID: UUID? // For addInteractable
+        let newInteractable: Interactable? // For addInteractable/addInteractableHere
+        let treasureId: String? // For gainTreasure
+
+        // Gating Conditions
+        var conditions: [GameCondition]?
+
+        // You will need custom init(from: Decoder) and encode(to: Encoder) to handle this structure,
+        // similar to how you've done for other complex enums/structs.
+        // It would map a "type" field in JSON to 'kind' and then decode relevant parameters.
+    }
+    ```
+    *If refactoring `Consequence` now is too large a step, you'll need a more complex way to associate conditions with enum cases during JSON parsing and processing, which can be error-prone.*
+
+3.  **Update `CardGame/ContentLoader.swift`:**
+    * Modify JSON parsing logic to correctly decode `Consequence` structs including their optional `conditions` arrays and parameters. This will involve careful handling in your `JSONDecoder` setup, potentially for `ActionOption` and `Interactable` where consequences are defined.
 ```
 
 ### `Docs/S4_FullGameLoop/1-DynamicActionConsequences.md`

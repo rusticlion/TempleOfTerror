@@ -43,7 +43,3 @@ struct HarmTooltipView: View {
         .padding()
     }
 }
-
-#Preview {
-    HarmTooltipView(familyId: "head_trauma", level: .moderate)
-}

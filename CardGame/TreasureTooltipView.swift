@@ -27,15 +27,3 @@ struct TreasureTooltipView: View {
         .padding()
     }
 }
-
-#Preview {
-    TreasureTooltipView(
-        treasure: Treasure(
-            id: "demo",
-            name: "Lens of True Sight",
-            description: "Shows hidden things",
-            grantedModifier: Modifier(bonusDice: 1, description: "+1d to Survey"),
-            tags: ["Magic"]
-        )
-    )
-}
