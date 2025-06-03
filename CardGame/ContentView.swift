@@ -139,10 +139,12 @@ struct ContentView: View {
                             showingStatusSheet.toggle()
                         } label: {
                             Image(systemName: "person.3.fill")
-                            Text("Party")
+                            Text("Status")
                         }
                         .padding()
                         .background(.thinMaterial, in: Capsule())
+
+                        Spacer()
 
                         Button {
                             showingMap.toggle()
