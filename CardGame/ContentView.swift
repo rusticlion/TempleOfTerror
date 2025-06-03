@@ -99,14 +99,22 @@ struct ContentView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
 
                 VStack(spacing: 8) {
+                    if showingCharacterSheet, let character = selectedCharacter {
+                        CharacterSheetView(character: character)
+                            .transition(.move(edge: .bottom))
+                            .padding(.horizontal)
+                    }
+
                     HStack {
                         CharacterSelectorView(characters: viewModel.gameState.party,
                                               selectedCharacterID: $selectedCharacterID)
 
                         Button {
-                            showingCharacterSheet.toggle()
+                            withAnimation {
+                                showingCharacterSheet.toggle()
+                            }
                         } label: {
-                            Image(systemName: "chevron.up")
+                            Image(systemName: showingCharacterSheet ? "chevron.down" : "chevron.up")
                                 .padding(6)
                                 .background(.thinMaterial, in: Circle())
                         }
@@ -145,6 +153,7 @@ struct ContentView: View {
                     .padding(.horizontal)
                 }
                 .padding(.vertical)
+                .animation(.easeInOut, value: showingCharacterSheet)
             }
             .disabled(viewModel.gameState.status == .gameOver)
             .sheet(item: $pendingAction) { action in
@@ -187,13 +196,6 @@ struct ContentView: View {
         }
         .sheet(isPresented: $showingMap) {
             MapView(viewModel: viewModel)
-        }
-        .sheet(isPresented: $showingCharacterSheet) {
-            if let character = selectedCharacter {
-                CharacterSheetView(character: character)
-            } else {
-                Text("No character selected")
-            }
         }
         .onChange(of: scenePhase) { phase in
             if phase != .active {
