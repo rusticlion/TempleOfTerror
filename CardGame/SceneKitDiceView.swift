@@ -4,6 +4,14 @@ import SceneKit
 struct SceneKitDiceView: UIViewRepresentable {
     let diceCount: Int
 
+    class Coordinator {
+        var dice: [DieNode] = []
+    }
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator()
+    }
+
     func makeUIView(context: Context) -> SCNView {
         let scnView = SCNView()
         let scene = SCNScene()
@@ -46,11 +54,41 @@ struct SceneKitDiceView: UIViewRepresentable {
 
         scene.physicsWorld.gravity = SCNVector3(0, -9.8, 0)
 
+        // Add dice nodes
+        for _ in 0..<diceCount {
+            let die = DieNode()
+            die.node.position = SCNVector3(
+                Float.random(in: -4...4),
+                1.0,
+                Float.random(in: -4...4)
+            )
+            scene.rootNode.addChildNode(die.node)
+            context.coordinator.dice.append(die)
+        }
+
         return scnView
     }
 
     func updateUIView(_ uiView: SCNView, context: Context) {
-        // Future updates will add dice here
+        guard let scene = uiView.scene else { return }
+
+        if context.coordinator.dice.count < diceCount {
+            for _ in context.coordinator.dice.count..<diceCount {
+                let die = DieNode()
+                die.node.position = SCNVector3(
+                    Float.random(in: -4...4),
+                    1.0,
+                    Float.random(in: -4...4)
+                )
+                scene.rootNode.addChildNode(die.node)
+                context.coordinator.dice.append(die)
+            }
+        } else if context.coordinator.dice.count > diceCount {
+            while context.coordinator.dice.count > diceCount {
+                let die = context.coordinator.dice.removeLast()
+                die.node.removeFromParentNode()
+            }
+        }
     }
 }
 
