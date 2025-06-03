@@ -13,7 +13,18 @@ class DungeonGenerator {
         self.content = content
     }
 
-    func generate(level: Int) -> (DungeonMap, [GameClock]) {
+    func generate(level: Int, manifest: ScenarioManifest? = nil) -> (DungeonMap, [GameClock]) {
+        let manifestToUse = manifest ?? content.scenarioManifest
+        if let manifest = manifestToUse,
+           let mapFile = manifest.mapFile,
+           let predefined = content.loadMap(named: mapFile) {
+            let clockCount = Int.random(in: 1...2)
+            let clocks = Array(clockTemplates.shuffled().prefix(clockCount))
+            return (predefined, clocks)
+        } else if let manifest = manifestToUse, manifest.mapFile != nil {
+            print("Warning: Failed to load map file \(manifest.mapFile!) for scenario \(manifest.id)")
+        }
+
         var nodes: [String: MapNode] = [:]
         let nodeCount = 5 + level // Simple scaling
 

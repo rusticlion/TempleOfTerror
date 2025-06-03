@@ -6,6 +6,8 @@ struct ScenarioManifest: Codable, Identifiable, Hashable {
     var title: String
     var description: String
     var entryNode: String?
+    /// Name of a JSON file defining a fixed map for this scenario.
+    var mapFile: String?
 }
 
 class ContentLoader {
@@ -98,6 +100,21 @@ class ContentLoader {
         } catch {
             print("Failed to decode \(filename): \(error)")
             return []
+        }
+    }
+
+    /// Load a predefined DungeonMap from the given file name within this scenario.
+    func loadMap(named file: String) -> DungeonMap? {
+        guard let url = Self.url(for: file, scenario: scenarioName) else {
+            print("Failed to locate map file \(file) for scenario \(scenarioName)")
+            return nil
+        }
+        do {
+            let data = try Data(contentsOf: url)
+            return try JSONDecoder().decode(DungeonMap.self, from: data)
+        } catch {
+            print("Failed to decode map file \(file): \(error)")
+            return nil
         }
     }
 }
