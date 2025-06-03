@@ -559,6 +559,58 @@ extension Consequence {
     static var removeSelfInteractable: Consequence {
         Consequence(kind: .removeSelfInteractable)
     }
+
+    /// Apply stress to the acting character.
+    static func gainStress(_ amount: Int) -> Consequence {
+        var c = Consequence(kind: .gainStress)
+        c.amount = amount
+        return c
+    }
+
+    /// Inflict harm from a specified family at the given level.
+    static func sufferHarm(level: HarmLevel, familyId: String) -> Consequence {
+        var c = Consequence(kind: .sufferHarm)
+        c.level = level
+        c.familyId = familyId
+        return c
+    }
+
+    /// Progress a named clock by the provided amount.
+    static func tickClock(name: String, amount: Int) -> Consequence {
+        var c = Consequence(kind: .tickClock)
+        c.clockName = name
+        c.amount = amount
+        return c
+    }
+
+    /// Remove the specified interactable from the current node.
+    static func removeInteractable(id: String) -> Consequence {
+        var c = Consequence(kind: .removeInteractable)
+        c.interactableId = id
+        return c
+    }
+
+    /// Add an interactable to the given node.
+    static func addInteractable(_ interactable: Interactable, inNodeID: UUID) -> Consequence {
+        var c = Consequence(kind: .addInteractable)
+        c.newInteractable = interactable
+        c.inNodeID = inNodeID
+        return c
+    }
+
+    /// Add an interactable in the acting character's current location.
+    static func addInteractableHere(_ interactable: Interactable) -> Consequence {
+        var c = Consequence(kind: .addInteractableHere)
+        c.newInteractable = interactable
+        return c
+    }
+
+    /// Grant a treasure by id to the acting character.
+    static func gainTreasure(id: String) -> Consequence {
+        var c = Consequence(kind: .gainTreasure)
+        c.treasureId = id
+        return c
+    }
 }
 
 enum HarmLevel: String, Codable {
