@@ -1,10 +1,13 @@
 import SwiftUI
 import SceneKit
 
-class SceneKitDiceController: ObservableObject {
+class SceneKitDiceController: NSObject, ObservableObject, SCNSceneRendererDelegate {
     fileprivate var dice: [DieNode] = []
+    var onDiceSettled: (([Int]) -> Void)? = nil
+    private var awaitingResults = false
 
     func rollDice() {
+        awaitingResults = true
         for (index, die) in dice.enumerated() {
             let spread = Float(index) - Float(dice.count - 1) / 2
             let pos = SCNVector3(spread * 1.2 + Float.random(in: -0.2...0.2), 1.0, Float.random(in: -0.2...0.2))
@@ -13,6 +16,21 @@ class SceneKitDiceController: ObservableObject {
             die.node.physicsBody?.applyForce(force, asImpulse: true)
             let torque = SCNVector4(Float.random(in: -1...1), Float.random(in: -1...1), Float.random(in: -1...1), Float.random(in: -3...3))
             die.node.physicsBody?.applyTorque(torque, asImpulse: true)
+        }
+    }
+
+    func renderer(_ renderer: SCNSceneRenderer, updateAtTime time: TimeInterval) {
+        guard awaitingResults else { return }
+        let allResting = dice.allSatisfy { $0.node.physicsBody?.isResting ?? false }
+        if allResting {
+            awaitingResults = false
+            for die in dice {
+                die.updateValueFromOrientation()
+            }
+            let values = dice.map { $0.value }
+            DispatchQueue.main.async {
+                self.onDiceSettled?(values)
+            }
         }
     }
 }
@@ -26,6 +44,7 @@ struct SceneKitDiceView: UIViewRepresentable {
         let scnView = SCNView()
         let scene = SCNScene()
         scnView.scene = scene
+        scnView.delegate = controller
 
         // Camera looking straight down into the tray
         let cameraNode = SCNNode()
