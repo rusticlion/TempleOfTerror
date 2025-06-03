@@ -20,17 +20,18 @@ class SceneKitDiceController: ObservableObject {
 struct SceneKitDiceView: UIViewRepresentable {
     @ObservedObject var controller: SceneKitDiceController
     let diceCount: Int
+    private let traySize: Float = 10
 
     func makeUIView(context: Context) -> SCNView {
         let scnView = SCNView()
         let scene = SCNScene()
         scnView.scene = scene
 
-        // Camera looking down into the tray
+        // Camera looking straight down into the tray
         let cameraNode = SCNNode()
         cameraNode.camera = SCNCamera()
-        cameraNode.position = SCNVector3(x: 0, y: 5, z: 5)
-        cameraNode.eulerAngles = SCNVector3(-Float.pi / 4, 0, 0)
+        cameraNode.position = SCNVector3(x: 0, y: 6, z: 0)
+        cameraNode.eulerAngles = SCNVector3(-Float.pi / 2, 0, 0)
         scene.rootNode.addChildNode(cameraNode)
 
         // Ambient light
@@ -51,15 +52,44 @@ struct SceneKitDiceView: UIViewRepresentable {
         scene.rootNode.addChildNode(omniNode)
 
         // Tray floor
-        let floor = SCNBox(width: 10, height: 0.2, length: 10, chamferRadius: 0)
+        let floor = SCNBox(width: CGFloat(traySize), height: 0.2, length: CGFloat(traySize), chamferRadius: 0)
         floor.firstMaterial?.diffuse.contents = UIImage(named: "texture_dicetray_surface")
         let floorNode = SCNNode(geometry: floor)
         floorNode.position = SCNVector3(0, -0.1, 0)
         floorNode.physicsBody = SCNPhysicsBody.static()
         scene.rootNode.addChildNode(floorNode)
 
+        // Tray walls to keep dice contained
+        let wallThickness: Float = 0.2
+        let wallHeight: Float = 2
+        let wallGeometry = SCNBox(width: CGFloat(traySize), height: CGFloat(wallHeight), length: CGFloat(wallThickness), chamferRadius: 0)
+        wallGeometry.firstMaterial?.diffuse.contents = floor.firstMaterial?.diffuse.contents
+
+        let backWall = SCNNode(geometry: wallGeometry)
+        backWall.position = SCNVector3(0, wallHeight/2 - 0.1, -traySize/2)
+        backWall.physicsBody = SCNPhysicsBody.static()
+        scene.rootNode.addChildNode(backWall)
+
+        let frontWall = SCNNode(geometry: wallGeometry)
+        frontWall.position = SCNVector3(0, wallHeight/2 - 0.1, traySize/2)
+        frontWall.physicsBody = SCNPhysicsBody.static()
+        scene.rootNode.addChildNode(frontWall)
+
+        let sideWallGeometry = SCNBox(width: CGFloat(wallThickness), height: CGFloat(wallHeight), length: CGFloat(traySize), chamferRadius: 0)
+        sideWallGeometry.firstMaterial?.diffuse.contents = floor.firstMaterial?.diffuse.contents
+
+        let leftWall = SCNNode(geometry: sideWallGeometry)
+        leftWall.position = SCNVector3(-traySize/2, wallHeight/2 - 0.1, 0)
+        leftWall.physicsBody = SCNPhysicsBody.static()
+        scene.rootNode.addChildNode(leftWall)
+
+        let rightWall = SCNNode(geometry: sideWallGeometry)
+        rightWall.position = SCNVector3(traySize/2, wallHeight/2 - 0.1, 0)
+        rightWall.physicsBody = SCNPhysicsBody.static()
+        scene.rootNode.addChildNode(rightWall)
+
         scnView.isPlaying = true
-        scnView.allowsCameraControl = true
+        scnView.allowsCameraControl = false
 
         scene.physicsWorld.gravity = SCNVector3(0, -9.8, 0)
 
@@ -67,9 +97,9 @@ struct SceneKitDiceView: UIViewRepresentable {
         for _ in 0..<diceCount {
             let die = DieNode()
             die.node.position = SCNVector3(
-                Float.random(in: -4...4),
+                Float.random(in: -(traySize/2 - 1)...(traySize/2 - 1)),
                 1.0,
-                Float.random(in: -4...4)
+                Float.random(in: -(traySize/2 - 1)...(traySize/2 - 1))
             )
             scene.rootNode.addChildNode(die.node)
             controller.dice.append(die)
@@ -85,9 +115,9 @@ struct SceneKitDiceView: UIViewRepresentable {
             for _ in controller.dice.count..<diceCount {
                 let die = DieNode()
                 die.node.position = SCNVector3(
-                    Float.random(in: -4...4),
+                    Float.random(in: -(traySize/2 - 1)...(traySize/2 - 1)),
                     1.0,
-                    Float.random(in: -4...4)
+                    Float.random(in: -(traySize/2 - 1)...(traySize/2 - 1))
                 )
                 scene.rootNode.addChildNode(die.node)
                 controller.dice.append(die)

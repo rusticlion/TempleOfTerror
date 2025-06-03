@@ -15,6 +15,7 @@ class DieNode {
             container.scale = SCNVector3(defaultScale, defaultScale, defaultScale)
             let shape = SCNPhysicsShape(node: container, options: [SCNPhysicsShape.Option.type: SCNPhysicsShape.ShapeType.convexHull])
             let body = SCNPhysicsBody(type: .dynamic, shape: shape)
+            body.continuousCollisionDetectionThreshold = 0.001
             body.mass = 1.0
             body.friction = 0.8
             body.restitution = 0.2
