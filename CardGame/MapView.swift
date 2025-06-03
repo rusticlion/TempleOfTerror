@@ -72,13 +72,12 @@ struct MapView: View {
                 if let map = viewModel.gameState.dungeon {
 
                     // Build a list of uniquely identifiable connections to draw
-                    var drawableConnections: [DrawableConnection] = []
-                    for node in map.nodes.values {
+                    let drawableConnections: [DrawableConnection] = map.nodes.values.reduce(into: []) { connections, node in
                         if let fromPos = nodePositions[node.id] {
                             for connection in node.connections {
                                 if let toPos = nodePositions[connection.toNodeID] {
                                     let id = "\(node.id.uuidString)-\(connection.toNodeID.uuidString)"
-                                    drawableConnections.append(DrawableConnection(id: id, fromPos: fromPos, toPos: toPos))
+                                    connections.append(DrawableConnection(id: id, fromPos: fromPos, toPos: toPos))
                                 }
                             }
                         }

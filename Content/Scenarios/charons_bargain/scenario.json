@@ -1,6 +1,6 @@
 {
   "id": "charons_bargain",
   "title": "Charon's Bargain",
-  "description": "A desperate mission aboard the Charon.",
+  "description": "You respond to a medical distress signal from a space freighter, but not all is as it seems. What are you willing to do to survive?",
   "mapFile": "map_charons_bargain.json"
 }

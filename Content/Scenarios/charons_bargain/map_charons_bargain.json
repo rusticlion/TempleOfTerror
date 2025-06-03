@@ -4,7 +4,7 @@
     "00000000-0000-0000-0000-000000000001": {
       "id": "00000000-0000-0000-0000-000000000001",
       "name": "Docking Bay",
-      "soundProfile": "metal_echoes",
+      "soundProfile": "metal_echoes_large",
       "interactables": [],
       "connections": [
         {
@@ -19,10 +19,206 @@
     "00000000-0000-0000-0000-000000000002": {
       "id": "00000000-0000-0000-0000-000000000002",
       "name": "Main Corridor",
-      "soundProfile": "metal_echoes",
+      "soundProfile": "ship_hum_low",
       "interactables": [],
-      "connections": [],
-      "theme": "industrial_corridor",
+      "connections": [
+        {
+          "toNodeID": "00000000-0000-0000-0000-000000000001",
+          "description": "Return to Docking Bay",
+          "isUnlocked": true
+        },
+        {
+          "toNodeID": "00000000-0000-0000-0000-000000000003",
+          "description": "Enter Crew Quarters",
+          "isUnlocked": true
+        },
+        {
+          "toNodeID": "00000000-0000-0000-0000-000000000004",
+          "description": "Access Medical Wing",
+          "isUnlocked": true
+        },
+        {
+          "toNodeID": "00000000-0000-0000-0000-000000000009",
+          "description": "Head towards Engineering/Maintenance",
+          "isUnlocked": true
+        }
+      ],
+      "theme": "ship_corridor",
+      "isDiscovered": false
+    },
+    "00000000-0000-0000-0000-000000000003": {
+      "id": "00000000-0000-0000-0000-000000000003",
+      "name": "Crew Quarters",
+      "soundProfile": "quiet_murmurs",
+      "interactables": [],
+      "connections": [
+        {
+          "toNodeID": "00000000-0000-0000-0000-000000000002",
+          "description": "Back to Main Corridor",
+          "isUnlocked": true
+        },
+        {
+          "toNodeID": "00000000-0000-0000-0000-000000000006",
+          "description": "Descend to Cargo Bay",
+          "isUnlocked": true
+        }
+      ],
+      "theme": "living_quarters_derelict",
+      "isDiscovered": false
+    },
+    "00000000-0000-0000-0000-000000000004": {
+      "id": "00000000-0000-0000-0000-000000000004",
+      "name": "Medical Wing",
+      "soundProfile": "medical_bay_alarms_faint",
+      "interactables": [],
+      "connections": [
+        {
+          "toNodeID": "00000000-0000-0000-0000-000000000002",
+          "description": "Return to Main Corridor",
+          "isUnlocked": true
+        },
+        {
+          "toNodeID": "00000000-0000-0000-0000-000000000005",
+          "description": "Enter Hydroponics Bay",
+          "isUnlocked": true
+        }
+      ],
+      "theme": "medical_lab_disturbed",
+      "isDiscovered": false
+    },
+    "00000000-0000-0000-0000-000000000005": {
+      "id": "00000000-0000-0000-0000-000000000005",
+      "name": "Hydroponics Bay",
+      "soundProfile": "hydroponics_overgrown_rustling",
+      "interactables": [],
+      "connections": [
+        {
+          "toNodeID": "00000000-0000-0000-0000-000000000004",
+          "description": "Back to Medical Wing",
+          "isUnlocked": true
+        },
+        {
+          "toNodeID": "00000000-0000-0000-0000-000000000007",
+          "description": "Path to VFE Lab (Hidden/Service Tunnel)",
+          "isUnlocked": false
+        }
+      ],
+      "theme": "hydroponics_mutated",
+      "isDiscovered": false
+    },
+    "00000000-0000-0000-0000-000000000006": {
+      "id": "00000000-0000-0000-0000-000000000006",
+      "name": "Cargo Bay",
+      "soundProfile": "cargo_bay_creaks",
+      "interactables": [],
+      "connections": [
+        {
+          "toNodeID": "00000000-0000-0000-0000-000000000003",
+          "description": "Ascend to Crew Quarters",
+          "isUnlocked": true
+        },
+        {
+          "toNodeID": "00000000-0000-0000-0000-000000000007",
+          "description": "Access to VFE Lab (Hidden Panel)",
+          "isUnlocked": false
+        },
+        {
+          "toNodeID": "00000000-0000-0000-0000-000000000010",
+          "description": "Path to Escape Pods",
+          "isUnlocked": true
+        }
+      ],
+      "theme": "cargo_bay_cluttered",
+      "isDiscovered": false
+    },
+    "00000000-0000-0000-0000-000000000007": {
+      "id": "00000000-0000-0000-0000-000000000007",
+      "name": "VFE Lab (Hidden)",
+      "soundProfile": "alien_artifact_hum",
+      "interactables": [],
+      "connections": [
+        {
+          "toNodeID": "00000000-0000-0000-0000-000000000005",
+          "description": "Return to Hydroponics Bay (Service Tunnel)",
+          "isUnlocked": true
+        },
+        {
+          "toNodeID": "00000000-0000-0000-0000-000000000006",
+          "description": "Return to Cargo Bay (Hidden Panel)",
+          "isUnlocked": true
+        },
+        {
+          "toNodeID": "00000000-0000-0000-0000-000000000008",
+          "description": "Enter Test Chamber",
+          "isUnlocked": false
+        },
+        {
+          "toNodeID": "00000000-0000-0000-0000-000000000009",
+          "description": "Maintenance Access to Engineering",
+          "isUnlocked": true
+        }
+      ],
+      "theme": "secret_lab_humming",
+      "isDiscovered": false
+    },
+    "00000000-0000-0000-0000-000000000008": {
+      "id": "00000000-0000-0000-0000-000000000008",
+      "name": "Test Chamber (Hidden)",
+      "soundProfile": "organic_pulsating_horror",
+      "interactables": [],
+      "connections": [
+        {
+          "toNodeID": "00000000-0000-0000-0000-000000000007",
+          "description": "Back to VFE Lab",
+          "isUnlocked": true
+        },
+        {
+          "toNodeID": "00000000-0000-0000-0000-000000000010",
+          "description": "Emergency Access to Escape Pods",
+          "isUnlocked": false
+        }
+      ],
+      "theme": "bio_horror_containment",
+      "isDiscovered": false
+    },
+    "00000000-0000-0000-0000-000000000009": {
+      "id": "00000000-0000-0000-0000-000000000009",
+      "name": "Engineering/Maintenance",
+      "soundProfile": "reactor_failing_sparks",
+      "interactables": [],
+      "connections": [
+        {
+          "toNodeID": "00000000-0000-0000-0000-000000000002",
+          "description": "Return to Main Corridor",
+          "isUnlocked": true
+        },
+        {
+          "toNodeID": "00000000-0000-0000-0000-000000000007",
+          "description": "Maintenance Access to VFE Lab",
+          "isUnlocked": false
+        }
+      ],
+      "theme": "engineering_damaged",
+      "isDiscovered": false
+    },
+    "00000000-0000-0000-0000-000000000010": {
+      "id": "00000000-0000-0000-0000-000000000010",
+      "name": "Escape Pods",
+      "soundProfile": "emergency_alarms_distant",
+      "interactables": [],
+      "connections": [
+        {
+          "toNodeID": "00000000-0000-0000-0000-000000000006",
+          "description": "Return to Cargo Bay",
+          "isUnlocked": true
+        },
+        {
+          "toNodeID": "00000000-0000-0000-0000-000000000008",
+          "description": "Emergency Access from Test Chamber",
+          "isUnlocked": false
+        }
+      ],
+      "theme": "escape_pods_damaged",
       "isDiscovered": false
     }
   }
