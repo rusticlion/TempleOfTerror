@@ -133,19 +133,8 @@ struct DiceRollView: View {
             }
 
             VStack(spacing: 20) {
-                HStack(spacing: 10) {
-                    let totalDice = diceValues.count
-                    ForEach(0..<totalDice, id: \.self) { index in
-                        Image(systemName: "die.face.\(diceValues[index]).fill")
-                            .font(.largeTitle)
-                            .foregroundColor(index >= (totalDice - extraDiceFromPush) ? .cyan : .primary)
-                            .rotationEffect(.degrees(diceRotations.indices.contains(index) ? diceRotations[index] : 0))
-                            .offset(diceOffsets.indices.contains(index) ? diceOffsets[index] : .zero)
-                            .opacity(fadeOthers && index != highlightIndex ? 0.5 : 1.0)
-                            .scaleEffect(index == highlightIndex ? popScale : 1.0)
-                            .shadow(color: index == highlightIndex ? .cyan : .clear, radius: index == highlightIndex ? 10 : 0)
-                    }
-                }
+                SceneKitDiceView(diceCount: diceValues.count)
+                    .frame(height: 200)
 
                 if result == nil {
                     Button {
