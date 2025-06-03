@@ -107,7 +107,8 @@ struct ContentView: View {
 
                     HStack {
                         CharacterSelectorView(characters: viewModel.gameState.party,
-                                              selectedCharacterID: $selectedCharacterID)
+                                              selectedCharacterID: $selectedCharacterID,
+                                              movementMode: viewModel.partyMovementMode)
 
                         Button {
                             withAnimation {
@@ -125,10 +126,12 @@ struct ContentView: View {
                         Button {
                             viewModel.toggleMovementMode()
                         } label: {
-                            Text("Movement: \(viewModel.partyMovementMode == .grouped ? "Grouped" : "Solo")")
+                            Text(viewModel.partyMovementMode == .grouped ? "Split Up" : "Stick Together")
                         }
                         .padding()
                         .background(.thinMaterial, in: Capsule())
+                        .disabled(viewModel.partyMovementMode == .solo && !viewModel.canRegroup())
+                        .opacity(viewModel.partyMovementMode == .solo && !viewModel.canRegroup() ? 0.6 : 1)
 
                         Spacer()
 

@@ -631,8 +631,19 @@ class GameViewModel: ObservableObject {
         return unique.count > 1
     }
 
+    /// Whether all party members currently share the same node.
+    func canRegroup() -> Bool {
+        !isPartyActuallySplit()
+    }
+
     func toggleMovementMode() {
-        partyMovementMode = (partyMovementMode == .grouped) ? .solo : .grouped
+        if partyMovementMode == .grouped {
+            partyMovementMode = .solo
+        } else {
+            if canRegroup() {
+                partyMovementMode = .grouped
+            }
+        }
     }
 }
 
