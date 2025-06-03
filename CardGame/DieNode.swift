@@ -43,7 +43,6 @@ class DieNode {
                     } else {
                         // Fallback if USDZ can't be loaded for measurement
                         // This means calculatedEffectiveSideLength will use its default value
-                        print("Error: Could not load dice.usdz for measurement. Using default physics size.")
                     }
                     
                     // Force SceneKit to compute the bounding box.
@@ -66,17 +65,14 @@ class DieNode {
                         // or average if you prefer. Or, if you know it's a perfect cube, use one.
                         self.calculatedEffectiveSideLength = max(scaledWidth, scaledHeight, scaledLength)
                         
-                        print("DieNode: Unscaled Visual Dimensions (from USDZ): W:\(unscaledWidth), H:\(unscaledHeight), L:\(unscaledLength)")
-                        print("DieNode: Applied Scale: \(defaultScale)")
-                        print("DieNode: Calculated Scaled Visual Dimensions: W:\(scaledWidth), H:\(scaledHeight), L:\(scaledLength)")
-                        print("DieNode: Using Effective Side Length for Physics: \(self.calculatedEffectiveSideLength)")
+                        // Debug logging removed
                     } else if visualNode.geometry != nil { // Fallback for the fallback visual box if USDZ failed
                         let (minBounds, maxBounds) = visualNode.boundingBox // visualNode is already scaled here
                         let visualWidth = maxBounds.x - minBounds.x
                         let visualHeight = maxBounds.y - minBounds.y
                         let visualLength = maxBounds.z - minBounds.z
                         self.calculatedEffectiveSideLength = CGFloat(max(visualWidth, visualHeight, visualLength))
-                        print("DieNode: Using dimensions from fallback visual geometry: \(self.calculatedEffectiveSideLength)")
+                        // Debug logging removed
                     }
             // --- End of calculation ---
 
@@ -105,7 +101,6 @@ class DieNode {
             let v = SCNNode(geometry: fallbackBox)
             self.visualNode = v
             self.node.addChildNode(v)
-            print("Error: Could not load dice.usdz. Using fallback geometry.")
         }
     }
 

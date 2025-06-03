@@ -8,47 +8,30 @@ struct DiceRollView: View {
     let interactableID: String?
 
     @State private var diceValues: [Int] = []
-    @State private var diceOffsets: [CGSize] = []
-    @State private var diceRotations: [Double] = []
     @State private var result: DiceRollResult? = nil
     @State private var projection: RollProjectionDetails? = nil
     @State private var isRolling = false
     @State private var extraDiceFromPush = 0
     @State private var hasPushed = false
     @State private var highlightIndex: Int? = nil
-    @State private var popScale: CGFloat = 1.0
     @State private var fadeOthers = false
     @State private var showOutcome = false
     @State private var showVignette = false
 
     @StateObject private var diceController = SceneKitDiceController()
 
-    @State private var shakeTimer: Timer? = nil
 
     @Environment(\.dismiss) var dismiss
 
     private func startShaking() {
         showVignette = true
         AudioManager.shared.play(sound: "sfx_dice_shake.wav")
-        shakeTimer?.invalidate()
-        shakeTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { _ in
-            for i in 0..<diceOffsets.count {
-                diceOffsets[i] = CGSize(width: Double.random(in: -6...6), height: Double.random(in: -6...6))
-                diceRotations[i] = Double.random(in: -20...20)
-            }
-        }
     }
 
     private func stopShaking(results: [Int]) {
-        shakeTimer?.invalidate()
-        shakeTimer = nil
-        for i in 0..<diceOffsets.count {
-            diceOffsets[i] = .zero
-            diceRotations[i] = 0
-        }
+        AudioManager.shared.play(sound: "sfx_dice_land.wav")
         showVignette = false
         isRolling = false
-        AudioManager.shared.play(sound: "sfx_dice_land.wav")
         let rollResult = viewModel.performAction(for: action, with: character, interactableID: interactableID, usingDice: results)
         self.result = rollResult
         if let rolled = rollResult.actualDiceRolled {
@@ -68,21 +51,8 @@ struct DiceRollView: View {
         }
         fadeOthers = true
         diceController.highlightDie(at: highlightIndex, fadeOthers: true)
-        popDie()
         withAnimation(.spring(response: 0.4, dampingFraction: 0.5)) {
             showOutcome = true
-        }
-    }
-
-    private func popDie() {
-        AudioManager.shared.play(sound: "sfx_ui_pop.wav")
-        withAnimation(.spring(response: 0.3, dampingFraction: 0.5)) {
-            popScale = 1.3
-        }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-            withAnimation(.easeOut(duration: 0.2)) {
-                popScale = 1.0
-            }
         }
     }
 
@@ -141,8 +111,6 @@ struct DiceRollView: View {
                         viewModel.pushYourself(forCharacter: character)
                         extraDiceFromPush += 1
                         diceValues.append(1)
-                        diceOffsets.append(.zero)
-                        diceRotations.append(0)
                         hasPushed = true
                     } label: {
                         Text("Push Yourself (+1d for 2 Stress)")
@@ -176,8 +144,6 @@ struct DiceRollView: View {
             self.projection = proj
             let diceCount = max(proj.finalDiceCount, 1)
             self.diceValues = Array(repeating: 1, count: diceCount)
-            self.diceOffsets = Array(repeating: .zero, count: diceCount)
-            self.diceRotations = Array(repeating: 0, count: diceCount)
             diceController.onDiceSettled = { results in
                 self.stopShaking(results: results)
             }
