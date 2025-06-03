@@ -418,6 +418,12 @@ struct GameCondition: Codable {
     }
 }
 
+/// Represents a selectable option in a `createChoice` consequence.
+struct ChoiceOption: Codable {
+    var title: String
+    var consequences: [Consequence]
+}
+
 struct Consequence: Codable {
     enum ConsequenceKind: String, Codable {
         case gainStress
@@ -429,6 +435,10 @@ struct Consequence: Codable {
         case addInteractable
         case addInteractableHere
         case gainTreasure
+        case modifyDice
+        case createChoice
+        case triggerEvent
+        case triggerConsequences
     }
 
     var kind: ConsequenceKind
@@ -444,6 +454,10 @@ struct Consequence: Codable {
     var inNodeID: UUID?
     var newInteractable: Interactable?
     var treasureId: String?
+    var duration: String?
+    var choiceOptions: [ChoiceOption]?
+    var eventId: String?
+    var triggered: [Consequence]?
 
     // Gating Conditions
     var conditions: [GameCondition]?
@@ -452,6 +466,7 @@ struct Consequence: Codable {
         case type, amount, level, familyId, clockName
         case fromNodeID, toNodeID, id, inNodeID
         case interactable, treasure, treasureId
+        case duration, options, eventId, consequences
         case conditions
     }
 
@@ -473,6 +488,10 @@ struct Consequence: Codable {
         inNodeID = nil
         newInteractable = nil
         treasureId = nil
+        duration = try container.decodeIfPresent(String.self, forKey: .duration)
+        choiceOptions = try container.decodeIfPresent([ChoiceOption].self, forKey: .options)
+        eventId = try container.decodeIfPresent(String.self, forKey: .eventId)
+        triggered = try container.decodeIfPresent([Consequence].self, forKey: .consequences)
 
         if resolvedKind == .removeInteractable, interactableId == "self" {
             resolvedKind = .removeSelfInteractable
@@ -539,6 +558,19 @@ struct Consequence: Codable {
         case .gainTreasure:
             try container.encode(ConsequenceKind.gainTreasure, forKey: .type)
             try container.encodeIfPresent(treasureId, forKey: .treasureId)
+        case .modifyDice:
+            try container.encode(ConsequenceKind.modifyDice, forKey: .type)
+            try container.encodeIfPresent(amount, forKey: .amount)
+            try container.encodeIfPresent(duration, forKey: .duration)
+        case .createChoice:
+            try container.encode(ConsequenceKind.createChoice, forKey: .type)
+            try container.encodeIfPresent(choiceOptions, forKey: .options)
+        case .triggerEvent:
+            try container.encode(ConsequenceKind.triggerEvent, forKey: .type)
+            try container.encodeIfPresent(eventId, forKey: .eventId)
+        case .triggerConsequences:
+            try container.encode(ConsequenceKind.triggerConsequences, forKey: .type)
+            try container.encodeIfPresent(triggered, forKey: .consequences)
         }
 
         try container.encodeIfPresent(conditions, forKey: .conditions)
@@ -609,6 +641,35 @@ extension Consequence {
     static func gainTreasure(id: String) -> Consequence {
         var c = Consequence(kind: .gainTreasure)
         c.treasureId = id
+        return c
+    }
+
+    /// Temporarily modify dice rolled for future actions.
+    static func modifyDice(amount: Int, duration: String) -> Consequence {
+        var c = Consequence(kind: .modifyDice)
+        c.amount = amount
+        c.duration = duration
+        return c
+    }
+
+    /// Present the player with a choice of options.
+    static func createChoice(options: [ChoiceOption]) -> Consequence {
+        var c = Consequence(kind: .createChoice)
+        c.choiceOptions = options
+        return c
+    }
+
+    /// Trigger a named event.
+    static func triggerEvent(id: String) -> Consequence {
+        var c = Consequence(kind: .triggerEvent)
+        c.eventId = id
+        return c
+    }
+
+    /// Trigger another set of consequences.
+    static func triggerConsequences(_ consequences: [Consequence]) -> Consequence {
+        var c = Consequence(kind: .triggerConsequences)
+        c.triggered = consequences
         return c
     }
 }

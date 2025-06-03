@@ -461,6 +461,34 @@ class GameViewModel: ObservableObject {
                     gameState.party[charIndex].modifiers.append(treasure.grantedModifier)
                     descriptions.append("Gained Treasure: \(treasure.name)!")
                 }
+            case .modifyDice:
+                if let amount = consequence.amount,
+                   let charIndex = gameState.party.firstIndex(where: { $0.id == character.id }) {
+                    let duration = consequence.duration ?? "next roll"
+                    let uses = duration == "next roll" ? 1 : 99
+                    let modifier = Modifier(bonusDice: amount,
+                                           uses: uses,
+                                           description: "Bonus from consequence")
+                    gameState.party[charIndex].modifiers.append(modifier)
+                    descriptions.append("Gain +\(amount)d for \(duration).")
+                }
+            case .createChoice:
+                // Choice handling not yet implemented; process first option if available
+                if let option = consequence.choiceOptions?.first {
+                    descriptions.append("Auto-selecting: \(option.title)")
+                    let sub = processConsequences(option.consequences, context: context)
+                    if !sub.isEmpty { descriptions.append(sub) }
+                }
+            case .triggerEvent:
+                if let id = consequence.eventId {
+                    // Placeholder for event system
+                    descriptions.append("Event triggered: \(id)")
+                }
+            case .triggerConsequences:
+                if let extra = consequence.triggered {
+                    let subDesc = processConsequences(extra, context: context)
+                    if !subDesc.isEmpty { descriptions.append(subDesc) }
+                }
             }
         }
         return descriptions.joined(separator: "\n")
