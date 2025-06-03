@@ -13,6 +13,15 @@ class DieNode {
                 container.addChildNode(child.clone())
             }
             container.scale = SCNVector3(defaultScale, defaultScale, defaultScale)
+            let shape = SCNPhysicsShape(node: container, options: [SCNPhysicsShape.Option.type: SCNPhysicsShape.ShapeType.convexHull])
+            let body = SCNPhysicsBody(type: .dynamic, shape: shape)
+            body.mass = 1.0
+            body.friction = 0.8
+            body.restitution = 0.2
+            body.rollingFriction = 0.5
+            body.damping = 0.5
+            body.angularDamping = 0.8
+            container.physicsBody = body
             self.node = container
         } else {
             // Fallback to an empty node if the model can't be loaded
@@ -20,5 +29,13 @@ class DieNode {
             node.scale = SCNVector3(defaultScale, defaultScale, defaultScale)
             self.node = node
         }
+    }
+
+    func prepareForRoll(at position: SCNVector3) {
+        node.position = position
+        node.eulerAngles = SCNVector3Zero
+        node.physicsBody?.clearAllForces()
+        node.physicsBody?.velocity = SCNVector3Zero
+        node.physicsBody?.angularVelocity = SCNVector4Zero
     }
 }
