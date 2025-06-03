@@ -20,6 +20,7 @@ class ContentLoader {
     let harmFamilies: [HarmFamily]
     let harmFamilyDict: [String: HarmFamily]
     let treasureTemplates: [Treasure]
+    let clockTemplates: [GameClock]
 
     /// Initialize a loader for a specific scenario directory.
     init(scenario: String = "tomb") {
@@ -29,6 +30,7 @@ class ContentLoader {
         self.harmFamilies = Self.load("harm_families.json", for: scenario)
         self.harmFamilyDict = Dictionary(uniqueKeysWithValues: harmFamilies.map { ($0.id, $0) })
         self.treasureTemplates = Self.load("treasures.json", for: scenario)
+        self.clockTemplates = Self.load("clocks.json", for: scenario)
     }
 
     private static func url(for filename: String, scenario: String) -> URL? {

@@ -272,6 +272,43 @@ struct GameClock: Identifiable, Codable {
     var name: String
     var segments: Int // e.g., 6
     var progress: Int
+    var onCompleteConsequences: [Consequence]? = nil
+    var onTickConsequences: [Consequence]? = nil
+
+    enum CodingKeys: String, CodingKey {
+        case name, segments, progress
+        case onCompleteConsequences, onTickConsequences
+    }
+
+    init(name: String,
+         segments: Int,
+         progress: Int,
+         onCompleteConsequences: [Consequence]? = nil,
+         onTickConsequences: [Consequence]? = nil) {
+        self.name = name
+        self.segments = segments
+        self.progress = progress
+        self.onCompleteConsequences = onCompleteConsequences
+        self.onTickConsequences = onTickConsequences
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        name = try container.decode(String.self, forKey: .name)
+        segments = try container.decode(Int.self, forKey: .segments)
+        progress = try container.decode(Int.self, forKey: .progress)
+        onCompleteConsequences = try container.decodeIfPresent([Consequence].self, forKey: .onCompleteConsequences)
+        onTickConsequences = try container.decodeIfPresent([Consequence].self, forKey: .onTickConsequences)
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(name, forKey: .name)
+        try container.encode(segments, forKey: .segments)
+        try container.encode(progress, forKey: .progress)
+        try container.encodeIfPresent(onCompleteConsequences, forKey: .onCompleteConsequences)
+        try container.encodeIfPresent(onTickConsequences, forKey: .onTickConsequences)
+    }
 }
 
 // Models for the interactable itself

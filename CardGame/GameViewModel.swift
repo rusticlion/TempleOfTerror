@@ -430,7 +430,9 @@ class GameViewModel: ObservableObject {
                 if let clockName = consequence.clockName,
                    let amount = consequence.amount,
                    let clockIndex = gameState.activeClocks.firstIndex(where: { $0.name == clockName }) {
-                    updateClock(id: gameState.activeClocks[clockIndex].id, ticks: amount)
+                    updateClock(id: gameState.activeClocks[clockIndex].id,
+                               ticks: amount,
+                               actingCharacter: character)
                     descriptions.append("The '\(clockName)' clock progresses by \(amount).")
                 }
             case .unlockConnection:
@@ -585,11 +587,36 @@ class GameViewModel: ObservableObject {
         }
     }
 
-    private func updateClock(id: UUID, ticks: Int) {
-        if let index = gameState.activeClocks.firstIndex(where: { $0.id == id }) {
-            gameState.activeClocks[index].progress = min(gameState.activeClocks[index].segments,
-                                                         gameState.activeClocks[index].progress + ticks)
+    private func updateClock(id: UUID, ticks: Int, actingCharacter: Character? = nil) {
+        guard let index = gameState.activeClocks.firstIndex(where: { $0.id == id }) else { return }
+
+        var clock = gameState.activeClocks[index]
+        clock.progress = min(clock.segments, clock.progress + ticks)
+
+        if let tickCons = clock.onTickConsequences {
+            if let char = actingCharacter ?? gameState.party.first {
+                let context = ConsequenceContext(character: char,
+                                                 interactableID: nil,
+                                                 finalEffect: .standard,
+                                                 finalPosition: .controlled,
+                                                 isCritical: false)
+                _ = processConsequences(tickCons, context: context)
+            }
         }
+
+        if clock.progress >= clock.segments {
+            if let completeCons = clock.onCompleteConsequences,
+               let char = actingCharacter ?? gameState.party.first {
+                let context = ConsequenceContext(character: char,
+                                                 interactableID: nil,
+                                                 finalEffect: .standard,
+                                                 finalPosition: .controlled,
+                                                 isCritical: false)
+                _ = processConsequences(completeCons, context: context)
+            }
+        }
+
+        gameState.activeClocks[index] = clock
     }
 
     func pushYourself(forCharacter character: Character) {
