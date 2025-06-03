@@ -34,6 +34,7 @@
 		464B59D32DEA5DBF0002EA59 /* TreasureTooltipView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 464B59D22DEA5DBF0002EA59 /* TreasureTooltipView.swift */; };
 		464B59D52DEA5EB60002EA59 /* HarmTooltipView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 464B59D42DEA5EB60002EA59 /* HarmTooltipView.swift */; };
 		46549A0E2DEE6F1500D17D66 /* dice.usdz in Resources */ = {isa = PBXBuildFile; fileRef = 46549A0D2DEE6F1500D17D66 /* dice.usdz */; };
+		46549A102DEE749500D17D66 /* SceneKitDiceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46549A0F2DEE749500D17D66 /* SceneKitDiceView.swift */; };
 		46A9D2292DE7D14C00FE459E /* HeaderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46A9D2282DE7D14C00FE459E /* HeaderView.swift */; };
 		46A9D22B2DE7D2E500FE459E /* StatusSheetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46A9D22A2DE7D2E500FE459E /* StatusSheetView.swift */; };
 		46A9D22D2DE7F82000FE459E /* ContentLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46A9D22C2DE7F81F00FE459E /* ContentLoader.swift */; };
@@ -95,6 +96,7 @@
 		464B59D22DEA5DBF0002EA59 /* TreasureTooltipView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TreasureTooltipView.swift; sourceTree = "<group>"; };
 		464B59D42DEA5EB60002EA59 /* HarmTooltipView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = HarmTooltipView.swift; sourceTree = "<group>"; };
 		46549A0D2DEE6F1500D17D66 /* dice.usdz */ = {isa = PBXFileReference; lastKnownFileType = file.usdz; path = dice.usdz; sourceTree = "<group>"; };
+		46549A0F2DEE749500D17D66 /* SceneKitDiceView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SceneKitDiceView.swift; sourceTree = "<group>"; };
 		46A9D2282DE7D14C00FE459E /* HeaderView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = HeaderView.swift; sourceTree = "<group>"; };
 		46A9D22A2DE7D2E500FE459E /* StatusSheetView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StatusSheetView.swift; sourceTree = "<group>"; };
 		46A9D22C2DE7F81F00FE459E /* ContentLoader.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ContentLoader.swift; sourceTree = "<group>"; };
@@ -152,6 +154,7 @@
 		460D624C2DE7934300D50D0C /* CardGame */ = {
 			isa = PBXGroup;
 			children = (
+				46549A0F2DEE749500D17D66 /* SceneKitDiceView.swift */,
 				46549A0C2DEE6EE100D17D66 /* 3DAssets */,
 				464B59D42DEA5EB60002EA59 /* HarmTooltipView.swift */,
 				464B59D22DEA5DBF0002EA59 /* TreasureTooltipView.swift */,
@@ -383,6 +386,7 @@
 				460D62942DE7B24600D50D0C /* CharacterSelectorView.swift in Sources */,
 				460D62902DE7AA3900D50D0C /* Models.swift in Sources */,
 				460D62982DE7B4A400D50D0C /* DiceRollView.swift in Sources */,
+				46549A102DEE749500D17D66 /* SceneKitDiceView.swift in Sources */,
 				460D62912DE7AA3900D50D0C /* PartyStatusView.swift in Sources */,
 				460D628C2DE7AA3900D50D0C /* GameViewModel.swift in Sources */,
 				464B59CD2DEA1A850002EA59 /* CharacterSheetView.swift in Sources */,
