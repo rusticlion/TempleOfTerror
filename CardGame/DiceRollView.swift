@@ -180,6 +180,9 @@ struct DiceRollView: View {
             self.diceValues = Array(repeating: 1, count: diceCount)
             self.diceOffsets = Array(repeating: .zero, count: diceCount)
             self.diceRotations = Array(repeating: 0, count: diceCount)
+            diceController.onDiceSettled = { results in
+                self.diceValues = results
+            }
         }
         .overlay(
             Group {

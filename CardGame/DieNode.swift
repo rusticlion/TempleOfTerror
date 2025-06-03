@@ -62,4 +62,40 @@ class DieNode {
         node.physicsBody?.velocity = SCNVector3Zero
         node.physicsBody?.angularVelocity = SCNVector4Zero
     }
+
+    /// Determine which face is pointing upward based on the node's orientation.
+    func updateValueFromOrientation() {
+        let transform = node.presentation.worldTransform
+        let worldUp = SCNVector3(0, 1, 0)
+
+        func dot(_ a: SCNVector3, _ b: SCNVector3) -> Float {
+            return a.x * b.x + a.y * b.y + a.z * b.z
+        }
+
+        let xPos = SCNVector3(transform.m11, transform.m12, transform.m13)
+        let yPos = SCNVector3(transform.m21, transform.m22, transform.m23)
+        let zPos = SCNVector3(transform.m31, transform.m32, transform.m33)
+
+        let axes: [(SCNVector3, Int)] = [
+            (yPos, 5),
+            (SCNVector3(-yPos.x, -yPos.y, -yPos.z), 2),
+            (xPos, 4),
+            (SCNVector3(-xPos.x, -xPos.y, -xPos.z), 3),
+            (SCNVector3(-zPos.x, -zPos.y, -zPos.z), 6),
+            (zPos, 1)
+        ]
+
+        var bestVal = 1
+        var bestDot: Float = -Float.infinity
+
+        for (vec, val) in axes {
+            let d = dot(vec, worldUp)
+            if d > bestDot {
+                bestDot = d
+                bestVal = val
+            }
+        }
+
+        self.value = bestVal
+    }
 }
