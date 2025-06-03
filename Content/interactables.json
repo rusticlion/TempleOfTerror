@@ -320,6 +320,37 @@
           }
         }
       ]
+    },
+    {
+      "id": "template_mystical_altar",
+      "title": "Mystical Altar",
+      "description": "An altar radiating ancient power",
+      "availableActions": [{
+        "name": "Channel Power",
+        "actionType": "Attune",
+        "position": "risky",
+        "effect": "standard",
+        "outcomes": {
+          "success": [
+            {
+              "type": "gainTreasure",
+              "treasureId": "treasure_minor_blessing",
+              "conditions": [{
+                "type": "requiresExactEffectLevel",
+                "effectParam": "limited"
+              }]
+            },
+            {
+              "type": "gainTreasure",
+              "treasureId": "treasure_major_blessing",
+              "conditions": [{
+                "type": "requiresMinEffectLevel",
+                "effectParam": "great"
+              }]
+            }
+          ]
+        }
+      }]
     }
   ]
 }
