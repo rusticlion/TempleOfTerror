@@ -128,6 +128,31 @@ struct Character: Identifiable, Codable {
 struct HarmTier: Codable {
     var description: String
     var penalty: Penalty? // Penalty is optional for the "Fatal" tier
+    var boon: Modifier? // Optional boon granted while this harm is active
+
+    enum CodingKeys: String, CodingKey {
+        case description, penalty, boon
+    }
+
+    init(description: String, penalty: Penalty? = nil, boon: Modifier? = nil) {
+        self.description = description
+        self.penalty = penalty
+        self.boon = boon
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        description = try container.decode(String.self, forKey: .description)
+        penalty = try container.decodeIfPresent(Penalty.self, forKey: .penalty)
+        boon = try container.decodeIfPresent(Modifier.self, forKey: .boon)
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(description, forKey: .description)
+        try container.encodeIfPresent(penalty, forKey: .penalty)
+        try container.encodeIfPresent(boon, forKey: .boon)
+    }
 }
 
 /// Defines a full "family" of related harms, from minor to fatal.

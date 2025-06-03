@@ -26,6 +26,16 @@ struct HarmTooltipView: View {
         }
     }
 
+    private func boonDescription(_ boon: Modifier) -> String {
+        var parts: [String] = []
+        if boon.bonusDice != 0 { parts.append("+\(boon.bonusDice)d") }
+        if boon.improvePosition { parts.append("Improved Position") }
+        if boon.improveEffect { parts.append("+1 Effect") }
+        let detail = parts.joined(separator: ", ")
+        if detail.isEmpty { return boon.description }
+        return "\(detail) - \(boon.description)"
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             if let tier = tier {
@@ -35,6 +45,11 @@ struct HarmTooltipView: View {
                     Text(penaltyDescription(penalty))
                         .font(.subheadline)
                         .foregroundColor(.secondary)
+                }
+                if let boon = tier.boon {
+                    Text(boonDescription(boon))
+                        .font(.subheadline)
+                        .foregroundColor(.green)
                 }
             } else {
                 Text("Unknown Harm")
