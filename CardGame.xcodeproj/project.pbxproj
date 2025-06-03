@@ -33,6 +33,7 @@
 		464B59D12DEA27510002EA59 /* MainMenuView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 464B59D02DEA27510002EA59 /* MainMenuView.swift */; };
 		464B59D32DEA5DBF0002EA59 /* TreasureTooltipView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 464B59D22DEA5DBF0002EA59 /* TreasureTooltipView.swift */; };
 		464B59D52DEA5EB60002EA59 /* HarmTooltipView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 464B59D42DEA5EB60002EA59 /* HarmTooltipView.swift */; };
+		46549A0E2DEE6F1500D17D66 /* dice.usdz in Resources */ = {isa = PBXBuildFile; fileRef = 46549A0D2DEE6F1500D17D66 /* dice.usdz */; };
 		46A9D2292DE7D14C00FE459E /* HeaderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46A9D2282DE7D14C00FE459E /* HeaderView.swift */; };
 		46A9D22B2DE7D2E500FE459E /* StatusSheetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46A9D22A2DE7D2E500FE459E /* StatusSheetView.swift */; };
 		46A9D22D2DE7F82000FE459E /* ContentLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46A9D22C2DE7F81F00FE459E /* ContentLoader.swift */; };
@@ -93,6 +94,7 @@
 		464B59D02DEA27510002EA59 /* MainMenuView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MainMenuView.swift; sourceTree = "<group>"; };
 		464B59D22DEA5DBF0002EA59 /* TreasureTooltipView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TreasureTooltipView.swift; sourceTree = "<group>"; };
 		464B59D42DEA5EB60002EA59 /* HarmTooltipView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = HarmTooltipView.swift; sourceTree = "<group>"; };
+		46549A0D2DEE6F1500D17D66 /* dice.usdz */ = {isa = PBXFileReference; lastKnownFileType = file.usdz; path = dice.usdz; sourceTree = "<group>"; };
 		46A9D2282DE7D14C00FE459E /* HeaderView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = HeaderView.swift; sourceTree = "<group>"; };
 		46A9D22A2DE7D2E500FE459E /* StatusSheetView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StatusSheetView.swift; sourceTree = "<group>"; };
 		46A9D22C2DE7F81F00FE459E /* ContentLoader.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ContentLoader.swift; sourceTree = "<group>"; };
@@ -150,6 +152,7 @@
 		460D624C2DE7934300D50D0C /* CardGame */ = {
 			isa = PBXGroup;
 			children = (
+				46549A0C2DEE6EE100D17D66 /* 3DAssets */,
 				464B59D42DEA5EB60002EA59 /* HarmTooltipView.swift */,
 				464B59D22DEA5DBF0002EA59 /* TreasureTooltipView.swift */,
 				464B59D02DEA27510002EA59 /* MainMenuView.swift */,
@@ -218,6 +221,14 @@
 				460D628A2DE7AA3900D50D0C /* Preview Assets.xcassets */,
 			);
 			path = "Preview Content";
+			sourceTree = "<group>";
+		};
+		46549A0C2DEE6EE100D17D66 /* 3DAssets */ = {
+			isa = PBXGroup;
+			children = (
+				46549A0D2DEE6F1500D17D66 /* dice.usdz */,
+			);
+			path = 3DAssets;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -326,6 +337,7 @@
 			files = (
 				46A9D2302DE7F85F00FE459E /* Content in Resources */,
 				460D62552DE7934600D50D0C /* Preview Assets.xcassets in Resources */,
+				46549A0E2DEE6F1500D17D66 /* dice.usdz in Resources */,
 				460D62522DE7934600D50D0C /* Assets.xcassets in Resources */,
 				464B59CB2DE817190002EA59 /* AssetPlaceholders in Resources */,
 			);
