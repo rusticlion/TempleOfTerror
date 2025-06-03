@@ -9,7 +9,7 @@ struct NodeConnectionsView: View {
             Text("Paths from this room")
                 .font(.headline)
             if let node = currentNode {
-                ForEach(node.connections, id: \.toNodeID) { connection in
+                ForEach(Array(node.connections.enumerated()), id: \.0) { _, connection in
                     Button {
                         onMove(connection)
                     } label: {

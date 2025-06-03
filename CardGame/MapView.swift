@@ -6,6 +6,13 @@ struct MapView: View {
     @State private var nodePositions: [UUID: CGPoint] = [:]
     @State private var selectedNodeInfo: (name: String, characters: [String])? = nil
 
+    // Helper type to uniquely identify drawable connections between nodes
+    struct DrawableConnection: Identifiable {
+        let id: String
+        let fromPos: CGPoint
+        let toPos: CGPoint
+    }
+
     private func calculateNodePositions(map: DungeonMap, geometry: GeometryProxy) {
         var positions: [UUID: CGPoint] = [:]
         var queue: [(id: UUID, depth: Int)] = [(map.startingNodeID, 0)]
@@ -63,16 +70,28 @@ struct MapView: View {
         NavigationStack {
             GeometryReader { geo in
                 if let map = viewModel.gameState.dungeon {
-                    ZStack {
-                        ForEach(map.nodes.values.flatMap { node in node.connections.map { (node.id, $0) } }, id: \.1.toNodeID) { fromID, conn in
-                            if let fromPos = nodePositions[fromID], let toPos = nodePositions[conn.toNodeID] {
-                                Path { path in
-                                    path.move(to: fromPos)
-                                    path.addLine(to: toPos)
+
+                    // Build a list of uniquely identifiable connections to draw
+                    var drawableConnections: [DrawableConnection] = []
+                    for node in map.nodes.values {
+                        if let fromPos = nodePositions[node.id] {
+                            for connection in node.connections {
+                                if let toPos = nodePositions[connection.toNodeID] {
+                                    let id = "\(node.id.uuidString)-\(connection.toNodeID.uuidString)"
+                                    drawableConnections.append(DrawableConnection(id: id, fromPos: fromPos, toPos: toPos))
                                 }
-                                .stroke(Color.gray, lineWidth: 2)
-                                .zIndex(0)
                             }
+                        }
+                    }
+
+                    ZStack {
+                        ForEach(drawableConnections) { dConn in
+                            Path { path in
+                                path.move(to: dConn.fromPos)
+                                path.addLine(to: dConn.toPos)
+                            }
+                            .stroke(Color.gray, lineWidth: 2)
+                            .zIndex(0)
                         }
 
                         ForEach(Array(map.nodes.values), id: \.id) { node in
