@@ -10,6 +10,15 @@ struct RollProjectionDetails {
     var notes: [String]
 }
 
+/// Context information used when processing a list of consequences.
+struct ConsequenceContext {
+    let character: Character
+    let interactableID: String?
+    let finalEffect: RollEffect
+    let finalPosition: RollPosition
+    let isCritical: Bool
+}
+
 @MainActor
 enum PartyMovementMode {
     case grouped
@@ -174,7 +183,12 @@ class GameViewModel: ObservableObject {
     /// consequences immediately.
     func performFreeAction(for action: ActionOption, with character: Character, interactableID: String?) -> String {
         let consequences = action.outcomes[.success] ?? []
-        let description = processConsequences(consequences, forCharacter: character, interactableID: interactableID)
+        let context = ConsequenceContext(character: character,
+                                         interactableID: interactableID,
+                                         finalEffect: action.effect,
+                                         finalPosition: action.position,
+                                         isCritical: false)
+        let description = processConsequences(consequences, context: context)
         saveGame()
         return description
     }
@@ -261,8 +275,12 @@ class GameViewModel: ObservableObject {
                              finalEffect: finalEffect,
                              finalPosition: finalPosition)
         }
-
-        consequencesDescription = processConsequences(eligible, forCharacter: character, interactableID: interactableID)
+        let context = ConsequenceContext(character: character,
+                                         interactableID: interactableID,
+                                         finalEffect: finalEffect,
+                                         finalPosition: finalPosition,
+                                         isCritical: isCritical)
+        consequencesDescription = processConsequences(eligible, context: context)
 
         if isCritical && highestRoll >= 4 {
             let critMsg = "Critical Success! Effect increased to \(finalEffect.rawValue.capitalized)."
@@ -348,7 +366,12 @@ class GameViewModel: ObservableObject {
             consequences = action.outcomes[.failure] ?? []
         }
 
-        var description = processConsequences(consequences, forCharacter: leader, interactableID: interactableID)
+        let context = ConsequenceContext(character: leader,
+                                         interactableID: interactableID,
+                                         finalEffect: action.effect,
+                                         finalPosition: action.position,
+                                         isCritical: false)
+        var description = processConsequences(consequences, context: context)
 
         if let leaderIndex = gameState.party.firstIndex(where: { $0.id == leader.id }) {
             gameState.party[leaderIndex].stress += failures
@@ -367,10 +390,20 @@ class GameViewModel: ObservableObject {
                               finalEffect: nil)
     }
 
-    private func processConsequences(_ consequences: [Consequence], forCharacter character: Character, interactableID: String?) -> String {
+    private func processConsequences(_ consequences: [Consequence], context: ConsequenceContext) -> String {
         var descriptions: [String] = []
+        let character = context.character
+        let interactableID = context.interactableID
         let partyMemberId = character.id
+        let currentEffect = context.finalEffect
+        let currentPosition = context.finalPosition
         for consequence in consequences {
+            if !areConditionsMet(conditions: consequence.conditions,
+                                 forCharacter: character,
+                                 finalEffect: currentEffect,
+                                 finalPosition: currentPosition) {
+                continue
+            }
             switch consequence.kind {
             case .gainStress:
                 if let amount = consequence.amount,
