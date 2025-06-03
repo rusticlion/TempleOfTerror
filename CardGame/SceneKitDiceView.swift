@@ -90,7 +90,7 @@ struct SceneKitDiceView: UIViewRepresentable {
             length: CGFloat(wallThickness),
             chamferRadius: wallChamferRadius
         )
-        frontBackWallGeometry.firstMaterial?.diffuse.contents = floor.firstMaterial?.diffuse.contents
+        frontBackWallGeometry.firstMaterial?.diffuse.contents = nil
 
         let backWall = SCNNode(geometry: frontBackWallGeometry)
         backWall.position = SCNVector3(0, wallHeight/2 - 0.1, -traySize/2)
@@ -109,7 +109,7 @@ struct SceneKitDiceView: UIViewRepresentable {
             length: CGFloat(traySize),
             chamferRadius: wallChamferRadius
         )
-        leftRightWallGeometry.firstMaterial?.diffuse.contents = floor.firstMaterial?.diffuse.contents
+        leftRightWallGeometry.firstMaterial?.diffuse.contents = nil
 
         let leftWall = SCNNode(geometry: leftRightWallGeometry)
         leftWall.position = SCNVector3(-traySize/2, wallHeight/2 - 0.1, 0)
