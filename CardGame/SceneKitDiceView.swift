@@ -26,7 +26,6 @@ class SceneKitDiceController: NSObject, ObservableObject, SCNSceneRendererDelega
         highlightedIndex = index
         for (i, die) in dice.enumerated() {
             if let idx = index, i == idx {
-                die.setEmissiveColor(.cyan)
                 die.setOpacity(1.0)
             } else {
                 die.setEmissiveColor(die.isPushed ? .orange : nil)
