@@ -61,29 +61,43 @@ struct SceneKitDiceView: UIViewRepresentable {
 
         // Tray walls to keep dice contained
         let wallThickness: Float = 0.2
-        let wallHeight: Float = 2
-        let wallGeometry = SCNBox(width: CGFloat(traySize), height: CGFloat(wallHeight), length: CGFloat(wallThickness), chamferRadius: 0)
-        wallGeometry.firstMaterial?.diffuse.contents = floor.firstMaterial?.diffuse.contents
+        let wallHeight: Float = 2.0
+        let wallChamferRadius: CGFloat = 0.05
 
-        let backWall = SCNNode(geometry: wallGeometry)
+        // Geometry for front/back walls (top/bottom edges from camera perspective)
+        let frontBackWallGeometry = SCNBox(
+            width: CGFloat(traySize),
+            height: CGFloat(wallHeight),
+            length: CGFloat(wallThickness),
+            chamferRadius: wallChamferRadius
+        )
+        frontBackWallGeometry.firstMaterial?.diffuse.contents = floor.firstMaterial?.diffuse.contents
+
+        let backWall = SCNNode(geometry: frontBackWallGeometry)
         backWall.position = SCNVector3(0, wallHeight/2 - 0.1, -traySize/2)
         backWall.physicsBody = SCNPhysicsBody.static()
         scene.rootNode.addChildNode(backWall)
 
-        let frontWall = SCNNode(geometry: wallGeometry)
+        let frontWall = SCNNode(geometry: frontBackWallGeometry)
         frontWall.position = SCNVector3(0, wallHeight/2 - 0.1, traySize/2)
         frontWall.physicsBody = SCNPhysicsBody.static()
         scene.rootNode.addChildNode(frontWall)
 
-        let sideWallGeometry = SCNBox(width: CGFloat(wallThickness), height: CGFloat(wallHeight), length: CGFloat(traySize), chamferRadius: 0)
-        sideWallGeometry.firstMaterial?.diffuse.contents = floor.firstMaterial?.diffuse.contents
+        // Geometry for left/right walls
+        let leftRightWallGeometry = SCNBox(
+            width: CGFloat(wallThickness),
+            height: CGFloat(wallHeight),
+            length: CGFloat(traySize),
+            chamferRadius: wallChamferRadius
+        )
+        leftRightWallGeometry.firstMaterial?.diffuse.contents = floor.firstMaterial?.diffuse.contents
 
-        let leftWall = SCNNode(geometry: sideWallGeometry)
+        let leftWall = SCNNode(geometry: leftRightWallGeometry)
         leftWall.position = SCNVector3(-traySize/2, wallHeight/2 - 0.1, 0)
         leftWall.physicsBody = SCNPhysicsBody.static()
         scene.rootNode.addChildNode(leftWall)
 
-        let rightWall = SCNNode(geometry: sideWallGeometry)
+        let rightWall = SCNNode(geometry: leftRightWallGeometry)
         rightWall.position = SCNVector3(traySize/2, wallHeight/2 - 0.1, 0)
         rightWall.physicsBody = SCNPhysicsBody.static()
         scene.rootNode.addChildNode(rightWall)
