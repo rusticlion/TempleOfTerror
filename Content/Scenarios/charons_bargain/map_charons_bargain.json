@@ -1,0 +1,29 @@
+{
+  "startingNodeID": "00000000-0000-0000-0000-000000000001",
+  "nodes": {
+    "00000000-0000-0000-0000-000000000001": {
+      "id": "00000000-0000-0000-0000-000000000001",
+      "name": "Docking Bay",
+      "soundProfile": "metal_echoes",
+      "interactables": [],
+      "connections": [
+        {
+          "toNodeID": "00000000-0000-0000-0000-000000000002",
+          "description": "Proceed to Main Corridor",
+          "isUnlocked": true
+        }
+      ],
+      "theme": "industrial_docking",
+      "isDiscovered": true
+    },
+    "00000000-0000-0000-0000-000000000002": {
+      "id": "00000000-0000-0000-0000-000000000002",
+      "name": "Main Corridor",
+      "soundProfile": "metal_echoes",
+      "interactables": [],
+      "connections": [],
+      "theme": "industrial_corridor",
+      "isDiscovered": false
+    }
+  }
+}

@@ -675,7 +675,8 @@ class GameViewModel: ObservableObject {
         // selected scenario.
         ContentLoader.shared = ContentLoader(scenario: scenario)
         let generator = DungeonGenerator(content: ContentLoader.shared)
-        let (newDungeon, generatedClocks) = generator.generate(level: 1)
+        let manifest = ContentLoader.shared.scenarioManifest
+        let (newDungeon, generatedClocks) = generator.generate(level: 1, manifest: manifest)
 
         self.gameState = GameState(
             scenarioName: scenario,
