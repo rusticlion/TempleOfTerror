@@ -1,0 +1,42 @@
+{
+  "families": [
+    {
+      "id": "vfe_physical_aberration",
+      "lesser": {
+        "description": "Warped Flesh",
+        "penalty": { "type": "actionPenalty", "actionType": "Command" },
+        "boon": { "improveEffect": true, "description": "VFE Mutation Surge" }
+      },
+      "moderate": {
+        "description": "Mutated Limbs",
+        "penalty": { "type": "reduceEffect" },
+        "boon": { "bonusDice": 1, "description": "Unnatural Strength" }
+      },
+      "severe": {
+        "description": "Grotesque Form",
+        "penalty": { "type": "banAction", "actionType": "Charm" },
+        "boon": { "bonusDice": 2, "description": "Feral Fury" }
+      },
+      "fatal": { "description": "Runaway Mutation" }
+    },
+    {
+      "id": "vfe_cerebral_euphoria",
+      "lesser": {
+        "description": "Strange Euphoria",
+        "penalty": { "type": "increaseStressCost", "amount": 1 },
+        "boon": { "bonusDice": 1, "description": "Heightened Focus" }
+      },
+      "moderate": {
+        "description": "Mental Expansion",
+        "penalty": { "type": "actionPenalty", "actionType": "Hack" },
+        "boon": { "improvePosition": true, "description": "Mental Clarity" }
+      },
+      "severe": {
+        "description": "Psychic Overload",
+        "penalty": { "type": "banAction", "actionType": "Study" },
+        "boon": { "improveEffect": true, "description": "Psychic Insight" }
+      },
+      "fatal": { "description": "Mind Shatter" }
+    }
+  ]
+}

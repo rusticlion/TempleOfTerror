@@ -106,15 +106,24 @@ class GameViewModel: ObservableObject {
             if let penalty = HarmLibrary.families[harm.familyId]?.lesser.penalty {
                 apply(penalty: penalty, description: harm.description, to: action.actionType, diceCount: &diceCount, effect: &effect, notes: &notes)
             }
+            if let boon = HarmLibrary.families[harm.familyId]?.lesser.boon {
+                apply(boon: boon, description: harm.description, to: action.actionType, diceCount: &diceCount, position: &position, effect: &effect, notes: &notes)
+            }
         }
         for harm in character.harm.moderate {
             if let penalty = HarmLibrary.families[harm.familyId]?.moderate.penalty {
                 apply(penalty: penalty, description: harm.description, to: action.actionType, diceCount: &diceCount, effect: &effect, notes: &notes)
             }
+            if let boon = HarmLibrary.families[harm.familyId]?.moderate.boon {
+                apply(boon: boon, description: harm.description, to: action.actionType, diceCount: &diceCount, position: &position, effect: &effect, notes: &notes)
+            }
         }
         for harm in character.harm.severe {
             if let penalty = HarmLibrary.families[harm.familyId]?.severe.penalty {
                 apply(penalty: penalty, description: harm.description, to: action.actionType, diceCount: &diceCount, effect: &effect, notes: &notes)
+            }
+            if let boon = HarmLibrary.families[harm.familyId]?.severe.boon {
+                apply(boon: boon, description: harm.description, to: action.actionType, diceCount: &diceCount, position: &position, effect: &effect, notes: &notes)
             }
         }
         // Apply bonuses from modifiers
@@ -554,6 +563,25 @@ class GameViewModel: ObservableObject {
             notes.append("(Cannot perform due to \(description))")
         default:
             break
+        }
+    }
+
+    private func apply(boon: Modifier, description: String, to actionType: String, diceCount: inout Int, position: inout RollPosition, effect: inout RollEffect, notes: inout [String]) {
+        if let specific = boon.applicableToAction, specific != actionType { return }
+
+        if boon.bonusDice != 0 {
+            diceCount += boon.bonusDice
+            notes.append("(+\(boon.bonusDice)d from \(description))")
+        }
+
+        if boon.improvePosition {
+            position = position.improved()
+            notes.append("(Improved Position from \(description))")
+        }
+
+        if boon.improveEffect {
+            effect = effect.increased()
+            notes.append("(+1 Effect from \(description))")
         }
     }
 
