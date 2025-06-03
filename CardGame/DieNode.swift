@@ -1,16 +1,23 @@
 import SceneKit
+import UIKit
 
 class DieNode {
     var node: SCNNode
+    /// The node containing the visible dice geometry.
+    /// Stored so materials can be modified later for highlighting.
+    var visualNode: SCNNode
     var value: Int = 1
+    var isPushed: Bool = false
     private let defaultScale: Float = 0.01
     private var calculatedEffectiveSideLength: CGFloat = 0.8 // Default fallback
 
     init() {
+        // Prepare base nodes
+        self.node = SCNNode()
+        self.visualNode = SCNNode()
+
         if let sceneURL = Bundle.main.url(forResource: "dice", withExtension: "usdz"),
            let diceScene = try? SCNScene(url: sceneURL, options: nil) {
-            // Outer node will hold the physics body
-            self.node = SCNNode()
 
             // Child node for the visual model
             let visualNode = SCNNode()
@@ -18,6 +25,7 @@ class DieNode {
                 visualNode.addChildNode(child.clone())
             }
             visualNode.scale = SCNVector3(defaultScale, defaultScale, defaultScale)
+            self.visualNode = visualNode
             self.node.addChildNode(visualNode)
             
             // --- Calculate effective side length from the scaled visualNode ---
@@ -92,10 +100,11 @@ class DieNode {
 
             self.node.physicsBody = body
         } else {
-            // Fallback to an empty node if the model can't be loaded
-            self.node = SCNNode()
+            // Fallback to a simple cube if the model can't be loaded
             let fallbackBox = SCNBox(width: calculatedEffectiveSideLength, height: calculatedEffectiveSideLength, length: calculatedEffectiveSideLength, chamferRadius: 0.05)
-            self.node.geometry = fallbackBox
+            let v = SCNNode(geometry: fallbackBox)
+            self.visualNode = v
+            self.node.addChildNode(v)
             print("Error: Could not load dice.usdz. Using fallback geometry.")
         }
     }
@@ -147,5 +156,35 @@ class DieNode {
         }
 
         self.value = bestVal
+    }
+
+    private func traverse(node: SCNNode, apply: (SCNMaterial) -> Void) {
+        if let materials = node.geometry?.materials {
+            for m in materials {
+                apply(m)
+            }
+        }
+        for child in node.childNodes {
+            traverse(node: child, apply: apply)
+        }
+    }
+
+    func setEmissiveColor(_ color: UIColor?) {
+        traverse(node: visualNode) { material in
+            material.emission.contents = color
+        }
+    }
+
+    func setOpacity(_ opacity: CGFloat) {
+        visualNode.opacity = opacity
+    }
+
+    func markPushed(_ pushed: Bool) {
+        isPushed = pushed
+        if pushed {
+            setEmissiveColor(UIColor.orange)
+        } else {
+            setEmissiveColor(nil)
+        }
     }
 }
