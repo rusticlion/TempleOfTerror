@@ -7,6 +7,7 @@ struct ContentView: View {
     @State private var selectedCharacterID: UUID? // Track selected character
     @State private var showingStatusSheet = false // Controls the party sheet
     @State private var showingMap = false // Controls the map sheet
+    @State private var showingCharacterSheet = false // Controls the character drawer
     @State private var doorProgress: CGFloat = 0 // For sliding door transition
     @Environment(\.scenePhase) private var scenePhase
 
@@ -47,18 +48,13 @@ struct ContentView: View {
         ZStack {
             VStack(spacing: 0) {
                 HeaderView(
-                    title: viewModel.getNodeName(for: selectedCharacterID) ?? "Unknown Location",
-                    characters: viewModel.gameState.party,
-                    selectedCharacterID: $selectedCharacterID
+                    title: viewModel.getNodeName(for: selectedCharacterID) ?? "Unknown Location"
                 )
 
                 ScrollView {
                     VStack(alignment: .leading, spacing: 16) {
 
-                        if let character = selectedCharacter {
-                            CharacterSheetView(character: character)
-                            Divider()
-                        }
+
 
                         if let node = viewModel.node(for: selectedCharacterID) {
                             VStack(alignment: .leading, spacing: 16) {
@@ -102,36 +98,53 @@ struct ContentView: View {
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
 
-                HStack {
-                    Button {
-                        viewModel.toggleMovementMode()
-                    } label: {
-                        Text("Movement: \(viewModel.partyMovementMode == .grouped ? "Grouped" : "Solo")")
-                    }
-                    .padding()
-                    .background(.thinMaterial, in: Capsule())
+                VStack(spacing: 8) {
+                    HStack {
+                        CharacterSelectorView(characters: viewModel.gameState.party,
+                                              selectedCharacterID: $selectedCharacterID)
 
-                    Spacer()
-
-                    Button {
-                        showingStatusSheet.toggle()
-                    } label: {
-                        Image(systemName: "person.3.fill")
-                        Text("Party")
+                        Button {
+                            showingCharacterSheet.toggle()
+                        } label: {
+                            Image(systemName: "chevron.up")
+                                .padding(6)
+                                .background(.thinMaterial, in: Circle())
+                        }
                     }
-                    .padding()
-                    .background(.thinMaterial, in: Capsule())
+                    .padding(.horizontal)
 
-                    Button {
-                        showingMap.toggle()
-                    } label: {
-                        Image(systemName: "map")
-                        Text("Map")
+                    HStack {
+                        Button {
+                            viewModel.toggleMovementMode()
+                        } label: {
+                            Text("Movement: \(viewModel.partyMovementMode == .grouped ? "Grouped" : "Solo")")
+                        }
+                        .padding()
+                        .background(.thinMaterial, in: Capsule())
+
+                        Spacer()
+
+                        Button {
+                            showingStatusSheet.toggle()
+                        } label: {
+                            Image(systemName: "person.3.fill")
+                            Text("Party")
+                        }
+                        .padding()
+                        .background(.thinMaterial, in: Capsule())
+
+                        Button {
+                            showingMap.toggle()
+                        } label: {
+                            Image(systemName: "map")
+                            Text("Map")
+                        }
+                        .padding()
+                        .background(.thinMaterial, in: Capsule())
                     }
-                    .padding()
-                    .background(.thinMaterial, in: Capsule())
+                    .padding(.horizontal)
                 }
-                .padding()
+                .padding(.vertical)
             }
             .disabled(viewModel.gameState.status == .gameOver)
             .sheet(item: $pendingAction) { action in
@@ -175,9 +188,24 @@ struct ContentView: View {
         .sheet(isPresented: $showingMap) {
             MapView(viewModel: viewModel)
         }
+        .sheet(isPresented: $showingCharacterSheet) {
+            if let character = selectedCharacter {
+                CharacterSheetView(character: character)
+            } else {
+                Text("No character selected")
+            }
+        }
         .onChange(of: scenePhase) { phase in
             if phase != .active {
                 viewModel.saveGame()
+            }
+        }
+        .navigationBarBackButtonHidden(true)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button(action: {}) {
+                    Image(systemName: "gearshape")
+                }
             }
         }
     }
