@@ -9,7 +9,7 @@ class SceneKitDiceController: ObservableObject {
             let spread = Float(index) - Float(dice.count - 1) / 2
             let pos = SCNVector3(spread * 1.2 + Float.random(in: -0.2...0.2), 1.0, Float.random(in: -0.2...0.2))
             die.prepareForRoll(at: pos)
-            let force = SCNVector3(Float.random(in: -2...2), Float.random(in: 5...9), Float.random(in: -2...2))
+            let force = SCNVector3(Float.random(in: -2...2), Float.random(in: 0.2...0.5), Float.random(in: -2...2))
             die.node.physicsBody?.applyForce(force, asImpulse: true)
             let torque = SCNVector4(Float.random(in: -1...1), Float.random(in: -1...1), Float.random(in: -1...1), Float.random(in: -3...3))
             die.node.physicsBody?.applyTorque(torque, asImpulse: true)
@@ -30,7 +30,7 @@ struct SceneKitDiceView: UIViewRepresentable {
         // Camera looking straight down into the tray
         let cameraNode = SCNNode()
         cameraNode.camera = SCNCamera()
-        cameraNode.position = SCNVector3(x: 0, y: 6, z: 0)
+        cameraNode.position = SCNVector3(x: 0, y: 10, z: 0)
         cameraNode.eulerAngles = SCNVector3(-Float.pi / 2, 0, 0)
         scene.rootNode.addChildNode(cameraNode)
 
