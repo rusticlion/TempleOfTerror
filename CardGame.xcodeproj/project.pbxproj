@@ -103,10 +103,10 @@
 		46A9D22A2DE7D2E500FE459E /* StatusSheetView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StatusSheetView.swift; sourceTree = "<group>"; };
 		46A9D22C2DE7F81F00FE459E /* ContentLoader.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ContentLoader.swift; sourceTree = "<group>"; };
 		46A9D22F2DE7F85F00FE459E /* Content */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Content; sourceTree = "<group>"; };
-                46A9D2312DE7FAF100FE459E /* DungeonGenerator.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DungeonGenerator.swift; sourceTree = "<group>"; };
-                46A9D2332DE8001F00FE459E /* AudioManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AudioManager.swift; sourceTree = "<group>"; };
-                46D0A0022DF9EE0000FF1111 /* SceneKitDiceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneKitDiceView.swift; sourceTree = "<group>"; };
-                46D0A0042DF9EE0000FF1111 /* DieNode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DieNode.swift; sourceTree = "<group>"; };
+		46A9D2312DE7FAF100FE459E /* DungeonGenerator.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DungeonGenerator.swift; sourceTree = "<group>"; };
+		46A9D2332DE8001F00FE459E /* AudioManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AudioManager.swift; sourceTree = "<group>"; };
+		46D0A0022DF9EE0000FF1111 /* SceneKitDiceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneKitDiceView.swift; sourceTree = "<group>"; };
+		46D0A0042DF9EE0000FF1111 /* DieNode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DieNode.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
