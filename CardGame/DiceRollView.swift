@@ -21,6 +21,8 @@ struct DiceRollView: View {
     @State private var showOutcome = false
     @State private var showVignette = false
 
+    @StateObject private var diceController = SceneKitDiceController()
+
     @State private var shakeTimer: Timer? = nil
 
     @Environment(\.dismiss) var dismiss
@@ -133,7 +135,7 @@ struct DiceRollView: View {
             }
 
             VStack(spacing: 20) {
-                SceneKitDiceView(diceCount: diceValues.count)
+                SceneKitDiceView(controller: diceController, diceCount: diceValues.count)
                     .frame(height: 200)
 
                 if result == nil {
@@ -158,6 +160,7 @@ struct DiceRollView: View {
                 Button("Roll the Dice!") {
                     isRolling = true
                     startShaking()
+                    diceController.rollDice()
                 }
                 .buttonStyle(.borderedProminent)
                 .controlSize(.large)

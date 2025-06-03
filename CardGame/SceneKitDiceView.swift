@@ -1,16 +1,25 @@
 import SwiftUI
 import SceneKit
 
+class SceneKitDiceController: ObservableObject {
+    fileprivate var dice: [DieNode] = []
+
+    func rollDice() {
+        for (index, die) in dice.enumerated() {
+            let spread = Float(index) - Float(dice.count - 1) / 2
+            let pos = SCNVector3(spread * 1.2 + Float.random(in: -0.2...0.2), 1.0, Float.random(in: -0.2...0.2))
+            die.prepareForRoll(at: pos)
+            let force = SCNVector3(Float.random(in: -2...2), Float.random(in: 5...9), Float.random(in: -2...2))
+            die.node.physicsBody?.applyForce(force, asImpulse: true)
+            let torque = SCNVector4(Float.random(in: -1...1), Float.random(in: -1...1), Float.random(in: -1...1), Float.random(in: -3...3))
+            die.node.physicsBody?.applyTorque(torque, asImpulse: true)
+        }
+    }
+}
+
 struct SceneKitDiceView: UIViewRepresentable {
+    @ObservedObject var controller: SceneKitDiceController
     let diceCount: Int
-
-    class Coordinator {
-        var dice: [DieNode] = []
-    }
-
-    func makeCoordinator() -> Coordinator {
-        Coordinator()
-    }
 
     func makeUIView(context: Context) -> SCNView {
         let scnView = SCNView()
@@ -63,7 +72,7 @@ struct SceneKitDiceView: UIViewRepresentable {
                 Float.random(in: -4...4)
             )
             scene.rootNode.addChildNode(die.node)
-            context.coordinator.dice.append(die)
+            controller.dice.append(die)
         }
 
         return scnView
@@ -72,8 +81,8 @@ struct SceneKitDiceView: UIViewRepresentable {
     func updateUIView(_ uiView: SCNView, context: Context) {
         guard let scene = uiView.scene else { return }
 
-        if context.coordinator.dice.count < diceCount {
-            for _ in context.coordinator.dice.count..<diceCount {
+        if controller.dice.count < diceCount {
+            for _ in controller.dice.count..<diceCount {
                 let die = DieNode()
                 die.node.position = SCNVector3(
                     Float.random(in: -4...4),
@@ -81,11 +90,11 @@ struct SceneKitDiceView: UIViewRepresentable {
                     Float.random(in: -4...4)
                 )
                 scene.rootNode.addChildNode(die.node)
-                context.coordinator.dice.append(die)
+                controller.dice.append(die)
             }
-        } else if context.coordinator.dice.count > diceCount {
-            while context.coordinator.dice.count > diceCount {
-                let die = context.coordinator.dice.removeLast()
+        } else if controller.dice.count > diceCount {
+            while controller.dice.count > diceCount {
+                let die = controller.dice.removeLast()
                 die.node.removeFromParentNode()
             }
         }
