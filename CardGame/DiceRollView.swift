@@ -37,12 +37,9 @@ struct DiceRollView: View {
                 diceRotations[i] = Double.random(in: -20...20)
             }
         }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-            stopShaking()
-        }
     }
 
-    private func stopShaking() {
+    private func stopShaking(results: [Int]) {
         shakeTimer?.invalidate()
         shakeTimer = nil
         for i in 0..<diceOffsets.count {
@@ -52,7 +49,7 @@ struct DiceRollView: View {
         showVignette = false
         isRolling = false
         AudioManager.shared.play(sound: "sfx_dice_land.wav")
-        let rollResult = viewModel.performAction(for: action, with: character, interactableID: interactableID)
+        let rollResult = viewModel.performAction(for: action, with: character, interactableID: interactableID, usingDice: results)
         self.result = rollResult
         if let rolled = rollResult.actualDiceRolled {
             self.diceValues = rolled
@@ -181,7 +178,7 @@ struct DiceRollView: View {
             self.diceOffsets = Array(repeating: .zero, count: diceCount)
             self.diceRotations = Array(repeating: 0, count: diceCount)
             diceController.onDiceSettled = { results in
-                self.diceValues = results
+                self.stopShaking(results: results)
             }
         }
         .overlay(

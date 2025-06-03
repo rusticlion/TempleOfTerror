@@ -180,7 +180,10 @@ class GameViewModel: ObservableObject {
     }
 
     /// The main dice roll function, now returns the result for the UI.
-    func performAction(for action: ActionOption, with character: Character, interactableID: String?) -> DiceRollResult {
+    func performAction(for action: ActionOption,
+                       with character: Character,
+                       interactableID: String?,
+                       usingDice diceResults: [Int]? = nil) -> DiceRollResult {
         if action.isGroupAction {
             return performGroupAction(for: action, leader: character, interactableID: interactableID)
         }
@@ -200,20 +203,36 @@ class GameViewModel: ObservableObject {
         var highestRoll: Int
         var isCritical = false
 
-        if character.actions[action.actionType] ?? 0 == 0 {
-            let d1 = Int.random(in: 1...6)
-            let d2 = Int.random(in: 1...6)
-            actualDiceRolled = [d1, d2]
-            highestRoll = min(d1, d2)
-            if d1 == 6 && d2 == 6 { isCritical = true }
-        } else {
-            let dicePool = max(projection.finalDiceCount, 1)
-            for _ in 0..<dicePool {
-                actualDiceRolled.append(Int.random(in: 1...6))
+        if let provided = diceResults {
+            actualDiceRolled = provided
+            if character.actions[action.actionType] ?? 0 == 0 {
+                if provided.count >= 2 {
+                    highestRoll = min(provided[0], provided[1])
+                    if provided[0] == 6 && provided[1] == 6 { isCritical = true }
+                } else {
+                    highestRoll = provided.min() ?? 0
+                }
+            } else {
+                highestRoll = provided.max() ?? 0
+                let sixes = provided.filter { $0 == 6 }.count
+                if sixes > 1 { isCritical = true }
             }
-            highestRoll = actualDiceRolled.max() ?? 0
-            let sixes = actualDiceRolled.filter { $0 == 6 }.count
-            if sixes > 1 { isCritical = true }
+        } else {
+            if character.actions[action.actionType] ?? 0 == 0 {
+                let d1 = Int.random(in: 1...6)
+                let d2 = Int.random(in: 1...6)
+                actualDiceRolled = [d1, d2]
+                highestRoll = min(d1, d2)
+                if d1 == 6 && d2 == 6 { isCritical = true }
+            } else {
+                let dicePool = max(projection.finalDiceCount, 1)
+                for _ in 0..<dicePool {
+                    actualDiceRolled.append(Int.random(in: 1...6))
+                }
+                highestRoll = actualDiceRolled.max() ?? 0
+                let sixes = actualDiceRolled.filter { $0 == 6 }.count
+                if sixes > 1 { isCritical = true }
+            }
         }
 
         var consequencesToApply: [Consequence] = []
