@@ -5,9 +5,12 @@ class SceneKitDiceController: NSObject, ObservableObject, SCNSceneRendererDelega
     fileprivate var dice: [DieNode] = []
     var onDiceSettled: (([Int]) -> Void)? = nil
     private var awaitingResults = false
+    private var highlightedIndex: Int? = nil
+    var pushedDiceCount: Int = 0
 
     func rollDice() {
         awaitingResults = true
+        highlightDie(at: nil, fadeOthers: false)
         for (index, die) in dice.enumerated() {
             let spread = Float(index) - Float(dice.count - 1) / 2
             let pos = SCNVector3(spread * 1.2 + Float.random(in: -0.2...0.2), 1.0, Float.random(in: -0.2...0.2))
@@ -16,6 +19,19 @@ class SceneKitDiceController: NSObject, ObservableObject, SCNSceneRendererDelega
             die.node.physicsBody?.applyForce(force, asImpulse: true)
             let torque = SCNVector4(Float.random(in: -1...1), Float.random(in: -1...1), Float.random(in: -1...1), Float.random(in: -3...3))
             die.node.physicsBody?.applyTorque(torque, asImpulse: true)
+        }
+    }
+
+    func highlightDie(at index: Int?, fadeOthers: Bool) {
+        highlightedIndex = index
+        for (i, die) in dice.enumerated() {
+            if let idx = index, i == idx {
+                die.setEmissiveColor(.cyan)
+                die.setOpacity(1.0)
+            } else {
+                die.setEmissiveColor(die.isPushed ? .orange : nil)
+                die.setOpacity(fadeOthers && index != nil ? 0.5 : 1.0)
+            }
         }
     }
 
@@ -38,6 +54,7 @@ class SceneKitDiceController: NSObject, ObservableObject, SCNSceneRendererDelega
 struct SceneKitDiceView: UIViewRepresentable {
     @ObservedObject var controller: SceneKitDiceController
     let diceCount: Int
+    let pushedDice: Int
     private let traySize: Float = 10
 
     func makeUIView(context: Context) -> SCNView {
@@ -126,9 +143,14 @@ struct SceneKitDiceView: UIViewRepresentable {
 
         scene.physicsWorld.gravity = SCNVector3(0, -9.8, 0)
 
+        controller.pushedDiceCount = pushedDice
+
         // Add dice nodes
-        for _ in 0..<diceCount {
+        for i in 0..<diceCount {
             let die = DieNode()
+            if i >= diceCount - pushedDice {
+                die.markPushed(true)
+            }
             die.node.position = SCNVector3(
                 Float.random(in: -(traySize/2 - 1)...(traySize/2 - 1)),
                 1.0,
@@ -144,9 +166,14 @@ struct SceneKitDiceView: UIViewRepresentable {
     func updateUIView(_ uiView: SCNView, context: Context) {
         guard let scene = uiView.scene else { return }
 
+        controller.pushedDiceCount = pushedDice
+
         if controller.dice.count < diceCount {
-            for _ in controller.dice.count..<diceCount {
+            for i in controller.dice.count..<diceCount {
                 let die = DieNode()
+                if i >= diceCount - pushedDice {
+                    die.markPushed(true)
+                }
                 die.node.position = SCNVector3(
                     Float.random(in: -(traySize/2 - 1)...(traySize/2 - 1)),
                     1.0,
@@ -159,6 +186,14 @@ struct SceneKitDiceView: UIViewRepresentable {
             while controller.dice.count > diceCount {
                 let die = controller.dice.removeLast()
                 die.node.removeFromParentNode()
+            }
+        }
+
+        // Update pushed state for existing dice
+        for (i, die) in controller.dice.enumerated() {
+            let shouldBePushed = i >= diceCount - pushedDice
+            if die.isPushed != shouldBePushed {
+                die.markPushed(shouldBePushed)
             }
         }
     }

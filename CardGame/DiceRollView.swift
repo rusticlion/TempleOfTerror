@@ -67,6 +67,7 @@ struct DiceRollView: View {
             }
         }
         fadeOthers = true
+        diceController.highlightDie(at: highlightIndex, fadeOthers: true)
         popDie()
         withAnimation(.spring(response: 0.4, dampingFraction: 0.5)) {
             showOutcome = true
@@ -132,7 +133,7 @@ struct DiceRollView: View {
             }
 
             VStack(spacing: 20) {
-                SceneKitDiceView(controller: diceController, diceCount: diceValues.count)
+                SceneKitDiceView(controller: diceController, diceCount: diceValues.count, pushedDice: extraDiceFromPush)
                     .frame(height: 200)
 
                 if result == nil {
