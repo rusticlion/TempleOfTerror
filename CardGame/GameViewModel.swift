@@ -679,15 +679,14 @@ class GameViewModel: ObservableObject {
         let manifest = ContentLoader.shared.scenarioManifest
         let (newDungeon, generatedClocks) = generator.generate(level: 1, manifest: manifest)
 
+        // Use the new PartyGenerationService
+        let partyService = PartyGenerationService()
+        let initialParty = partyService.generateRandomParty()
+
         self.gameState = GameState(
             scenarioName: scenario,
-            party: [
-                Character(id: UUID(), name: "Indy", characterClass: "Archaeologist", stress: 0, harm: HarmState(), actions: ["Study": 3, "Wreck": 1]),
-                Character(id: UUID(), name: "Sallah", characterClass: "Brawler", stress: 0, harm: HarmState(), actions: ["Finesse": 2, "Survey": 2]),
-                Character(id: UUID(), name: "Marion", characterClass: "Survivor", stress: 0, harm: HarmState(), actions: ["Tinker": 2, "Attune": 1])
-            ],
+            party: initialParty, // Use the generated party here
             activeClocks: [
-                GameClock(name: "The Guardian Wakes", segments: 6, progress: 0),
                 GameClock(name: "Test Clock", segments: 4, progress: 0)
             ] + generatedClocks,
             dungeon: newDungeon,
