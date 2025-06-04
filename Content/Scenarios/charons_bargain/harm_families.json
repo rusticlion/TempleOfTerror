@@ -5,17 +5,17 @@
       "lesser": {
         "description": "Warped Flesh",
         "penalty": { "type": "actionPenalty", "actionType": "Command" },
-        "boon": { "improveEffect": true, "description": "VFE Mutation Surge" }
+        "boon": { "improveEffect": true, "description": "VFE Mutation Surge", "isOptionalToApply": false }
       },
       "moderate": {
         "description": "Mutated Limbs",
         "penalty": { "type": "reduceEffect" },
-        "boon": { "bonusDice": 1, "description": "Unnatural Strength" }
+        "boon": { "bonusDice": 1, "description": "Unnatural Strength", "isOptionalToApply": false }
       },
       "severe": {
         "description": "Grotesque Form",
         "penalty": { "type": "banAction", "actionType": "Charm" },
-        "boon": { "bonusDice": 2, "description": "Feral Fury" }
+        "boon": { "bonusDice": 2, "description": "Feral Fury", "isOptionalToApply": false }
       },
       "fatal": { "description": "Runaway Mutation" }
     },
@@ -24,17 +24,17 @@
       "lesser": {
         "description": "Strange Euphoria",
         "penalty": { "type": "increaseStressCost", "amount": 1 },
-        "boon": { "bonusDice": 1, "description": "Heightened Focus" }
+        "boon": { "bonusDice": 1, "description": "Heightened Focus", "isOptionalToApply": false }
       },
       "moderate": {
         "description": "Mental Expansion",
         "penalty": { "type": "actionPenalty", "actionType": "Hack" },
-        "boon": { "improvePosition": true, "description": "Mental Clarity" }
+        "boon": { "improvePosition": true, "description": "Mental Clarity", "isOptionalToApply": false }
       },
       "severe": {
         "description": "Psychic Overload",
         "penalty": { "type": "banAction", "actionType": "Study" },
-        "boon": { "improveEffect": true, "description": "Psychic Insight" }
+        "boon": { "improveEffect": true, "description": "Psychic Insight", "isOptionalToApply": false }
       },
       "fatal": { "description": "Mind Shatter" }
     }
