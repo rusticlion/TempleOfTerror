@@ -7,9 +7,12 @@ class SceneKitDiceController: NSObject, ObservableObject, SCNSceneRendererDelega
     private var awaitingResults = false
     private var highlightedIndex: Int? = nil
     var pushedDiceCount: Int = 0
+    /// Ensures we don't return a result until the dice have actually moved.
+    private var hasStartedRolling = false
 
     func rollDice() {
         awaitingResults = true
+        hasStartedRolling = false
         highlightDie(at: nil, fadeOthers: false)
         for (index, die) in dice.enumerated() {
             let spread = Float(index) - Float(dice.count - 1) / 2
@@ -36,6 +39,15 @@ class SceneKitDiceController: NSObject, ObservableObject, SCNSceneRendererDelega
 
     func renderer(_ renderer: SCNSceneRenderer, updateAtTime time: TimeInterval) {
         guard awaitingResults else { return }
+
+        if !hasStartedRolling {
+            let anyMoving = dice.contains { !($0.node.physicsBody?.isResting ?? true) }
+            if anyMoving {
+                hasStartedRolling = true
+            }
+            return
+        }
+
         let allResting = dice.allSatisfy { $0.node.physicsBody?.isResting ?? false }
         if allResting {
             awaitingResults = false
