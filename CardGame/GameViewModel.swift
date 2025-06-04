@@ -312,7 +312,6 @@ class GameViewModel: ObservableObject {
         var result = baseProjection
         for mod in chosenModifierStructs {
             if mod.bonusDice != 0 {
-                result.finalDiceCount += mod.bonusDice
                 result.rawDicePool += mod.bonusDice
                 result.notes.append("(+\(mod.bonusDice)d from \(mod.description))")
             }
@@ -324,6 +323,11 @@ class GameViewModel: ObservableObject {
                 result.finalEffect = result.finalEffect.increased()
                 result.notes.append("(+1 Effect from \(mod.description))")
             }
+        }
+        if baseProjection.baseDiceCount == 0 {
+            result.finalDiceCount = result.rawDicePool > 0 ? result.rawDicePool : 2
+        } else {
+            result.finalDiceCount = max(result.rawDicePool, 0)
         }
         return result
     }
