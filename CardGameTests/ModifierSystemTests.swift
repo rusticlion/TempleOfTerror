@@ -41,6 +41,7 @@ final class ModifierSystemTests: XCTestCase {
         let vm = GameViewModel()
         let base = RollProjectionDetails(baseDiceCount: 2,
                                          finalDiceCount: 2,
+                                         rawDicePool: 2,
                                          basePosition: .risky,
                                          finalPosition: .risky,
                                          baseEffect: .standard,
