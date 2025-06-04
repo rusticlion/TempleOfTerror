@@ -52,6 +52,22 @@ final class ModifierSystemTests: XCTestCase {
         XCTAssertEqual(result.finalDiceCount, 4)
     }
 
+    func testPushCancelsZeroRatingPenalty() throws {
+        let vm = GameViewModel()
+        let base = RollProjectionDetails(baseDiceCount: 0,
+                                         finalDiceCount: 2,
+                                         rawDicePool: 0,
+                                         basePosition: .risky,
+                                         finalPosition: .risky,
+                                         baseEffect: .standard,
+                                         finalEffect: .standard,
+                                         notes: [])
+        let push = Modifier(bonusDice: 1, uses: 1, isOptionalToApply: true, description: "Push")
+        let result = vm.calculateEffectiveProjection(baseProjection: base, applying: [push])
+        XCTAssertEqual(result.rawDicePool, 1)
+        XCTAssertEqual(result.finalDiceCount, 1)
+    }
+
     func testPerformActionConsumesModifier() throws {
         ContentLoader.shared = ContentLoader()
         var character = makeTestCharacter()
