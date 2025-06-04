@@ -534,8 +534,9 @@ class GameViewModel: ObservableObject {
                     conditionMet = character.treasures.contains(where: { $0.id == tId })
                 }
             case .partyHasTreasureWithTag:
-                // TODO: Implement party tag check when treasures support tags
-                print("WARN: partyHasTreasureWithTag condition not fully implemented yet.")
+                if let tag = condition.stringParam {
+                    conditionMet = self.partyHasTreasureTag(tag)
+                }
             case .clockProgress:
                 if let name = condition.stringParam,
                    let min = condition.intParam,

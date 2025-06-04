@@ -12,6 +12,33 @@ struct CharacterSheetView: View {
     @State private var selectedTreasure: Treasure? = nil
     @State private var selectedHarm: SelectedHarm? = nil
 
+    private func tier(for familyId: String, level: HarmLevel) -> HarmTier? {
+        guard let family = HarmLibrary.families[familyId] else { return nil }
+        switch level {
+        case .lesser: return family.lesser
+        case .moderate: return family.moderate
+        case .severe: return family.severe
+        }
+    }
+
+    private func shortPenaltyDescription(_ penalty: Penalty) -> String {
+        switch penalty {
+        case .reduceEffect: return "-1 Effect"
+        case .increaseStressCost(let amount): return "+\(amount) Stress cost"
+        case .actionPenalty(let actionType): return "\(actionType) -1d"
+        case .banAction(let actionType): return "No \(actionType)"
+        }
+    }
+
+    private func shortBoonDescription(_ boon: Modifier) -> String {
+        var parts: [String] = []
+        if boon.bonusDice != 0 { parts.append("+\(boon.bonusDice)d") }
+        if boon.improvePosition { parts.append("Pos+") }
+        if boon.improveEffect { parts.append("Effect+") }
+        if parts.isEmpty { return boon.description }
+        return parts.joined(separator: ", ")
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             // Identity
@@ -59,13 +86,25 @@ struct CharacterSheetView: View {
                                 Button {
                                     selectedHarm = SelectedHarm(familyId: harm.familyId, level: .lesser)
                                 } label: {
-                                    Text(harm.description)
-                                        .font(.caption2)
-                                        .foregroundColor(.primary)
-                                        .padding(4)
-                                        .frame(minWidth: 0, maxWidth: .infinity, alignment: .center)
-                                        .background(Color(UIColor.systemBackground))
-                                        .cornerRadius(4)
+                                    VStack {
+                                        Text(harm.description)
+                                        if let tier = tier(for: harm.familyId, level: .lesser) {
+                                            if let penalty = tier.penalty {
+                                                Text(shortPenaltyDescription(penalty))
+                                                    .foregroundColor(.red)
+                                            }
+                                            if let boon = tier.boon {
+                                                Text(shortBoonDescription(boon))
+                                                    .foregroundColor(.green)
+                                            }
+                                        }
+                                    }
+                                    .font(.caption2)
+                                    .foregroundColor(.primary)
+                                    .padding(4)
+                                    .frame(minWidth: 0, maxWidth: .infinity, alignment: .center)
+                                    .background(Color(UIColor.systemBackground))
+                                    .cornerRadius(4)
                                 }
                                 .buttonStyle(.plain)
                             } else {
@@ -88,13 +127,25 @@ struct CharacterSheetView: View {
                                 Button {
                                     selectedHarm = SelectedHarm(familyId: harm.familyId, level: .moderate)
                                 } label: {
-                                    Text(harm.description)
-                                        .font(.caption2)
-                                        .foregroundColor(.primary)
-                                        .padding(4)
-                                        .frame(minWidth: 0, maxWidth: .infinity, alignment: .center)
-                                        .background(Color(UIColor.systemBackground))
-                                        .cornerRadius(4)
+                                    VStack {
+                                        Text(harm.description)
+                                        if let tier = tier(for: harm.familyId, level: .moderate) {
+                                            if let penalty = tier.penalty {
+                                                Text(shortPenaltyDescription(penalty))
+                                                    .foregroundColor(.red)
+                                            }
+                                            if let boon = tier.boon {
+                                                Text(shortBoonDescription(boon))
+                                                    .foregroundColor(.green)
+                                            }
+                                        }
+                                    }
+                                    .font(.caption2)
+                                    .foregroundColor(.primary)
+                                    .padding(4)
+                                    .frame(minWidth: 0, maxWidth: .infinity, alignment: .center)
+                                    .background(Color(UIColor.systemBackground))
+                                    .cornerRadius(4)
                                 }
                                 .buttonStyle(.plain)
                             } else {
@@ -114,13 +165,25 @@ struct CharacterSheetView: View {
                         Button {
                             selectedHarm = SelectedHarm(familyId: harm.familyId, level: .severe)
                         } label: {
-                            Text(harm.description)
-                                .font(.caption2)
-                                .foregroundColor(.primary)
-                                .padding(4)
-                                .frame(minWidth: 0, maxWidth: .infinity, alignment: .center)
-                                .background(Color(UIColor.systemBackground))
-                                .cornerRadius(4)
+                            VStack {
+                                Text(harm.description)
+                                if let tier = tier(for: harm.familyId, level: .severe) {
+                                    if let penalty = tier.penalty {
+                                        Text(shortPenaltyDescription(penalty))
+                                            .foregroundColor(.red)
+                                    }
+                                    if let boon = tier.boon {
+                                        Text(shortBoonDescription(boon))
+                                            .foregroundColor(.green)
+                                    }
+                                }
+                            }
+                            .font(.caption2)
+                            .foregroundColor(.primary)
+                            .padding(4)
+                            .frame(minWidth: 0, maxWidth: .infinity, alignment: .center)
+                            .background(Color(UIColor.systemBackground))
+                            .cornerRadius(4)
                         }
                         .buttonStyle(.plain)
                     } else {
