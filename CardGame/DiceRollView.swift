@@ -9,10 +9,11 @@ struct DiceRollView: View {
 
     @State private var diceValues: [Int] = []
     @State private var result: DiceRollResult? = nil
-    @State private var projection: RollProjectionDetails? = nil
+    @State private var baseProjection: RollProjectionDetails? = nil
+    @State private var displayedProjection: RollProjectionDetails? = nil
+    @State private var availableOptionalModifiers: [SelectableModifierInfo] = []
+    @State private var chosenModifierIDs: Set<UUID> = []
     @State private var isRolling = false
-    @State private var extraDiceFromPush = 0
-    @State private var hasPushed = false
     @State private var highlightIndex: Int? = nil
     @State private var fadeOthers = false
     @State private var showOutcome = false
@@ -23,6 +24,29 @@ struct DiceRollView: View {
 
     @Environment(\.dismiss) var dismiss
 
+    private func toggleModifier(_ info: SelectableModifierInfo) {
+        if chosenModifierIDs.contains(info.id) {
+            chosenModifierIDs.remove(info.id)
+        } else {
+            chosenModifierIDs.insert(info.id)
+        }
+        let selectedMods = availableOptionalModifiers
+            .filter { chosenModifierIDs.contains($0.id) }
+            .map { $0.modifierData }
+        if let base = baseProjection {
+            let proj = viewModel.calculateEffectiveProjection(baseProjection: base,
+                                                              applying: selectedMods)
+            displayedProjection = proj
+            let diceCount = max(proj.finalDiceCount, 1)
+            diceValues = Array(repeating: 1, count: diceCount)
+        }
+    }
+
+    private var pushedDiceCount: Int {
+        guard let pushInfo = availableOptionalModifiers.first(where: { $0.description == "Push Yourself" }) else { return 0 }
+        return chosenModifierIDs.contains(pushInfo.id) ? pushInfo.modifierData.bonusDice : 0
+    }
+
     private func startShaking() {
         showVignette = true
         AudioManager.shared.play(sound: "sfx_dice_shake.wav")
@@ -32,7 +56,11 @@ struct DiceRollView: View {
         AudioManager.shared.play(sound: "sfx_dice_land.wav")
         showVignette = false
         isRolling = false
-        let rollResult = viewModel.performAction(for: action, with: character, interactableID: interactableID, usingDice: results)
+        let rollResult = viewModel.performAction(for: action,
+                                                with: character,
+                                                interactableID: interactableID,
+                                                usingDice: results,
+                                                chosenOptionalModifierIDs: Array(chosenModifierIDs))
         self.result = rollResult
         if let rolled = rollResult.actualDiceRolled {
             self.diceValues = rolled
@@ -85,7 +113,7 @@ struct DiceRollView: View {
                     Text("Rolled a \(result.highestRoll)").font(.title3)
                     Text(result.consequences).padding()
                 }
-            } else if let proj = projection {
+            } else if let proj = displayedProjection {
                 VStack(spacing: 4) {
                     Text("Dice: \(proj.finalDiceCount)d6")
                         .font(.headline)
@@ -102,23 +130,37 @@ struct DiceRollView: View {
                 }
             }
 
-            VStack(spacing: 20) {
-                SceneKitDiceView(controller: diceController, diceCount: diceValues.count, pushedDice: extraDiceFromPush)
-                    .frame(height: 200)
-
-                if result == nil {
-                    Button {
-                        viewModel.pushYourself(forCharacter: character)
-                        extraDiceFromPush += 1
-                        diceValues.append(1)
-                        hasPushed = true
-                    } label: {
-                        Text("Push Yourself (+1d for 2 Stress)")
+            if result == nil && !availableOptionalModifiers.isEmpty {
+                VStack(alignment: .leading, spacing: 8) {
+                    ForEach(availableOptionalModifiers) { info in
+                        Button {
+                            toggleModifier(info)
+                        } label: {
+                            HStack {
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(info.description).font(.subheadline)
+                                    Text(info.detailedEffect).font(.caption)
+                                }
+                                Spacer()
+                                Text(info.remainingUses).font(.caption2)
+                                if chosenModifierIDs.contains(info.id) {
+                                    Image(systemName: "checkmark.circle.fill")
+                                }
+                            }
+                            .padding(6)
+                            .frame(maxWidth: .infinity)
+                            .background(chosenModifierIDs.contains(info.id) ? Color.accentColor.opacity(0.2) : Color.clear)
+                            .cornerRadius(8)
+                        }
+                        .buttonStyle(.plain)
                     }
-                    .disabled(hasPushed)
-                    .buttonStyle(.bordered)
                 }
             }
+
+            SceneKitDiceView(controller: diceController,
+                             diceCount: diceValues.count,
+                             pushedDice: pushedDiceCount)
+                .frame(height: 200)
 
             Spacer()
 
@@ -140,9 +182,11 @@ struct DiceRollView: View {
         }
         .padding(30)
         .onAppear {
-            let proj = viewModel.calculateProjection(for: action, with: character)
-            self.projection = proj
-            let diceCount = max(proj.finalDiceCount, 1)
+            let context = viewModel.getRollContext(for: action, with: character)
+            self.baseProjection = context.baseProjection
+            self.displayedProjection = context.baseProjection
+            self.availableOptionalModifiers = context.optionalModifiers
+            let diceCount = max(context.baseProjection.finalDiceCount, 1)
             self.diceValues = Array(repeating: 1, count: diceCount)
             diceController.onDiceSettled = { results in
                 self.stopShaking(results: results)
