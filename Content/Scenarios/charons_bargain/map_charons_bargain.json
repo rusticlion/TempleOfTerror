@@ -21,7 +21,7 @@
                   "type": "triggerConsequences",
                   "consequences": [
                     {
-                      "kind": "addInteractableHere",
+                      "type": "addInteractableHere",
                       "newInteractable": {
                         "id": "cb_beacon_log_fragment",
                         "title": "Beacon Log Fragment",
