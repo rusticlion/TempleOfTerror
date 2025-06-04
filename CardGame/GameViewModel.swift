@@ -197,6 +197,131 @@ class GameViewModel: ObservableObject {
         )
     }
 
+    /// Retrieve the base roll projection along with selectable optional modifiers.
+    func getRollContext(for action: ActionOption, with character: Character) -> (baseProjection: RollProjectionDetails, optionalModifiers: [SelectableModifierInfo]) {
+        var diceCount = character.actions[action.actionType] ?? 0
+        var position = action.position
+        var effect = action.effect
+        let baseDice = diceCount
+        let basePosition = position
+        let baseEffect = effect
+        var notes: [String] = []
+
+        // Non-optional harm penalties/boons
+        for harm in character.harm.lesser {
+            if let penalty = HarmLibrary.families[harm.familyId]?.lesser.penalty {
+                apply(penalty: penalty, description: harm.description, to: action.actionType, diceCount: &diceCount, effect: &effect, notes: &notes)
+            }
+            if let boon = HarmLibrary.families[harm.familyId]?.lesser.boon {
+                apply(boon: boon, description: harm.description, to: action.actionType, diceCount: &diceCount, position: &position, effect: &effect, notes: &notes)
+            }
+        }
+        for harm in character.harm.moderate {
+            if let penalty = HarmLibrary.families[harm.familyId]?.moderate.penalty {
+                apply(penalty: penalty, description: harm.description, to: action.actionType, diceCount: &diceCount, effect: &effect, notes: &notes)
+            }
+            if let boon = HarmLibrary.families[harm.familyId]?.moderate.boon {
+                apply(boon: boon, description: harm.description, to: action.actionType, diceCount: &diceCount, position: &position, effect: &effect, notes: &notes)
+            }
+        }
+        for harm in character.harm.severe {
+            if let penalty = HarmLibrary.families[harm.familyId]?.severe.penalty {
+                apply(penalty: penalty, description: harm.description, to: action.actionType, diceCount: &diceCount, effect: &effect, notes: &notes)
+            }
+            if let boon = HarmLibrary.families[harm.familyId]?.severe.boon {
+                apply(boon: boon, description: harm.description, to: action.actionType, diceCount: &diceCount, position: &position, effect: &effect, notes: &notes)
+            }
+        }
+
+        // Always-on modifiers
+        for modifier in character.modifiers {
+            if modifier.uses == 0 { continue }
+            if modifier.isOptionalToApply { continue }
+            if let specific = modifier.applicableToAction, specific != action.actionType { continue }
+
+            if modifier.bonusDice != 0 {
+                diceCount += modifier.bonusDice
+                notes.append("(+\(modifier.bonusDice)d \(modifier.description))")
+            }
+            if modifier.improvePosition {
+                position = position.improved()
+                notes.append("(Improved Position from \(modifier.description))")
+            }
+            if modifier.improveEffect {
+                effect = effect.increased()
+                notes.append("(+1 Effect from \(modifier.description))")
+            }
+        }
+
+        diceCount = max(diceCount, 0)
+        if baseDice == 0 { notes.append("\(character.name) has 0 rating in \(action.actionType): Rolling 2d6, taking lowest.") }
+
+        let displayDice = (baseDice == 0) ? 2 : diceCount
+        let projection = RollProjectionDetails(
+            baseDiceCount: baseDice,
+            finalDiceCount: displayDice,
+            basePosition: basePosition,
+            finalPosition: position,
+            baseEffect: baseEffect,
+            finalEffect: effect,
+            notes: notes
+        )
+
+        // Gather optional modifiers
+        var optionalInfos: [SelectableModifierInfo] = []
+        for mod in character.modifiers {
+            if !mod.isOptionalToApply { continue }
+            if mod.uses == 0 { continue }
+            if let specific = mod.applicableToAction, specific != action.actionType { continue }
+
+            var effectDesc: [String] = []
+            if mod.bonusDice != 0 { effectDesc.append("+\(mod.bonusDice)d") }
+            if mod.improvePosition { effectDesc.append("Improves Position") }
+            if mod.improveEffect { effectDesc.append("+1 Effect") }
+            let detail = effectDesc.joined(separator: ", ")
+            let usesString = mod.uses > 0 ? "\(mod.uses)" : "∞"
+            let info = SelectableModifierInfo(id: mod.id,
+                                              description: mod.description,
+                                              detailedEffect: detail,
+                                              remainingUses: usesString,
+                                              modifierData: mod)
+            optionalInfos.append(info)
+        }
+
+        // Push Yourself option
+        if character.stress <= 7 {
+            let pushMod = Modifier(bonusDice: 1, uses: 1, isOptionalToApply: true, description: "Push Yourself")
+            let pushInfo = SelectableModifierInfo(id: pushMod.id,
+                                                 description: "Push Yourself",
+                                                 detailedEffect: "+1d",
+                                                 remainingUses: "Costs 2 Stress",
+                                                 modifierData: pushMod)
+            optionalInfos.append(pushInfo)
+        }
+
+        return (projection, optionalInfos)
+    }
+
+    /// Apply chosen modifiers to a base projection and return the updated projection.
+    func calculateEffectiveProjection(baseProjection: RollProjectionDetails, applying chosenModifierStructs: [Modifier]) -> RollProjectionDetails {
+        var result = baseProjection
+        for mod in chosenModifierStructs {
+            if mod.bonusDice != 0 {
+                result.finalDiceCount += mod.bonusDice
+                result.notes.append("(+\(mod.bonusDice)d from \(mod.description))")
+            }
+            if mod.improvePosition {
+                result.finalPosition = result.finalPosition.improved()
+                result.notes.append("(Improved Position from \(mod.description))")
+            }
+            if mod.improveEffect {
+                result.finalEffect = result.finalEffect.increased()
+                result.notes.append("(+1 Effect from \(mod.description))")
+            }
+        }
+        return result
+    }
+
     /// Executes a free action that does not require a roll, applying its success
     /// consequences immediately.
     func performFreeAction(for action: ActionOption, with character: Character, interactableID: String?) -> String {
@@ -215,11 +340,12 @@ class GameViewModel: ObservableObject {
     func performAction(for action: ActionOption,
                        with character: Character,
                        interactableID: String?,
-                       usingDice diceResults: [Int]? = nil) -> DiceRollResult {
+                       usingDice diceResults: [Int]? = nil,
+                       chosenOptionalModifierIDs: [UUID] = []) -> DiceRollResult {
         if action.isGroupAction {
             return performGroupAction(for: action, leader: character, interactableID: interactableID)
         }
-        guard gameState.party.contains(where: { $0.id == character.id }) else {
+        guard let charIndex = gameState.party.firstIndex(where: { $0.id == character.id }) else {
             return DiceRollResult(highestRoll: 0,
                                   outcome: "Error",
                                   consequences: "Character not found.",
@@ -228,16 +354,54 @@ class GameViewModel: ObservableObject {
                                   finalEffect: nil)
         }
 
-        let projection = calculateProjection(for: action, with: character)
-        var finalEffect = projection.finalEffect
-        let finalPosition = projection.finalPosition
+        let context = getRollContext(for: action, with: character)
+        var workingProjection = context.baseProjection
+
+        var appliedOptionalMods: [Modifier] = []
+        var consumedMessages: [String] = []
+        var updatedModifiers: [Modifier] = gameState.party[charIndex].modifiers
+
+        // Map of modifier id to index for quick lookup
+        var idToIndex: [UUID: Int] = [:]
+        for (idx, mod) in updatedModifiers.enumerated() { idToIndex[mod.id] = idx }
+
+        for id in chosenOptionalModifierIDs {
+            if let idx = idToIndex[id] {
+                var mod = updatedModifiers[idx]
+                appliedOptionalMods.append(mod)
+                if mod.uses > 0 {
+                    mod.uses -= 1
+                    if mod.uses == 0 {
+                        let name = mod.description.replacingOccurrences(of: "from ", with: "")
+                        consumedMessages.append("Used up \(name).")
+                        updatedModifiers.remove(at: idx)
+                        // update indices after removal
+                        idToIndex = [:]
+                        for (i, m) in updatedModifiers.enumerated() { idToIndex[m.id] = i }
+                        continue
+                    } else {
+                        updatedModifiers[idx] = mod
+                    }
+                }
+            } else {
+                // Treat as Push Yourself
+                appliedOptionalMods.append(Modifier(bonusDice: 1, uses: 1, isOptionalToApply: true, description: "Push Yourself"))
+                gameState.party[charIndex].stress += 2
+            }
+        }
+
+        workingProjection = calculateEffectiveProjection(baseProjection: workingProjection, applying: appliedOptionalMods)
+        var finalEffect = workingProjection.finalEffect
+        let finalPosition = workingProjection.finalPosition
+        let ratingZero = (character.actions[action.actionType] ?? 0) == 0
+        let dicePool = max(workingProjection.finalDiceCount, ratingZero ? 2 : 1)
         var actualDiceRolled: [Int] = []
         var highestRoll: Int
         var isCritical = false
 
         if let provided = diceResults {
             actualDiceRolled = provided
-            if character.actions[action.actionType] ?? 0 == 0 {
+            if ratingZero {
                 if provided.count >= 2 {
                     highestRoll = min(provided[0], provided[1])
                     if provided[0] == 6 && provided[1] == 6 { isCritical = true }
@@ -250,14 +414,13 @@ class GameViewModel: ObservableObject {
                 if sixes > 1 { isCritical = true }
             }
         } else {
-            if character.actions[action.actionType] ?? 0 == 0 {
+            if ratingZero {
                 let d1 = Int.random(in: 1...6)
                 let d2 = Int.random(in: 1...6)
                 actualDiceRolled = [d1, d2]
                 highestRoll = min(d1, d2)
                 if d1 == 6 && d2 == 6 { isCritical = true }
             } else {
-                let dicePool = max(projection.finalDiceCount, 1)
                 for _ in 0..<dicePool {
                     actualDiceRolled.append(Int.random(in: 1...6))
                 }
@@ -309,33 +472,13 @@ class GameViewModel: ObservableObject {
             }
         }
 
-        if let charIndex = gameState.party.firstIndex(where: { $0.id == character.id }) {
-            var updatedModifiers: [Modifier] = []
-            var consumedMessages: [String] = []
-            for var modifier in gameState.party[charIndex].modifiers {
-                if modifier.uses == 0 { continue }
-                if let specific = modifier.applicableToAction, specific != action.actionType {
-                    updatedModifiers.append(modifier)
-                    continue
-                }
-                if modifier.uses > 0 {
-                    modifier.uses -= 1
-                    if modifier.uses == 0 {
-                        let name = modifier.description.replacingOccurrences(of: "from ", with: "")
-                        consumedMessages.append("Used up \(name).")
-                        continue
-                    }
-                }
-                updatedModifiers.append(modifier)
-            }
-            gameState.party[charIndex].modifiers = updatedModifiers
-            if !consumedMessages.isEmpty {
-                AudioManager.shared.play(sound: "sfx_modifier_consume.wav")
-                if consequencesDescription.isEmpty {
-                    consequencesDescription = consumedMessages.joined(separator: "\n")
-                } else {
-                    consequencesDescription += "\n" + consumedMessages.joined(separator: "\n")
-                }
+        gameState.party[charIndex].modifiers = updatedModifiers
+        if !consumedMessages.isEmpty {
+            AudioManager.shared.play(sound: "sfx_modifier_consume.wav")
+            if consequencesDescription.isEmpty {
+                consequencesDescription = consumedMessages.joined(separator: "\n")
+            } else {
+                consequencesDescription += "\n" + consumedMessages.joined(separator: "\n")
             }
         }
         saveGame()
