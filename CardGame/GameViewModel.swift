@@ -3,6 +3,7 @@ import SwiftUI
 struct RollProjectionDetails {
     var baseDiceCount: Int
     var finalDiceCount: Int
+    var rawDicePool: Int
     var basePosition: RollPosition
     var finalPosition: RollPosition
     var baseEffect: RollEffect
@@ -178,6 +179,7 @@ class GameViewModel: ObservableObject {
             notes.append("Group Action: party rolls together; best result counts. Leader takes 1 Stress per failed ally.")
         }
 
+        let rawDicePool = diceCount
         diceCount = max(diceCount, 0) // Can't roll negative dice
 
         if baseDice == 0 {
@@ -189,6 +191,7 @@ class GameViewModel: ObservableObject {
         return RollProjectionDetails(
             baseDiceCount: baseDice,
             finalDiceCount: displayDice,
+            rawDicePool: rawDicePool,
             basePosition: basePosition,
             finalPosition: position,
             baseEffect: baseEffect,
@@ -253,6 +256,7 @@ class GameViewModel: ObservableObject {
             }
         }
 
+        let rawDicePool = diceCount
         diceCount = max(diceCount, 0)
         if baseDice == 0 { notes.append("\(character.name) has 0 rating in \(action.actionType): Rolling 2d6, taking lowest.") }
 
@@ -260,6 +264,7 @@ class GameViewModel: ObservableObject {
         let projection = RollProjectionDetails(
             baseDiceCount: baseDice,
             finalDiceCount: displayDice,
+            rawDicePool: rawDicePool,
             basePosition: basePosition,
             finalPosition: position,
             baseEffect: baseEffect,
@@ -307,7 +312,7 @@ class GameViewModel: ObservableObject {
         var result = baseProjection
         for mod in chosenModifierStructs {
             if mod.bonusDice != 0 {
-                result.finalDiceCount += mod.bonusDice
+                result.rawDicePool += mod.bonusDice
                 result.notes.append("(+\(mod.bonusDice)d from \(mod.description))")
             }
             if mod.improvePosition {
@@ -318,6 +323,11 @@ class GameViewModel: ObservableObject {
                 result.finalEffect = result.finalEffect.increased()
                 result.notes.append("(+1 Effect from \(mod.description))")
             }
+        }
+        if baseProjection.baseDiceCount == 0 {
+            result.finalDiceCount = result.rawDicePool > 0 ? result.rawDicePool : 2
+        } else {
+            result.finalDiceCount = max(result.rawDicePool, 0)
         }
         return result
     }
@@ -393,15 +403,16 @@ class GameViewModel: ObservableObject {
         workingProjection = calculateEffectiveProjection(baseProjection: workingProjection, applying: appliedOptionalMods)
         var finalEffect = workingProjection.finalEffect
         let finalPosition = workingProjection.finalPosition
-        let ratingZero = (character.actions[action.actionType] ?? 0) == 0
-        let dicePool = max(workingProjection.finalDiceCount, ratingZero ? 2 : 1)
+        let rawPool = workingProjection.rawDicePool
+        let useRatingZero = rawPool <= 0
+        let dicePool = useRatingZero ? 2 : rawPool
         var actualDiceRolled: [Int] = []
         var highestRoll: Int
         var isCritical = false
 
         if let provided = diceResults {
             actualDiceRolled = provided
-            if ratingZero {
+            if useRatingZero {
                 if provided.count >= 2 {
                     highestRoll = min(provided[0], provided[1])
                     if provided[0] == 6 && provided[1] == 6 { isCritical = true }
@@ -414,7 +425,7 @@ class GameViewModel: ObservableObject {
                 if sixes > 1 { isCritical = true }
             }
         } else {
-            if ratingZero {
+            if useRatingZero {
                 let d1 = Int.random(in: 1...6)
                 let d2 = Int.random(in: 1...6)
                 actualDiceRolled = [d1, d2]
