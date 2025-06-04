@@ -22,48 +22,58 @@ struct GameState: Codable {
 
 /// A general-purpose modifier that can adjust action rolls.
 struct Modifier: Codable {
+    var id: UUID = UUID()
     var bonusDice: Int = 0
     var improvePosition: Bool = false
     var improveEffect: Bool = false
     var applicableToAction: String? = nil
     var uses: Int = 1
+    var isOptionalToApply: Bool = true
     var description: String
 
     enum CodingKeys: String, CodingKey {
-        case bonusDice, improvePosition, improveEffect, applicableToAction, uses, description
+        case id, bonusDice, improvePosition, improveEffect, applicableToAction, uses, isOptionalToApply, description
     }
 
-    init(bonusDice: Int = 0,
+    init(id: UUID = UUID(),
+         bonusDice: Int = 0,
          improvePosition: Bool = false,
          improveEffect: Bool = false,
          applicableToAction: String? = nil,
          uses: Int = 1,
+         isOptionalToApply: Bool = true,
          description: String) {
+        self.id = id
         self.bonusDice = bonusDice
         self.improvePosition = improvePosition
         self.improveEffect = improveEffect
         self.applicableToAction = applicableToAction
         self.uses = uses
+        self.isOptionalToApply = isOptionalToApply
         self.description = description
     }
 
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decodeIfPresent(UUID.self, forKey: .id) ?? UUID()
         bonusDice = try container.decodeIfPresent(Int.self, forKey: .bonusDice) ?? 0
         improvePosition = try container.decodeIfPresent(Bool.self, forKey: .improvePosition) ?? false
         improveEffect = try container.decodeIfPresent(Bool.self, forKey: .improveEffect) ?? false
         applicableToAction = try container.decodeIfPresent(String.self, forKey: .applicableToAction)
         uses = try container.decodeIfPresent(Int.self, forKey: .uses) ?? 1
+        isOptionalToApply = try container.decodeIfPresent(Bool.self, forKey: .isOptionalToApply) ?? true
         description = try container.decode(String.self, forKey: .description)
     }
 
     func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
         try container.encode(bonusDice, forKey: .bonusDice)
         try container.encode(improvePosition, forKey: .improvePosition)
         try container.encode(improveEffect, forKey: .improveEffect)
         try container.encodeIfPresent(applicableToAction, forKey: .applicableToAction)
         try container.encode(uses, forKey: .uses)
+        try container.encode(isOptionalToApply, forKey: .isOptionalToApply)
         try container.encode(description, forKey: .description)
     }
 }
@@ -88,7 +98,9 @@ struct Treasure: Codable, Identifiable {
         self.id = id
         self.name = name
         self.description = description
-        self.grantedModifier = grantedModifier
+        var mod = grantedModifier
+        mod.isOptionalToApply = true
+        self.grantedModifier = mod
         self.tags = tags
     }
 
@@ -97,7 +109,9 @@ struct Treasure: Codable, Identifiable {
         id = try container.decode(String.self, forKey: .id)
         name = try container.decode(String.self, forKey: .name)
         description = try container.decode(String.self, forKey: .description)
-        grantedModifier = try container.decode(Modifier.self, forKey: .grantedModifier)
+        var mod = try container.decode(Modifier.self, forKey: .grantedModifier)
+        mod.isOptionalToApply = true
+        grantedModifier = mod
         tags = try container.decodeIfPresent([String].self, forKey: .tags) ?? []
     }
 
@@ -137,14 +151,24 @@ struct HarmTier: Codable {
     init(description: String, penalty: Penalty? = nil, boon: Modifier? = nil) {
         self.description = description
         self.penalty = penalty
-        self.boon = boon
+        if var mod = boon {
+            mod.isOptionalToApply = false
+            self.boon = mod
+        } else {
+            self.boon = nil
+        }
     }
 
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         description = try container.decode(String.self, forKey: .description)
         penalty = try container.decodeIfPresent(Penalty.self, forKey: .penalty)
-        boon = try container.decodeIfPresent(Modifier.self, forKey: .boon)
+        if var mod = try container.decodeIfPresent(Modifier.self, forKey: .boon) {
+            mod.isOptionalToApply = false
+            boon = mod
+        } else {
+            boon = nil
+        }
     }
 
     func encode(to encoder: Encoder) throws {
