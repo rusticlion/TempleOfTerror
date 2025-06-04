@@ -5,7 +5,142 @@
       "id": "00000000-0000-0000-0000-000000000001",
       "name": "Docking Bay",
       "soundProfile": "metal_echoes_large",
-      "interactables": [],
+      "interactables": [ {
+        "id": "cb_docking_beacon",
+        "title": "Damaged Emergency Beacon",
+        "description": "Sparks fly from the panel. Close inspection reveals hasty, bloody work. Last message fragment: '...medical emergency...Dr. Thorne requests immediate...aid...'",
+        "availableActions": [
+          {
+            "name": "Inspect Damage",
+            "actionType": "Survey",
+            "position": "controlled",
+            "effect": "standard",
+            "outcomes": {
+              "success": [
+                {
+                  "type": "triggerConsequences",
+                  "consequences": [
+                    {
+                      "kind": "addInteractableHere",
+                      "newInteractable": {
+                        "id": "cb_beacon_log_fragment",
+                        "title": "Beacon Log Fragment",
+                        "description": "The beacon's log contains a corrupted entry: 'Signal altered. True status: [STATIC]. Warning: VFE active. Monarch protocol...'",
+                        "availableActions": [
+                          {
+                            "name": "Study Log",
+                            "actionType": "Study",
+                            "position": "risky",
+                            "effect": "standard",
+                            "requiresTest": true,
+                            "outcomes": {
+                              "success": [
+                                { "type": "gainTreasure", "treasureId": "cb_dr_thornes_partial_code" },
+                                { "type": "removeSelfInteractable" }
+                              ],
+                              "partial": [
+                                 { "type": "gainStress", "amount": 1},
+                                 { "type": "tickClock", "clockName": "VFE Power Surge", "amount": 1 }
+                              ],
+                              "failure": [
+                                { "type": "sufferHarm", "level": "lesser", "familyId": "vfe_cerebral_euphoria" }
+                              ]
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
+                { "type": "gainStress", "amount": 1, "conditions": [{"type": "requiresExactEffectLevel", "effectParam": "limited"}] }
+              ],
+              "partial": [
+                { "type": "tickClock", "clockName": "VFE Power Surge", "amount": 1 }
+              ],
+              "failure": [
+                { "type": "sufferHarm", "level": "lesser", "familyId": "vfe_physical_aberration" , "conditions": [{"type": "requiresMinPositionLevel", "positionParam": "desperate"}] }
+              ]
+            }
+          },
+          {
+            "name": "Attempt Quick Repair",
+            "actionType": "Tinker",
+            "position": "risky",
+            "effect": "limited",
+            "outcomes": {
+              "success": [
+                {"type": "triggerEvent", "eventId": "cb_beacon_partially_active"}
+              ],
+              "failure": [
+                { "type": "sufferHarm", "level": "moderate", "familyId": "electric_shock" },
+                { "type": "tickClock", "clockName": "Ship Systems Failing", "amount": 1 }
+              ]
+            }
+          }
+        ],
+        "tags": ["Electronic", "Damaged"]
+      },
+      {
+        "id": "cb_cargo_loader",
+        "title": "Slumped Cargo Loader",
+        "description": "The heavy cargo loader is inactive, its hydraulic lines slack.",
+        "availableActions": [
+          {
+            "name": "Hotwire Loader",
+            "actionType": "Tinker",
+            "position": "desperate",
+            "effect": "standard",
+            "outcomes": {
+              "success": [
+                { "type": "triggerEvent", "eventId": "cb_cargo_loader_activated" },
+                { "type": "removeSelfInteractable" }
+              ],
+              "partial": [
+                { "type": "gainStress", "amount": 2 },
+                { "type": "tickClock", "clockName": "VFE Power Surge", "amount": 1 }
+              ],
+              "failure": [
+                { "type": "sufferHarm", "level": "lesser", "familyId": "electric_shock" },
+                { "type": "addInteractableHere", "newInteractable": {
+                    "id": "cb_loader_fire",
+                    "title": "Loader Electrical Fire",
+                    "description": "The cargo loader bursts into acrid smoke and electrical fire!",
+                    "isThreat": true,
+                    "availableActions": [
+                      {
+                          "name": "Extinguish Fire",
+                          "actionType": "Wreck",
+                          "position": "risky",
+                          "effect": "standard",
+                          "outcomes": {
+                              "success": [{"type": "removeSelfInteractable"}],
+                              "failure": [{"type": "sufferHarm", "level": "moderate", "familyId": "vfe_physical_aberration"}]
+                          }
+                      }
+                    ],
+                    "tags": ["Hazard", "Fire"]
+                  }
+                }
+              ]
+            }
+          },
+          {
+              "name": "Scavenge Parts",
+              "actionType": "Survey",
+              "position": "controlled",
+              "effect": "limited",
+              "outcomes": {
+                  "success": [
+                      {"type": "gainTreasure", "treasureId": "cb_scrap_components"}
+                  ],
+                  "failure": [
+                      {"type": "gainStress", "amount": 1}
+                  ]
+              }
+          }
+        ],
+        "tags": ["Mechanical", "Inactive"]
+      }],
       "connections": [
         {
           "toNodeID": "00000000-0000-0000-0000-000000000002",
@@ -20,7 +155,42 @@
       "id": "00000000-0000-0000-0000-000000000002",
       "name": "Main Corridor",
       "soundProfile": "ship_hum_low",
-      "interactables": [],
+      "interactables": [{
+        "id": "cb_main_corridor_graffiti",
+        "title": "Scrawled Graffiti",
+        "description": "Messages cover the walls: \"HE'S STILL IN THERE - A.T.\", \"TRUST THE VFE\", \"DON'T LET HER NEAR THE REACTOR\". Some appear frantically rewritten.",
+        "availableActions": [
+          {
+            "name": "Analyze Handwriting",
+            "actionType": "Study",
+            "position": "controlled",
+            "effect": "standard",
+            "outcomes": {
+              "success": [
+                {"type": "triggerEvent", "eventId": "cb_graffiti_insight_thorne"}
+              ],
+              "partial": [
+                { "type": "gainStress", "amount": 1 }
+              ]
+            }
+          },
+          {
+            "name": "Search for Hidden Details",
+            "actionType": "Survey",
+            "position": "risky",
+            "effect": "limited",
+            "outcomes": {
+              "success": [
+                {"type": "triggerEvent", "eventId": "cb_graffiti_hidden_symbol"}
+              ],
+              "failure": [
+                { "type": "sufferHarm", "level": "lesser", "familyId": "vfe_cerebral_euphoria" }
+              ]
+            }
+          }
+        ],
+        "tags": ["Clue", "Textual"]
+      }],
       "connections": [
         {
           "toNodeID": "00000000-0000-0000-0000-000000000001",
@@ -70,7 +240,93 @@
       "id": "00000000-0000-0000-0000-000000000004",
       "name": "Medical Wing",
       "soundProfile": "medical_bay_alarms_faint",
-      "interactables": [],
+      "interactables": [{
+        "id": "cb_medwing_autodoc",
+        "title": "Bloodstained Autodoc Pod",
+        "description": "The Autodoc is smeared with blood. A terminal shows it was being modified to interface with an 'External Regenerative Field'.",
+        "availableActions": [
+          {
+            "name": "Activate Self-Repair",
+            "actionType": "Tinker",
+            "position": "desperate",
+            "effect": "standard",
+            "outcomes": {
+              "success": [
+                { "type": "sufferHarm", "level": "moderate", "familyId": "vfe_physical_aberration", "conditions": [{"type": "requiresMinEffectLevel", "effectParam":"standard"}]},
+                { "type": "sufferHarm", "level": "severe", "familyId": "vfe_physical_aberration", "conditions": [{"type": "requiresMinEffectLevel", "effectParam":"great"}]}
+              ],
+              "partial": [
+                { "type": "sufferHarm", "level": "lesser", "familyId": "vfe_physical_aberration" },
+                { "type": "gainStress", "amount": 2 }
+              ],
+              "failure": [
+                { "type": "tickClock", "clockName": "VFE Power Surge", "amount": 2 },
+                { "type": "sufferHarm", "level": "severe", "familyId": "vfe_physical_aberration" }
+              ]
+            }
+          },
+          {
+            "name": "Study Modifications",
+            "actionType": "Study",
+            "position": "risky",
+            "effect": "standard",
+            "outcomes": {
+              "success": [
+                { "type": "gainTreasure", "treasureId": "cb_vfe_interface_schematic" }
+              ],
+              "partial": [
+                  {"type": "gainStress", "amount": 1}
+              ],
+              "failure": [
+                { "type": "sufferHarm", "level": "moderate", "familyId": "vfe_cerebral_euphoria" }
+              ]
+            }
+          }
+        ],
+        "tags": ["Medical", "VFE-touched", "Dangerous"]
+      },
+      {
+        "id": "cb_medwing_research_terminal_ng",
+        "title": "Dr. Ng's Research Terminal",
+        "description": "This terminal contains Dr. Ng's logs and early VFE data before Thorne locked her out. It details theories on the VFE's energy draw and escalating mutations.",
+        "availableActions": [
+          {
+            "name": "Access Logs",
+            "actionType": "Study",
+            "position": "controlled",
+            "effect": "standard",
+            "outcomes": {
+              "success": [
+                  {"type": "gainTreasure", "treasureId": "cb_dr_ng_research_logs"},
+                  {"type": "triggerEvent", "eventId": "cb_ng_reveals_lab_location"}
+              ],
+              "partial": [
+                  {"type": "gainStress", "amount": 1},
+                  {"type": "triggerEvent", "eventId": "cb_ng_partial_lab_info"}
+              ],
+              "failure": [
+                  {"type": "tickClock", "clockName": "Security Lockdown", "amount": 1}
+              ]
+            }
+          },
+          {
+            "name": "Bypass Security for Thorne's Files",
+            "actionType": "Tinker",
+            "position": "risky",
+            "effect": "limited",
+            "outcomes": {
+              "success": [
+                  {"type": "gainTreasure", "treasureId": "cb_dr_thornes_early_vfe_notes"}
+              ],
+              "failure": [
+                  {"type": "sufferHarm", "level": "lesser", "familyId": "electric_shock"},
+                  {"type": "tickClock", "clockName": "Security Lockdown", "amount": 2}
+              ]
+            }
+          }
+        ],
+        "tags": ["Computer", "Clue", "Log"]
+      }],
       "connections": [
         {
           "toNodeID": "00000000-0000-0000-0000-000000000002",
@@ -110,7 +366,41 @@
       "id": "00000000-0000-0000-0000-000000000006",
       "name": "Cargo Bay",
       "soundProfile": "cargo_bay_creaks",
-      "interactables": [],
+      "interactables": [{
+        "id": "cb_corrupted_maintenance_droid",
+        "title": "Corrupted Maintenance Droid",
+        "description": "Its optical sensors are overgrown with twitching organic matter. It moves erratically.",
+        "isThreat": true,
+        "availableActions": [
+          {
+            "name": "Disable Droid",
+            "actionType": "Wreck",
+            "position": "risky",
+            "effect": "standard",
+            "outcomes": {
+              "success": [ { "type": "removeSelfInteractable" } ],
+              "partial": [
+                  {"type": "sufferHarm", "level": "lesser", "familyId": "vfe_physical_aberration"},
+                  {"type": "gainStress", "amount": 1}
+              ],
+              "failure": [ { "type": "sufferHarm", "level": "moderate", "familyId": "vfe_physical_aberration" } ]
+            }
+          },
+          {
+            "name": "Evade Droid",
+            "actionType": "Finesse",
+            "position": "desperate",
+            "effect": "limited",
+            "outcomes": {
+              "success": [
+                  {"type": "triggerEvent", "eventId": "cb_droid_evaded_moves_node"}
+              ],
+              "failure": [ { "type": "tickClock", "clockName": "Droid Pursuit", "amount": 1 } ]
+            }
+          }
+        ],
+        "tags": ["Mechanical", "VFE-corrupted", "Hostile"]
+      }],
       "connections": [
         {
           "toNodeID": "00000000-0000-0000-0000-000000000003",
