@@ -64,11 +64,11 @@ struct CharacterSheetView: View {
                 VStack(alignment: .center, spacing: 2) {
                     Text("Stress \(character.stress)/9")
                         .font(.caption2)
-                    HStack(spacing: 2) {
+                    HStack(spacing: 4) {
                         ForEach(1...9, id: \.self) { index in
                             Image(character.stress >= index ? "icon_stress_pip_lit" : "icon_stress_pip_unlit")
                                 .resizable()
-                                .frame(width: 12, height: 12)
+                                .frame(width: 16, height: 16)
                         }
                     }
                 }
@@ -206,20 +206,20 @@ struct CharacterSheetView: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text("Actions")
                     .font(.caption2)
-                LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: 4) {
                     ForEach(character.actions.sorted(by: { $0.key < $1.key }), id: \.key) { action, rating in
                         HStack(spacing: 4) {
                             Text(action)
+                                .font(.caption)
                             HStack(spacing: 1) {
                                 ForEach(0..<rating, id: \.self) { _ in
                                     Image("icon_stress_pip_lit")
                                         .resizable()
-                                        .frame(width: 8, height: 8)
+                                        .frame(width: 10, height: 10)
                                 }
                             }
                             Spacer()
                         }
-                        .font(.caption2)
                     }
                 }
             }
