@@ -88,7 +88,7 @@ struct SceneKitDiceView: UIViewRepresentable {
 
         // Tray floor
         let floor = SCNBox(width: CGFloat(traySize), height: 0.2, length: CGFloat(traySize), chamferRadius: 0)
-        floor.firstMaterial?.diffuse.contents = UIImage(named: "texture_dicetray_surface")
+        floor.firstMaterial?.diffuse.contents = nil // UIImage(named: "texture_dicetray_surface")
         let floorNode = SCNNode(geometry: floor)
         floorNode.position = SCNVector3(0, -0.1, 0)
         floorNode.physicsBody = SCNPhysicsBody.static()

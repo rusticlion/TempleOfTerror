@@ -456,12 +456,12 @@ class GameViewModel: ObservableObject {
                              finalEffect: finalEffect,
                              finalPosition: finalPosition)
         }
-        let context = ConsequenceContext(character: character,
+        let consequenceProcessingContext = ConsequenceContext(character: character,
                                          interactableID: interactableID,
                                          finalEffect: finalEffect,
                                          finalPosition: finalPosition,
                                          isCritical: isCritical)
-        consequencesDescription = processConsequences(eligible, context: context)
+        consequencesDescription = processConsequences(eligible, context: consequenceProcessingContext)
 
         if isCritical && highestRoll >= 4 {
             let critMsg = "Critical Success! Effect increased to \(finalEffect.rawValue.capitalized)."

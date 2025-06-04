@@ -34,15 +34,15 @@
 		464B59D32DEA5DBF0002EA59 /* TreasureTooltipView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 464B59D22DEA5DBF0002EA59 /* TreasureTooltipView.swift */; };
 		464B59D52DEA5EB60002EA59 /* HarmTooltipView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 464B59D42DEA5EB60002EA59 /* HarmTooltipView.swift */; };
 		46549A0E2DEE6F1500D17D66 /* dice.usdz in Resources */ = {isa = PBXBuildFile; fileRef = 46549A0D2DEE6F1500D17D66 /* dice.usdz */; };
-		46549A102DEE749500D17D66 /* SceneKitDiceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46549A0F2DEE749500D17D66 /* SceneKitDiceView.swift */; };
+		46549A122DF0B58900D17D66 /* PartyGenerationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46549A112DF0B58900D17D66 /* PartyGenerationService.swift */; };
 		46A9D2292DE7D14C00FE459E /* HeaderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46A9D2282DE7D14C00FE459E /* HeaderView.swift */; };
 		46A9D22B2DE7D2E500FE459E /* StatusSheetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46A9D22A2DE7D2E500FE459E /* StatusSheetView.swift */; };
 		46A9D22D2DE7F82000FE459E /* ContentLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46A9D22C2DE7F81F00FE459E /* ContentLoader.swift */; };
 		46A9D2302DE7F85F00FE459E /* Content in Resources */ = {isa = PBXBuildFile; fileRef = 46A9D22F2DE7F85F00FE459E /* Content */; };
-                46A9D2322DE7FAF100FE459E /* DungeonGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46A9D2312DE7FAF100FE459E /* DungeonGenerator.swift */; };
-                46A9D2342DE8001F00FE459E /* AudioManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46A9D2332DE8001F00FE459E /* AudioManager.swift */; };
-                46D0A0012DF9EE0000FF1111 /* SceneKitDiceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46D0A0022DF9EE0000FF1111 /* SceneKitDiceView.swift */; };
-                46D0A0032DF9EE0000FF1111 /* DieNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46D0A0042DF9EE0000FF1111 /* DieNode.swift */; };
+		46A9D2322DE7FAF100FE459E /* DungeonGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46A9D2312DE7FAF100FE459E /* DungeonGenerator.swift */; };
+		46A9D2342DE8001F00FE459E /* AudioManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46A9D2332DE8001F00FE459E /* AudioManager.swift */; };
+		46D0A0012DF9EE0000FF1111 /* SceneKitDiceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46D0A0022DF9EE0000FF1111 /* SceneKitDiceView.swift */; };
+		46D0A0032DF9EE0000FF1111 /* DieNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46D0A0042DF9EE0000FF1111 /* DieNode.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -99,6 +99,7 @@
 		464B59D42DEA5EB60002EA59 /* HarmTooltipView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = HarmTooltipView.swift; sourceTree = "<group>"; };
 		46549A0D2DEE6F1500D17D66 /* dice.usdz */ = {isa = PBXFileReference; lastKnownFileType = file.usdz; path = dice.usdz; sourceTree = "<group>"; };
 		46549A0F2DEE749500D17D66 /* SceneKitDiceView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SceneKitDiceView.swift; sourceTree = "<group>"; };
+		46549A112DF0B58900D17D66 /* PartyGenerationService.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PartyGenerationService.swift; sourceTree = "<group>"; };
 		46A9D2282DE7D14C00FE459E /* HeaderView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = HeaderView.swift; sourceTree = "<group>"; };
 		46A9D22A2DE7D2E500FE459E /* StatusSheetView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StatusSheetView.swift; sourceTree = "<group>"; };
 		46A9D22C2DE7F81F00FE459E /* ContentLoader.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ContentLoader.swift; sourceTree = "<group>"; };
@@ -158,6 +159,7 @@
 		460D624C2DE7934300D50D0C /* CardGame */ = {
 			isa = PBXGroup;
 			children = (
+				46549A112DF0B58900D17D66 /* PartyGenerationService.swift */,
 				46549A0F2DEE749500D17D66 /* SceneKitDiceView.swift */,
 				46549A0C2DEE6EE100D17D66 /* 3DAssets */,
 				464B59D42DEA5EB60002EA59 /* HarmTooltipView.swift */,
@@ -171,11 +173,11 @@
 				46A9D22C2DE7F81F00FE459E /* ContentLoader.swift */,
 				46A9D22A2DE7D2E500FE459E /* StatusSheetView.swift */,
 				46A9D2282DE7D14C00FE459E /* HeaderView.swift */,
-                                460D62992DE7BD4200D50D0C /* NodeConnectionsView.swift */,
-                                460D62972DE7B4A400D50D0C /* DiceRollView.swift */,
-                                46D0A0022DF9EE0000FF1111 /* SceneKitDiceView.swift */,
-                                46D0A0042DF9EE0000FF1111 /* DieNode.swift */,
-                                460D62952DE7B39400D50D0C /* InteractableCardView.swift */,
+				460D62992DE7BD4200D50D0C /* NodeConnectionsView.swift */,
+				460D62972DE7B4A400D50D0C /* DiceRollView.swift */,
+				46D0A0022DF9EE0000FF1111 /* SceneKitDiceView.swift */,
+				46D0A0042DF9EE0000FF1111 /* DieNode.swift */,
+				460D62952DE7B39400D50D0C /* InteractableCardView.swift */,
 				460D62932DE7B24600D50D0C /* CharacterSelectorView.swift */,
 				460D62822DE7AA3900D50D0C /* Assets.xcassets */,
 				460D62842DE7AA3900D50D0C /* CardGame.xcdatamodeld */,
@@ -390,13 +392,14 @@
 				464B59D32DEA5DBF0002EA59 /* TreasureTooltipView.swift in Sources */,
 				46A9D22D2DE7F82000FE459E /* ContentLoader.swift in Sources */,
 				460D62942DE7B24600D50D0C /* CharacterSelectorView.swift in Sources */,
-                                460D62902DE7AA3900D50D0C /* Models.swift in Sources */,
-                                460D62982DE7B4A400D50D0C /* DiceRollView.swift in Sources */,
-                                46D0A0012DF9EE0000FF1111 /* SceneKitDiceView.swift in Sources */,
-                                46D0A0032DF9EE0000FF1111 /* DieNode.swift in Sources */,
-                                460D62912DE7AA3900D50D0C /* PartyStatusView.swift in Sources */,
+				460D62902DE7AA3900D50D0C /* Models.swift in Sources */,
+				460D62982DE7B4A400D50D0C /* DiceRollView.swift in Sources */,
+				46D0A0012DF9EE0000FF1111 /* SceneKitDiceView.swift in Sources */,
+				46D0A0032DF9EE0000FF1111 /* DieNode.swift in Sources */,
+				460D62912DE7AA3900D50D0C /* PartyStatusView.swift in Sources */,
 				460D628C2DE7AA3900D50D0C /* GameViewModel.swift in Sources */,
 				464B59CD2DEA1A850002EA59 /* CharacterSheetView.swift in Sources */,
+				46549A122DF0B58900D17D66 /* PartyGenerationService.swift in Sources */,
 				460D624E2DE7934300D50D0C /* CardGameApp.swift in Sources */,
 				46A9D2342DE8001F00FE459E /* AudioManager.swift in Sources */,
 				46A9D2292DE7D14C00FE459E /* HeaderView.swift in Sources */,
