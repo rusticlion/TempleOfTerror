@@ -19,6 +19,15 @@ struct ConsequenceContext {
     let isCritical: Bool
 }
 
+/// Lightweight info about a selectable modifier for the DiceRollView.
+struct SelectableModifierInfo: Identifiable {
+    let id: UUID
+    let description: String
+    let detailedEffect: String
+    let remainingUses: String
+    let modifierData: Modifier
+}
+
 @MainActor
 enum PartyMovementMode {
     case grouped
