@@ -547,13 +547,16 @@ struct Consequence: Codable {
 
     // Gating Conditions
     var conditions: [GameCondition]?
+    
+    // Narrative description of the consequence
+    var description: String?
 
     private enum CodingKeys: String, CodingKey {
         case type, amount, level, familyId, clockName
         case fromNodeID, toNodeID, id, inNodeID
         case interactable, treasure, treasureId
         case duration, options, eventId, consequences
-        case conditions
+        case conditions, description
     }
 
     init(kind: ConsequenceKind) {
@@ -605,6 +608,7 @@ struct Consequence: Codable {
         }
 
         conditions = try container.decodeIfPresent([GameCondition].self, forKey: .conditions)
+        description = try container.decodeIfPresent(String.self, forKey: .description)
         kind = resolvedKind
     }
 
@@ -660,6 +664,7 @@ struct Consequence: Codable {
         }
 
         try container.encodeIfPresent(conditions, forKey: .conditions)
+        try container.encodeIfPresent(description, forKey: .description)
     }
 }
 

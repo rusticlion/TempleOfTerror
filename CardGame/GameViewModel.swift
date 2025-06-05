@@ -576,18 +576,30 @@ class GameViewModel: ObservableObject {
                                  finalPosition: currentPosition) {
                 continue
             }
+            // First check if we have a narrative description
+            var narrativeUsed = false
+            if let narrative = consequence.description {
+                descriptions.append(narrative)
+                narrativeUsed = true
+            }
+            
+            // Process the mechanical effect
             switch consequence.kind {
             case .gainStress:
                 if let amount = consequence.amount,
                    let charIndex = gameState.party.firstIndex(where: { $0.id == character.id }) {
                     gameState.party[charIndex].stress += amount
-                    descriptions.append("Gained \(amount) Stress.")
+                    if !narrativeUsed {
+                        descriptions.append("Gained \(amount) Stress.")
+                    }
                 }
             case .sufferHarm:
                 if let level = consequence.level,
                    let familyId = consequence.familyId {
-                    let description = applyHarm(familyId: familyId, level: level, toCharacter: character.id)
-                    descriptions.append(description)
+                    let harmDesc = applyHarm(familyId: familyId, level: level, toCharacter: character.id)
+                    if !narrativeUsed {
+                        descriptions.append(harmDesc)
+                    }
                 }
             case .tickClock:
                 if let clockName = consequence.clockName,
@@ -596,36 +608,48 @@ class GameViewModel: ObservableObject {
                     updateClock(id: gameState.activeClocks[clockIndex].id,
                                ticks: amount,
                                actingCharacter: character)
-                    descriptions.append("The '\(clockName)' clock progresses by \(amount).")
+                    if !narrativeUsed {
+                        descriptions.append("The '\(clockName)' clock progresses by \(amount).")
+                    }
                 }
             case .unlockConnection:
                 if let fromNodeID = consequence.fromNodeID,
                    let toNodeID = consequence.toNodeID,
                    let connIndex = gameState.dungeon?.nodes[fromNodeID.uuidString]?.connections.firstIndex(where: { $0.toNodeID == toNodeID }) {
                     gameState.dungeon?.nodes[fromNodeID.uuidString]?.connections[connIndex].isUnlocked = true
-                    descriptions.append("A path has opened!")
+                    if !narrativeUsed {
+                        descriptions.append("A path has opened!")
+                    }
                 }
             case .removeInteractable:
                 if let id = consequence.interactableId,
                    let nodeID = gameState.characterLocations[partyMemberId.uuidString] {
                     gameState.dungeon?.nodes[nodeID.uuidString]?.interactables.removeAll(where: { $0.id == id })
-                    descriptions.append("The way is clear.")
+                    if !narrativeUsed {
+                        descriptions.append("The way is clear.")
+                    }
                 }
             case .removeSelfInteractable:
                 if let nodeID = gameState.characterLocations[partyMemberId.uuidString], let interactableStrID = interactableID {
                     gameState.dungeon?.nodes[nodeID.uuidString]?.interactables.removeAll(where: { $0.id == interactableStrID })
-                    descriptions.append("The way is clear.")
+                    if !narrativeUsed {
+                        descriptions.append("The way is clear.")
+                    }
                 }
             case .addInteractable:
                 if let inNodeID = consequence.inNodeID, let interactable = consequence.newInteractable {
                     gameState.dungeon?.nodes[inNodeID.uuidString]?.interactables.append(interactable)
-                    descriptions.append("Something new appears.")
+                    if !narrativeUsed {
+                        descriptions.append("Something new appears.")
+                    }
                 }
             case .addInteractableHere:
                 if let interactable = consequence.newInteractable,
                    let nodeID = gameState.characterLocations[partyMemberId.uuidString] {
                     gameState.dungeon?.nodes[nodeID.uuidString]?.interactables.append(interactable)
-                    descriptions.append("Something new appears.")
+                    if !narrativeUsed {
+                        descriptions.append("Something new appears.")
+                    }
                 }
             case .gainTreasure:
                 if let treasureId = consequence.treasureId,
@@ -633,7 +657,9 @@ class GameViewModel: ObservableObject {
                    let charIndex = gameState.party.firstIndex(where: { $0.id == character.id }) {
                     gameState.party[charIndex].treasures.append(treasure)
                     gameState.party[charIndex].modifiers.append(treasure.grantedModifier)
-                    descriptions.append("Gained Treasure: \(treasure.name)!")
+                    if !narrativeUsed {
+                        descriptions.append("Gained Treasure: \(treasure.name)!")
+                    }
                 }
             case .modifyDice:
                 if let amount = consequence.amount,
@@ -644,7 +670,9 @@ class GameViewModel: ObservableObject {
                                            uses: uses,
                                            description: "Bonus from consequence")
                     gameState.party[charIndex].modifiers.append(modifier)
-                    descriptions.append("Gain +\(amount)d for \(duration).")
+                    if !narrativeUsed {
+                        descriptions.append("Gain +\(amount)d for \(duration).")
+                    }
                 }
             case .createChoice:
                 // Choice handling not yet implemented; process first option if available
@@ -656,7 +684,9 @@ class GameViewModel: ObservableObject {
             case .triggerEvent:
                 if let id = consequence.eventId {
                     // Placeholder for event system
-                    descriptions.append("Event triggered: \(id)")
+                    if !narrativeUsed {
+                        descriptions.append("Event triggered: \(id)")
+                    }
                 }
             case .triggerConsequences:
                 if let extra = consequence.triggered {

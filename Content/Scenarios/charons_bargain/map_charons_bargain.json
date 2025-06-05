@@ -35,15 +35,33 @@
                             "requiresTest": true,
                             "outcomes": {
                               "success": [
-                                { "type": "gainTreasure", "treasureId": "cb_dr_thornes_partial_code" },
+                                { 
+                                  "type": "gainTreasure", 
+                                  "treasureId": "cb_dr_thornes_partial_code",
+                                  "description": "You decode a fragment of Dr. Thorne's access code. The numbers seem to shift before your eyes, but you memorize them before they can escape."
+                                },
                                 { "type": "removeSelfInteractable" }
                               ],
                               "partial": [
-                                 { "type": "gainStress", "amount": 1},
-                                 { "type": "tickClock", "clockName": "VFE Power Surge", "amount": 1 }
+                                 { 
+                                   "type": "gainStress", 
+                                   "amount": 1,
+                                   "description": "The corrupted data makes your head swim. You push through, but the strain is evident."
+                                 },
+                                 { 
+                                   "type": "tickClock", 
+                                   "clockName": "VFE Power Surge", 
+                                   "amount": 1,
+                                   "description": "Your tampering causes a feedback loop. Somewhere deep in the ship, systems strain against an alien energy."
+                                 }
                               ],
                               "failure": [
-                                { "type": "sufferHarm", "level": "lesser", "familyId": "vfe_cerebral_euphoria" }
+                                { 
+                                  "type": "sufferHarm", 
+                                  "level": "lesser", 
+                                  "familyId": "vfe_cerebral_euphoria",
+                                  "description": "The log floods your mind with incomprehensible data. For a moment, you understand everything and nothing. The knowledge burns."
+                                }
                               ]
                             }
                           }
@@ -51,11 +69,63 @@
                       }
                     }
                   ]
-                },
-                { "type": "gainStress", "amount": 1, "conditions": [{"type": "requiresExactEffectLevel", "effectParam": "limited"}] }
+                }
               ],
               "partial": [
-                { "type": "tickClock", "clockName": "VFE Power Surge", "amount": 1 }
+                { "type": "tickClock", "clockName": "VFE Power Surge", "amount": 1 },
+                {
+                  "type": "triggerConsequences",
+                  "consequences": [
+                    {
+                      "type": "addInteractableHere",
+                      "newInteractable": {
+                        "id": "cb_beacon_log_fragment",
+                        "title": "Beacon Log Fragment",
+                        "description": "The beacon's log contains a corrupted entry: 'Signal altered. True status: [STATIC]. Warning: VFE active. Monarch protocol...'",
+                        "availableActions": [
+                          {
+                            "name": "Study Log",
+                            "actionType": "Study",
+                            "position": "risky",
+                            "effect": "standard",
+                            "requiresTest": true,
+                            "outcomes": {
+                              "success": [
+                                { 
+                                  "type": "gainTreasure", 
+                                  "treasureId": "cb_dr_thornes_partial_code",
+                                  "description": "You decode a fragment of Dr. Thorne's access code. The numbers seem to shift before your eyes, but you memorize them before they can escape."
+                                },
+                                { "type": "removeSelfInteractable" }
+                              ],
+                              "partial": [
+                                 { 
+                                   "type": "gainStress", 
+                                   "amount": 1,
+                                   "description": "The corrupted data makes your head swim. You push through, but the strain is evident."
+                                 },
+                                 { 
+                                   "type": "tickClock", 
+                                   "clockName": "VFE Power Surge", 
+                                   "amount": 1,
+                                   "description": "Your tampering causes a feedback loop. Somewhere deep in the ship, systems strain against an alien energy."
+                                 }
+                              ],
+                              "failure": [
+                                { 
+                                  "type": "sufferHarm", 
+                                  "level": "lesser", 
+                                  "familyId": "vfe_cerebral_euphoria",
+                                  "description": "The log floods your mind with incomprehensible data. For a moment, you understand everything and nothing. The knowledge burns."
+                                }
+                              ]
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
               ],
               "failure": [
                 { "type": "sufferHarm", "level": "lesser", "familyId": "vfe_physical_aberration" , "conditions": [{"type": "requiresMinPositionLevel", "positionParam": "desperate"}] }
@@ -252,16 +322,43 @@
             "effect": "standard",
             "outcomes": {
               "success": [
-                { "type": "sufferHarm", "level": "moderate", "familyId": "vfe_physical_aberration", "conditions": [{"type": "requiresMinEffectLevel", "effectParam":"standard"}]},
-                { "type": "sufferHarm", "level": "severe", "familyId": "vfe_physical_aberration", "conditions": [{"type": "requiresMinEffectLevel", "effectParam":"great"}]}
+                { 
+                  "type": "sufferHarm", 
+                  "level": "moderate", 
+                  "familyId": "vfe_physical_aberration", 
+                  "conditions": [{"type": "requiresMinEffectLevel", "effectParam":"standard"}],
+                  "description": "The autodoc's needles pierce your flesh as alien energies surge through modified protocols. Your wounds seal with unnatural speed, but the new flesh is wrong - too thick, ridged with strange patterns."
+                },
+                { 
+                  "type": "sufferHarm", 
+                  "level": "severe", 
+                  "familyId": "vfe_physical_aberration", 
+                  "conditions": [{"type": "requiresMinEffectLevel", "effectParam":"great"}],
+                  "description": "The VFE field overwhelms the autodoc's safety limits. Your body convulses as it rebuilds itself according to alien blueprints. When it's done, you're whole... but no longer entirely human."
+                }
               ],
               "partial": [
-                { "type": "sufferHarm", "level": "lesser", "familyId": "vfe_physical_aberration" },
+                { 
+                  "type": "sufferHarm", 
+                  "level": "lesser", 
+                  "familyId": "vfe_physical_aberration",
+                  "description": "The autodoc hums with unnatural harmonics. Minor wounds close, but the healed flesh feels different - denser, stranger. You try not to think about what's happening beneath your skin."
+                },
                 { "type": "gainStress", "amount": 2 }
               ],
               "failure": [
-                { "type": "tickClock", "clockName": "VFE Power Surge", "amount": 2 },
-                { "type": "sufferHarm", "level": "severe", "familyId": "vfe_physical_aberration" }
+                { 
+                  "type": "tickClock", 
+                  "clockName": "VFE Power Surge", 
+                  "amount": 2,
+                  "description": "The autodoc's systems cascade into failure. Emergency alarms shriek as the VFE field pulses out of control. Throughout the ship, dormant systems awaken to the surge."
+                },
+                { 
+                  "type": "sufferHarm", 
+                  "level": "severe", 
+                  "familyId": "vfe_physical_aberration",
+                  "description": "The machine turns predator. Restraints snap tight as it begins 'improving' you with nightmarish efficiency. By the time you break free, the damage is extensive and irreversible."
+                }
               ]
             }
           },
