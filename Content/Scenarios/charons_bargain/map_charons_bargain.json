@@ -21,11 +21,12 @@
                   "type": "triggerConsequences",
                   "consequences": [
                     {
-                      "type": "addInteractableHere",
-                      "newInteractable": {
+                      "type": "addInteractable",
+                      "inNodeID": "current",
+                      "interactable": {
                         "id": "cb_beacon_log_fragment",
                         "title": "Beacon Log Fragment",
-                        "description": "The beacon's log contains a corrupted entry: 'Signal altered. True status: [STATIC]. Warning: VFE active. Monarch protocol...'",
+                        "description": "The beacon's log contains a corrupted entry: 'Signal altered. True status: [STATIC]. Warning: VFE active. Empress protocol...'",
                         "availableActions": [
                           {
                             "name": "Study Log",
@@ -77,8 +78,9 @@
                   "type": "triggerConsequences",
                   "consequences": [
                     {
-                      "type": "addInteractableHere",
-                      "newInteractable": {
+                      "type": "addInteractable",
+                      "inNodeID": "current",
+                      "interactable": {
                         "id": "cb_beacon_log_fragment",
                         "title": "Beacon Log Fragment",
                         "description": "The beacon's log contains a corrupted entry: 'Signal altered. True status: [STATIC]. Warning: VFE active. Monarch protocol...'",
@@ -171,7 +173,7 @@
               ],
               "failure": [
                 { "type": "sufferHarm", "level": "lesser", "familyId": "electric_shock" },
-                { "type": "addInteractableHere", "newInteractable": {
+                { "type": "addInteractable", "inNodeID": "current", "interactable": {
                     "id": "cb_loader_fire",
                     "title": "Loader Electrical Fire",
                     "description": "The cargo loader bursts into acrid smoke and electrical fire!",
