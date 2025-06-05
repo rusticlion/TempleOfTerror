@@ -12,14 +12,14 @@ struct CharacterSelectorView: View {
 
             if movementMode == .grouped {
                 Picker("Select Character", selection: $selectedCharacterID) {
-                    ForEach(characters) { character in
+                    ForEach(characters.filter { !$0.isDefeated }) { character in
                         Text(character.name).tag(character.id as UUID?)
                     }
                 }
                 .pickerStyle(.segmented)
             } else {
                 HStack(spacing: 12) {
-                    ForEach(characters) { character in
+                    ForEach(characters.filter { !$0.isDefeated }) { character in
                         Button {
                             selectedCharacterID = character.id
                         } label: {

@@ -397,6 +397,7 @@ class GameViewModel: ObservableObject {
                 // Treat as Push Yourself
                 appliedOptionalMods.append(Modifier(bonusDice: 1, uses: 1, isOptionalToApply: true, description: "Push Yourself"))
                 gameState.party[charIndex].stress += 2
+                _ = checkStressOverflow(for: charIndex)
             }
         }
 
@@ -515,7 +516,7 @@ class GameViewModel: ObservableObject {
         var bestRoll = 0
         var failures = 0
 
-        for member in gameState.party {
+        for member in gameState.party where !member.isDefeated {
             let dicePool = max(member.actions[action.actionType] ?? 0, 1)
             var highest = 0
             for _ in 0..<dicePool { highest = max(highest, Int.random(in: 1...6)) }
@@ -547,6 +548,10 @@ class GameViewModel: ObservableObject {
 
         if let leaderIndex = gameState.party.firstIndex(where: { $0.id == leader.id }) {
             gameState.party[leaderIndex].stress += failures
+            if let overflow = checkStressOverflow(for: leaderIndex) {
+                if !description.isEmpty { description += "\n" }
+                description += overflow
+            }
             if failures > 0 {
                 if !description.isEmpty { description += "\n" }
                 description += "Leader takes \(failures) Stress from allies' slips."
@@ -589,8 +594,9 @@ class GameViewModel: ObservableObject {
                 if let amount = consequence.amount,
                    let charIndex = gameState.party.firstIndex(where: { $0.id == character.id }) {
                     gameState.party[charIndex].stress += amount
-                    if !narrativeUsed {
-                        descriptions.append("Gained \(amount) Stress.")
+                    descriptions.append("Gained \(amount) Stress.")
+                    if let overflow = checkStressOverflow(for: charIndex) {
+                        descriptions.append(overflow)
                     }
                 }
             case .sufferHarm:
@@ -813,13 +819,24 @@ class GameViewModel: ObservableObject {
         gameState.activeClocks[index] = clock
     }
 
+    private func checkStressOverflow(for index: Int) -> String? {
+        if gameState.party[index].stress > 9 {
+            return handleStressOverflow(for: index)
+        }
+        return nil
+    }
+
+    private func handleStressOverflow(for index: Int) -> String {
+        let charId = gameState.party[index].id
+        gameState.party[index].stress = 0
+        let harmDesc = applyHarm(familyId: "mental_fraying", level: .lesser, toCharacter: charId)
+        return "Stress Overload!\n" + harmDesc
+    }
+
     func pushYourself(forCharacter character: Character) {
         if let charIndex = gameState.party.firstIndex(where: { $0.id == character.id }) {
-            let currentStress = gameState.party[charIndex].stress
-            if currentStress + 2 > 9 {
-                // Handle Trauma case later
-            }
             gameState.party[charIndex].stress += 2
+            _ = checkStressOverflow(for: charIndex)
         }
     }
 
@@ -853,8 +870,16 @@ class GameViewModel: ObservableObject {
                     gameState.party[charIndex].harm.severe.append((familyId, harm.description))
                     return "Suffered SEVERE Harm: \(harm.description)."
                 } else {
-                    gameState.status = .gameOver
+                    // Character suffers Fatal Harm and is removed from play
+                    gameState.party[charIndex].isDefeated = true
+                    gameState.characterLocations.removeValue(forKey: characterId.uuidString)
                     let fatalDescription = harmFamily.fatal.description
+
+                    // If no active characters remain, end the run
+                    if gameState.party.allSatisfy({ $0.isDefeated }) {
+                        gameState.status = .gameOver
+                    }
+
                     saveGame()
                     return "Suffered FATAL Harm: \(fatalDescription)."
                 }
@@ -900,7 +925,7 @@ class GameViewModel: ObservableObject {
 
     /// Check if any party member possesses a treasure with the given tag.
     func partyHasTreasureTag(_ tag: String) -> Bool {
-        for member in gameState.party {
+        for member in gameState.party where !member.isDefeated {
             for treasure in member.treasures {
                 if treasure.tags.contains(tag) { return true }
             }
@@ -916,8 +941,8 @@ class GameViewModel: ObservableObject {
         if partyMovementMode == .solo {
             gameState.characterLocations[characterID.uuidString] = connection.toNodeID
         } else {
-            for id in gameState.party.map({ $0.id }) {
-                gameState.characterLocations[id.uuidString] = connection.toNodeID
+            for member in gameState.party where !member.isDefeated {
+                gameState.characterLocations[member.id.uuidString] = connection.toNodeID
             }
         }
 

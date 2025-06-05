@@ -58,6 +58,7 @@ struct MapView: View {
         }
 
         let charactersInNode = viewModel.gameState.party.filter { character in
+            !character.isDefeated &&
             viewModel.gameState.characterLocations[character.id.uuidString] == nodeID
         }.map { $0.name }
 

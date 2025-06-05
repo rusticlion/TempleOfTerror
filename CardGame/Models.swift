@@ -136,6 +136,65 @@ struct Character: Identifiable, Codable {
     var actions: [String: Int] // e.g., ["Study": 2, "Tinker": 1]
     var treasures: [Treasure] = []
     var modifiers: [Modifier] = []
+    /// Whether this character can still act. Characters become defeated after
+    /// suffering Fatal Harm.
+    var isDefeated: Bool = false
+
+    enum CodingKeys: String, CodingKey {
+        case id, name, characterClass, stress, harm, actions, treasures, modifiers, isDefeated
+    }
+
+    init(id: UUID,
+         name: String,
+         characterClass: String,
+         stress: Int,
+         harm: HarmState,
+         actions: [String: Int],
+         treasures: [Treasure] = [],
+         modifiers: [Modifier] = [],
+         isDefeated: Bool = false) {
+        self.id = id
+        self.name = name
+        self.characterClass = characterClass
+        self.stress = stress
+        self.harm = harm
+        self.actions = actions
+        self.treasures = treasures
+        self.modifiers = modifiers
+        self.isDefeated = isDefeated
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(UUID.self, forKey: .id)
+        name = try container.decode(String.self, forKey: .name)
+        characterClass = try container.decode(String.self, forKey: .characterClass)
+        stress = try container.decode(Int.self, forKey: .stress)
+        harm = try container.decode(HarmState.self, forKey: .harm)
+        actions = try container.decode([String: Int].self, forKey: .actions)
+        treasures = try container.decodeIfPresent([Treasure].self, forKey: .treasures) ?? []
+        modifiers = try container.decodeIfPresent([Modifier].self, forKey: .modifiers) ?? []
+        isDefeated = try container.decodeIfPresent(Bool.self, forKey: .isDefeated) ?? false
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(name, forKey: .name)
+        try container.encode(characterClass, forKey: .characterClass)
+        try container.encode(stress, forKey: .stress)
+        try container.encode(harm, forKey: .harm)
+        try container.encode(actions, forKey: .actions)
+        if !treasures.isEmpty {
+            try container.encode(treasures, forKey: .treasures)
+        }
+        if !modifiers.isEmpty {
+            try container.encode(modifiers, forKey: .modifiers)
+        }
+        if isDefeated {
+            try container.encode(isDefeated, forKey: .isDefeated)
+        }
+    }
 }
 
 /// Defines a single tier of a harm family.

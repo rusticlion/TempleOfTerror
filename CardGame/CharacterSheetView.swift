@@ -46,6 +46,12 @@ struct CharacterSheetView: View {
                 Text(character.name)
                     .font(.headline)
                     .bold()
+                if character.isDefeated {
+                    Text("DEFEATED")
+                        .font(.caption)
+                        .foregroundColor(.red)
+                        .padding(.leading, 4)
+                }
                 Spacer()
                 Text(character.characterClass)
                     .font(.subheadline)

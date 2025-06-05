@@ -37,6 +37,13 @@
         "boon": { "improveEffect": true, "description": "Psychic Insight", "isOptionalToApply": false }
       },
       "fatal": { "description": "Mind Shatter" }
+    },
+    {
+      "id": "mental_fraying",
+      "lesser": { "description": "Unsteady", "penalty": { "type": "reduceEffect" } },
+      "moderate": { "description": "Fragmented Thoughts", "penalty": { "type": "actionPenalty", "actionType": "Study" } },
+      "severe": { "description": "Shattered Psyche", "penalty": { "type": "banAction", "actionType": "Command" } },
+      "fatal": { "description": "Mind Lost to the Abyss" }
     }
   ]
 }
