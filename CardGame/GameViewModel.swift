@@ -516,7 +516,7 @@ class GameViewModel: ObservableObject {
         var bestRoll = 0
         var failures = 0
 
-        for member in gameState.party {
+        for member in gameState.party where !member.isDefeated {
             let dicePool = max(member.actions[action.actionType] ?? 0, 1)
             var highest = 0
             for _ in 0..<dicePool { highest = max(highest, Int.random(in: 1...6)) }
@@ -842,8 +842,16 @@ class GameViewModel: ObservableObject {
                     gameState.party[charIndex].harm.severe.append((familyId, harm.description))
                     return "Suffered SEVERE Harm: \(harm.description)."
                 } else {
-                    gameState.status = .gameOver
+                    // Character suffers Fatal Harm and is removed from play
+                    gameState.party[charIndex].isDefeated = true
+                    gameState.characterLocations.removeValue(forKey: characterId.uuidString)
                     let fatalDescription = harmFamily.fatal.description
+
+                    // If no active characters remain, end the run
+                    if gameState.party.allSatisfy({ $0.isDefeated }) {
+                        gameState.status = .gameOver
+                    }
+
                     saveGame()
                     return "Suffered FATAL Harm: \(fatalDescription)."
                 }
@@ -889,7 +897,7 @@ class GameViewModel: ObservableObject {
 
     /// Check if any party member possesses a treasure with the given tag.
     func partyHasTreasureTag(_ tag: String) -> Bool {
-        for member in gameState.party {
+        for member in gameState.party where !member.isDefeated {
             for treasure in member.treasures {
                 if treasure.tags.contains(tag) { return true }
             }
@@ -905,8 +913,8 @@ class GameViewModel: ObservableObject {
         if partyMovementMode == .solo {
             gameState.characterLocations[characterID.uuidString] = connection.toNodeID
         } else {
-            for id in gameState.party.map({ $0.id }) {
-                gameState.characterLocations[id.uuidString] = connection.toNodeID
+            for member in gameState.party where !member.isDefeated {
+                gameState.characterLocations[member.id.uuidString] = connection.toNodeID
             }
         }
 

@@ -25,7 +25,7 @@ struct ContentView: View {
 
     // Helper to retrieve the selected character object
     private var selectedCharacter: Character? {
-        viewModel.gameState.party.first { $0.id == selectedCharacterID }
+        viewModel.gameState.party.first { $0.id == selectedCharacterID && !$0.isDefeated }
     }
 
     private func performTransition(to connection: NodeConnection) {
