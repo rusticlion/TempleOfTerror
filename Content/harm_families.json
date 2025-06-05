@@ -34,6 +34,13 @@
       "moderate": { "description": "Broken Tools", "penalty": { "type": "banAction", "actionType": "Tinker" } },
       "severe": { "description": "Lost Map", "penalty": { "type": "increaseStressCost", "amount": 1 } },
       "fatal": { "description": "Stranded and Helpless" }
+    },
+    {
+      "id": "mental_fraying",
+      "lesser": { "description": "Unsteady", "penalty": { "type": "reduceEffect" } },
+      "moderate": { "description": "Fragmented Thoughts", "penalty": { "type": "actionPenalty", "actionType": "Study" } },
+      "severe": { "description": "Shattered Psyche", "penalty": { "type": "banAction", "actionType": "Command" } },
+      "fatal": { "description": "Mind Lost to the Abyss" }
     }
   ]
 }

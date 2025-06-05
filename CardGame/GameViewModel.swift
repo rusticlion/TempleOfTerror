@@ -397,6 +397,7 @@ class GameViewModel: ObservableObject {
                 // Treat as Push Yourself
                 appliedOptionalMods.append(Modifier(bonusDice: 1, uses: 1, isOptionalToApply: true, description: "Push Yourself"))
                 gameState.party[charIndex].stress += 2
+                _ = checkStressOverflow(for: charIndex)
             }
         }
 
@@ -547,6 +548,10 @@ class GameViewModel: ObservableObject {
 
         if let leaderIndex = gameState.party.firstIndex(where: { $0.id == leader.id }) {
             gameState.party[leaderIndex].stress += failures
+            if let overflow = checkStressOverflow(for: leaderIndex) {
+                if !description.isEmpty { description += "\n" }
+                description += overflow
+            }
             if failures > 0 {
                 if !description.isEmpty { description += "\n" }
                 description += "Leader takes \(failures) Stress from allies' slips."
@@ -582,6 +587,9 @@ class GameViewModel: ObservableObject {
                    let charIndex = gameState.party.firstIndex(where: { $0.id == character.id }) {
                     gameState.party[charIndex].stress += amount
                     descriptions.append("Gained \(amount) Stress.")
+                    if let overflow = checkStressOverflow(for: charIndex) {
+                        descriptions.append(overflow)
+                    }
                 }
             case .sufferHarm:
                 if let level = consequence.level,
@@ -783,13 +791,24 @@ class GameViewModel: ObservableObject {
         gameState.activeClocks[index] = clock
     }
 
+    private func checkStressOverflow(for index: Int) -> String? {
+        if gameState.party[index].stress > 9 {
+            return handleStressOverflow(for: index)
+        }
+        return nil
+    }
+
+    private func handleStressOverflow(for index: Int) -> String {
+        let charId = gameState.party[index].id
+        gameState.party[index].stress = 0
+        let harmDesc = applyHarm(familyId: "mental_fraying", level: .lesser, toCharacter: charId)
+        return "Stress Overload!\n" + harmDesc
+    }
+
     func pushYourself(forCharacter character: Character) {
         if let charIndex = gameState.party.firstIndex(where: { $0.id == character.id }) {
-            let currentStress = gameState.party[charIndex].stress
-            if currentStress + 2 > 9 {
-                // Handle Trauma case later
-            }
             gameState.party[charIndex].stress += 2
+            _ = checkStressOverflow(for: charIndex)
         }
     }
 
