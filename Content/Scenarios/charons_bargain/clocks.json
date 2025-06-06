@@ -1,0 +1,31 @@
+[
+  {
+    "name": "Ship Security Lockdown",
+    "segments": 4,
+    "progress": 0,
+    "onCompleteConsequences": [
+      { "type": "removeInteractable", "id": "cb_ferryman_shuttle_ready" },
+      { "type": "addInteractable", "inNodeID": "00000000-0000-0000-0000-000000000001", "interactable": { "$ref": "cb_ferryman_shuttle_locked" } }
+    ]
+  },
+  {
+    "name": "VFE Instability",
+    "segments": 6,
+    "progress": 0,
+    "onCompleteConsequences": [
+      { "type": "addInteractable", "inNodeID": "00000000-0000-0000-0000-000000000002", "interactable": { "$ref": "threat_crawling_biomass" } }
+    ]
+  },
+  {
+    "name": "Reason with Thorne",
+    "segments": 4,
+    "progress": 0,
+    "onCompleteConsequences": []
+  },
+  {
+    "name": "Droid Pursuit",
+    "segments": 4,
+    "progress": 0,
+    "onCompleteConsequences": []
+  }
+]
