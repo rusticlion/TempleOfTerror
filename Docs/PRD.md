@@ -1,10 +1,10 @@
-Forged in the Tomb: A Product Requirements Document
-Project: Forged in the Tomb
+Dice Delver: A Product Requirements Document
+Project: Dice Delver
 Platform: iPhone (SwiftUI)
 Version: 1.0
 
 1. Overview
-Forged in the Tomb is a single-player, rogue-lite dungeon crawl for iOS, built with SwiftUI. It draws inspiration from the high-stakes, trap-filled exploration of the classic D&D module "Tomb of Horrors" and the adventurous spirit of the Indiana Jones franchise. The game will leverage a simplified interpretation of the Forged in the Dark (FitD) tabletop roleplaying game's core mechanics, specifically its dice, stress, and harm systems, which are available under a creative commons license. The gameplay will eschew traditional combat, focusing instead on overcoming environmental hazards, disarming traps, and deciphering cryptic curses.
+Dice Delver is a single-player, rogue-lite dungeon crawl for iOS, built with SwiftUI. It draws inspiration from the high-stakes, trap-filled exploration of the classic D&D module "Tomb of Horrors" and the adventurous spirit of the Indiana Jones franchise. The game will leverage a simplified interpretation of the Forged in the Dark (FitD) tabletop roleplaying game's core mechanics, specifically its dice, stress, and harm systems, which are available under a creative commons license. The gameplay will eschew traditional combat, focusing instead on overcoming environmental hazards, disarming traps, and deciphering cryptic curses.
 
 The game will be structured as a node-based crawl, with players navigating a procedurally generated dungeon. Each run will feature a randomly rolled party of three adventurers, each with unique starting statistics and equipment. The core gameplay loop will revolve around players selecting a character to interact with various "Interactables" within each node, using a chosen statistic to make a roll. A key feature will be the "dice roll projection" which will clearly communicate the potential outcomes (position and effect) to the player before they commit to an action.
 

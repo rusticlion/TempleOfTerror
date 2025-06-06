@@ -1,7 +1,7 @@
 import SwiftUI
 
 @main
-struct CardSwipeDemoApp: App {
+struct DiceDelverApp: App {
     var body: some Scene {
         WindowGroup {
             MainMenuView()

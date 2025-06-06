@@ -10,7 +10,7 @@ struct MainMenuView: View {
     var body: some View {
         NavigationStack(path: $path) {
             VStack(spacing: 20) {
-                Text("Temple of Terror")
+                Text("Dice Delver")
                     .font(.largeTitle)
                     .bold()
 
