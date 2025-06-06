@@ -125,7 +125,7 @@
                   "outcomes": {
                       "success": [
                           { "type": "triggerEvent", "eventId": "cb_beacon_partially_active" },
-                          { "description": "You stabilize the beacon's power supply. It now broadcasts a steady, repeating 'All Clear' signal... which you know is a lie." }
+                          { "type": "triggerConsequences", "description": "You stabilize the beacon's power supply. It now broadcasts a steady, repeating 'All Clear' signal... which you know is a lie.", "consequences": [] }
                       ],
                       "failure": [
                           { "type": "sufferHarm", "level": "lesser", "familyId": "electric_shock" },
