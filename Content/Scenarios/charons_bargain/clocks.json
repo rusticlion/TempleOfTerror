@@ -1,11 +1,21 @@
 [
   {
     "name": "Ship Security Lockdown",
-    "segments": 4,
+    "segments": 3,
     "progress": 0,
     "onCompleteConsequences": [
       { "type": "removeInteractable", "id": "cb_ferryman_shuttle_ready" },
-      { "type": "addInteractable", "inNodeID": "00000000-0000-0000-0000-000000000001", "interactable": { "$ref": "cb_ferryman_shuttle_locked" } }
+      { "type": "addInteractable", "inNodeID": "00000000-0000-0000-0000-000000000001", "interactable":
+        { 
+          "id": "cb_ferryman_shuttle_locked",
+          "title": "Your Shuttle, the _Ferryman_",
+          "description": "It's cramped and smells faintly of ozone, but it's your ticket out of here. You can't leave until the quarantine protocol is deactivated.",
+          "availableActions": [
+            
+          ],
+          "tags": ["Astronautics", "Exit"]
+        }
+      }
     ]
   },
   {
@@ -18,6 +28,12 @@
   },
   {
     "name": "Reason with Thorne",
+    "segments": 6,
+    "progress": 0,
+    "onCompleteConsequences": []
+  },
+  {
+    "name": "Thorne's Last Resort",
     "segments": 4,
     "progress": 0,
     "onCompleteConsequences": []

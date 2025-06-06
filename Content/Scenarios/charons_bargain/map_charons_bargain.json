@@ -77,9 +77,9 @@
                                              },
                                              { 
                                                "type": "tickClock", 
-                                               "clockName": "VFE Power Surge",
+                                               "clockName": "Ship Security Lockdown",
                                                "amount": 1,
-                                               "description": "Your tampering causes a feedback loop. Somewhere deep in the ship, systems strain against an alien energy.",
+                                               "description": "Your tampering triggers a security protocol.",
                                                "conditions": [{"type": "requiresMinPositionLevel", "positionParam": "risky"}]
                                              },
                                              { 
@@ -90,6 +90,13 @@
                                             { "type": "removeSelfInteractable" }
                                           ],
                                           "failure": [
+                                            { 
+                                               "type": "tickClock", 
+                                               "clockName": "Ship Security Lockdown",
+                                               "amount": 1,
+                                               "description": "Your tampering triggers a security protocol.",
+                                               "conditions": [{"type": "requiresMinPositionLevel", "positionParam": "risky"}]
+                                            },
                                             { 
                                               "type": "sufferHarm", 
                                               "level": "lesser", 
@@ -123,182 +130,16 @@
                       "failure": [
                           { "type": "sufferHarm", "level": "lesser", "familyId": "electric_shock" },
                           {
-                              "type": "addClock",
-                              "description": "Your clumsy bypass attempt sends an alert to the ship's security AI. A new directive appears on your HUD: QUARANTINE PROTOCOL ENGAGED.",
-                              "newClock": {
-                                  "name": "Ship Security Lockdown",
-                                  "segments": 3, "progress": 2,
-                                  "onCompleteConsequences": [
-                                      { "type": "removeInteractable", "id": "cb_ferryman_shuttle_ready" },
-                                      { "type": "addInteractable", "inNodeID": "00000000-0000-0000-0000-000000000001", "newInteractable": { "$ref": "cb_ferryman_shuttle_locked" } }
-                                  ]
-                              }
+                              "type": "tickClock",
+                              "clockName": "Ship Security Lockdown",
+                              "amount": 2,
+                              "description": "Your clumsy bypass attempt sends an alert to the ship's security AI. A new directive appears on your HUD: QUARANTINE PROTOCOL PRIMED."
                           }
                       ]
                   }
               }
           ],
           "tags": ["Electronic", "Damaged"]
-      },
-        {
-        "id": "cb_docking_beacon",
-        "title": "Damaged Emergency Beacon",
-        "description": "Sparks fly from the panel. Close inspection reveals hasty, bloody work. Last message fragment: '...medical emergency...Dr. Thorne requests immediate...aid...'",
-        "availableActions": [
-          {
-            "name": "Inspect Damage",
-            "actionType": "Survey",
-            "position": "controlled",
-            "effect": "standard",
-            "outcomes": {
-              "success": [
-                {
-                  "type": "triggerConsequences",
-                  "consequences": [
-<<<<<<< HEAD
-                    
-=======
-                    {
-                      "type": "addInteractable",
-                      "inNodeID": "current",
-                      "interactable": {
-                        "id": "cb_beacon_log_fragment",
-                        "title": "Beacon Log Fragment",
-                        "description": "The beacon's log contains a corrupted entry: 'Signal altered. True status: [STATIC]. Warning: VFE active. Empress protocol...'",
-                        "availableActions": [
-                          {
-                            "name": "Study Log",
-                            "actionType": "Study",
-                            "position": "risky",
-                            "effect": "standard",
-                            "requiresTest": true,
-                            "outcomes": {
-                              "success": [
-                                { 
-                                  "type": "gainTreasure", 
-                                  "treasureId": "cb_dr_thornes_partial_code",
-                                  "description": "You decode a fragment of Dr. Thorne's access code. The numbers seem to shift before your eyes, but you memorize them before they can escape."
-                                },
-                                { "type": "removeSelfInteractable" }
-                              ],
-                              "partial": [
-                                 { 
-                                   "type": "gainStress", 
-                                   "amount": 1,
-                                   "description": "The corrupted data makes your head swim. You push through, but the strain is evident."
-                                 },
-                                 { 
-                                   "type": "tickClock", 
-                                   "clockName": "VFE Instability", 
-                                   "amount": 1,
-                                   "description": "Your tampering causes a feedback loop. Somewhere deep in the ship, systems strain against an alien energy."
-                                 }
-                              ],
-                              "failure": [
-                                { 
-                                  "type": "sufferHarm", 
-                                  "level": "lesser", 
-                                  "familyId": "vfe_cerebral_euphoria",
-                                  "description": "The log floods your mind with incomprehensible data. For a moment, you understand everything and nothing. The knowledge burns."
-                                }
-                              ]
-                            }
-                          }
-                        ]
-                      }
-                    }
->>>>>>> 657baf22342eca4b2b506def87c74afe79408e16
-                  ]
-                }
-              ],
-              "partial": [
-                { "type": "tickClock", "clockName": "VFE Instability", "amount": 1 },
-                {
-                  "type": "triggerConsequences",
-                  "consequences": [
-                    {
-                      "type": "addInteractable",
-                      "inNodeID": "current",
-                      "interactable": {
-                        "id": "cb_beacon_log_fragment",
-                        "title": "Beacon Log Fragment",
-                        "description": "The beacon's log contains a corrupted entry: 'Signal altered. True status: [STATIC]. Warning: VFE active. Monarch protocol...'",
-                        "availableActions": [
-                          {
-                            "name": "Study Log",
-                            "actionType": "Study",
-                            "position": "risky",
-                            "effect": "standard",
-                            "requiresTest": true,
-                            "outcomes": {
-                              "success": [
-                                { 
-                                  "type": "gainTreasure", 
-                                  "treasureId": "cb_dr_thornes_partial_code",
-                                  "description": "You decode a fragment of Dr. Thorne's access code. The numbers seem to shift before your eyes, but you memorize them before they can escape."
-                                },
-                                { "type": "removeSelfInteractable" }
-                              ],
-                              "partial": [
-                                 { 
-                                   "type": "gainStress", 
-                                   "amount": 1,
-                                   "description": "The corrupted data makes your head swim. You push through, but the strain is evident."
-                                 },
-                                 { 
-                                   "type": "tickClock", 
-                                   "clockName": "VFE Instability", 
-                                   "amount": 1,
-                                   "description": "Your tampering causes a feedback loop. Somewhere deep in the ship, systems strain against an alien energy."
-                                 }
-                              ],
-                              "failure": [
-                                { 
-                                  "type": "sufferHarm", 
-                                  "level": "lesser", 
-                                  "familyId": "vfe_cerebral_euphoria",
-                                  "description": "The log floods your mind with incomprehensible data. For a moment, you understand everything and nothing. The knowledge burns."
-                                }
-                              ]
-                            }
-                          }
-                        ]
-                      }
-                    }
-                  ]
-                }
-              ],
-              "failure": [
-                { "type": "sufferHarm", "level": "lesser", "familyId": "vfe_physical_aberration" , "conditions": [{"type": "requiresMinPositionLevel", "positionParam": "desperate"}] }
-              ]
-            }
-          },
-          {
-            "name": "Attempt Quick Repair",
-            "actionType": "Tinker",
-            "position": "risky",
-            "effect": "limited",
-            "outcomes": {
-              "success": [
-                {"type": "triggerEvent", "eventId": "cb_beacon_partially_active"}
-              ],
-              "failure": [
-                {
-                  "type": "sufferHarm",
-                  "level": "lesser",
-                  "familyId": "electric_shock"
-                },
-                {
-                  "type": "tickClock",
-                  "clockName": "Ship Security Lockdown",
-                  "amount": 1,
-                  "description": "Your clumsy bypass attempt sends an alert to the ship's security AI. A new directive appears on your HUD: QUARANTINE PROTOCOL ENGAGED."
-                }
-              ]
-            }
-          }
-        ],
-        "tags": ["Electronic", "Damaged"]
       },
       {
         "id": "cb_cargo_loader",
