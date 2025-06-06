@@ -584,6 +584,7 @@ struct Consequence: Codable {
         case createChoice
         case triggerEvent
         case triggerConsequences
+        case addClock
     }
 
     var kind: ConsequenceKind
@@ -598,6 +599,7 @@ struct Consequence: Codable {
     var interactableId: String?
     var inNodeID: UUID?
     var newInteractable: Interactable?
+    var newClock: GameClock?
     var treasureId: String?
     var duration: String?
     var choiceOptions: [ChoiceOption]?
@@ -614,6 +616,7 @@ struct Consequence: Codable {
         case type, amount, level, familyId, clockName
         case fromNodeID, toNodeID, id, inNodeID
         case interactable, treasure, treasureId
+        case newClock
         case duration, options, eventId, consequences
         case conditions, description
     }
@@ -635,6 +638,7 @@ struct Consequence: Codable {
         interactableId = try container.decodeIfPresent(String.self, forKey: .id)
         inNodeID = nil
         newInteractable = nil
+        newClock = nil
         treasureId = nil
         duration = try container.decodeIfPresent(String.self, forKey: .duration)
         choiceOptions = try container.decodeIfPresent([ChoiceOption].self, forKey: .options)
@@ -656,6 +660,8 @@ struct Consequence: Codable {
             }
         } else if resolvedKind == .addInteractableHere {
             newInteractable = try container.decodeIfPresent(Interactable.self, forKey: .interactable)
+        } else if resolvedKind == .addClock {
+            newClock = try container.decodeIfPresent(GameClock.self, forKey: .newClock)
         }
 
         if resolvedKind == .gainTreasure {
@@ -704,6 +710,9 @@ struct Consequence: Codable {
             try container.encode(ConsequenceKind.addInteractable, forKey: .type)
             try container.encode("current", forKey: .inNodeID)
             try container.encodeIfPresent(newInteractable, forKey: .interactable)
+        case .addClock:
+            try container.encode(ConsequenceKind.addClock, forKey: .type)
+            try container.encodeIfPresent(newClock, forKey: .newClock)
         case .gainTreasure:
             try container.encode(ConsequenceKind.gainTreasure, forKey: .type)
             try container.encodeIfPresent(treasureId, forKey: .treasureId)
@@ -820,6 +829,13 @@ extension Consequence {
     static func triggerConsequences(_ consequences: [Consequence]) -> Consequence {
         var c = Consequence(kind: .triggerConsequences)
         c.triggered = consequences
+        return c
+    }
+
+    /// Add a new clock to the active game state.
+    static func addClock(_ clock: GameClock) -> Consequence {
+        var c = Consequence(kind: .addClock)
+        c.newClock = clock
         return c
     }
 }

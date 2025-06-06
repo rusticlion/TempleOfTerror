@@ -144,8 +144,24 @@
                 {"type": "triggerEvent", "eventId": "cb_beacon_partially_active"}
               ],
               "failure": [
-                { "type": "sufferHarm", "level": "moderate", "familyId": "electric_shock" },
-                { "type": "tickClock", "clockName": "Ship Systems Failing", "amount": 1 }
+                {
+                  "type": "sufferHarm",
+                  "level": "lesser",
+                  "familyId": "electric_shock"
+                },
+                {
+                  "type": "addClock",
+                  "description": "Your clumsy bypass attempt sends an alert to the ship's security AI. A new directive appears on your HUD: QUARANTINE PROTOCOL ENGAGED.",
+                  "newClock": {
+                    "name": "Ship Security Lockdown",
+                    "segments": 4,
+                    "progress": 1,
+                    "onCompleteConsequences": [
+                      { "type": "removeInteractable", "id": "cb_ferryman_shuttle_ready" },
+                      { "type": "addInteractable", "inNodeID": "00000000-0000-0000-0000-000000000001", "interactable": { "$ref": "cb_ferryman_shuttle_locked" } }
+                    ]
+                  }
+                }
               ]
             }
           }
