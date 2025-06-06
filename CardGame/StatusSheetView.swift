@@ -6,9 +6,9 @@ struct StatusSheetView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 20) {
-                PartyStatusView(viewModel: viewModel)
-                Divider()
                 ClocksView(viewModel: viewModel)
+                Divider()
+                PartyStatusView(viewModel: viewModel)
                 Spacer()
             }
             .padding()

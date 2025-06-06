@@ -5,7 +5,7 @@ struct PartyStatusView: View {
 
     var body: some View {
         VStack(alignment: .leading) {
-            Text("Party Status")
+            Text("Status")
                 .font(.headline)
 
             ForEach(viewModel.gameState.party) { character in
