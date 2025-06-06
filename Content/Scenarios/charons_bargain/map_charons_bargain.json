@@ -51,7 +51,7 @@
                                  },
                                  { 
                                    "type": "tickClock", 
-                                   "clockName": "VFE Power Surge", 
+                                   "clockName": "VFE Instability", 
                                    "amount": 1,
                                    "description": "Your tampering causes a feedback loop. Somewhere deep in the ship, systems strain against an alien energy."
                                  }
@@ -73,7 +73,7 @@
                 }
               ],
               "partial": [
-                { "type": "tickClock", "clockName": "VFE Power Surge", "amount": 1 },
+                { "type": "tickClock", "clockName": "VFE Instability", "amount": 1 },
                 {
                   "type": "triggerConsequences",
                   "consequences": [
@@ -108,7 +108,7 @@
                                  },
                                  { 
                                    "type": "tickClock", 
-                                   "clockName": "VFE Power Surge", 
+                                   "clockName": "VFE Instability", 
                                    "amount": 1,
                                    "description": "Your tampering causes a feedback loop. Somewhere deep in the ship, systems strain against an alien energy."
                                  }
@@ -150,17 +150,10 @@
                   "familyId": "electric_shock"
                 },
                 {
-                  "type": "addClock",
-                  "description": "Your clumsy bypass attempt sends an alert to the ship's security AI. A new directive appears on your HUD: QUARANTINE PROTOCOL ENGAGED.",
-                  "newClock": {
-                    "name": "Ship Security Lockdown",
-                    "segments": 4,
-                    "progress": 1,
-                    "onCompleteConsequences": [
-                      { "type": "removeInteractable", "id": "cb_ferryman_shuttle_ready" },
-                      { "type": "addInteractable", "inNodeID": "00000000-0000-0000-0000-000000000001", "interactable": { "$ref": "cb_ferryman_shuttle_locked" } }
-                    ]
-                  }
+                  "type": "tickClock",
+                  "clockName": "Ship Security Lockdown",
+                  "amount": 1,
+                  "description": "Your clumsy bypass attempt sends an alert to the ship's security AI. A new directive appears on your HUD: QUARANTINE PROTOCOL ENGAGED."
                 }
               ]
             }
@@ -185,7 +178,7 @@
               ],
               "partial": [
                 { "type": "gainStress", "amount": 2 },
-                { "type": "tickClock", "clockName": "VFE Power Surge", "amount": 1 }
+                { "type": "tickClock", "clockName": "VFE Instability", "amount": 1 }
               ],
               "failure": [
                 { "type": "sufferHarm", "level": "lesser", "familyId": "electric_shock" },
@@ -367,7 +360,7 @@
               "failure": [
                 { 
                   "type": "tickClock", 
-                  "clockName": "VFE Power Surge", 
+                  "clockName": "VFE Instability", 
                   "amount": 2,
                   "description": "The autodoc's systems cascade into failure. Emergency alarms shriek as the VFE field pulses out of control. Throughout the ship, dormant systems awaken to the surge."
                 },
@@ -420,7 +413,7 @@
                   {"type": "triggerEvent", "eventId": "cb_ng_partial_lab_info"}
               ],
               "failure": [
-                  {"type": "tickClock", "clockName": "Security Lockdown", "amount": 1}
+                  {"type": "tickClock", "clockName": "Ship Security Lockdown", "amount": 1}
               ]
             }
           },
@@ -435,7 +428,7 @@
               ],
               "failure": [
                   {"type": "sufferHarm", "level": "lesser", "familyId": "electric_shock"},
-                  {"type": "tickClock", "clockName": "Security Lockdown", "amount": 2}
+                  {"type": "tickClock", "clockName": "Ship Security Lockdown", "amount": 2}
               ]
             }
           }
