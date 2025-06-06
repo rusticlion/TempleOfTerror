@@ -657,6 +657,15 @@ class GameViewModel: ObservableObject {
                         descriptions.append("Something new appears.")
                     }
                 }
+            case .addClock:
+                if let clockToAdd = consequence.newClock {
+                    if !gameState.activeClocks.contains(where: { $0.name == clockToAdd.name }) {
+                        gameState.activeClocks.append(clockToAdd)
+                        if !narrativeUsed {
+                            descriptions.append("A new threat emerges: \(clockToAdd.name).")
+                        }
+                    }
+                }
             case .gainTreasure:
                 if let treasureId = consequence.treasureId,
                    let treasure = ContentLoader.shared.treasureTemplates.first(where: { $0.id == treasureId }),
