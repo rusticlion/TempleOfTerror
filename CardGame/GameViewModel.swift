@@ -608,14 +608,22 @@ class GameViewModel: ObservableObject {
                     }
                 }
             case .tickClock:
-                if let clockName = consequence.clockName,
-                   let amount = consequence.amount,
-                   let clockIndex = gameState.activeClocks.firstIndex(where: { $0.name == clockName }) {
-                    updateClock(id: gameState.activeClocks[clockIndex].id,
-                               ticks: amount,
-                               actingCharacter: character)
-                    if !narrativeUsed {
-                        descriptions.append("The '\(clockName)' clock progresses by \(amount).")
+                if let clockName = consequence.clockName, let amount = consequence.amount {
+                    if let clockIndex = gameState.activeClocks.firstIndex(where: { $0.name == clockName }) {
+                        let clockId = gameState.activeClocks[clockIndex].id
+                        updateClock(id: clockId, ticks: amount, actingCharacter: context.character)
+                        if !narrativeUsed {
+                            descriptions.append("The '\(clockName)' clock progresses by \(amount).")
+                        }
+                    } else if let clockTemplate = ContentLoader.shared.clockTemplates.first(where: { $0.name == clockName }) {
+                        var newClock = clockTemplate
+                        newClock.progress = amount
+                        gameState.activeClocks.append(newClock)
+                        if !narrativeUsed {
+                            descriptions.append("A new situation develops: '\(clockName)' [\(newClock.progress)/\(newClock.segments)].")
+                        }
+                    } else {
+                        print("WARNING: Attempted to tick a clock named '\(clockName)' that does not exist in the scenario's clock registry.")
                     }
                 }
             case .unlockConnection:
@@ -655,15 +663,6 @@ class GameViewModel: ObservableObject {
                     gameState.dungeon?.nodes[nodeID.uuidString]?.interactables.append(interactable)
                     if !narrativeUsed {
                         descriptions.append("Something new appears.")
-                    }
-                }
-            case .addClock:
-                if let clockToAdd = consequence.newClock {
-                    if !gameState.activeClocks.contains(where: { $0.name == clockToAdd.name }) {
-                        gameState.activeClocks.append(clockToAdd)
-                        if !narrativeUsed {
-                            descriptions.append("A new threat emerges: \(clockToAdd.name).")
-                        }
                     }
                 }
             case .gainTreasure:

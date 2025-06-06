@@ -155,12 +155,64 @@
                 {
                   "type": "triggerConsequences",
                   "consequences": [
+<<<<<<< HEAD
                     
+=======
+                    {
+                      "type": "addInteractable",
+                      "inNodeID": "current",
+                      "interactable": {
+                        "id": "cb_beacon_log_fragment",
+                        "title": "Beacon Log Fragment",
+                        "description": "The beacon's log contains a corrupted entry: 'Signal altered. True status: [STATIC]. Warning: VFE active. Empress protocol...'",
+                        "availableActions": [
+                          {
+                            "name": "Study Log",
+                            "actionType": "Study",
+                            "position": "risky",
+                            "effect": "standard",
+                            "requiresTest": true,
+                            "outcomes": {
+                              "success": [
+                                { 
+                                  "type": "gainTreasure", 
+                                  "treasureId": "cb_dr_thornes_partial_code",
+                                  "description": "You decode a fragment of Dr. Thorne's access code. The numbers seem to shift before your eyes, but you memorize them before they can escape."
+                                },
+                                { "type": "removeSelfInteractable" }
+                              ],
+                              "partial": [
+                                 { 
+                                   "type": "gainStress", 
+                                   "amount": 1,
+                                   "description": "The corrupted data makes your head swim. You push through, but the strain is evident."
+                                 },
+                                 { 
+                                   "type": "tickClock", 
+                                   "clockName": "VFE Instability", 
+                                   "amount": 1,
+                                   "description": "Your tampering causes a feedback loop. Somewhere deep in the ship, systems strain against an alien energy."
+                                 }
+                              ],
+                              "failure": [
+                                { 
+                                  "type": "sufferHarm", 
+                                  "level": "lesser", 
+                                  "familyId": "vfe_cerebral_euphoria",
+                                  "description": "The log floods your mind with incomprehensible data. For a moment, you understand everything and nothing. The knowledge burns."
+                                }
+                              ]
+                            }
+                          }
+                        ]
+                      }
+                    }
+>>>>>>> 657baf22342eca4b2b506def87c74afe79408e16
                   ]
                 }
               ],
               "partial": [
-                { "type": "tickClock", "clockName": "VFE Power Surge", "amount": 1 },
+                { "type": "tickClock", "clockName": "VFE Instability", "amount": 1 },
                 {
                   "type": "triggerConsequences",
                   "consequences": [
@@ -195,7 +247,7 @@
                                  },
                                  { 
                                    "type": "tickClock", 
-                                   "clockName": "VFE Power Surge", 
+                                   "clockName": "VFE Instability", 
                                    "amount": 1,
                                    "description": "Your tampering causes a feedback loop. Somewhere deep in the ship, systems strain against an alien energy."
                                  }
@@ -237,17 +289,10 @@
                   "familyId": "electric_shock"
                 },
                 {
-                  "type": "addClock",
-                  "description": "Your clumsy bypass attempt sends an alert to the ship's security AI. A new directive appears on your HUD: QUARANTINE PROTOCOL ENGAGED.",
-                  "newClock": {
-                    "name": "Ship Security Lockdown",
-                    "segments": 4,
-                    "progress": 1,
-                    "onCompleteConsequences": [
-                      { "type": "removeInteractable", "id": "cb_ferryman_shuttle_ready" },
-                      { "type": "addInteractable", "inNodeID": "00000000-0000-0000-0000-000000000001", "interactable": { "$ref": "cb_ferryman_shuttle_locked" } }
-                    ]
-                  }
+                  "type": "tickClock",
+                  "clockName": "Ship Security Lockdown",
+                  "amount": 1,
+                  "description": "Your clumsy bypass attempt sends an alert to the ship's security AI. A new directive appears on your HUD: QUARANTINE PROTOCOL ENGAGED."
                 }
               ]
             }
@@ -272,7 +317,7 @@
               ],
               "partial": [
                 { "type": "gainStress", "amount": 2 },
-                { "type": "tickClock", "clockName": "VFE Power Surge", "amount": 1 }
+                { "type": "tickClock", "clockName": "VFE Instability", "amount": 1 }
               ],
               "failure": [
                 { "type": "sufferHarm", "level": "lesser", "familyId": "electric_shock" },
@@ -454,7 +499,7 @@
               "failure": [
                 { 
                   "type": "tickClock", 
-                  "clockName": "VFE Power Surge", 
+                  "clockName": "VFE Instability", 
                   "amount": 2,
                   "description": "The autodoc's systems cascade into failure. Emergency alarms shriek as the VFE field pulses out of control. Throughout the ship, dormant systems awaken to the surge."
                 },
@@ -507,7 +552,7 @@
                   {"type": "triggerEvent", "eventId": "cb_ng_partial_lab_info"}
               ],
               "failure": [
-                  {"type": "tickClock", "clockName": "Security Lockdown", "amount": 1}
+                  {"type": "tickClock", "clockName": "Ship Security Lockdown", "amount": 1}
               ]
             }
           },
@@ -522,7 +567,7 @@
               ],
               "failure": [
                   {"type": "sufferHarm", "level": "lesser", "familyId": "electric_shock"},
-                  {"type": "tickClock", "clockName": "Security Lockdown", "amount": 2}
+                  {"type": "tickClock", "clockName": "Ship Security Lockdown", "amount": 2}
               ]
             }
           }
