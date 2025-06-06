@@ -23,7 +23,34 @@
     "segments": 6,
     "progress": 0,
     "onCompleteConsequences": [
-      { "type": "addInteractable", "inNodeID": "00000000-0000-0000-0000-000000000002", "interactable": { "$ref": "threat_crawling_biomass" } }
+      { "type": "addInteractable", "inNodeID": "00000000-0000-0000-0000-000000000002", "interactable": {
+          "id": "threat_crawling_biomass",
+          "title": "Crawling Biomass",
+          "description": "A mass of corrupted tissue creeps across the floor, hungrily reaching for you.",
+          "isThreat": true,
+          "availableActions": [
+            {
+              "name": "Incinerate",
+              "actionType": "Wreck",
+              "position": "risky",
+              "effect": "standard",
+              "outcomes": {
+                "success": [ { "type": "removeSelfInteractable" } ],
+                "failure": [ { "type": "sufferHarm", "level": "moderate", "familyId": "vfe_physical_aberration" } ]
+              }
+            },
+            {
+              "name": "Retreat",
+              "actionType": "Finesse",
+              "position": "desperate",
+              "effect": "limited",
+              "outcomes": {
+                "success": [ { "type": "removeSelfInteractable" } ],
+                "failure": [ { "type": "gainStress", "amount": 1 } ]
+              }
+            }
+          ]
+        } }
     ]
   },
   {
