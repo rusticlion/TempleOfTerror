@@ -30,6 +30,10 @@ Example snippet:
   "outcomes": { "success": [ { "type": "removeInteractable", "id": "self" } ] }
 }
 ```
+`removeAction` can also be used to disable a completed option without removing the object:
+```json
+{ "type": "removeAction", "id": "self", "actionName": "Illuminate" }
+```
 Use tags to gate hidden options or trigger special consequences.
 
 ## Checking Tags in Scenario Code
