@@ -684,6 +684,18 @@ class GameViewModel: ObservableObject {
                         }
                     }
                 }
+            case .addAction:
+                if let nodeID = gameState.characterLocations[partyMemberId.uuidString],
+                   let action = consequence.newAction {
+                    let targetId = consequence.interactableId ?? interactableID
+                    if let tid = targetId,
+                       let idx = gameState.dungeon?.nodes[nodeID.uuidString]?.interactables.firstIndex(where: { $0.id == tid }) {
+                        gameState.dungeon?.nodes[nodeID.uuidString]?.interactables[idx].availableActions.append(action)
+                        if !narrativeUsed {
+                            descriptions.append("'\(action.name)' is now available.")
+                        }
+                    }
+                }
             case .addInteractable:
                 if let inNodeID = consequence.inNodeID, let interactable = consequence.newInteractable {
                     gameState.dungeon?.nodes[inNodeID.uuidString]?.interactables.append(interactable)

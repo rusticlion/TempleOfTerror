@@ -24,6 +24,10 @@ This document describes key fields used in the JSON content files.
 ```json
 { "type": "removeAction", "id": "self", "actionName": "Open" }
 ```
+`addAction` performs the inverse, adding a new action option to the referenced interactable:
+```json
+{ "type": "addAction", "id": "self", "action": { "name": "Open", "actionType": "Skirmish", "position": "risky", "effect": "standard" } }
+```
 
 ## Treasure
 
