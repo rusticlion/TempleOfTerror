@@ -10,20 +10,50 @@ struct InteractableCardView: View {
         guard let character = selectedCharacter else { return false }
         for harm in character.harm.lesser {
             if let penalty = HarmLibrary.families[harm.familyId]?.lesser.penalty {
-                if case .actionPenalty(let t) = penalty, t == action.actionType { return true }
-                if case .banAction(let t) = penalty, t == action.actionType { return true }
+                switch penalty {
+                case .actionPenalty(let t) where t == action.actionType:
+                    return true
+                case .banAction(let t) where t == action.actionType:
+                    return true
+                case .actionPositionPenalty(let t) where t == action.actionType:
+                    return true
+                case .actionEffectPenalty(let t) where t == action.actionType:
+                    return true
+                default:
+                    break
+                }
             }
         }
         for harm in character.harm.moderate {
             if let penalty = HarmLibrary.families[harm.familyId]?.moderate.penalty {
-                if case .actionPenalty(let t) = penalty, t == action.actionType { return true }
-                if case .banAction(let t) = penalty, t == action.actionType { return true }
+                switch penalty {
+                case .actionPenalty(let t) where t == action.actionType:
+                    return true
+                case .banAction(let t) where t == action.actionType:
+                    return true
+                case .actionPositionPenalty(let t) where t == action.actionType:
+                    return true
+                case .actionEffectPenalty(let t) where t == action.actionType:
+                    return true
+                default:
+                    break
+                }
             }
         }
         for harm in character.harm.severe {
             if let penalty = HarmLibrary.families[harm.familyId]?.severe.penalty {
-                if case .actionPenalty(let t) = penalty, t == action.actionType { return true }
-                if case .banAction(let t) = penalty, t == action.actionType { return true }
+                switch penalty {
+                case .actionPenalty(let t) where t == action.actionType:
+                    return true
+                case .banAction(let t) where t == action.actionType:
+                    return true
+                case .actionPositionPenalty(let t) where t == action.actionType:
+                    return true
+                case .actionEffectPenalty(let t) where t == action.actionType:
+                    return true
+                default:
+                    break
+                }
             }
         }
         return false
@@ -33,7 +63,11 @@ struct InteractableCardView: View {
         guard let character = selectedCharacter else { return false }
         for mod in character.modifiers {
             if mod.uses == 0 { continue }
-            if let specific = mod.applicableToAction, specific != action.actionType { continue }
+            if let actions = mod.applicableActions {
+                if !actions.contains(action.actionType) { continue }
+            } else if let specific = mod.applicableToAction, specific != action.actionType {
+                continue
+            }
             if mod.bonusDice != 0 || mod.improvePosition || mod.improveEffect { return true }
         }
         return false

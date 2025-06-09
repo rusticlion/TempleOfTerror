@@ -27,12 +27,15 @@ struct Modifier: Codable {
     var improvePosition: Bool = false
     var improveEffect: Bool = false
     var applicableToAction: String? = nil
+    /// New: list of action types this modifier applies to. Supersedes
+    /// `applicableToAction` when provided.
+    var applicableActions: [String]? = nil
     var uses: Int = 1
     var isOptionalToApply: Bool = true
     var description: String
 
     enum CodingKeys: String, CodingKey {
-        case id, bonusDice, improvePosition, improveEffect, applicableToAction, uses, isOptionalToApply, description
+        case id, bonusDice, improvePosition, improveEffect, applicableToAction, applicableActions, uses, isOptionalToApply, description
     }
 
     init(id: UUID = UUID(),
@@ -40,6 +43,7 @@ struct Modifier: Codable {
          improvePosition: Bool = false,
          improveEffect: Bool = false,
          applicableToAction: String? = nil,
+         applicableActions: [String]? = nil,
          uses: Int = 1,
          isOptionalToApply: Bool = true,
          description: String) {
@@ -48,6 +52,7 @@ struct Modifier: Codable {
         self.improvePosition = improvePosition
         self.improveEffect = improveEffect
         self.applicableToAction = applicableToAction
+        self.applicableActions = applicableActions
         self.uses = uses
         self.isOptionalToApply = isOptionalToApply
         self.description = description
@@ -60,6 +65,10 @@ struct Modifier: Codable {
         improvePosition = try container.decodeIfPresent(Bool.self, forKey: .improvePosition) ?? false
         improveEffect = try container.decodeIfPresent(Bool.self, forKey: .improveEffect) ?? false
         applicableToAction = try container.decodeIfPresent(String.self, forKey: .applicableToAction)
+        applicableActions = try container.decodeIfPresent([String].self, forKey: .applicableActions)
+        if applicableActions == nil, let single = applicableToAction {
+            applicableActions = [single]
+        }
         uses = try container.decodeIfPresent(Int.self, forKey: .uses) ?? 1
         isOptionalToApply = try container.decodeIfPresent(Bool.self, forKey: .isOptionalToApply) ?? true
         description = try container.decode(String.self, forKey: .description)
@@ -71,7 +80,15 @@ struct Modifier: Codable {
         try container.encode(bonusDice, forKey: .bonusDice)
         try container.encode(improvePosition, forKey: .improvePosition)
         try container.encode(improveEffect, forKey: .improveEffect)
-        try container.encodeIfPresent(applicableToAction, forKey: .applicableToAction)
+        if let actions = applicableActions {
+            if actions.count == 1 {
+                try container.encode(actions.first, forKey: .applicableToAction)
+            } else {
+                try container.encode(actions, forKey: .applicableActions)
+            }
+        } else {
+            try container.encodeIfPresent(applicableToAction, forKey: .applicableToAction)
+        }
         try container.encode(uses, forKey: .uses)
         try container.encode(isOptionalToApply, forKey: .isOptionalToApply)
         try container.encode(description, forKey: .description)
@@ -253,6 +270,8 @@ enum Penalty: Codable {
     case increaseStressCost(amount: Int) // Stress costs are increased.
     case actionPenalty(actionType: String) // Specific action suffers –1 die.
     case banAction(actionType: String) // An action is impossible without effort
+    case actionPositionPenalty(actionType: String) // Specific action worsens position
+    case actionEffectPenalty(actionType: String) // Specific action suffers -1 Effect
 
     private enum CodingKeys: String, CodingKey {
         case type, amount, actionType
@@ -263,6 +282,8 @@ enum Penalty: Codable {
         case increaseStressCost
         case actionPenalty
         case banAction
+        case actionPositionPenalty
+        case actionEffectPenalty
     }
 
     init(from decoder: Decoder) throws {
@@ -280,6 +301,12 @@ enum Penalty: Codable {
         case .banAction:
             let action = try container.decode(String.self, forKey: .actionType)
             self = .banAction(actionType: action)
+        case .actionPositionPenalty:
+            let action = try container.decode(String.self, forKey: .actionType)
+            self = .actionPositionPenalty(actionType: action)
+        case .actionEffectPenalty:
+            let action = try container.decode(String.self, forKey: .actionType)
+            self = .actionEffectPenalty(actionType: action)
         }
     }
 
@@ -296,6 +323,12 @@ enum Penalty: Codable {
             try container.encode(action, forKey: .actionType)
         case .banAction(let action):
             try container.encode(Kind.banAction, forKey: .type)
+            try container.encode(action, forKey: .actionType)
+        case .actionPositionPenalty(let action):
+            try container.encode(Kind.actionPositionPenalty, forKey: .type)
+            try container.encode(action, forKey: .actionType)
+        case .actionEffectPenalty(let action):
+            try container.encode(Kind.actionEffectPenalty, forKey: .type)
             try container.encode(action, forKey: .actionType)
         }
     }
@@ -866,6 +899,15 @@ enum RollPosition: String, Codable {
         case .desperate: return .risky
         case .risky: return .controlled
         case .controlled: return .controlled
+        }
+    }
+
+    /// Returns a one-step worse position, clamping at `.desperate`.
+    func decreased() -> RollPosition {
+        switch self {
+        case .controlled: return .risky
+        case .risky: return .desperate
+        case .desperate: return .desperate
         }
     }
 

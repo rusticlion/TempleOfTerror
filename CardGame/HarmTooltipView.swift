@@ -23,6 +23,10 @@ struct HarmTooltipView: View {
             return "\(actionType) rolls -1 die."
         case .banAction(let actionType):
             return "Cannot perform \(actionType)."
+        case .actionPositionPenalty(let actionType):
+            return "\(actionType) rolls at worse Position."
+        case .actionEffectPenalty(let actionType):
+            return "\(actionType) suffers -1 Effect."
         }
     }
 

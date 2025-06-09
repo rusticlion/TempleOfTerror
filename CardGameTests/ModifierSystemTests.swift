@@ -85,4 +85,36 @@ final class ModifierSystemTests: XCTestCase {
 
         XCTAssertTrue(vm.gameState.party[0].modifiers.isEmpty)
     }
+
+    func testActionSpecificArrayModifier() throws {
+        let vm = GameViewModel()
+        var character = makeTestCharacter()
+        let mod = Modifier(bonusDice: 1, improveEffect: false, applicableActions: ["Skirmish", "Wreck"], uses: 1, isOptionalToApply: false, description: "Warhammer")
+        character.modifiers = [mod]
+
+        let action = makeTestAction() // Skirmish
+        let proj = vm.calculateProjection(for: action, with: character)
+        XCTAssertEqual(proj.finalDiceCount, 3)
+
+        let other = ActionOption(name: "Smash", actionType: "Wreck", position: .risky, effect: .standard)
+        let proj2 = vm.calculateProjection(for: other, with: character)
+        XCTAssertEqual(proj2.finalDiceCount, 3)
+
+        let off = ActionOption(name: "Sneak", actionType: "Prowl", position: .risky, effect: .standard)
+        let proj3 = vm.calculateProjection(for: off, with: character)
+        XCTAssertEqual(proj3.finalDiceCount, 2)
+    }
+
+    func testActionEffectPenalty() throws {
+        ContentLoader.shared = ContentLoader(scenario: "test_penalty")
+        let vm = GameViewModel()
+        var character = makeTestCharacter()
+        character.actions["Prowl"] = 2
+        character.harm.lesser = [(familyId: "sprain", description: "Ankle Sprain")]
+
+        let action = ActionOption(name: "Sneak", actionType: "Prowl", position: .risky, effect: .standard)
+        let proj = vm.calculateProjection(for: action, with: character)
+
+        XCTAssertEqual(proj.finalEffect, .limited)
+    }
 }
