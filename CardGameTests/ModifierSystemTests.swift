@@ -147,4 +147,18 @@ final class ModifierSystemTests: XCTestCase {
         let tagProj = vm.calculateProjection(for: action, with: character, interactableTags: ["Flora"])
         XCTAssertEqual(tagProj.finalDiceCount, 1)
     }
+
+    func testTreasureModifierForSpecificAction() throws {
+        let vm = GameViewModel()
+        var character = makeTestCharacter()
+        let mod = Modifier(bonusDice: 1, applicableToAction: "Tinker", uses: 1, isOptionalToApply: true, description: "Scrap Parts")
+        let treasure = Treasure(id: "test_scrap", name: "Scrap", description: "", grantedModifier: mod)
+        character.treasures = [treasure]
+        character.actions["Tinker"] = 1
+
+        let action = ActionOption(name: "Repair", actionType: "Tinker", position: .risky, effect: .standard)
+        let context = vm.getRollContext(for: action, with: character)
+
+        XCTAssertTrue(context.optionalModifiers.contains { $0.description == "Scrap Parts" })
+    }
 }
