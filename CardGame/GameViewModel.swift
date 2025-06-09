@@ -650,6 +650,18 @@ class GameViewModel: ObservableObject {
                         descriptions.append("The way is clear.")
                     }
                 }
+            case .removeAction:
+                if let nodeID = gameState.characterLocations[partyMemberId.uuidString],
+                   let actionName = consequence.actionName {
+                    let targetId = consequence.interactableId ?? interactableID
+                    if let tid = targetId,
+                       let idx = gameState.dungeon?.nodes[nodeID.uuidString]?.interactables.firstIndex(where: { $0.id == tid }) {
+                        gameState.dungeon?.nodes[nodeID.uuidString]?.interactables[idx].availableActions.removeAll(where: { $0.name == actionName })
+                        if !narrativeUsed {
+                            descriptions.append("'\(actionName)' can no longer be taken.")
+                        }
+                    }
+                }
             case .addInteractable:
                 if let inNodeID = consequence.inNodeID, let interactable = consequence.newInteractable {
                     gameState.dungeon?.nodes[inNodeID.uuidString]?.interactables.append(interactable)

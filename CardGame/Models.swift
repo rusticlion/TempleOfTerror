@@ -577,6 +577,7 @@ struct Consequence: Codable {
         case unlockConnection
         case removeInteractable
         case removeSelfInteractable
+        case removeAction
         case addInteractable
         case addInteractableHere
         case gainTreasure
@@ -596,6 +597,7 @@ struct Consequence: Codable {
     var fromNodeID: UUID?
     var toNodeID: UUID?
     var interactableId: String?
+    var actionName: String?
     var inNodeID: UUID?
     var newInteractable: Interactable?
     var treasureId: String?
@@ -615,7 +617,7 @@ struct Consequence: Codable {
         case fromNodeID, toNodeID, id, inNodeID
         case interactable, treasure, treasureId
         case duration, options, eventId, consequences
-        case conditions, description
+        case actionName, conditions, description
     }
 
     init(kind: ConsequenceKind) {
@@ -633,6 +635,7 @@ struct Consequence: Codable {
         fromNodeID = try container.decodeIfPresent(UUID.self, forKey: .fromNodeID)
         toNodeID = try container.decodeIfPresent(UUID.self, forKey: .toNodeID)
         interactableId = try container.decodeIfPresent(String.self, forKey: .id)
+        actionName = try container.decodeIfPresent(String.self, forKey: .actionName)
         inNodeID = nil
         newInteractable = nil
         treasureId = nil
@@ -643,6 +646,9 @@ struct Consequence: Codable {
 
         if resolvedKind == .removeInteractable, interactableId == "self" {
             resolvedKind = .removeSelfInteractable
+            interactableId = nil
+        }
+        if resolvedKind == .removeAction, interactableId == "self" {
             interactableId = nil
         }
 
@@ -693,9 +699,19 @@ struct Consequence: Codable {
         case .removeInteractable:
             try container.encode(ConsequenceKind.removeInteractable, forKey: .type)
             try container.encodeIfPresent(interactableId, forKey: .id)
+            try container.encodeIfPresent(actionName, forKey: .actionName)
         case .removeSelfInteractable:
             try container.encode(ConsequenceKind.removeInteractable, forKey: .type)
             try container.encode("self", forKey: .id)
+            try container.encodeIfPresent(actionName, forKey: .actionName)
+        case .removeAction:
+            try container.encode(ConsequenceKind.removeAction, forKey: .type)
+            if let id = interactableId {
+                try container.encode(id, forKey: .id)
+            } else {
+                try container.encode("self", forKey: .id)
+            }
+            try container.encodeIfPresent(actionName, forKey: .actionName)
         case .addInteractable:
             try container.encode(ConsequenceKind.addInteractable, forKey: .type)
             try container.encodeIfPresent(inNodeID, forKey: .inNodeID)
@@ -768,6 +784,14 @@ extension Consequence {
     /// Remove the specified interactable from the current node.
     static func removeInteractable(id: String) -> Consequence {
         var c = Consequence(kind: .removeInteractable)
+        c.interactableId = id
+        return c
+    }
+
+    /// Remove a specific action from the given interactable.
+    static func removeAction(name: String, fromInteractable id: String) -> Consequence {
+        var c = Consequence(kind: .removeAction)
+        c.actionName = name
         c.interactableId = id
         return c
     }

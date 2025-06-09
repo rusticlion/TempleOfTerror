@@ -33,4 +33,53 @@ final class CardGameTests: XCTestCase {
         }
     }
 
+    func testRemoveActionConsequence() throws {
+        // Set up a simple game state with one interactable
+        let vm = GameViewModel()
+        let nodeID = UUID()
+        let action1 = ActionOption(name: "Open",
+                                   actionType: "Skirmish",
+                                   position: .risky,
+                                   effect: .standard)
+        let action2 = ActionOption(name: "Look",
+                                   actionType: "Survey",
+                                   position: .risky,
+                                   effect: .standard)
+        let interactable = Interactable(id: "test",
+                                        title: "Test",
+                                        description: "Test",
+                                        availableActions: [action1, action2])
+        let node = MapNode(id: nodeID,
+                           name: "Room",
+                           soundProfile: "",
+                           interactables: [interactable],
+                           connections: [])
+        vm.gameState.dungeon = DungeonMap(nodes: [nodeID.uuidString: node],
+                                          startingNodeID: nodeID)
+
+        var character = Character(id: UUID(),
+                                  name: "Hero",
+                                  characterClass: "Rogue",
+                                  stress: 0,
+                                  harm: HarmState(),
+                                  actions: ["Skirmish": 1, "Survey": 1],
+                                  treasures: [],
+                                  modifiers: [])
+        vm.gameState.party = [character]
+        vm.gameState.characterLocations[character.id.uuidString] = nodeID
+
+        let removeCon = Consequence.removeAction(name: "Open", fromInteractable: "self")
+        let dummyAction = ActionOption(name: "Trigger",
+                                       actionType: "Skirmish",
+                                       position: .risky,
+                                       effect: .standard,
+                                       requiresTest: false,
+                                       outcomes: [.success: [removeCon]])
+
+        _ = vm.performFreeAction(for: dummyAction, with: character, interactableID: "test")
+
+        let remaining = vm.gameState.dungeon?.nodes[nodeID.uuidString]?.interactables.first?.availableActions.map { $0.name }
+        XCTAssertEqual(remaining, ["Look"])
+    }
+
 }

@@ -19,6 +19,12 @@ This document describes key fields used in the JSON content files.
 
 * `requiresTest` — Optional `Bool`. Defaults to `true`. If `false`, the action executes its `success` consequences immediately without a dice roll.
 
+`removeAction` is a consequence type similar to `removeInteractable`. It removes a specific action from an interactable while leaving the interactable itself in play:
+
+```json
+{ "type": "removeAction", "id": "self", "actionName": "Open" }
+```
+
 ## Treasure
 
 Treasure entries live in `treasures.json`.
