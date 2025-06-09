@@ -9,9 +9,11 @@ struct TreasureTooltipView: View {
                 .font(.headline)
             Text(treasure.description)
                 .font(.body)
+                .fixedSize(horizontal: false, vertical: true)
             Text(treasure.grantedModifier.description)
                 .font(.subheadline)
                 .foregroundColor(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
             if !treasure.tags.isEmpty {
                 HStack(spacing: 4) {
                     ForEach(treasure.tags, id: \.self) { tag in

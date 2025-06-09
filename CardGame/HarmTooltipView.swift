@@ -41,15 +41,18 @@ struct HarmTooltipView: View {
             if let tier = tier {
                 Text(tier.description)
                     .font(.headline)
+                    .fixedSize(horizontal: false, vertical: true)
                 if let penalty = tier.penalty {
                     Text(penaltyDescription(penalty))
                         .font(.subheadline)
                         .foregroundColor(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
                 if let boon = tier.boon {
                     Text(boonDescription(boon))
                         .font(.subheadline)
                         .foregroundColor(.green)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
             } else {
                 Text("Unknown Harm")

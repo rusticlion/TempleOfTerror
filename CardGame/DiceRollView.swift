@@ -111,7 +111,14 @@ struct DiceRollView: View {
                             .font(.subheadline)
                     }
                     Text("Rolled a \(result.highestRoll)").font(.title3)
-                    Text(result.consequences).padding()
+                    ScrollView {
+                        Text(result.consequences)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .multilineTextAlignment(.leading)
+                            .padding()
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .frame(maxHeight: 200)
                 }
             } else if let proj = displayedProjection {
                 VStack(spacing: 4) {
