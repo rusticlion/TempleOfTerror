@@ -52,6 +52,7 @@ struct InteractableCardView: View {
                 .font(.title2).bold()
             Text(interactable.description)
                 .font(.body)
+                .fixedSize(horizontal: false, vertical: true)
             if !interactable.tags.isEmpty {
                 HStack(spacing: 4) {
                     ForEach(interactable.tags, id: \.self) { tag in

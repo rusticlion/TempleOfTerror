@@ -94,6 +94,7 @@ struct CharacterSheetView: View {
                                 } label: {
                                     VStack {
                                         Text(harm.description)
+                                            .fixedSize(horizontal: false, vertical: true)
                                         if let tier = tier(for: harm.familyId, level: .lesser) {
                                             if let penalty = tier.penalty {
                                                 Text(shortPenaltyDescription(penalty))
@@ -135,6 +136,7 @@ struct CharacterSheetView: View {
                                 } label: {
                                     VStack {
                                         Text(harm.description)
+                                            .fixedSize(horizontal: false, vertical: true)
                                         if let tier = tier(for: harm.familyId, level: .moderate) {
                                             if let penalty = tier.penalty {
                                                 Text(shortPenaltyDescription(penalty))
@@ -173,6 +175,7 @@ struct CharacterSheetView: View {
                         } label: {
                             VStack {
                                 Text(harm.description)
+                                    .fixedSize(horizontal: false, vertical: true)
                                 if let tier = tier(for: harm.familyId, level: .severe) {
                                     if let penalty = tier.penalty {
                                         Text(shortPenaltyDescription(penalty))

@@ -68,7 +68,9 @@ private struct ScenarioSelectView: View {
             List(available, id: \.id) { scenario in
                 VStack(alignment: .leading) {
                     Text(scenario.title).font(.headline)
-                    Text(scenario.description).font(.subheadline)
+                    Text(scenario.description)
+                        .font(.subheadline)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
                 .onTapGesture {
                     onSelect(scenario)

@@ -15,6 +15,7 @@ struct NodeConnectionsView: View {
                     } label: {
                         HStack {
                             Text(connection.description)
+                                .fixedSize(horizontal: false, vertical: true)
                             Spacer()
                             if !connection.isUnlocked {
                                 Image(systemName: "lock.fill")
