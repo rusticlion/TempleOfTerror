@@ -8,16 +8,17 @@ struct InteractableCardView: View {
 
     private func hasPenalty(for action: ActionOption) -> Bool {
         guard let character = selectedCharacter else { return false }
+        let tags = interactable.tags
         for harm in character.harm.lesser {
             if let penalty = HarmLibrary.families[harm.familyId]?.lesser.penalty {
                 switch penalty {
-                case .actionPenalty(let t) where t == action.actionType:
+                case .actionPenalty(let t, let tag) where t == action.actionType && (tag == nil || tags.contains(tag!)):
                     return true
-                case .banAction(let t) where t == action.actionType:
+                case .banAction(let t, let tag) where t == action.actionType && (tag == nil || tags.contains(tag!)):
                     return true
-                case .actionPositionPenalty(let t) where t == action.actionType:
+                case .actionPositionPenalty(let t, let tag) where t == action.actionType && (tag == nil || tags.contains(tag!)):
                     return true
-                case .actionEffectPenalty(let t) where t == action.actionType:
+                case .actionEffectPenalty(let t, let tag) where t == action.actionType && (tag == nil || tags.contains(tag!)):
                     return true
                 default:
                     break
@@ -27,13 +28,13 @@ struct InteractableCardView: View {
         for harm in character.harm.moderate {
             if let penalty = HarmLibrary.families[harm.familyId]?.moderate.penalty {
                 switch penalty {
-                case .actionPenalty(let t) where t == action.actionType:
+                case .actionPenalty(let t, let tag) where t == action.actionType && (tag == nil || tags.contains(tag!)):
                     return true
-                case .banAction(let t) where t == action.actionType:
+                case .banAction(let t, let tag) where t == action.actionType && (tag == nil || tags.contains(tag!)):
                     return true
-                case .actionPositionPenalty(let t) where t == action.actionType:
+                case .actionPositionPenalty(let t, let tag) where t == action.actionType && (tag == nil || tags.contains(tag!)):
                     return true
-                case .actionEffectPenalty(let t) where t == action.actionType:
+                case .actionEffectPenalty(let t, let tag) where t == action.actionType && (tag == nil || tags.contains(tag!)):
                     return true
                 default:
                     break
@@ -43,13 +44,13 @@ struct InteractableCardView: View {
         for harm in character.harm.severe {
             if let penalty = HarmLibrary.families[harm.familyId]?.severe.penalty {
                 switch penalty {
-                case .actionPenalty(let t) where t == action.actionType:
+                case .actionPenalty(let t, let tag) where t == action.actionType && (tag == nil || tags.contains(tag!)):
                     return true
-                case .banAction(let t) where t == action.actionType:
+                case .banAction(let t, let tag) where t == action.actionType && (tag == nil || tags.contains(tag!)):
                     return true
-                case .actionPositionPenalty(let t) where t == action.actionType:
+                case .actionPositionPenalty(let t, let tag) where t == action.actionType && (tag == nil || tags.contains(tag!)):
                     return true
-                case .actionEffectPenalty(let t) where t == action.actionType:
+                case .actionEffectPenalty(let t, let tag) where t == action.actionType && (tag == nil || tags.contains(tag!)):
                     return true
                 default:
                     break
@@ -61,6 +62,7 @@ struct InteractableCardView: View {
 
     private func hasBonus(for action: ActionOption) -> Bool {
         guard let character = selectedCharacter else { return false }
+        let tags = interactable.tags
         for mod in character.modifiers {
             if mod.uses == 0 { continue }
             if let actions = mod.applicableActions {
@@ -68,6 +70,7 @@ struct InteractableCardView: View {
             } else if let specific = mod.applicableToAction, specific != action.actionType {
                 continue
             }
+            if let req = mod.requiredTag, !tags.contains(req) { continue }
             if mod.bonusDice != 0 || mod.improvePosition || mod.improveEffect { return true }
         }
         return false

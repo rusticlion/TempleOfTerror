@@ -189,7 +189,13 @@ struct DiceRollView: View {
         }
         .padding(30)
         .onAppear {
-            let context = viewModel.getRollContext(for: action, with: character)
+            var tags: [String] = []
+            if let id = interactableID,
+               let nodeID = viewModel.gameState.characterLocations[character.id.uuidString],
+               let inter = viewModel.gameState.dungeon?.nodes[nodeID.uuidString]?.interactables.first(where: { $0.id == id }) {
+                tags = inter.tags
+            }
+            let context = viewModel.getRollContext(for: action, with: character, interactableTags: tags)
             self.baseProjection = context.baseProjection
             self.displayedProjection = context.baseProjection
             self.availableOptionalModifiers = context.optionalModifiers

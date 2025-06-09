@@ -102,7 +102,7 @@ class GameViewModel: ObservableObject {
     // --- Core Logic Functions for the Sprint ---
 
     /// Calculates the projection before the roll.
-    func calculateProjection(for action: ActionOption, with character: Character) -> RollProjectionDetails {
+    func calculateProjection(for action: ActionOption, with character: Character, interactableTags tags: [String] = []) -> RollProjectionDetails {
         var diceCount = character.actions[action.actionType] ?? 0
         var position = action.position
         var effect = action.effect
@@ -114,26 +114,26 @@ class GameViewModel: ObservableObject {
         // Apply penalties from all active harm conditions
         for harm in character.harm.lesser {
             if let penalty = HarmLibrary.families[harm.familyId]?.lesser.penalty {
-                apply(penalty: penalty, description: harm.description, to: action.actionType, diceCount: &diceCount, position: &position, effect: &effect, notes: &notes)
+                apply(penalty: penalty, description: harm.description, to: action.actionType, tags: tags, diceCount: &diceCount, position: &position, effect: &effect, notes: &notes)
             }
             if let boon = HarmLibrary.families[harm.familyId]?.lesser.boon {
-                apply(boon: boon, description: harm.description, to: action.actionType, diceCount: &diceCount, position: &position, effect: &effect, notes: &notes)
+                apply(boon: boon, description: harm.description, to: action.actionType, tags: tags, diceCount: &diceCount, position: &position, effect: &effect, notes: &notes)
             }
         }
         for harm in character.harm.moderate {
             if let penalty = HarmLibrary.families[harm.familyId]?.moderate.penalty {
-                apply(penalty: penalty, description: harm.description, to: action.actionType, diceCount: &diceCount, position: &position, effect: &effect, notes: &notes)
+                apply(penalty: penalty, description: harm.description, to: action.actionType, tags: tags, diceCount: &diceCount, position: &position, effect: &effect, notes: &notes)
             }
             if let boon = HarmLibrary.families[harm.familyId]?.moderate.boon {
-                apply(boon: boon, description: harm.description, to: action.actionType, diceCount: &diceCount, position: &position, effect: &effect, notes: &notes)
+                apply(boon: boon, description: harm.description, to: action.actionType, tags: tags, diceCount: &diceCount, position: &position, effect: &effect, notes: &notes)
             }
         }
         for harm in character.harm.severe {
             if let penalty = HarmLibrary.families[harm.familyId]?.severe.penalty {
-                apply(penalty: penalty, description: harm.description, to: action.actionType, diceCount: &diceCount, position: &position, effect: &effect, notes: &notes)
+                apply(penalty: penalty, description: harm.description, to: action.actionType, tags: tags, diceCount: &diceCount, position: &position, effect: &effect, notes: &notes)
             }
             if let boon = HarmLibrary.families[harm.familyId]?.severe.boon {
-                apply(boon: boon, description: harm.description, to: action.actionType, diceCount: &diceCount, position: &position, effect: &effect, notes: &notes)
+                apply(boon: boon, description: harm.description, to: action.actionType, tags: tags, diceCount: &diceCount, position: &position, effect: &effect, notes: &notes)
             }
         }
         // Apply bonuses from modifiers
@@ -144,6 +144,7 @@ class GameViewModel: ObservableObject {
             } else if let specific = modifier.applicableToAction, specific != action.actionType {
                 continue
             }
+            if let req = modifier.requiredTag, !tags.contains(req) { continue }
 
             if modifier.bonusDice != 0 {
                 diceCount += modifier.bonusDice
@@ -205,7 +206,7 @@ class GameViewModel: ObservableObject {
     }
 
     /// Retrieve the base roll projection along with selectable optional modifiers.
-    func getRollContext(for action: ActionOption, with character: Character) -> (baseProjection: RollProjectionDetails, optionalModifiers: [SelectableModifierInfo]) {
+    func getRollContext(for action: ActionOption, with character: Character, interactableTags tags: [String] = []) -> (baseProjection: RollProjectionDetails, optionalModifiers: [SelectableModifierInfo]) {
         var diceCount = character.actions[action.actionType] ?? 0
         var position = action.position
         var effect = action.effect
@@ -217,26 +218,26 @@ class GameViewModel: ObservableObject {
         // Non-optional harm penalties/boons
         for harm in character.harm.lesser {
             if let penalty = HarmLibrary.families[harm.familyId]?.lesser.penalty {
-                apply(penalty: penalty, description: harm.description, to: action.actionType, diceCount: &diceCount, position: &position, effect: &effect, notes: &notes)
+                apply(penalty: penalty, description: harm.description, to: action.actionType, tags: tags, diceCount: &diceCount, position: &position, effect: &effect, notes: &notes)
             }
             if let boon = HarmLibrary.families[harm.familyId]?.lesser.boon {
-                apply(boon: boon, description: harm.description, to: action.actionType, diceCount: &diceCount, position: &position, effect: &effect, notes: &notes)
+                apply(boon: boon, description: harm.description, to: action.actionType, tags: tags, diceCount: &diceCount, position: &position, effect: &effect, notes: &notes)
             }
         }
         for harm in character.harm.moderate {
             if let penalty = HarmLibrary.families[harm.familyId]?.moderate.penalty {
-                apply(penalty: penalty, description: harm.description, to: action.actionType, diceCount: &diceCount, position: &position, effect: &effect, notes: &notes)
+                apply(penalty: penalty, description: harm.description, to: action.actionType, tags: tags, diceCount: &diceCount, position: &position, effect: &effect, notes: &notes)
             }
             if let boon = HarmLibrary.families[harm.familyId]?.moderate.boon {
-                apply(boon: boon, description: harm.description, to: action.actionType, diceCount: &diceCount, position: &position, effect: &effect, notes: &notes)
+                apply(boon: boon, description: harm.description, to: action.actionType, tags: tags, diceCount: &diceCount, position: &position, effect: &effect, notes: &notes)
             }
         }
         for harm in character.harm.severe {
             if let penalty = HarmLibrary.families[harm.familyId]?.severe.penalty {
-                apply(penalty: penalty, description: harm.description, to: action.actionType, diceCount: &diceCount, position: &position, effect: &effect, notes: &notes)
+                apply(penalty: penalty, description: harm.description, to: action.actionType, tags: tags, diceCount: &diceCount, position: &position, effect: &effect, notes: &notes)
             }
             if let boon = HarmLibrary.families[harm.familyId]?.severe.boon {
-                apply(boon: boon, description: harm.description, to: action.actionType, diceCount: &diceCount, position: &position, effect: &effect, notes: &notes)
+                apply(boon: boon, description: harm.description, to: action.actionType, tags: tags, diceCount: &diceCount, position: &position, effect: &effect, notes: &notes)
             }
         }
 
@@ -249,6 +250,7 @@ class GameViewModel: ObservableObject {
             } else if let specific = modifier.applicableToAction, specific != action.actionType {
                 continue
             }
+            if let req = modifier.requiredTag, !tags.contains(req) { continue }
 
             if modifier.bonusDice != 0 {
                 diceCount += modifier.bonusDice
@@ -290,6 +292,7 @@ class GameViewModel: ObservableObject {
             } else if let specific = mod.applicableToAction, specific != action.actionType {
                 continue
             }
+            if let req = mod.requiredTag, !tags.contains(req) { continue }
 
             var effectDesc: [String] = []
             if mod.bonusDice != 0 { effectDesc.append("+\(mod.bonusDice)d") }
@@ -376,7 +379,14 @@ class GameViewModel: ObservableObject {
                                   finalEffect: nil)
         }
 
-        let context = getRollContext(for: action, with: character)
+        var tags: [String] = []
+        if let id = interactableID,
+           let nodeID = gameState.characterLocations[character.id.uuidString],
+           let interactable = gameState.dungeon?.nodes[nodeID.uuidString]?.interactables.first(where: { $0.id == id }) {
+            tags = interactable.tags
+        }
+
+        let context = getRollContext(for: action, with: character, interactableTags: tags)
         var workingProjection = context.baseProjection
 
         var appliedOptionalMods: [Modifier] = []
@@ -784,21 +794,26 @@ class GameViewModel: ObservableObject {
         return true
     }
 
-    private func apply(penalty: Penalty, description: String, to actionType: String, diceCount: inout Int, position: inout RollPosition, effect: inout RollEffect, notes: inout [String]) {
+    private func apply(penalty: Penalty, description: String, to actionType: String, tags: [String], diceCount: inout Int, position: inout RollPosition, effect: inout RollEffect, notes: inout [String]) {
         switch penalty {
-        case .reduceEffect:
+        case .reduceEffect(let tag):
+            if let tag = tag, !tags.contains(tag) { break }
             effect = effect.decreased()
             notes.append("(-1 Effect from \(description))")
-        case .actionPenalty(let action) where action == actionType:
+        case .actionPenalty(let action, let tag) where action == actionType:
+            if let tag = tag, !tags.contains(tag) { break }
             diceCount -= 1
             notes.append("(-1d from \(description))")
-        case .banAction(let action) where action == actionType:
+        case .banAction(let action, let tag) where action == actionType:
+            if let tag = tag, !tags.contains(tag) { break }
             diceCount = 0
             notes.append("(Cannot perform due to \(description))")
-        case .actionPositionPenalty(let action) where action == actionType:
+        case .actionPositionPenalty(let action, let tag) where action == actionType:
+            if let tag = tag, !tags.contains(tag) { break }
             position = position.decreased()
             notes.append("(-Position from \(description))")
-        case .actionEffectPenalty(let action) where action == actionType:
+        case .actionEffectPenalty(let action, let tag) where action == actionType:
+            if let tag = tag, !tags.contains(tag) { break }
             effect = effect.decreased()
             notes.append("(-Effect from \(description))")
         default:
@@ -806,12 +821,13 @@ class GameViewModel: ObservableObject {
         }
     }
 
-    private func apply(boon: Modifier, description: String, to actionType: String, diceCount: inout Int, position: inout RollPosition, effect: inout RollEffect, notes: inout [String]) {
+    private func apply(boon: Modifier, description: String, to actionType: String, tags: [String], diceCount: inout Int, position: inout RollPosition, effect: inout RollEffect, notes: inout [String]) {
         if let actions = boon.applicableActions {
             if !actions.contains(actionType) { return }
         } else if let specific = boon.applicableToAction, specific != actionType {
             return
         }
+        if let required = boon.requiredTag, !tags.contains(required) { return }
 
         if boon.bonusDice != 0 {
             diceCount += boon.bonusDice

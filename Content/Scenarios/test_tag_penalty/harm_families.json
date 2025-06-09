@@ -1,0 +1,11 @@
+{
+  "families": [
+    {
+      "id": "flora_allergy",
+      "lesser": { "description": "Allergic Reaction", "penalty": { "type": "actionPenalty", "actionType": "Tinker", "requiredTag": "Flora" } },
+      "moderate": { "description": "Severe Allergy" },
+      "severe": { "description": "Anaphylactic Shock" },
+      "fatal": { "description": "Fatal Reaction" }
+    }
+  ]
+}

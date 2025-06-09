@@ -117,4 +117,34 @@ final class ModifierSystemTests: XCTestCase {
 
         XCTAssertEqual(proj.finalEffect, .limited)
     }
+
+    func testTagConditionalModifier() throws {
+        let vm = GameViewModel()
+        var character = makeTestCharacter()
+        let mod = Modifier(bonusDice: 1, improveEffect: true, applicableActions: ["Skirmish"], requiredTag: "Flora", uses: 1, isOptionalToApply: false, description: "Herbicide")
+        character.modifiers = [mod]
+
+        let action = makeTestAction()
+        let base = vm.calculateProjection(for: action, with: character, interactableTags: [])
+        XCTAssertEqual(base.finalDiceCount, 2)
+
+        let tagged = vm.calculateProjection(for: action, with: character, interactableTags: ["Flora"])
+        XCTAssertEqual(tagged.finalDiceCount, 3)
+        XCTAssertEqual(tagged.finalEffect, .great)
+    }
+
+    func testTagConditionalPenalty() throws {
+        ContentLoader.shared = ContentLoader(scenario: "test_tag_penalty")
+        let vm = GameViewModel()
+        var character = makeTestCharacter()
+        character.actions["Tinker"] = 2
+        character.harm.lesser = [(familyId: "flora_allergy", description: "Allergic Reaction")]
+
+        let action = ActionOption(name: "Clear Weeds", actionType: "Tinker", position: .risky, effect: .standard)
+        let noTagProj = vm.calculateProjection(for: action, with: character, interactableTags: [])
+        XCTAssertEqual(noTagProj.finalDiceCount, 2)
+
+        let tagProj = vm.calculateProjection(for: action, with: character, interactableTags: ["Flora"])
+        XCTAssertEqual(tagProj.finalDiceCount, 1)
+    }
 }
