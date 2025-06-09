@@ -39,6 +39,26 @@
       "fatal": { "description": "Mind Shatter" }
     },
     {
+      "id": "cb_rat_bites",
+      "lesser": {
+        "description": "Rat Bites",
+        "penalty": { "type": "actionEffectPenalty", "actionType": "Finesse" }
+      },
+      "moderate": {
+        "description": "Oozing Wounds",
+        "penalty": { "type": "actionPenalty", "actionType": "Finesse" }
+      },
+      "severe": {
+        "description": "Unnatural Fever",
+        "penalty": { "type": "banAction", "actionType": "Finesse" },
+        "boon": { "bonusDice": 1, "description": "Fever Visions", "actionType": "Attune", "isOptionalToApply": false }
+      },
+      "fatal": {
+        "description": "Eaten By Rats",
+        "penalty": { "type": "banAction", "actionType": "Finesse" }
+      }
+    },
+    {
       "id": "mental_fraying",
       "lesser": { "description": "Unsteady", "penalty": { "type": "reduceEffect" } },
       "moderate": { "description": "Fragmented Thoughts", "penalty": { "type": "actionPenalty", "actionType": "Study" } },

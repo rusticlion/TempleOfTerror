@@ -5,7 +5,7 @@
     "description": "A fragment of an access code. The numbers seem to shift, but you have the sequence.",
     "grantedModifier": {
       "improveEffect": true,
-      "uses": 1,
+      "uses": -1,
       "description": "from Thorne's Code",
       "isOptionalToApply": true
     },

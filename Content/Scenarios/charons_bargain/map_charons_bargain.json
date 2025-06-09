@@ -5,6 +5,7 @@
       "id": "00000000-0000-0000-0000-000000000001",
       "name": "Docking Bay",
       "soundProfile": "metal_echoes_large",
+      "isDiscovered": true,
       "interactables": [
         {
           "id": "cb_ferryman_shuttle_ready",
@@ -17,6 +18,7 @@
               "position": "controlled",
               "effect": "great",
               "requiresTest": false,
+              "isGroupAction": true,
               "outcomes": {
                 "success": [
                   {
@@ -90,6 +92,7 @@
                                   {
                                     "type": "tickClock",
                                     "clockName": "Ship Security Lockdown",
+                                    "description": "You trigger a security protocol.",
                                     "amount": 1
                                   },
                                   {
@@ -105,7 +108,9 @@
                         }
                       },
                       {
-                        "type": "removeSelfInteractable"
+                        "type": "removeAction",
+                        "id": "self",
+                        "actionName": "Inspect Damage"
                       }
                     ]
                   }
@@ -135,7 +140,8 @@
                                     "description": "You decode a fragment of Dr. Thorne's access code. The numbers seem to shift before your eyes, but you memorize them before they can escape."
                                   },
                                   {
-                                    "type": "removeSelfInteractable"
+                                    "type": "removeInteractable",
+                                    "id": "self"
                                   }
                                 ],
                                 "partial": [
@@ -149,7 +155,8 @@
                                     "description": "The corrupted data makes your head swim as you extract the code fragment."
                                   },
                                   {
-                                    "type": "removeSelfInteractable"
+                                    "type": "removeInteractable",
+                                    "id": "self"
                                   }
                                 ],
                                 "failure": [
@@ -171,7 +178,9 @@
                         }
                       },
                       {
-                        "type": "removeSelfInteractable"
+                        "type": "removeAction",
+                        "id": "self",
+                        "actionName": "Inspect Damage"
                       },
                       {
                         "type": "gainStress",
@@ -200,18 +209,28 @@
                     "type": "triggerEvent",
                     "eventId": "cb_beacon_partially_active",
                     "description": "You stabilize the beacon's power supply. It now broadcasts a steady, repeating 'All Clear' signal... which you know is a lie."
+                  },
+                  {
+                    "type": "removeAction",
+                    "id": "self",
+                    "actionName": "Attempt Repair"
                   }
                 ],
                 "partial": [
                   {
                     "type": "triggerEvent",
                     "eventId": "cb_beacon_partially_active",
-                    "description": "You get the beacon working, but your hasty repair draws a significant power spike that alerts ship security."
+                    "description": "You get the beacon working, but your hasty repair draws a significant power spike. The lights flicker."
                   },
                   {
                     "type": "tickClock",
-                    "clockName": "Ship Security Lockdown",
+                    "clockName": "Reactor Overload",
                     "amount": 1
+                  },
+                  {
+                    "type": "removeAction",
+                    "id": "self",
+                    "actionName": "Attempt Repair"
                   }
                 ],
                 "failure": [
@@ -225,6 +244,11 @@
                     "clockName": "Ship Security Lockdown",
                     "amount": 2,
                     "description": "Your clumsy bypass attempt sends a major alert to the ship's security AI. QUARANTINE PROTOCOL PRIMED."
+                  },
+                  {
+                    "type": "removeAction",
+                    "id": "self",
+                    "actionName": "Attempt Repair"
                   }
                 ]
               }
@@ -268,7 +292,7 @@
                   },
                   {
                     "type": "tickClock",
-                    "clockName": "VFE Instability",
+                    "clockName": "Reactor Overload",
                     "amount": 1
                   },
                   {
@@ -330,7 +354,7 @@
             },
             {
               "name": "Scavenge Parts",
-              "actionType": "Survey",
+              "actionType": "Wreck",
               "position": "controlled",
               "effect": "limited",
               "outcomes": {
@@ -362,6 +386,16 @@
                     "type": "gainStress",
                     "amount": 1,
                     "description": "The loader's casing is too tough or stripped clean. You find nothing useful."
+                  },
+                  {
+                    "type": "removeSelfInteractable",
+                    "conditions": [
+                      {
+                        "type": "requiresMinPositionLevel",
+                        "positionParam": "risky"
+                      }
+                    ],
+                    "description": "You think you broke something..."
                   }
                 ]
               }
@@ -372,6 +406,13 @@
             "Inactive"
           ]
         }
+      ],
+      "connections": [
+        {
+          "toNodeID": "00000000-0000-0000-0000-000000000002",
+          "description": "Enter Main Corridor",
+          "isUnlocked": true
+        }
       ]
     },
     "00000000-0000-0000-0000-000000000002": {
@@ -379,6 +420,110 @@
       "name": "Main Corridor",
       "soundProfile": "ship_hum_low",
       "interactables": [
+        {
+          "id": "cb_amalgamated_rats",
+          "title": "Amalgamated Rats",
+          "isThreat": true,
+          "description": "A horde of rats, some with strange mutations, scurry through the corridor. They seem to be avoiding you.",
+          "availableActions": [
+            {
+              "name": "Scare Rats",
+              "actionType": "Skirmish",
+              "position": "risky",
+              "effect": "standard",
+              "outcomes": {
+                "success": [
+                  {
+                    "type": "removeInteractable",
+                    "id": "self"
+                  }
+                ],
+                "partial": [
+                  {
+                    "type": "removeInteractable",
+                    "id": "self"
+                  },
+                  {
+                    "type": "gainStress",
+                    "amount": 1
+                  }
+                ],
+                "failure": [
+                  {
+                    "type": "gainStress",
+                    "amount": 1
+                  },
+                  {
+                    "type": "sufferHarm",
+                    "level": "lesser",
+                    "familyId": "cb_rat_bites",
+                    "conditions": [
+                      {
+                        "type": "requiresMinPositionLevel",
+                        "positionParam": "risky"
+                      }
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "name": "Stomp Rats",
+              "actionType": "Wreck",
+              "position": "desperate",
+              "effect": "standard",
+              "outcomes": {
+                "success": [
+                  {
+                    "type": "removeInteractable",
+                    "id": "self"
+                  }
+                ],
+                "partial": [
+                  {
+                    "type": "sufferHarm",
+                    "level": "lesser",
+                    "familyId": "cb_rat_bites",
+                    "conditions": [
+                      {
+                        "type": "requiresMinPositionLevel",
+                        "positionParam": "risky"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "removeInteractable",
+                    "id": "self"
+                  }
+                ],
+                "failure": [
+                  {
+                    "type": "sufferHarm",
+                    "level": "moderate",
+                    "familyId": "cb_rat_bites",
+                    "conditions": [
+                      {
+                        "type": "requiresExactPositionLevel",
+                        "positionParam": "desperate"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "sufferHarm",
+                    "level": "lesser",
+                    "familyId": "cb_rat_bites",
+                    "conditions": [
+                      {
+                        "type": "requiresExactPositionLevel",
+                        "positionParam": "risky"
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        },
         {
           "id": "cb_main_corridor_graffiti",
           "title": "Scrawled Graffiti",

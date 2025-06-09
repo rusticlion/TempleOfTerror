@@ -19,6 +19,31 @@
     ]
   },
   {
+    "name": "Reactor Overload",
+    "segments": 4,
+    "progress": 0,
+    "onCompleteConsequences": [
+      {
+        "type": "tickClock",
+        "clockName": "Reactor Meltdown",
+        "amount": 1,
+        "description": "The ship jolts violently and the power flickers."
+      }
+    ]
+  },
+  {
+    "name": "Reactor Meltdown",
+    "segments": 3,
+    "progress": 0,
+    "onCompleteConsequences": [
+      { 
+        "type": "triggerEvent", 
+        "eventId": "cb_reactor_meltdown",
+        "description": "The reactor core explodes. The ship is engulfed in flames. GAME OVER"
+      }
+    ]
+  },
+  {
     "name": "VFE Instability",
     "segments": 6,
     "progress": 0,
