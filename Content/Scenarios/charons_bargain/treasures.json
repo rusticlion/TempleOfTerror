@@ -1,0 +1,27 @@
+[
+  {
+    "id": "cb_dr_thornes_partial_code",
+    "name": "Thorne's Partial Code",
+    "description": "A fragment of an access code. The numbers seem to shift, but you have the sequence.",
+    "grantedModifier": {
+      "improveEffect": true,
+      "uses": 1,
+      "description": "from Thorne's Code",
+      "isOptionalToApply": true
+    },
+    "tags": ["Code", "Thorne"]
+  },
+  {
+    "id": "cb_scrap_components",
+    "name": "Scrap Components",
+    "description": "Useful parts scavenged from derelict machinery.",
+    "grantedModifier": {
+      "bonusDice": 1,
+      "applicableToAction": "Tinker",
+      "uses": 1,
+      "description": "from Scavenged Parts",
+      "isOptionalToApply": true
+    },
+    "tags": ["Mechanical", "Scrap"]
+  }
+]

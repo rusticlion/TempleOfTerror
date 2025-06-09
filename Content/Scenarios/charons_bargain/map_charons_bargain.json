@@ -5,7 +5,7 @@
       "id": "00000000-0000-0000-0000-000000000001",
       "name": "Docking Bay",
       "soundProfile": "metal_echoes_large",
-      "interactables": [ 
+      "interactables": [
         {
           "id": "cb_ferryman_shuttle_ready",
           "title": "Your Shuttle, the _Ferryman_",
@@ -22,7 +22,7 @@
                   {
                     "type": "triggerEvent",
                     "eventId": "game_over_coward_ending",
-                    "description": "You decide the flashing emergency lights and ominous silence are trouble you don't need. Without setting foot on the Styx Transporter, you lift off and head for home. You're safe, but the fate of the crew remains a mystery you chose not to solve."
+                    "description": "You decide the flashing emergency lights and ominous silence are trouble you don't need. You lift off and head for home. You're safe, but the fate of the Styx Transporter remains a mystery you chose not to solve."
                   }
                 ]
               }
@@ -35,182 +35,111 @@
           "title": "Damaged Emergency Beacon",
           "description": "Sparks fly from the panel. Last message fragment: '...medical emergency...Dr. Thorne requests immediate...aid...'",
           "availableActions": [
-              {
-                  "name": "Inspect Damage",
-                  "actionType": "Survey",
-                  "position": "controlled",
-                  "effect": "standard",
-                  "outcomes": {
-                      "success": [
-                          {
-                              "type": "triggerConsequences",
-                              "description": "Your inspection reveals the damage is intentional. An auxiliary data port is accessible.",
-                              "consequences": [
-                                {
-                                  "type": "addInteractable",
-                                  "inNodeID": "current",
-                                  "interactable": {
-                                    "id": "cb_beacon_log_fragment",
-                                    "title": "Auxiliary Data Port",
-                                    "description": "The beacon's log contains a corrupted entry: 'Signal altered. True status: [STATIC]. Warning: VFE active. Empress protocol...'",
-                                    "availableActions": [
-                                      {
-                                        "name": "Study Log",
-                                        "actionType": "Study",
-                                        "position": "risky",
-                                        "effect": "standard",
-                                        "requiresTest": true,
-                                        "outcomes": {
-                                          "success": [
-                                            { 
-                                              "type": "gainTreasure", 
-                                              "treasureId": "cb_dr_thornes_partial_code",
-                                              "description": "You decode a fragment of Dr. Thorne's access code. The numbers seem to shift before your eyes, but you memorize them before they can escape."
-                                            },
-                                            { "type": "removeSelfInteractable" }
-                                          ],
-                                          "partial": [
-                                             { 
-                                               "type": "gainStress", 
-                                               "amount": 1,
-                                               "description": "The corrupted data makes your head swim. You push through, but the strain is evident."
-                                             },
-                                             { 
-                                               "type": "tickClock", 
-                                               "clockName": "Ship Security Lockdown",
-                                               "amount": 1,
-                                               "description": "Your tampering triggers a security protocol.",
-                                               "conditions": [{"type": "requiresMinPositionLevel", "positionParam": "risky"}]
-                                             },
-                                             { 
-                                              "type": "gainTreasure", 
-                                              "treasureId": "cb_dr_thornes_partial_code",
-                                              "description": "You decode a fragment of an access code belonging to 'Dr. Thorne'. The numbers seem to shift before your eyes, but you memorize them before they can escape."
-                                            },
-                                            { "type": "removeSelfInteractable" }
-                                          ],
-                                          "failure": [
-                                            { 
-                                               "type": "tickClock", 
-                                               "clockName": "Ship Security Lockdown",
-                                               "amount": 1,
-                                               "description": "Your tampering triggers a security protocol.",
-                                               "conditions": [{"type": "requiresMinPositionLevel", "positionParam": "risky"}]
-                                            },
-                                            { 
-                                              "type": "sufferHarm", 
-                                              "level": "lesser", 
-                                              "familyId": "vfe_cerebral_euphoria",
-                                              "description": "The log floods your mind with incomprehensible data. For a moment, you understand everything and nothing. The knowledge burns."
-                                            }
-                                          ]
-                                        }
-                                      }
-                                    ]
-                                  }
-                                }
-                              ]
-                          }
-                      ],
-                      "partial": [
-                          { "type": "gainStress", "amount": 1, "description": "You can't get a clear read on the damage, and the erratic energy sparks set your teeth on edge." }
-                      ]
+            {
+              "name": "Inspect Damage",
+              "actionType": "Survey",
+              "position": "controlled",
+              "effect": "standard",
+              "outcomes": {
+                "success": [
+                  {
+                    "type": "triggerConsequences",
+                    "description": "Your inspection reveals the damage is intentional. An auxiliary data port is accessible.",
+                    "consequences": [
+                      { "type": "addInteractableHere", "interactable": { "id": "cb_beacon_log_fragment", "title": "Auxiliary Data Port", "description": "The beacon's log contains a corrupted entry: 'Signal altered. True status: [STATIC]. Warning: VFE active. Empress protocol...'", "availableActions": [ { "name": "Study Log", "actionType": "Study", "position": "risky", "effect": "standard", "outcomes": { "success": [ { "type": "gainTreasure", "treasureId": "cb_dr_thornes_partial_code", "description": "You decode a fragment of Dr. Thorne's access code. The numbers seem to shift before your eyes, but you memorize them before they can escape." }, { "type": "removeSelfInteractable" } ], "partial": [ { "type": "gainTreasure", "treasureId": "cb_dr_thornes_partial_code" }, { "type": "gainStress", "amount": 1, "description": "The corrupted data makes your head swim as you extract the code fragment." }, { "type": "removeSelfInteractable" } ], "failure": [ { "type": "tickClock", "clockName": "Ship Security Lockdown", "amount": 1 }, { "type": "sufferHarm", "level": "lesser", "familyId": "vfe_cerebral_euphoria", "description": "The log floods your mind with incomprehensible data. The knowledge burns." } ] } } ] } },
+                      { "type": "removeSelfInteractable" }
+                    ]
                   }
-              },
-              {
-                  "name": "Attempt Quick Repair",
-                  "actionType": "Tinker",
-                  "position": "risky",
-                  "effect": "limited",
-                  "outcomes": {
-                      "success": [
-                          { "type": "triggerEvent", "eventId": "cb_beacon_partially_active" },
-                          { "type": "triggerConsequences", "description": "You stabilize the beacon's power supply. It now broadcasts a steady, repeating 'All Clear' signal... which you know is a lie.", "consequences": [] }
-                      ],
-                      "failure": [
-                          { "type": "sufferHarm", "level": "lesser", "familyId": "electric_shock" },
-                          {
-                              "type": "tickClock",
-                              "clockName": "Ship Security Lockdown",
-                              "amount": 2,
-                              "description": "Your clumsy bypass attempt sends an alert to the ship's security AI. A new directive appears on your HUD: QUARANTINE PROTOCOL PRIMED."
-                          }
-                      ]
+                ],
+                "partial": [
+                  {
+                    "type": "triggerConsequences",
+                    "description": "You find a working auxiliary data port, but the bloody handprints on the damaged console are deeply unsettling.",
+                    "consequences": [
+                      { "type": "addInteractableHere", "interactable": { "id": "cb_beacon_log_fragment", "title": "Auxiliary Data Port", "description": "The beacon's log contains a corrupted entry: 'Signal altered. True status: [STATIC]. Warning: VFE active. Empress protocol...'", "availableActions": [ { "name": "Study Log", "actionType": "Study", "position": "risky", "effect": "standard", "outcomes": { "success": [ { "type": "gainTreasure", "treasureId": "cb_dr_thornes_partial_code", "description": "You decode a fragment of Dr. Thorne's access code. The numbers seem to shift before your eyes, but you memorize them before they can escape." }, { "type": "removeSelfInteractable" } ], "partial": [ { "type": "gainTreasure", "treasureId": "cb_dr_thornes_partial_code" }, { "type": "gainStress", "amount": 1, "description": "The corrupted data makes your head swim as you extract the code fragment." }, { "type": "removeSelfInteractable" } ], "failure": [ { "type": "tickClock", "clockName": "Ship Security Lockdown", "amount": 1 }, { "type": "sufferHarm", "level": "lesser", "familyId": "vfe_cerebral_euphoria", "description": "The log floods your mind with incomprehensible data. The knowledge burns." } ] } } ] } },
+                      { "type": "removeSelfInteractable" },
+                      { "type": "gainStress", "amount": 1 }
+                    ]
                   }
+                ],
+                "failure": [
+                    { "type": "gainStress", "amount": 1, "description": "You find nothing but fried circuits. The effort is frustratingly fruitless." }
+                ]
               }
+            },
+            {
+              "name": "Attempt Repair",
+              "actionType": "Tinker",
+              "position": "risky",
+              "effect": "standard",
+              "outcomes": {
+                "success": [
+                  { "type": "triggerEvent", "eventId": "cb_beacon_partially_active", "description": "You stabilize the beacon's power supply. It now broadcasts a steady, repeating 'All Clear' signal... which you know is a lie." }
+                ],
+                "partial": [
+                  { "type": "triggerEvent", "eventId": "cb_beacon_partially_active", "description": "You get the beacon working, but your hasty repair draws a significant power spike that alerts ship security."},
+                  { "type": "tickClock", "clockName": "Ship Security Lockdown", "amount": 1 }
+                ],
+                "failure": [
+                  { "type": "sufferHarm", "level": "lesser", "familyId": "electric_shock" },
+                  { "type": "tickClock", "clockName": "Ship Security Lockdown", "amount": 2, "description": "Your clumsy bypass attempt sends a major alert to the ship's security AI. QUARANTINE PROTOCOL PRIMED." }
+                ]
+              }
+            }
           ],
           "tags": ["Electronic", "Damaged"]
-      },
-      {
-        "id": "cb_cargo_loader",
-        "title": "Slumped Cargo Loader",
-        "description": "The heavy cargo loader is inactive, its hydraulic lines slack.",
-        "availableActions": [
-          {
-            "name": "Hotwire Loader",
-            "actionType": "Tinker",
-            "position": "desperate",
-            "effect": "standard",
-            "outcomes": {
-              "success": [
-                { "type": "triggerEvent", "eventId": "cb_cargo_loader_activated" },
-                { "type": "removeSelfInteractable" }
-              ],
-              "partial": [
-                { "type": "gainStress", "amount": 2 },
-                { "type": "tickClock", "clockName": "VFE Instability", "amount": 1 }
-              ],
-              "failure": [
-                { "type": "sufferHarm", "level": "lesser", "familyId": "electric_shock" },
-                { "type": "addInteractable", "inNodeID": "current", "interactable": {
-                    "id": "cb_loader_fire",
-                    "title": "Loader Electrical Fire",
-                    "description": "The cargo loader bursts into acrid smoke and electrical fire!",
-                    "isThreat": true,
-                    "availableActions": [
-                      {
-                          "name": "Extinguish Fire",
-                          "actionType": "Wreck",
-                          "position": "risky",
-                          "effect": "standard",
-                          "outcomes": {
-                              "success": [{"type": "removeSelfInteractable"}],
-                              "failure": [{"type": "sufferHarm", "level": "moderate", "familyId": "vfe_physical_aberration"}]
-                          }
-                      }
-                    ],
-                    "tags": ["Hazard", "Fire"]
-                  }
-                }
-              ]
-            }
-          },
-          {
+        },
+        {
+          "id": "cb_cargo_loader",
+          "title": "Slumped Cargo Loader",
+          "description": "The heavy cargo loader is inactive, its hydraulic lines slack.",
+          "availableActions": [
+            {
+              "name": "Hotwire Loader",
+              "actionType": "Tinker",
+              "position": "desperate",
+              "effect": "standard",
+              "outcomes": {
+                "success": [
+                  { "type": "triggerEvent", "eventId": "cb_cargo_loader_activated", "description": "With a shower of sparks, the loader whirs to life." },
+                  { "type": "removeSelfInteractable" }
+                ],
+                "partial": [
+                  { "type": "triggerEvent", "eventId": "cb_cargo_loader_activated", "description": "The loader lurches to life, but the power surge strains the ship's unstable systems and your nerves." },
+                  { "type": "gainStress", "amount": 1 },
+                  { "type": "tickClock", "clockName": "VFE Instability", "amount": 1 },
+                  { "type": "removeSelfInteractable" }
+                ],
+                "failure": [
+                  { "type": "sufferHarm", "level": "lesser", "familyId": "electric_shock" },
+                  { "type": "addInteractableHere", "interactable": { "id": "cb_loader_fire", "title": "Loader Electrical Fire", "description": "The cargo loader bursts into acrid smoke and electrical fire!", "isThreat": true, "availableActions": [ { "name": "Extinguish Fire", "actionType": "Wreck", "position": "risky", "effect": "standard", "outcomes": { "success": [{"type": "removeSelfInteractable"}], "partial": [{"type": "removeSelfInteractable"}, {"type": "gainStress", "amount": 1}], "failure": [{"type": "sufferHarm", "level": "moderate", "familyId": "vfe_physical_aberration"}] } } ], "tags": ["Hazard", "Fire"] } }
+                ]
+              }
+            },
+            {
               "name": "Scavenge Parts",
               "actionType": "Survey",
               "position": "controlled",
               "effect": "limited",
               "outcomes": {
-                  "success": [
-                      {"type": "gainTreasure", "treasureId": "cb_scrap_components"}
-                  ],
-                  "failure": [
-                      {"type": "gainStress", "amount": 1}
-                  ]
+                "success": [
+                  {"type": "gainTreasure", "treasureId": "cb_scrap_components"},
+                  {"type": "removeSelfInteractable"}
+                ],
+                "partial": [
+                  {"type": "gainTreasure", "treasureId": "cb_scrap_components"},
+                  {"type": "gainStress", "amount": 1, "description": "You manage to pry some components loose, but the screech of metal puts you on edge."},
+                  {"type": "removeSelfInteractable"}
+                ],
+                "failure": [
+                  {"type": "gainStress", "amount": 1, "description": "The loader's casing is too tough or stripped clean. You find nothing useful."}
+                ]
               }
-          }
-        ],
-        "tags": ["Mechanical", "Inactive"]
-      }],
-      "connections": [
-        {
-          "toNodeID": "00000000-0000-0000-0000-000000000002",
-          "description": "Proceed to Main Corridor",
-          "isUnlocked": true
+            }
+          ],
+          "tags": ["Mechanical", "Inactive"]
         }
-      ],
-      "theme": "industrial_docking",
-      "isDiscovered": true
+      ]
     },
     "00000000-0000-0000-0000-000000000002": {
       "id": "00000000-0000-0000-0000-000000000002",
@@ -238,7 +167,7 @@
           {
             "name": "Search for Hidden Details",
             "actionType": "Survey",
-            "position": "risky",
+            "position": "controlled",
             "effect": "limited",
             "outcomes": {
               "success": [
