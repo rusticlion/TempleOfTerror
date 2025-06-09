@@ -241,8 +241,11 @@ class GameViewModel: ObservableObject {
             }
         }
 
-        // Always-on modifiers
-        for modifier in character.modifiers {
+        // Always-on modifiers (include treasure modifiers just in case)
+        let treasureMods = character.treasures.map { $0.grantedModifier }
+        var modDict: [UUID: Modifier] = [:]
+        for m in (character.modifiers + treasureMods) { modDict[m.id] = m }
+        for modifier in modDict.values {
             if modifier.uses == 0 { continue }
             if modifier.isOptionalToApply { continue }
             if let actions = modifier.applicableActions {
@@ -284,7 +287,10 @@ class GameViewModel: ObservableObject {
 
         // Gather optional modifiers
         var optionalInfos: [SelectableModifierInfo] = []
-        for mod in character.modifiers {
+        let treasureMods2 = character.treasures.map { $0.grantedModifier }
+        var modDict2: [UUID: Modifier] = [:]
+        for m in (character.modifiers + treasureMods2) { modDict2[m.id] = m }
+        for mod in modDict2.values {
             if !mod.isOptionalToApply { continue }
             if mod.uses == 0 { continue }
             if let actions = mod.applicableActions {
