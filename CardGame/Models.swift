@@ -30,12 +30,14 @@ struct Modifier: Codable {
     /// New: list of action types this modifier applies to. Supersedes
     /// `applicableToAction` when provided.
     var applicableActions: [String]? = nil
+    /// Optional tag that the interactable must have for this modifier to apply.
+    var requiredTag: String? = nil
     var uses: Int = 1
     var isOptionalToApply: Bool = true
     var description: String
 
     enum CodingKeys: String, CodingKey {
-        case id, bonusDice, improvePosition, improveEffect, applicableToAction, applicableActions, uses, isOptionalToApply, description
+        case id, bonusDice, improvePosition, improveEffect, applicableToAction, applicableActions, requiredTag, uses, isOptionalToApply, description
     }
 
     init(id: UUID = UUID(),
@@ -44,6 +46,7 @@ struct Modifier: Codable {
          improveEffect: Bool = false,
          applicableToAction: String? = nil,
          applicableActions: [String]? = nil,
+         requiredTag: String? = nil,
          uses: Int = 1,
          isOptionalToApply: Bool = true,
          description: String) {
@@ -53,6 +56,7 @@ struct Modifier: Codable {
         self.improveEffect = improveEffect
         self.applicableToAction = applicableToAction
         self.applicableActions = applicableActions
+        self.requiredTag = requiredTag
         self.uses = uses
         self.isOptionalToApply = isOptionalToApply
         self.description = description
@@ -66,6 +70,7 @@ struct Modifier: Codable {
         improveEffect = try container.decodeIfPresent(Bool.self, forKey: .improveEffect) ?? false
         applicableToAction = try container.decodeIfPresent(String.self, forKey: .applicableToAction)
         applicableActions = try container.decodeIfPresent([String].self, forKey: .applicableActions)
+        requiredTag = try container.decodeIfPresent(String.self, forKey: .requiredTag)
         if applicableActions == nil, let single = applicableToAction {
             applicableActions = [single]
         }
@@ -89,6 +94,7 @@ struct Modifier: Codable {
         } else {
             try container.encodeIfPresent(applicableToAction, forKey: .applicableToAction)
         }
+        try container.encodeIfPresent(requiredTag, forKey: .requiredTag)
         try container.encode(uses, forKey: .uses)
         try container.encode(isOptionalToApply, forKey: .isOptionalToApply)
         try container.encode(description, forKey: .description)
@@ -266,15 +272,15 @@ struct HarmFamily: Codable, Identifiable {
 
 /// The mechanical penalty imposed by a HarmTier.
 enum Penalty: Codable {
-    case reduceEffect               // All actions are one effect level lower.
-    case increaseStressCost(amount: Int) // Stress costs are increased.
-    case actionPenalty(actionType: String) // Specific action suffers –1 die.
-    case banAction(actionType: String) // An action is impossible without effort
-    case actionPositionPenalty(actionType: String) // Specific action worsens position
-    case actionEffectPenalty(actionType: String) // Specific action suffers -1 Effect
+    case reduceEffect(requiredTag: String? = nil)               // All actions are one effect level lower.
+    case increaseStressCost(amount: Int, requiredTag: String? = nil) // Stress costs are increased.
+    case actionPenalty(actionType: String, requiredTag: String? = nil) // Specific action suffers –1 die.
+    case banAction(actionType: String, requiredTag: String? = nil) // An action is impossible without effort
+    case actionPositionPenalty(actionType: String, requiredTag: String? = nil) // Specific action worsens position
+    case actionEffectPenalty(actionType: String, requiredTag: String? = nil) // Specific action suffers -1 Effect
 
     private enum CodingKeys: String, CodingKey {
-        case type, amount, actionType
+        case type, amount, actionType, requiredTag
     }
 
     private enum Kind: String, Codable {
@@ -289,47 +295,54 @@ enum Penalty: Codable {
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         let kind = try container.decode(Kind.self, forKey: .type)
+        let tag = try container.decodeIfPresent(String.self, forKey: .requiredTag)
         switch kind {
         case .reduceEffect:
-            self = .reduceEffect
+            self = .reduceEffect(requiredTag: tag)
         case .increaseStressCost:
             let amount = try container.decode(Int.self, forKey: .amount)
-            self = .increaseStressCost(amount: amount)
+            self = .increaseStressCost(amount: amount, requiredTag: tag)
         case .actionPenalty:
             let action = try container.decode(String.self, forKey: .actionType)
-            self = .actionPenalty(actionType: action)
+            self = .actionPenalty(actionType: action, requiredTag: tag)
         case .banAction:
             let action = try container.decode(String.self, forKey: .actionType)
-            self = .banAction(actionType: action)
+            self = .banAction(actionType: action, requiredTag: tag)
         case .actionPositionPenalty:
             let action = try container.decode(String.self, forKey: .actionType)
-            self = .actionPositionPenalty(actionType: action)
+            self = .actionPositionPenalty(actionType: action, requiredTag: tag)
         case .actionEffectPenalty:
             let action = try container.decode(String.self, forKey: .actionType)
-            self = .actionEffectPenalty(actionType: action)
+            self = .actionEffectPenalty(actionType: action, requiredTag: tag)
         }
     }
 
     func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         switch self {
-        case .reduceEffect:
+        case .reduceEffect(let tag):
             try container.encode(Kind.reduceEffect, forKey: .type)
-        case .increaseStressCost(let amount):
+            try container.encodeIfPresent(tag, forKey: .requiredTag)
+        case .increaseStressCost(let amount, let tag):
             try container.encode(Kind.increaseStressCost, forKey: .type)
             try container.encode(amount, forKey: .amount)
-        case .actionPenalty(let action):
+            try container.encodeIfPresent(tag, forKey: .requiredTag)
+        case .actionPenalty(let action, let tag):
             try container.encode(Kind.actionPenalty, forKey: .type)
             try container.encode(action, forKey: .actionType)
-        case .banAction(let action):
+            try container.encodeIfPresent(tag, forKey: .requiredTag)
+        case .banAction(let action, let tag):
             try container.encode(Kind.banAction, forKey: .type)
             try container.encode(action, forKey: .actionType)
-        case .actionPositionPenalty(let action):
+            try container.encodeIfPresent(tag, forKey: .requiredTag)
+        case .actionPositionPenalty(let action, let tag):
             try container.encode(Kind.actionPositionPenalty, forKey: .type)
             try container.encode(action, forKey: .actionType)
-        case .actionEffectPenalty(let action):
+            try container.encodeIfPresent(tag, forKey: .requiredTag)
+        case .actionEffectPenalty(let action, let tag):
             try container.encode(Kind.actionEffectPenalty, forKey: .type)
             try container.encode(action, forKey: .actionType)
+            try container.encodeIfPresent(tag, forKey: .requiredTag)
         }
     }
 }
