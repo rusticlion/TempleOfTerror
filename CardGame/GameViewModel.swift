@@ -114,7 +114,7 @@ class GameViewModel: ObservableObject {
         // Apply penalties from all active harm conditions
         for harm in character.harm.lesser {
             if let penalty = HarmLibrary.families[harm.familyId]?.lesser.penalty {
-                apply(penalty: penalty, description: harm.description, to: action.actionType, diceCount: &diceCount, effect: &effect, notes: &notes)
+                apply(penalty: penalty, description: harm.description, to: action.actionType, diceCount: &diceCount, position: &position, effect: &effect, notes: &notes)
             }
             if let boon = HarmLibrary.families[harm.familyId]?.lesser.boon {
                 apply(boon: boon, description: harm.description, to: action.actionType, diceCount: &diceCount, position: &position, effect: &effect, notes: &notes)
@@ -122,7 +122,7 @@ class GameViewModel: ObservableObject {
         }
         for harm in character.harm.moderate {
             if let penalty = HarmLibrary.families[harm.familyId]?.moderate.penalty {
-                apply(penalty: penalty, description: harm.description, to: action.actionType, diceCount: &diceCount, effect: &effect, notes: &notes)
+                apply(penalty: penalty, description: harm.description, to: action.actionType, diceCount: &diceCount, position: &position, effect: &effect, notes: &notes)
             }
             if let boon = HarmLibrary.families[harm.familyId]?.moderate.boon {
                 apply(boon: boon, description: harm.description, to: action.actionType, diceCount: &diceCount, position: &position, effect: &effect, notes: &notes)
@@ -130,7 +130,7 @@ class GameViewModel: ObservableObject {
         }
         for harm in character.harm.severe {
             if let penalty = HarmLibrary.families[harm.familyId]?.severe.penalty {
-                apply(penalty: penalty, description: harm.description, to: action.actionType, diceCount: &diceCount, effect: &effect, notes: &notes)
+                apply(penalty: penalty, description: harm.description, to: action.actionType, diceCount: &diceCount, position: &position, effect: &effect, notes: &notes)
             }
             if let boon = HarmLibrary.families[harm.familyId]?.severe.boon {
                 apply(boon: boon, description: harm.description, to: action.actionType, diceCount: &diceCount, position: &position, effect: &effect, notes: &notes)
@@ -139,7 +139,11 @@ class GameViewModel: ObservableObject {
         // Apply bonuses from modifiers
         for modifier in character.modifiers {
             if modifier.uses == 0 { continue }
-            if let specific = modifier.applicableToAction, specific != action.actionType { continue }
+            if let actions = modifier.applicableActions {
+                if !actions.contains(action.actionType) { continue }
+            } else if let specific = modifier.applicableToAction, specific != action.actionType {
+                continue
+            }
 
             if modifier.bonusDice != 0 {
                 diceCount += modifier.bonusDice
@@ -213,7 +217,7 @@ class GameViewModel: ObservableObject {
         // Non-optional harm penalties/boons
         for harm in character.harm.lesser {
             if let penalty = HarmLibrary.families[harm.familyId]?.lesser.penalty {
-                apply(penalty: penalty, description: harm.description, to: action.actionType, diceCount: &diceCount, effect: &effect, notes: &notes)
+                apply(penalty: penalty, description: harm.description, to: action.actionType, diceCount: &diceCount, position: &position, effect: &effect, notes: &notes)
             }
             if let boon = HarmLibrary.families[harm.familyId]?.lesser.boon {
                 apply(boon: boon, description: harm.description, to: action.actionType, diceCount: &diceCount, position: &position, effect: &effect, notes: &notes)
@@ -221,7 +225,7 @@ class GameViewModel: ObservableObject {
         }
         for harm in character.harm.moderate {
             if let penalty = HarmLibrary.families[harm.familyId]?.moderate.penalty {
-                apply(penalty: penalty, description: harm.description, to: action.actionType, diceCount: &diceCount, effect: &effect, notes: &notes)
+                apply(penalty: penalty, description: harm.description, to: action.actionType, diceCount: &diceCount, position: &position, effect: &effect, notes: &notes)
             }
             if let boon = HarmLibrary.families[harm.familyId]?.moderate.boon {
                 apply(boon: boon, description: harm.description, to: action.actionType, diceCount: &diceCount, position: &position, effect: &effect, notes: &notes)
@@ -229,7 +233,7 @@ class GameViewModel: ObservableObject {
         }
         for harm in character.harm.severe {
             if let penalty = HarmLibrary.families[harm.familyId]?.severe.penalty {
-                apply(penalty: penalty, description: harm.description, to: action.actionType, diceCount: &diceCount, effect: &effect, notes: &notes)
+                apply(penalty: penalty, description: harm.description, to: action.actionType, diceCount: &diceCount, position: &position, effect: &effect, notes: &notes)
             }
             if let boon = HarmLibrary.families[harm.familyId]?.severe.boon {
                 apply(boon: boon, description: harm.description, to: action.actionType, diceCount: &diceCount, position: &position, effect: &effect, notes: &notes)
@@ -240,7 +244,11 @@ class GameViewModel: ObservableObject {
         for modifier in character.modifiers {
             if modifier.uses == 0 { continue }
             if modifier.isOptionalToApply { continue }
-            if let specific = modifier.applicableToAction, specific != action.actionType { continue }
+            if let actions = modifier.applicableActions {
+                if !actions.contains(action.actionType) { continue }
+            } else if let specific = modifier.applicableToAction, specific != action.actionType {
+                continue
+            }
 
             if modifier.bonusDice != 0 {
                 diceCount += modifier.bonusDice
@@ -277,7 +285,11 @@ class GameViewModel: ObservableObject {
         for mod in character.modifiers {
             if !mod.isOptionalToApply { continue }
             if mod.uses == 0 { continue }
-            if let specific = mod.applicableToAction, specific != action.actionType { continue }
+            if let actions = mod.applicableActions {
+                if !actions.contains(action.actionType) { continue }
+            } else if let specific = mod.applicableToAction, specific != action.actionType {
+                continue
+            }
 
             var effectDesc: [String] = []
             if mod.bonusDice != 0 { effectDesc.append("+\(mod.bonusDice)d") }
@@ -772,7 +784,7 @@ class GameViewModel: ObservableObject {
         return true
     }
 
-    private func apply(penalty: Penalty, description: String, to actionType: String, diceCount: inout Int, effect: inout RollEffect, notes: inout [String]) {
+    private func apply(penalty: Penalty, description: String, to actionType: String, diceCount: inout Int, position: inout RollPosition, effect: inout RollEffect, notes: inout [String]) {
         switch penalty {
         case .reduceEffect:
             effect = effect.decreased()
@@ -783,13 +795,23 @@ class GameViewModel: ObservableObject {
         case .banAction(let action) where action == actionType:
             diceCount = 0
             notes.append("(Cannot perform due to \(description))")
+        case .actionPositionPenalty(let action) where action == actionType:
+            position = position.decreased()
+            notes.append("(-Position from \(description))")
+        case .actionEffectPenalty(let action) where action == actionType:
+            effect = effect.decreased()
+            notes.append("(-Effect from \(description))")
         default:
             break
         }
     }
 
     private func apply(boon: Modifier, description: String, to actionType: String, diceCount: inout Int, position: inout RollPosition, effect: inout RollEffect, notes: inout [String]) {
-        if let specific = boon.applicableToAction, specific != actionType { return }
+        if let actions = boon.applicableActions {
+            if !actions.contains(actionType) { return }
+        } else if let specific = boon.applicableToAction, specific != actionType {
+            return
+        }
 
         if boon.bonusDice != 0 {
             diceCount += boon.bonusDice

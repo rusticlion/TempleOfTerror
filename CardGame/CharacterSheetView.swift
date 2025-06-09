@@ -27,6 +27,8 @@ struct CharacterSheetView: View {
         case .increaseStressCost(let amount): return "+\(amount) Stress cost"
         case .actionPenalty(let actionType): return "\(actionType) -1d"
         case .banAction(let actionType): return "No \(actionType)"
+        case .actionPositionPenalty(let actionType): return "\(actionType) Pos-"
+        case .actionEffectPenalty(let actionType): return "\(actionType) Eff-"
         }
     }
 
