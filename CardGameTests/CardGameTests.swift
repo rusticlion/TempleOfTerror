@@ -82,4 +82,52 @@ final class CardGameTests: XCTestCase {
         XCTAssertEqual(remaining, ["Look"])
     }
 
+    func testAddActionConsequence() throws {
+        let vm = GameViewModel()
+        let nodeID = UUID()
+        let action1 = ActionOption(name: "Look",
+                                   actionType: "Survey",
+                                   position: .risky,
+                                   effect: .standard)
+        let interactable = Interactable(id: "test",
+                                        title: "Test",
+                                        description: "Test",
+                                        availableActions: [action1])
+        let node = MapNode(id: nodeID,
+                           name: "Room",
+                           soundProfile: "",
+                           interactables: [interactable],
+                           connections: [])
+        vm.gameState.dungeon = DungeonMap(nodes: [nodeID.uuidString: node],
+                                          startingNodeID: nodeID)
+
+        var character = Character(id: UUID(),
+                                  name: "Hero",
+                                  characterClass: "Rogue",
+                                  stress: 0,
+                                  harm: HarmState(),
+                                  actions: ["Skirmish": 1, "Survey": 1],
+                                  treasures: [],
+                                  modifiers: [])
+        vm.gameState.party = [character]
+        vm.gameState.characterLocations[character.id.uuidString] = nodeID
+
+        let newAct = ActionOption(name: "Open",
+                                  actionType: "Skirmish",
+                                  position: .risky,
+                                  effect: .standard)
+        let addCon = Consequence.addAction(newAct, toInteractable: "self")
+        let dummy = ActionOption(name: "Trigger",
+                                 actionType: "Skirmish",
+                                 position: .risky,
+                                 effect: .standard,
+                                 requiresTest: false,
+                                 outcomes: [.success: [addCon]])
+
+        _ = vm.performFreeAction(for: dummy, with: character, interactableID: "test")
+
+        let names = vm.gameState.dungeon?.nodes[nodeID.uuidString]?.interactables.first?.availableActions.map { $0.name }
+        XCTAssertEqual(Set(names ?? []), Set(["Look", "Open"]))
+    }
+
 }

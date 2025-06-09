@@ -624,6 +624,7 @@ struct Consequence: Codable {
         case removeInteractable
         case removeSelfInteractable
         case removeAction
+        case addAction
         case addInteractable
         case addInteractableHere
         case gainTreasure
@@ -644,6 +645,7 @@ struct Consequence: Codable {
     var toNodeID: UUID?
     var interactableId: String?
     var actionName: String?
+    var newAction: ActionOption?
     var inNodeID: UUID?
     var newInteractable: Interactable?
     var treasureId: String?
@@ -663,7 +665,7 @@ struct Consequence: Codable {
         case fromNodeID, toNodeID, id, inNodeID
         case interactable, treasure, treasureId
         case duration, options, eventId, consequences
-        case actionName, conditions, description
+        case actionName, action, conditions, description
     }
 
     init(kind: ConsequenceKind) {
@@ -682,6 +684,7 @@ struct Consequence: Codable {
         toNodeID = try container.decodeIfPresent(UUID.self, forKey: .toNodeID)
         interactableId = try container.decodeIfPresent(String.self, forKey: .id)
         actionName = try container.decodeIfPresent(String.self, forKey: .actionName)
+        newAction = nil
         inNodeID = nil
         newInteractable = nil
         treasureId = nil
@@ -698,7 +701,12 @@ struct Consequence: Codable {
             interactableId = nil
         }
 
-        if resolvedKind == .addInteractable {
+        if resolvedKind == .addAction {
+            newAction = try container.decodeIfPresent(ActionOption.self, forKey: .action)
+            if interactableId == "self" {
+                interactableId = nil
+            }
+        } else if resolvedKind == .addInteractable {
             if let nodeString = try? container.decode(String.self, forKey: .inNodeID), nodeString == "current" {
                 newInteractable = try container.decodeIfPresent(Interactable.self, forKey: .interactable)
                 resolvedKind = .addInteractableHere
@@ -758,6 +766,14 @@ struct Consequence: Codable {
                 try container.encode("self", forKey: .id)
             }
             try container.encodeIfPresent(actionName, forKey: .actionName)
+        case .addAction:
+            try container.encode(ConsequenceKind.addAction, forKey: .type)
+            if let id = interactableId {
+                try container.encode(id, forKey: .id)
+            } else {
+                try container.encode("self", forKey: .id)
+            }
+            try container.encodeIfPresent(newAction, forKey: .action)
         case .addInteractable:
             try container.encode(ConsequenceKind.addInteractable, forKey: .type)
             try container.encodeIfPresent(inNodeID, forKey: .inNodeID)
@@ -838,6 +854,14 @@ extension Consequence {
     static func removeAction(name: String, fromInteractable id: String) -> Consequence {
         var c = Consequence(kind: .removeAction)
         c.actionName = name
+        c.interactableId = id
+        return c
+    }
+
+    /// Add a specific action to the given interactable.
+    static func addAction(_ action: ActionOption, toInteractable id: String) -> Consequence {
+        var c = Consequence(kind: .addAction)
+        c.newAction = action
         c.interactableId = id
         return c
     }
