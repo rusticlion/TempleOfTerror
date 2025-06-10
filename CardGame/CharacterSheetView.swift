@@ -222,13 +222,8 @@ struct CharacterSheetView: View {
                         HStack(spacing: 4) {
                             Text(action)
                                 .font(.caption)
-                            HStack(spacing: 1) {
-                                ForEach(0..<rating, id: \.self) { _ in
-                                    Image("icon_stress_pip_lit")
-                                        .resizable()
-                                        .frame(width: 10, height: 10)
-                                }
-                            }
+                            Text(String(repeating: ActionEmoji.emoji(for: action), count: rating))
+                                .font(.caption)
                             Spacer()
                         }
                     }
