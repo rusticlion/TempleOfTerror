@@ -87,14 +87,6 @@ struct DiceRollView: View {
     var body: some View {
         VStack(spacing: 20) {
             Text(character.name).font(.title)
-            Text("is attempting to...").font(.subheadline).foregroundColor(.secondary)
-            Text(action.name).font(.title2).bold()
-            Text("\(action.actionType): \(character.actions[action.actionType] ?? 0)")
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-
-            Spacer()
-
             if let result = result, showOutcome {
                 VStack {
                     Text(result.outcome)
@@ -111,15 +103,26 @@ struct DiceRollView: View {
                             .font(.subheadline)
                     }
                     Text("Rolled a \(result.highestRoll)").font(.title3)
-                    ScrollView {
-                        Text(result.consequences)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .multilineTextAlignment(.leading)
-                            .padding()
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-                    .frame(maxHeight: 200)
                 }
+            } else {
+                Text("is attempting to...").font(.subheadline).foregroundColor(.secondary)
+                Text(action.name).font(.title2).bold()
+                Text("\(action.actionType): \(character.actions[action.actionType] ?? 0)")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+            }
+
+            Spacer()
+
+            if let result = result, showOutcome {
+                ScrollView {
+                    Text(result.consequences)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .multilineTextAlignment(.leading)
+                        .padding()
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .frame(maxHeight: 300)
             } else if let proj = displayedProjection {
                 VStack(spacing: 4) {
                     Text("Dice: \(proj.finalDiceCount)d6")
