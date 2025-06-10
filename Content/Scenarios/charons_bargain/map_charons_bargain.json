@@ -199,7 +199,7 @@
               }
             },
             {
-              "name": "Attempt Repair",
+              "name": "Repair Console",
               "actionType": "Tinker",
               "position": "risky",
               "effect": "standard",
@@ -213,7 +213,7 @@
                   {
                     "type": "removeAction",
                     "id": "self",
-                    "actionName": "Attempt Repair"
+                    "actionName": "Repair Console"
                   }
                 ],
                 "partial": [
@@ -230,7 +230,7 @@
                   {
                     "type": "removeAction",
                     "id": "self",
-                    "actionName": "Attempt Repair"
+                    "actionName": "Repair Console"
                   }
                 ],
                 "failure": [
@@ -248,7 +248,7 @@
                   {
                     "type": "removeAction",
                     "id": "self",
-                    "actionName": "Attempt Repair"
+                    "actionName": "Repair Console"
                   }
                 ]
               }
@@ -364,7 +364,8 @@
                     "treasureId": "cb_scrap_components"
                   },
                   {
-                    "type": "removeSelfInteractable"
+                    "type": "removeInteractable",
+                    "id": "self"
                   }
                 ],
                 "partial": [
@@ -378,7 +379,8 @@
                     "description": "You manage to pry some components loose, but the screech of metal puts you on edge."
                   },
                   {
-                    "type": "removeSelfInteractable"
+                    "type": "removeInteractable",
+                    "id": "self"
                   }
                 ],
                 "failure": [
@@ -388,7 +390,8 @@
                     "description": "The loader's casing is too tough or stripped clean. You find nothing useful."
                   },
                   {
-                    "type": "removeSelfInteractable",
+                    "type": "removeInteractable",
+                    "id": "self",
                     "conditions": [
                       {
                         "type": "requiresMinPositionLevel",
@@ -424,7 +427,7 @@
           "id": "cb_amalgamated_rats",
           "title": "Amalgamated Rats",
           "isThreat": true,
-          "description": "A horde of rats, some with strange mutations, scurry through the corridor. They seem to be avoiding you.",
+          "description": "A horde of rats, some with strange mutations, scurry through the corridor. They seem to be avoiding you but they're blocking your path.",
           "availableActions": [
             {
               "name": "Scare Rats",
@@ -435,13 +438,15 @@
                 "success": [
                   {
                     "type": "removeInteractable",
-                    "id": "self"
+                    "id": "self",
+                    "description": "You scare the rats away. They vanish into the shadows in the dim emergency lighting."
                   }
                 ],
                 "partial": [
                   {
                     "type": "removeInteractable",
-                    "id": "self"
+                    "id": "self",
+                    "description": "You scare the rats away. They vanish into the shadows in the dim emergency lighting, but you still hear them squeaking and clattering in the walls."
                   },
                   {
                     "type": "gainStress",
@@ -451,7 +456,8 @@
                 "failure": [
                   {
                     "type": "gainStress",
-                    "amount": 1
+                    "amount": 1,
+                    "description": "They don't seem to be bothered by you. Their chittering is strangely synchronized."
                   },
                   {
                     "type": "sufferHarm",
@@ -462,7 +468,8 @@
                         "type": "requiresMinPositionLevel",
                         "positionParam": "risky"
                       }
-                    ]
+                    ],
+                    "description": "The rats bite you as you try to scare them away. You feel a sharp pain in your leg."
                   }
                 ]
               }
@@ -476,7 +483,8 @@
                 "success": [
                   {
                     "type": "removeInteractable",
-                    "id": "self"
+                    "id": "self",
+                    "description": "You stomp on the rats. They squeak and scatter."
                   }
                 ],
                 "partial": [
@@ -489,7 +497,8 @@
                         "type": "requiresMinPositionLevel",
                         "positionParam": "risky"
                       }
-                    ]
+                    ],
+                    "description": "A rat sinks sharp teeth into your foot and you punt it against a wall. It bursts into a smear of guts, still twitching. The rest of the horde scurry away."
                   },
                   {
                     "type": "removeInteractable",
@@ -499,17 +508,6 @@
                 "failure": [
                   {
                     "type": "sufferHarm",
-                    "level": "moderate",
-                    "familyId": "cb_rat_bites",
-                    "conditions": [
-                      {
-                        "type": "requiresExactPositionLevel",
-                        "positionParam": "desperate"
-                      }
-                    ]
-                  },
-                  {
-                    "type": "sufferHarm",
                     "level": "lesser",
                     "familyId": "cb_rat_bites",
                     "conditions": [
@@ -517,7 +515,20 @@
                         "type": "requiresExactPositionLevel",
                         "positionParam": "risky"
                       }
-                    ]
+                    ],
+                    "description": "A rat sinks sharp teeth into your foot. You kick it away and the horde's chittering intensifies."
+                  },
+                  {
+                    "type": "sufferHarm",
+                    "level": "moderate",
+                    "familyId": "cb_rat_bites",
+                    "conditions": [
+                      {
+                        "type": "requiresExactPositionLevel",
+                        "positionParam": "desperate"
+                      }
+                    ],
+                    "description": "The wound immediately begins oozing yellow pus. You feel a dull ache in your leg."
                   }
                 ]
               }
@@ -527,24 +538,48 @@
         {
           "id": "cb_main_corridor_graffiti",
           "title": "Scrawled Graffiti",
-          "description": "Messages cover the walls: \"HE'S STILL IN THERE - A.T.\", \"TRUST THE VFE\", \"DON'T LET HER NEAR THE REACTOR\". Some appear frantically rewritten.",
+          "description": "Messages cover the walls: \"HE'S STILL IN THERE - A.T.\",\"REMAIN CALM, TRUST US\", \"GET OUT WHILE YOU CAN - ESCAPE PODS ARE READY\", \"DON'T LET HER NEAR THE REACTOR\". Some appear frantically rewritten.",
           "availableActions": [
             {
-              "name": "Analyze Handwriting",
+              "name": "Study Messages",
               "actionType": "Study",
               "position": "controlled",
               "effect": "standard",
               "outcomes": {
                 "success": [
                   {
-                    "type": "triggerEvent",
-                    "eventId": "cb_graffiti_insight_thorne"
+                    "type": "gainTreasure",
+                    "treasureId": "cb_conflicting_advice",
+                    "description": "You can pick out at least two different sets of handwriting. One is neat and precise, the other is messy and hurried. Seems there's been a disagreement."
+                  },
+                  {
+                    "type": "removeAction",
+                    "id": "self",
+                    "actionName": "Study Messages"
                   }
                 ],
                 "partial": [
                   {
+                    "type": "gainTreasure",
+                    "treasureId": "cb_conflicting_advice",
+                    "description": "You can pick out at least two different sets of handwriting. One is neat and precise, the other is messy and hurried. Seems there's been a disagreement."
+                  },
+                  {
                     "type": "gainStress",
-                    "amount": 1
+                    "amount": 1,
+                    "description": "You look around nervously. You can still hear the rats. You're not sure about \"remaining calm\"."
+                  },
+                  {
+                    "type": "removeAction",
+                    "id": "self",
+                    "actionName": "Study Messages"
+                  }
+                ],
+                "failure": [
+                  {
+                    "type": "gainStress",
+                    "amount": 1,
+                    "description": "You can't make heads or tails of the jumble of messages, but something has clearly gone very wrong here."
                   }
                 ]
               }
@@ -606,7 +641,14 @@
       "id": "00000000-0000-0000-0000-000000000003",
       "name": "Crew Quarters",
       "soundProfile": "quiet_murmurs",
-      "interactables": [],
+      "interactables": [
+        {
+          "id": "cb_crew_quarters_terminal",
+          "title": "Crew Quarters Terminal",
+          "description": "A terminal with a list of crew members and their assigned quarters.",
+          "availableActions": []
+        }
+      ],
       "connections": [
         {
           "toNodeID": "00000000-0000-0000-0000-000000000002",

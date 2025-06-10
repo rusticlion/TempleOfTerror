@@ -23,8 +23,8 @@
       "id": "vfe_cerebral_euphoria",
       "lesser": {
         "description": "Strange Euphoria",
-        "penalty": { "type": "increaseStressCost", "amount": 1 },
-        "boon": { "bonusDice": 1, "description": "Heightened Focus", "isOptionalToApply": false }
+        "penalty": { "type": "actionEffectPenalty", "actionType": "Command" },
+        "boon": { "bonusDice": 1, "description": "Irrational Insight", "isOptionalToApply": false, "actionType": "Attune" }
       },
       "moderate": {
         "description": "Mental Expansion",

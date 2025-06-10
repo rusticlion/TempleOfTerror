@@ -4,7 +4,7 @@ Hunt: Track targets. Spring traps. Prey on weaknesses.
 Tinker: Modify mechanisms. Disable traps. Improvise tools.
 
 Prowl: Watch your step. Stick to the shadows. Slip past.
-Finesse: Perform acrobatics. Steady your hands. Be fast.
+Finesse: Perform acrobatics. Steady your hands. Be quick.
 Wreck: Apply brute force. Barrel through.
 Skirmish: Fight for your life. Hold a position.
 

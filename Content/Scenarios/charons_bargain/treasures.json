@@ -5,6 +5,7 @@
     "description": "A fragment of an access code. The numbers seem to shift, but you have the sequence.",
     "grantedModifier": {
       "improveEffect": true,
+      "requiredTag": "Encrypted",
       "uses": -1,
       "description": "from Thorne's Code",
       "isOptionalToApply": true
@@ -22,6 +23,19 @@
       "description": "from Scavenged Parts",
       "isOptionalToApply": true
     },
-    "tags": ["Mechanical", "Scrap"]
+    "tags": ["Mechanical", "Electrical"]
+  },
+  {
+    "id": "cb_conflicting_advice",
+    "name": "Conflicting Advice",
+    "description": "Conflicting advice from the graffiti in the main corridor.",
+    "grantedModifier": {
+      "improvePosition": true,
+      "applicableToAction": "Consort",
+      "uses": -1,
+      "description": "from Conflicting Advice",
+      "isOptionalToApply": false
+    },
+    "tags": ["Information"]
   }
 ]

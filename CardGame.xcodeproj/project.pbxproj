@@ -35,6 +35,7 @@
 		464B59D52DEA5EB60002EA59 /* HarmTooltipView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 464B59D42DEA5EB60002EA59 /* HarmTooltipView.swift */; };
 		46549A0E2DEE6F1500D17D66 /* dice.usdz in Resources */ = {isa = PBXBuildFile; fileRef = 46549A0D2DEE6F1500D17D66 /* dice.usdz */; };
 		46549A122DF0B58900D17D66 /* PartyGenerationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46549A112DF0B58900D17D66 /* PartyGenerationService.swift */; };
+		4688D5782DF8A18200668E94 /* ActionEmoji.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4688D5772DF8A18200668E94 /* ActionEmoji.swift */; };
 		46A9D2292DE7D14C00FE459E /* HeaderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46A9D2282DE7D14C00FE459E /* HeaderView.swift */; };
 		46A9D22B2DE7D2E500FE459E /* StatusSheetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46A9D22A2DE7D2E500FE459E /* StatusSheetView.swift */; };
 		46A9D22D2DE7F82000FE459E /* ContentLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46A9D22C2DE7F81F00FE459E /* ContentLoader.swift */; };
@@ -100,6 +101,7 @@
 		46549A0D2DEE6F1500D17D66 /* dice.usdz */ = {isa = PBXFileReference; lastKnownFileType = file.usdz; path = dice.usdz; sourceTree = "<group>"; };
 		46549A0F2DEE749500D17D66 /* SceneKitDiceView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SceneKitDiceView.swift; sourceTree = "<group>"; };
 		46549A112DF0B58900D17D66 /* PartyGenerationService.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PartyGenerationService.swift; sourceTree = "<group>"; };
+		4688D5772DF8A18200668E94 /* ActionEmoji.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ActionEmoji.swift; sourceTree = "<group>"; };
 		46A9D2282DE7D14C00FE459E /* HeaderView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = HeaderView.swift; sourceTree = "<group>"; };
 		46A9D22A2DE7D2E500FE459E /* StatusSheetView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StatusSheetView.swift; sourceTree = "<group>"; };
 		46A9D22C2DE7F81F00FE459E /* ContentLoader.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ContentLoader.swift; sourceTree = "<group>"; };
@@ -159,6 +161,7 @@
 		460D624C2DE7934300D50D0C /* CardGame */ = {
 			isa = PBXGroup;
 			children = (
+				4688D5772DF8A18200668E94 /* ActionEmoji.swift */,
 				46549A112DF0B58900D17D66 /* PartyGenerationService.swift */,
 				46549A0F2DEE749500D17D66 /* SceneKitDiceView.swift */,
 				46549A0C2DEE6EE100D17D66 /* 3DAssets */,
@@ -380,6 +383,7 @@
 				460D62922DE7AA3900D50D0C /* Persistence.swift in Sources */,
 				460D629A2DE7BD4200D50D0C /* NodeConnectionsView.swift in Sources */,
 				464B59CF2DEA1EF30002EA59 /* MapView.swift in Sources */,
+				4688D5782DF8A18200668E94 /* ActionEmoji.swift in Sources */,
 				460D62572DE7934600D50D0C /* Persistence.swift in Sources */,
 				460D625A2DE7934600D50D0C /* CardGame.xcdatamodeld in Sources */,
 				460D628D2DE7AA3900D50D0C /* ContentView.swift in Sources */,
