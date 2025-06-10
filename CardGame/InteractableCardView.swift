@@ -103,8 +103,9 @@ struct InteractableCardView: View {
             }
             Divider()
             ForEach(interactable.availableActions, id: \.name) { action in
-                let title = action.requiresTest ? action.name : "\(action.name) (Auto)"
-                Button(title) {
+                let displayName = action.requiresTest ? action.name : "\(action.name) (Auto)"
+                let emoji = ActionEmoji.emoji(for: action.actionType)
+                Button("\(emoji) \(displayName)") {
                     onActionTapped(action)
                 }
                 .buttonStyle(.bordered)
