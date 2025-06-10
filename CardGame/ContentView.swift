@@ -105,11 +105,7 @@ struct ContentView: View {
                             .padding(.horizontal)
                     }
 
-                    HStack {
-                        CharacterSelectorView(characters: viewModel.gameState.party,
-                                              selectedCharacterID: $selectedCharacterID,
-                                              movementMode: viewModel.partyMovementMode)
-
+                    VStack(spacing: 4) {
                         Button {
                             withAnimation {
                                 showingCharacterSheet.toggle()
@@ -119,7 +115,12 @@ struct ContentView: View {
                                 .padding(6)
                                 .background(.thinMaterial, in: Circle())
                         }
+
+                        CharacterSelectorView(characters: viewModel.gameState.party,
+                                              selectedCharacterID: $selectedCharacterID,
+                                              movementMode: viewModel.partyMovementMode)
                     }
+                    .frame(maxWidth: .infinity)
                     .padding(.horizontal)
 
                     HStack {

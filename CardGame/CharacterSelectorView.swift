@@ -6,10 +6,7 @@ struct CharacterSelectorView: View {
     var movementMode: PartyMovementMode
 
     var body: some View {
-        VStack(alignment: .leading) {
-            Text("Choose a Character")
-                .font(.headline)
-
+        VStack {
             if movementMode == .grouped {
                 Picker("Select Character", selection: $selectedCharacterID) {
                     ForEach(characters.filter { !$0.isDefeated }) { character in
@@ -34,6 +31,7 @@ struct CharacterSelectorView: View {
                 }
             }
         }
+        .frame(maxWidth: .infinity)
     }
 }
 
