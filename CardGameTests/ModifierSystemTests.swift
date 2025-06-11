@@ -161,4 +161,25 @@ final class ModifierSystemTests: XCTestCase {
 
         XCTAssertTrue(context.optionalModifiers.contains { $0.description == "Scrap Parts" })
     }
+
+    func testTreasureRemovedWhenUsesDepleted() throws {
+        ContentLoader.shared = ContentLoader()
+        var character = makeTestCharacter()
+        let mod = Modifier(bonusDice: 1, uses: 1, isOptionalToApply: true, description: "Charm")
+        let treasure = Treasure(id: "test_charm", name: "Charm Stone", description: "", grantedModifier: mod)
+        character.modifiers = [mod]
+        character.treasures = [treasure]
+        let vm = GameViewModel()
+        vm.gameState.party = [character]
+        vm.gameState.characterLocations[character.id.uuidString] = UUID()
+
+        _ = vm.performAction(for: makeTestAction(),
+                             with: character,
+                             interactableID: nil,
+                             usingDice: [6],
+                             chosenOptionalModifierIDs: [mod.id])
+
+        XCTAssertTrue(vm.gameState.party[0].modifiers.isEmpty)
+        XCTAssertTrue(vm.gameState.party[0].treasures.isEmpty)
+    }
 }
