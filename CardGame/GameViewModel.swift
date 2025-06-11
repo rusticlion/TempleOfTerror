@@ -398,10 +398,15 @@ class GameViewModel: ObservableObject {
         var appliedOptionalMods: [Modifier] = []
         var consumedMessages: [String] = []
         var updatedModifiers: [Modifier] = gameState.party[charIndex].modifiers
+        var updatedTreasures: [Treasure] = gameState.party[charIndex].treasures
 
         // Map of modifier id to index for quick lookup
         var idToIndex: [UUID: Int] = [:]
         for (idx, mod) in updatedModifiers.enumerated() { idToIndex[mod.id] = idx }
+        var treasureIndex: [UUID: Int] = [:]
+        for (idx, treasure) in updatedTreasures.enumerated() {
+            treasureIndex[treasure.grantedModifier.id] = idx
+        }
 
         for id in chosenOptionalModifierIDs {
             if let idx = idToIndex[id] {
@@ -409,16 +414,33 @@ class GameViewModel: ObservableObject {
                 appliedOptionalMods.append(mod)
                 if mod.uses > 0 {
                     mod.uses -= 1
-                    if mod.uses == 0 {
-                        let name = mod.description.replacingOccurrences(of: "from ", with: "")
-                        consumedMessages.append("Used up \(name).")
-                        updatedModifiers.remove(at: idx)
-                        // update indices after removal
-                        idToIndex = [:]
-                        for (i, m) in updatedModifiers.enumerated() { idToIndex[m.id] = i }
-                        continue
+                    if let tIdx = treasureIndex[mod.id] {
+                        if mod.uses == 0 {
+                            let name = mod.description.replacingOccurrences(of: "from ", with: "")
+                            consumedMessages.append("Used up \(name).")
+                            updatedModifiers.remove(at: idx)
+                            updatedTreasures.remove(at: tIdx)
+                            // rebuild indices after removal
+                            idToIndex = [:]
+                            for (i, m) in updatedModifiers.enumerated() { idToIndex[m.id] = i }
+                            treasureIndex = [:]
+                            for (i, t) in updatedTreasures.enumerated() { treasureIndex[t.grantedModifier.id] = i }
+                            continue
+                        } else {
+                            updatedModifiers[idx] = mod
+                            updatedTreasures[tIdx].grantedModifier.uses = mod.uses
+                        }
                     } else {
-                        updatedModifiers[idx] = mod
+                        if mod.uses == 0 {
+                            let name = mod.description.replacingOccurrences(of: "from ", with: "")
+                            consumedMessages.append("Used up \(name).")
+                            updatedModifiers.remove(at: idx)
+                            idToIndex = [:]
+                            for (i, m) in updatedModifiers.enumerated() { idToIndex[m.id] = i }
+                            continue
+                        } else {
+                            updatedModifiers[idx] = mod
+                        }
                     }
                 }
             } else {
@@ -513,6 +535,7 @@ class GameViewModel: ObservableObject {
         }
 
         gameState.party[charIndex].modifiers = updatedModifiers
+        gameState.party[charIndex].treasures = updatedTreasures
         if !consumedMessages.isEmpty {
             AudioManager.shared.play(sound: "sfx_modifier_consume.wav")
             if consequencesDescription.isEmpty {

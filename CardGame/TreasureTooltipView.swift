@@ -14,6 +14,11 @@ struct TreasureTooltipView: View {
                 .font(.subheadline)
                 .foregroundColor(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
+            if treasure.grantedModifier.uses > 0 {
+                Text("Uses Remaining: \(treasure.grantedModifier.uses)")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
             if !treasure.tags.isEmpty {
                 HStack(spacing: 4) {
                     ForEach(treasure.tags, id: \.self) { tag in
