@@ -632,6 +632,7 @@ struct Consequence: Codable {
         case createChoice
         case triggerEvent
         case triggerConsequences
+        case healHarm
     }
 
     var kind: ConsequenceKind
@@ -798,6 +799,8 @@ struct Consequence: Codable {
         case .triggerConsequences:
             try container.encode(ConsequenceKind.triggerConsequences, forKey: .type)
             try container.encodeIfPresent(triggered, forKey: .consequences)
+        case .healHarm:
+            try container.encode(ConsequenceKind.healHarm, forKey: .type)
         }
 
         try container.encodeIfPresent(conditions, forKey: .conditions)
@@ -915,6 +918,11 @@ extension Consequence {
         var c = Consequence(kind: .triggerConsequences)
         c.triggered = consequences
         return c
+    }
+
+    /// Heal all existing harm by one level.
+    static var healHarm: Consequence {
+        Consequence(kind: .healHarm)
     }
 
 }

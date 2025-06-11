@@ -658,6 +658,11 @@ class GameViewModel: ObservableObject {
                         descriptions.append(harmDesc)
                     }
                 }
+            case .healHarm:
+                let healDesc = healHarm(forCharacter: character.id)
+                if !narrativeUsed {
+                    descriptions.append(healDesc)
+                }
             case .tickClock:
                 if let clockName = consequence.clockName, let amount = consequence.amount {
                     if let clockIndex = gameState.activeClocks.firstIndex(where: { $0.name == clockName }) {
@@ -984,6 +989,43 @@ class GameViewModel: ObservableObject {
                 }
             }
         }
+    }
+
+    private func healHarm(forCharacter characterId: UUID) -> String {
+        guard let idx = gameState.party.firstIndex(where: { $0.id == characterId }) else { return "" }
+        var messages: [String] = []
+
+        let severe = gameState.party[idx].harm.severe
+        gameState.party[idx].harm.severe.removeAll()
+        for entry in severe {
+            if let fam = HarmLibrary.families[entry.familyId] {
+                gameState.party[idx].harm.moderate.append((entry.familyId, fam.moderate.description))
+                messages.append("Severe harm '\(entry.description)' downgraded to Moderate.")
+            } else {
+                gameState.party[idx].harm.moderate.append(entry)
+                messages.append("Severe harm '\(entry.description)' downgraded to Moderate.")
+            }
+        }
+
+        let moderate = gameState.party[idx].harm.moderate
+        gameState.party[idx].harm.moderate.removeAll()
+        for entry in moderate {
+            if let fam = HarmLibrary.families[entry.familyId] {
+                gameState.party[idx].harm.lesser.append((entry.familyId, fam.lesser.description))
+                messages.append("Moderate harm '\(entry.description)' downgraded to Lesser.")
+            } else {
+                gameState.party[idx].harm.lesser.append(entry)
+                messages.append("Moderate harm '\(entry.description)' downgraded to Lesser.")
+            }
+        }
+
+        let lesser = gameState.party[idx].harm.lesser
+        gameState.party[idx].harm.lesser.removeAll()
+        for entry in lesser {
+            messages.append("Lesser harm '\(entry.description)' healed.")
+        }
+
+        return messages.joined(separator: "\n")
     }
 
     /// Starts a brand new run, resetting the game state. The scenario id

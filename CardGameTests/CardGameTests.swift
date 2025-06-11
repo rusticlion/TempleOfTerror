@@ -130,4 +130,50 @@ final class CardGameTests: XCTestCase {
         XCTAssertEqual(Set(names ?? []), Set(["Look", "Open"]))
     }
 
+    func testHealHarmConsequence() throws {
+        ContentLoader.shared = ContentLoader()
+        let vm = GameViewModel()
+        let nodeID = UUID()
+        let node = MapNode(id: nodeID,
+                           name: "Room",
+                           soundProfile: "",
+                           interactables: [],
+                           connections: [])
+        vm.gameState.dungeon = DungeonMap(nodes: [nodeID.uuidString: node],
+                                          startingNodeID: nodeID)
+
+        var harm = HarmState()
+        harm.lesser = [(familyId: "head_trauma", description: "Headache")]
+        harm.moderate = [(familyId: "leg_injury", description: "Torn Muscle")]
+        harm.severe = [(familyId: "gear_damage", description: "Lost Map")]
+
+        var character = Character(id: UUID(),
+                                  name: "Healer",
+                                  characterClass: "Cleric",
+                                  stress: 0,
+                                  harm: harm,
+                                  actions: ["Study": 1],
+                                  treasures: [],
+                                  modifiers: [])
+        vm.gameState.party = [character]
+        vm.gameState.characterLocations[character.id.uuidString] = nodeID
+
+        let healCon = Consequence.healHarm
+        let action = ActionOption(name: "Heal",
+                                 actionType: "Study",
+                                 position: .risky,
+                                 effect: .standard,
+                                 requiresTest: false,
+                                 outcomes: [.success: [healCon]])
+
+        _ = vm.performFreeAction(for: action, with: character, interactableID: nil)
+
+        let updated = vm.gameState.party[0].harm
+        XCTAssertTrue(updated.severe.isEmpty)
+        XCTAssertEqual(updated.moderate.count, 1)
+        XCTAssertEqual(updated.moderate[0].description, "Broken Tools")
+        XCTAssertEqual(updated.lesser.count, 1)
+        XCTAssertEqual(updated.lesser[0].description, "Twisted Ankle")
+    }
+
 }
