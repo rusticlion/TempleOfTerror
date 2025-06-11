@@ -15,7 +15,7 @@ echo "" >> "$OUTPUT_FILE"
 echo "## Directory Tree for $PROJECT_DIR" >> "$OUTPUT_FILE"
 if [ -d "$PROJECT_DIR" ]; then
     echo "\`\`\`" >> "$OUTPUT_FILE"
-    find "$PROJECT_DIR" -print | sed -e 's;[^/]*/;|____;g' -e 's;____|; |;' -e 's;[^./]*\.[[:alnum:]_]\+;\`&\`;g' >> "$OUTPUT_FILE"
+    find "$PROJECT_DIR" -not -path "CardGame/3DAssets/dice.usdz" -print | sed -e 's;[^/]*/;|____;g' -e 's;____|; |;' -e 's;[^./]*\.[[:alnum:]_]\+;\`&\`;g' >> "$OUTPUT_FILE"
     echo "\`\`\`" >> "$OUTPUT_FILE"
 else
     echo "Directory '$PROJECT_DIR' not found." >> "$OUTPUT_FILE"
@@ -50,6 +50,7 @@ if [ -d "$PROJECT_DIR" ]; then
         -not -path "$PROJECT_DIR/node_modules/*" \
         -not -path "$PROJECT_DIR/AssetPlaceholders/*" \
         -not -path "$PROJECT_DIR/Assets.xcassets/*" \
+        -not -path "CardGame/3DAssets/dice.usdz" \
         -not -path "$PROJECT_DIR/.DS_Store" \
         -not -name "$OUTPUT_FILE" \
         -not -name "*.sh" \
