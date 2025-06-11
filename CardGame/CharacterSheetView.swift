@@ -259,6 +259,16 @@ struct CharacterSheetView: View {
                                     .padding(4)
                                     .background(Color(UIColor.systemBackground).opacity(0.5))
                                     .cornerRadius(6)
+                                    .overlay(alignment: .topTrailing) {
+                                        if treasure.grantedModifier.uses > 0 {
+                                            Text("\(treasure.grantedModifier.uses)")
+                                                .font(.caption2)
+                                                .padding(2)
+                                                .background(Color(UIColor.systemBackground))
+                                                .cornerRadius(4)
+                                                .offset(x: 4, y: -4)
+                                        }
+                                    }
                                 }
                                 .buttonStyle(.plain)
                             }
