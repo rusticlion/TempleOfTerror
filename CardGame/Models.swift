@@ -98,6 +98,27 @@ struct Modifier: Codable {
         try container.encode(isOptionalToApply, forKey: .isOptionalToApply)
         try container.encode(description, forKey: .description)
     }
+
+    /// Short summary combining mechanical effects for compact displays.
+    var shortDescription: String {
+        var parts: [String] = []
+        if bonusDice != 0 { parts.append("+\(bonusDice)d") }
+        if improvePosition { parts.append("Pos+") }
+        if improveEffect { parts.append("Effect+") }
+        if parts.isEmpty { return description }
+        return parts.joined(separator: ", ")
+    }
+
+    /// Detailed description including effect keywords and base text.
+    var longDescription: String {
+        var parts: [String] = []
+        if bonusDice != 0 { parts.append("+\(bonusDice)d") }
+        if improvePosition { parts.append("Improved Position") }
+        if improveEffect { parts.append("+1 Effect") }
+        let detail = parts.joined(separator: ", ")
+        if detail.isEmpty { return description }
+        return "\(detail) - \(description)"
+    }
 }
 
 /// A collectible treasure that grants a modifier when acquired.
@@ -277,6 +298,42 @@ enum Penalty: Codable {
     case banAction(actionType: String, requiredTag: String? = nil) // An action is impossible without effort
     case actionPositionPenalty(actionType: String, requiredTag: String? = nil) // Specific action worsens position
     case actionEffectPenalty(actionType: String, requiredTag: String? = nil) // Specific action suffers -1 Effect
+
+    /// Short summary suitable for compact UI displays.
+    var shortDescription: String {
+        switch self {
+        case .reduceEffect:
+            return "-1 Effect"
+        case .increaseStressCost(let amount, _):
+            return "+\(amount) Stress cost"
+        case .actionPenalty(let actionType, _):
+            return "\(actionType) -1d"
+        case .banAction(let actionType, _):
+            return "No \(actionType)"
+        case .actionPositionPenalty(let actionType, _):
+            return "\(actionType) Pos-"
+        case .actionEffectPenalty(let actionType, _):
+            return "\(actionType) Eff-"
+        }
+    }
+
+    /// Full sentence explanation of the penalty.
+    var longDescription: String {
+        switch self {
+        case .reduceEffect:
+            return "All actions suffer -1 Effect."
+        case .increaseStressCost(let amount, _):
+            return "Stress costs are increased by \(amount)."
+        case .actionPenalty(let actionType, _):
+            return "\(actionType) rolls -1 die."
+        case .banAction(let actionType, _):
+            return "Cannot perform \(actionType)."
+        case .actionPositionPenalty(let actionType, _):
+            return "\(actionType) rolls at worse Position."
+        case .actionEffectPenalty(let actionType, _):
+            return "\(actionType) suffers -1 Effect."
+        }
+    }
 
     private enum CodingKeys: String, CodingKey {
         case type, amount, actionType, requiredTag
