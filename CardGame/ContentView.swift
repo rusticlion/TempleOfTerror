@@ -68,8 +68,8 @@ struct ContentView: View {
                                                         selectedCharacter: selectedCharacter) { action in
                                         if let character = selectedCharacter {
                                             if action.requiresTest {
-                                                pendingAction = action
                                                 pendingInteractableID = interactable.id
+                                                pendingAction = action
                                             } else {
                                                 // Directly apply the free-action consequences
                                                 _ = vm.performFreeAction(for: action, with: character, interactableID: interactable.id)
