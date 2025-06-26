@@ -534,6 +534,18 @@ class GameViewModel: ObservableObject {
             }
         }
 
+        // Merge in any new modifiers or treasures added by consequences
+        for mod in gameState.party[charIndex].modifiers {
+            if !updatedModifiers.contains(where: { $0.id == mod.id }) {
+                updatedModifiers.append(mod)
+            }
+        }
+        for treasure in gameState.party[charIndex].treasures {
+            if !updatedTreasures.contains(where: { $0.id == treasure.id }) {
+                updatedTreasures.append(treasure)
+            }
+        }
+
         gameState.party[charIndex].modifiers = updatedModifiers
         gameState.party[charIndex].treasures = updatedTreasures
         if !consumedMessages.isEmpty {
