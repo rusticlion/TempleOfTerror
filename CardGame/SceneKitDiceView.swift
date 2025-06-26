@@ -101,6 +101,7 @@ struct SceneKitDiceView: UIViewRepresentable {
         // Tray floor
         let floor = SCNBox(width: CGFloat(traySize), height: 0.2, length: CGFloat(traySize), chamferRadius: 0)
         floor.firstMaterial?.diffuse.contents = nil // UIImage(named: "texture_dicetray_surface")
+        floor.firstMaterial?.transparency = 0
         let floorNode = SCNNode(geometry: floor)
         floorNode.position = SCNVector3(0, -0.1, 0)
         floorNode.physicsBody = SCNPhysicsBody.static()
@@ -119,17 +120,16 @@ struct SceneKitDiceView: UIViewRepresentable {
             chamferRadius: wallChamferRadius
         )
         frontBackWallGeometry.firstMaterial?.diffuse.contents = nil
+        frontBackWallGeometry.firstMaterial?.transparency = 0
 
         let backWall = SCNNode(geometry: frontBackWallGeometry)
         backWall.position = SCNVector3(0, wallHeight/2 - 0.1, -traySize/2)
         backWall.physicsBody = SCNPhysicsBody.static()
-        backWall.isHidden = true
         scene.rootNode.addChildNode(backWall)
 
         let frontWall = SCNNode(geometry: frontBackWallGeometry)
         frontWall.position = SCNVector3(0, wallHeight/2 - 0.1, traySize/2)
         frontWall.physicsBody = SCNPhysicsBody.static()
-        frontWall.isHidden = true
         scene.rootNode.addChildNode(frontWall)
 
         // Geometry for left/right walls
@@ -140,17 +140,16 @@ struct SceneKitDiceView: UIViewRepresentable {
             chamferRadius: wallChamferRadius
         )
         leftRightWallGeometry.firstMaterial?.diffuse.contents = nil
+        leftRightWallGeometry.firstMaterial?.transparency = 0
 
         let leftWall = SCNNode(geometry: leftRightWallGeometry)
         leftWall.position = SCNVector3(-traySize/2, wallHeight/2 - 0.1, 0)
         leftWall.physicsBody = SCNPhysicsBody.static()
-        leftWall.isHidden = true
         scene.rootNode.addChildNode(leftWall)
 
         let rightWall = SCNNode(geometry: leftRightWallGeometry)
         rightWall.position = SCNVector3(traySize/2, wallHeight/2 - 0.1, 0)
         rightWall.physicsBody = SCNPhysicsBody.static()
-        rightWall.isHidden = true
         scene.rootNode.addChildNode(rightWall)
 
         scnView.isPlaying = true
