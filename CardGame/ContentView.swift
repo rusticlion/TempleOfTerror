@@ -1,9 +1,14 @@
 import SwiftUI
 
+struct PendingRoll: Identifiable {
+    let id = UUID()
+    let action: ActionOption
+    let interactableID: String
+}
+
 struct ContentView: View {
     @StateObject private var viewModel: GameViewModel
-    @State private var pendingAction: ActionOption?
-    @State private var pendingInteractableID: String?
+    @State private var pendingRoll: PendingRoll?
     @State private var selectedCharacterID: UUID? // Track selected character
     @State private var showingStatusSheet = false // Controls the party sheet
     @State private var showingMap = false // Controls the map sheet
@@ -68,8 +73,7 @@ struct ContentView: View {
                                                         selectedCharacter: selectedCharacter) { action in
                                         if let character = selectedCharacter {
                                             if action.requiresTest {
-                                                pendingInteractableID = interactable.id
-                                                pendingAction = action
+                                                pendingRoll = PendingRoll(action: action, interactableID: interactable.id)
                                             } else {
                                                 // Directly apply the free-action consequences
                                                 _ = vm.performFreeAction(for: action, with: character, interactableID: interactable.id)
@@ -162,14 +166,14 @@ struct ContentView: View {
                 .animation(.easeInOut, value: showingCharacterSheet)
             }
             .disabled(viewModel.gameState.status == .gameOver)
-            .sheet(item: $pendingAction) { action in
+            .sheet(item: $pendingRoll) { pending in
                 if let character = selectedCharacter {
                     let clockID = viewModel.gameState.activeClocks.first?.id
                     DiceRollView(viewModel: viewModel,
-                                 action: action,
+                                 action: pending.action,
                                  character: character,
                                  clockID: clockID,
-                                 interactableID: pendingInteractableID)
+                                 interactableID: pending.interactableID)
                 } else {
                     Text("No action selected")
                 }
