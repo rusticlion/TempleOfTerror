@@ -39,6 +39,9 @@ class GameViewModel: ObservableObject {
     @Published var gameState: GameState
     @Published var partyMovementMode: PartyMovementMode = .grouped
 
+    /// Enable verbose logging when processing consequences.
+    static var debugConsequences = false
+
     /// Location of the save file within the app's Documents directory.
     private static var saveURL: URL {
         FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
@@ -609,10 +612,16 @@ class GameViewModel: ObservableObject {
         let currentEffect = context.finalEffect
         let currentPosition = context.finalPosition
         for consequence in consequences {
+            if Self.debugConsequences {
+                print("[Consequences] Evaluating \(consequence.kind) for \(character.name)")
+            }
             if !areConditionsMet(conditions: consequence.conditions,
                                  forCharacter: character,
                                  finalEffect: currentEffect,
                                  finalPosition: currentPosition) {
+                if Self.debugConsequences {
+                    print("[Consequences] Skipping \(consequence.kind) due to unmet conditions")
+                }
                 continue
             }
             // First check if we have a narrative description
@@ -676,15 +685,28 @@ class GameViewModel: ObservableObject {
                 }
             case .removeInteractable:
                 if let id = consequence.interactableId,
-                   let nodeID = gameState.characterLocations[partyMemberId.uuidString] {
-                    gameState.dungeon?.nodes[nodeID.uuidString]?.interactables.removeAll(where: { $0.id == id })
+                   let nodeID = gameState.characterLocations[partyMemberId.uuidString],
+                   var node = gameState.dungeon?.nodes[nodeID.uuidString] {
+                    let before = node.interactables.count
+                    node.interactables.removeAll(where: { $0.id == id })
+                    gameState.dungeon?.nodes[nodeID.uuidString] = node
+                    if Self.debugConsequences {
+                        let removed = before - node.interactables.count
+                        print("[Consequences] removeInteractable: removed \(removed) with id \(id)")
+                    }
                     if !narrativeUsed {
                         descriptions.append("The way is clear.")
                     }
                 }
             case .removeSelfInteractable:
-                if let nodeID = gameState.characterLocations[partyMemberId.uuidString], let interactableStrID = interactableID {
-                    gameState.dungeon?.nodes[nodeID.uuidString]?.interactables.removeAll(where: { $0.id == interactableStrID })
+                if let nodeID = gameState.characterLocations[partyMemberId.uuidString],
+                   let interactableStrID = interactableID,
+                   var node = gameState.dungeon?.nodes[nodeID.uuidString] {
+                    node.interactables.removeAll(where: { $0.id == interactableStrID })
+                    gameState.dungeon?.nodes[nodeID.uuidString] = node
+                    if Self.debugConsequences {
+                        print("[Consequences] removeSelfInteractable id \(interactableStrID)")
+                    }
                     if !narrativeUsed {
                         descriptions.append("The way is clear.")
                     }
