@@ -37,5 +37,64 @@
       "isOptionalToApply": false
     },
     "tags": ["Information"]
+  },
+  {
+    "id": "cb_crew_conflict_intuition",
+    "name": "Crew Conflict Intuition",
+    "description": "You have a feeling that the crew is in conflict.",
+    "grantedModifier": {
+      "improveEffect": true,
+      "applicableToAction": "Attune",
+      "requiredTag": "History",
+      "uses": -1
+    }
+  },
+  {
+    "id": "cb_dr_thornes_access_code",
+    "name": "Dr. Thorne's Access Code",
+    "description": "An old access code belonging to Dr. Thorne.",
+    "grantedModifier": {
+        "improveEffect": true,
+        "requiredTag": "Thorne",
+        "uses": -1,
+        "description": "from Thorne's Access Code"
+    },
+    "tags": ["Code", "Thorne"]
+  },
+  {
+    "id": "cb_hydra_intel",
+    "name": "Hydra Intel",
+    "description": "You know the Hydra can't be killed while the VFE is active.",
+    "grantedModifier": {
+        "improvePosition": true,
+        "requiredTag": "Hydra",
+        "uses": -1,
+        "description": "from Hydra Intel"
+    },
+    "tags": ["Intel", "Hydra"]
+  },
+  {
+    "id": "cb_dr_ng_research_logs",
+    "name": "Dr. Ng's Research Logs",
+    "description": "A collection of Dr. Ng's research notes, detailing early VFE experiments and her growing concerns about Dr. Thorne's methods.",
+    "grantedModifier": {
+      "improveEffect": true,
+      "applicableToAction": "Study",
+      "uses": -1,
+      "description": "from Ng's Logs"
+    },
+    "tags": ["Log", "Clue"]
+  },
+  {
+    "id": "cb_dr_thornes_early_vfe_notes",
+    "name": "Dr. Thorne's Early VFE Notes",
+    "description": "Early, less deranged notes from Dr. Thorne on the VFE's properties. Contains some technical specifications.",
+    "grantedModifier": {
+      "bonusDice": 1,
+      "applicableToAction": "Tinker",
+      "uses": -1,
+      "description": "from Thorne's Notes"
+    },
+    "tags": ["Log", "Clue", "Technical"]
   }
 ]

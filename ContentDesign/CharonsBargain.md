@@ -2,11 +2,11 @@ Charon's Bargain
 A Mothership RPG One-Shot Adventure
 
 Scenario Overview
-The Players receive a dubious distress signal from the transport ship Styx 
-Transporter. Upon investigation, they discover a vessel adrift, its 
+The Players receive a dubious distress signal from the cargo freighter _Styx 
+Transporter_. Upon investigation, they discover a vessel adrift, its 
 systems failing, and stalked by a horrific biological entity. The ship 
 houses a secret lab where Dr. Aris Thorne, driven by grief and denial, has 
-been using a dangerous alien artifact – the Vitalizing Field Equipment 
+been using a dangerous alien artifact – the Vitalizing Field Emitter 
 (VFE) – in a desperate attempt to save her catastrophically injured 
 husband, Alex. This endeavor has had horrific consequences, transforming 
 him into a monstrous "Hydra" and warping other life on board.
@@ -21,10 +21,10 @@ truly "good" outcomes.
 Unknowable Horrors: The dangers of meddling with alien technology beyond 
 human comprehension.
 Background: What Happened Here?
-The Mission: The Styx Transporter was on a covert mission to retrieve and 
+The Mission: The _Styx_ was on a covert mission to retrieve and 
 study an Artifact of immense power, later designated the Vitalizing Field 
-Equipment (VFE), believed to originate from the hyperintelligent AI 
-"Monarch" or its autonomous factories. Dr. Aris Thorne, a brilliant but 
+Emitter (VFE), believed to originate from the hyperintelligent AI 
+"Empress" or its autonomous factories. Dr. Aris Thorne, a brilliant but 
 ethically flexible scientist, was key to this mission, hoping the VFE 
 could revolutionize medical science.
 The Accident: During or shortly after the VFE's retrieval, a containment 
@@ -41,11 +41,11 @@ and reactor instability. These surges amplified the VFE's effects. Alex’s
 body warped with each regenerative cycle, becoming less human and more 
 monstrous—a "Hydra" of flesh and bone. The VFE’s influence also spread, 
 causing minor mutations in other organic matter and residual fauna (like 
-rats) aboard the Styx Transporter.
+rats) aboard the _Styx_.
 The Distress Signal: As the situation deteriorated, Security Officer Elias 
 Ward attempted to send a distress signal for evacuation. Dr. Thorne, deep 
 in her denial and convinced she could still "save" Alex, altered the 
-signal to a medical emergency, hoping to lure personnel who could help her 
+signal to indicate a medical emergency, hoping to lure personnel who could help her 
 control the VFE.
 Fractured Survivors: The remaining crew fractured. Some, like Ward, 
 focused on containment. Dr. Lauren Ng, Thorne’s research assistant, grew 
@@ -54,9 +54,9 @@ decisively against Thorne. Engineer Marcus Hardy, exposed to the VFE's
 energies while trying to manage the failing reactor, suffered mutations.
 The Hydra's Birth: In a final, desperate act to "stabilize" Alex, Dr. 
 Thorne pushed the VFE to its limits. This resulted in Alex's complete 
-transformation into the Scranton-Hydra, a creature of constant, horrific 
-regeneration, barely contained within the ship’s Test Chamber.
-Current State: The Styx Transporter drifts, a tomb-ship caught in a cycle 
+transformation into the Hydra, a constantly-regenerating, flesh-warped monstrosity,
+barely contained within the ship’s Test Chamber.
+Current State: The _Styx Transporter_ drifts, a tomb-ship caught in a cycle 
 of power surges that fuel the VFE. Dr. Thorne remains in her hidden VFE 
 Lab, obsessively tending to the Artifact and the monstrosity in the Test 
 Chamber, blind to the reality of her failure.
@@ -64,7 +64,7 @@ Key NPCs
 Dr. Aris Thorne: Brilliant, obsessed, and dangerously deluded. She will do 
 anything to protect the VFE and what she believes is her husband's only 
 chance. She is likely in the VFE Lab.
-The Scranton-Hydra (Alex Thorne): Once Dr. Thorne’s husband, now a 
+The Hydra (Alex Thorne): Once Dr. Thorne’s husband, now a 
 grotesque, multi-appendaged horror that regenerates and adapts. It is 
 unkillable as long as the VFE is active. Located in the Test Chamber.
 Dr. Lauren Ng: Research assistant to Dr. Thorne. Traumatized and 
@@ -76,16 +76,16 @@ Thorne for the disaster. May know about ship systems or other survivors.
 (Location: GM's discretion, perhaps barricaded in Crew Quarters or 
 Engineering/Maintenance).
 Marcus Hardy: Engineer. Severely mutated by VFE exposure but may have 
-moments of lucidity. Knows about the ship's failing reactor and power 
-systems. (Location: Likely near Engineering/Maintenance).
+moments of lucidity. Knowledgeable about the ship's failing reactor and power 
+systems. Single-handedly holding back total warp reactor meltdown. (Location: Likely near Engineering/Maintenance).
 The Vitalizing Field Equipment (VFE)
-The VFE is an alien Artifact of unknown origin, likely connected to 
-Monarch.
+The VFE is an alien Artifact of unknown origin, connected to a mysterious entity 
+codenamed "Empress".
 
 Primary Effect: Induces rapid, chaotic biological regeneration and 
-adaptation in organic matter.
-Side Effects: Causes grotesque mutations, unpredictable biological 
-growths, and can warp existing lifeforms into new, hostile configurations. 
+adaptation in organic matter. Highly effective in preserving life.
+Side Effects: Causes grotesque mutations, unpredictable mental changes, 
+and can warp existing lifeforms into new, hostile configurations. 
 Prolonged exposure is highly dangerous.
 Power Dependency: Its effects are amplified by power surges from the 
 ship's failing reactor.
@@ -95,14 +95,14 @@ detrimental ways (e.g., an arm regrows as a useless tendril, skin hardens
 into brittle plates, new sensory organs sprout). This can lead to stat 
 penalties, new vulnerabilities, or even partial loss of character control.
 Player Objectives
-Survive: The Styx Transporter is a death trap. The Scranton-Hydra, mutated 
+Survive: The _Styx_ is a death trap. The Hydra, mutated 
 creatures, environmental hazards, and the VFE itself pose constant 
 threats.
 Save (Maybe): Can anyone truly be saved? Players must decide how to deal 
 with Dr. Thorne. Is it possible to convince her to abandon her efforts? 
 Are there other survivors who can be rescued?
 Solve: Uncover the truth behind the distress signal and the catastrophe 
-that befell the Styx Transporter. The ultimate goal is likely to 
+that befell the _Styx_. The ultimate goal is likely to 
 neutralize the threat, which primarily means deactivating the VFE.
 Pacing and Structure (Three Acts)
 Act 1: Arrival and Initial Exploration
@@ -126,7 +126,7 @@ Scenes: Discovering the Medical Wing, encountering Dr. Ng, finding
 evidence of the VFE's true nature, locating the hidden VFE Lab.
 Clues: Medical data showing grotesque regeneration, Dr. Ng’s testimony, 
 Dr. Thorne's research notes in the VFE lab detailing her descent into 
-obsession and the VFE's connection to Monarch.
+obsession and the VFE's connection to Empress.
 Encounters: More significant mutated crew members. Confrontation with Dr. 
 Thorne, who will plead for help or react hostilely if players attempt to 
 interfere with the VFE.
@@ -148,7 +148,7 @@ main reactor controls (Engineering/Maintenance) to shut it/them down, all
 while evading or dealing with the Hydra.
 Escalation: The Hydra grows more dangerous if fought directly while the 
 VFE is active, possibly regenerating limbs or developing new attacks. The 
-VFE field itself might become more aggressive.
+VFE field itself might intensify.
 Resolution Options:
 Deactivation: Shutting down the VFE. This will cause the Scranton-Hydra to 
 (eventually) die, effectively "killing" Alex Thorne. This is the most 
@@ -186,15 +186,14 @@ intermittently.
 Interactables:
 Emergency Beacon: Damaged panel. Close inspection (Electronics or 
 Mechanical Repair roll) reveals manual override and signs of hasty, bloody 
-work. Last message fragment: "...medical emergency...Dr. Thorne requests 
-immediate...aid..."
+work. Last message fragment: "...med emergency...Dr. Thorne requests 
+immediate..."
 Cargo Loader: Slumped, inactive. Can be reactivated (requires power 
-rerouting or successful Mechanics roll) to move heavy objects or as a 
+rerouting or successful Tinker roll) to move heavy objects or as a 
 clumsy weapon.
 Hazards/Encounters:
-Corrupted Maintenance Droid: Its optical sensors are overgrown with 
-twitching organic matter. Erratic, may attack with tools or ram.
 Power Fluctuations: Random sparks from damaged conduits.
+
 Main Corridor
 
 Atmosphere: Long, shadowy. Patches of strange, pulsating slime on walls. 
@@ -208,6 +207,7 @@ Hazards/Encounters:
 Amalgamated Rats: A skittering carpet of fused rats, jaws snapping. Low 
 individual threat, but dangerous in a swarm.
 Flickering Lights: Can cause disorientation or provide cover for threats.
+
 Crew Quarters
 
 Atmosphere: Stale air, personal belongings strewn about. Some doors 
@@ -223,6 +223,7 @@ Hazards/Encounters:
 Mutated Crew Member (Lurker): Hiding, movements jerky. May be docile until 
 startled or if players carry VFE-affected items. Not overtly hostile, but 
 terrified and unpredictable.
+
 Medical Wing
 
 Atmosphere: Antiseptic smell mixed with something metallic and rotting. 
@@ -240,6 +241,7 @@ Research Terminal: Contains Dr. Ng's logs, early VFE data (before Thorne
 locked her out), theories on the VFE's energy draw.
 Hazards/Encounters: Discarded biological samples may show minor, twitching 
 signs of VFE influence.
+
 Hydroponics Bay
 
 Atmosphere: Humid, strangely overgrown. Plants are mutated—too large, 
@@ -249,9 +251,9 @@ Interactables:
 Water Filtration Controls: Could be used to flush specific connected areas 
 with (possibly contaminated) water as a distraction.
 Plant Samples: Taking samples might reveal the VFE’s pervasive influence.
-Hazards/Encounters: The air is thick with spores; prolonged exposure 
-without filters might require a Body save to avoid minor irritation or 
-hallucinations.
+Hazards/Encounters: The air is thick with spores; exposure 
+without filters might induce minor irritation or hallucinations.
+
 Cargo Bay
 
 Atmosphere: Vast, cluttered with containers. Some are breached, spilling 
@@ -259,14 +261,15 @@ mundane supplies mixed with VFE-warped material.
 Interactables:
 Sealed Containers: Some marked "BIOLOGICAL EXPERIMENTS - HANDLE WITH 
 EXTREME CAUTION."
-Forklift/Crane: Damaged but potentially repairable (Mechanics roll).
+Forklift/Crane: Damaged but potentially repairable (Tinker roll).
 Hidden Access (VFE Lab): A specific section of wall/floor appears on no 
 official schematic. Dr. Ng might hint at it, or a thorough search 
-(Observation or relevant skill) reveals a cleverly disguised maintenance 
+(Survey) reveals a cleverly disguised maintenance 
 hatch or panel. Requires Dr. Thorne's old access code (from Ng, or a 
-datapad in Crew Quarters) or a difficult Hacking/Mechanics roll to bypass.
+datapad in Crew Quarters) or a difficult Tinker/Wreck roll to bypass.
 Hazards/Encounters: Mutated insects or vermin might scuttle amongst the 
 cargo.
+
 VFE Lab (Hidden)
 
 Access: Via hidden hatch in Cargo Bay.
@@ -280,18 +283,18 @@ VFE Control Terminal: Allows direct interaction with the Artifact.
 Displays chaotic energy readings and biological feedback from the Test 
 Chamber. Attempting to understand or control it is extremely difficult and 
 dangerous. This is the primary way to deactivate the VFE. Contains 
-Thorne’s detailed (and increasingly unhinged) logs about Alex and Monarch.
+Thorne’s detailed (and increasingly unhinged) logs about Alex and Empress.
 Emergency Override (Test Chamber): A heavily secured panel to open/seal 
 the Test Chamber door. Thorne will fight to prevent access.
 Hazards/Encounters: The ambient VFE field is stronger here. Unprotected 
-players may need to make Body saves to avoid minor mutations or ill 
-effects.
+players may suffer minor mutations or ill effects.
+
 Test Chamber (Hidden)
 
 Access: Via a heavily secured blast door from the VFE Lab.
 Atmosphere: A nightmarish charnel house. Walls are slick with organic 
 residue. The air is thick with the stench of chemicals and warped flesh. 
-The Hydra is a constant, terrifying presence.
+The Hydra is a terrifying presence, bound to a modified operating table by frayed restraints.
 Primary Threat: The Scranton-Hydra (Alex Thorne). A massive, multi-limbed, 
 multi-sensory horror. It constantly regenerates, adapts, and may display 
 remnants of human intelligence in its tactics. It is effectively immortal 
@@ -302,6 +305,7 @@ temperature/atmosphere. Might be briefly usable to cause the Hydra
 discomfort or temporary weakness if repaired.
 Observation Window (to VFE Lab): Thick, likely cracked or stained.
 Hazards/Encounters: The Hydra. The entire room is a biohazard.
+
 Engineering/Maintenance
 
 Atmosphere: Loud with the groan of the dying reactor. Hot, sparks fly. 
@@ -317,6 +321,9 @@ cutting it to specific sections (including the VFE Lab, with difficulty
 and risk).
 Hazards/Encounters: Reactor leaks (radiation/energy), unstable flooring, 
 electrical arcs. Marcus Hardy, if hostile.
+Corrupted Maintenance Droid: Its optical sensors are overgrown with 
+twitching organic matter. Erratic, may attack with tools or ram.
+
 Escape Pods
 
 Atmosphere: Relatively clean, but with an air of desperation. Some pods 
@@ -326,7 +333,9 @@ Pod Launch Controls: Some pods may require power or codes to launch.
 Emergency Supplies: Medkits, O2 tanks, flares.
 Hazards/Encounters: A lone, heavily mutated survivor who failed to launch 
 a pod might be here, catatonic or hostile.
+
 Omens & Foreshadowing
+
 Flickering lights synched with a distant, rhythmic thumping.
 Whispers or pained breathing heard through vents.
 Sudden temperature drops in certain corridors.
@@ -334,8 +343,10 @@ Objects vanishing or being subtly moved when players aren't looking.
 Patches of rapidly growing, pulsating organic matter on walls.
 Dreams/hallucinations if players rest (related to drowning, being remade, 
 or Charon).
+
 Threats & Creatures
-The Scranton-Hydra: The primary threat. Stats should be formidable, 
+
+The Hydra: The primary threat. Stats should be formidable, 
 emphasizing its regenerative capabilities and adaptive attacks (e.g., 
 sprouting new limbs, spitting acid, hardened hide). Unkillable unless the 
 VFE is deactivated.
@@ -347,7 +358,9 @@ Corrupted Maintenance Droids: Ship systems given a horrifying biological
 bent.
 Environmental Hazards: Electrical arcing, reactor leaks, VFE field 
 hotspots causing rapid, localized mutations.
+
 Time Pressure Mechanics
+
 Destabilizing Reactor Core: The ship's reactor is failing, leading to 
 periodic power surges. Each surge:
 Temporarily boosts the VFE's effects (Hydra becomes more active/dangerous, 
@@ -360,10 +373,12 @@ might enter a runaway feedback loop, making its ambient effects
 increasingly pervasive and dangerous for everyone on board. This acts as a 
 soft "time limit" for the players to resolve the situation before the 
 entire ship becomes an unlivable, mutating hellscape.
+
 Potential Resolutions & Aftermath
+
 VFE Deactivated, Hydra "Dies": Alex Thorne is finally at peace. Dr. 
 Thorne's reaction can range from catatonia to violent despair. Players 
-might escape with logs detailing the horrors of Monarch artifacts.
+might escape with logs detailing the horrors of Empress artifacts.
 Ship Destroyed: A pyrrhic victory. The threat is neutralized, but all 
 evidence and potential survivors are lost.
 Players Escape, VFE Active: The Styx Transporter becomes a drifting plague 
@@ -374,9 +389,3 @@ deactivation leads to her mental collapse), her fate is a grim loose end.
 A New Hydra: If a player character becomes too mutated by the VFE, they 
 might become a new, less controlled "Hydra," especially if the original is 
 destroyed but the VFE remains active.
-Tie-ins
-Gradient Descent/Monarch AI: The VFE is explicitly an Artifact from this 
-source, showcasing the dangers of Monarch's creations. Logs on board could 
-provide clues or data related to Monarch's broader plans.
-Future Scenarios: The VFE (or knowledge of it) could fall into other 
-hands, leading to new horrors. Survivors might carry latent VFE mutations.

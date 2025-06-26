@@ -592,15 +592,96 @@
               "outcomes": {
                 "success": [
                   {
-                    "type": "triggerEvent",
-                    "eventId": "cb_graffiti_hidden_symbol"
+                    "type": "gainStress",
+                    "amount": -1,
+                    "description": "You notice that the advice urging to \"stay calm\" is written in a shaky hand, while the advice to \"get out\" is stenciled cleanly. Maybe most of the crew has already left."
+                  },
+                  {
+                    "type": "removeAction",
+                    "id": "self",
+                    "actionName": "Search for Hidden Details"
+                  },
+                  {
+                    "type": "gainTreasure",
+                    "treasureId": "cb_crew_conflict_intuition"
+                  }
+                ],
+                "partial": [
+                  {
+                    "type": "gainStress",
+                    "amount": 1,
+                    "description": "You notice that the advice urging to \"stay calm\" is written in a shaky hand, while the advice to \"get out\" is stenciled cleanly. You're not happy about being here."
+                  },
+                  {
+                    "type": "removeAction",
+                    "id": "self",
+                    "actionName": "Search for Hidden Details"
+                  },
+                  {
+                    "type": "gainTreasure",
+                    "treasureId": "cb_crew_conflict_intuition"
                   }
                 ],
                 "failure": [
                   {
+                    "type": "gainStress",
+                    "amount": 1,
+                    "description": "Something has clearly gone very wrong here. You worry that you're too late."
+                  },
+                  {
                     "type": "sufferHarm",
                     "level": "lesser",
-                    "familyId": "vfe_cerebral_euphoria"
+                    "familyId": "vfe_cerebral_euphoria",
+                    "conditions": [
+                      {
+                        "type": "requiresMinPositionLevel",
+                        "positionParam": "risky"
+                      }
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "name": "What happened here?",
+              "actionType": "Attune",
+              "position": "controlled",
+              "effect": "standard",
+              "outcomes": {
+                "success": [
+                  {
+                    "type": "gainStress",
+                    "amount": -2,
+                    "description": "Clearly, this vessel's misson has gone off the rails. It looks like some sort of authority figure was trying to reassure the crew that everything was under control as it became clear that the mission was doomed. You'll have to be careful who to trust, but at least someone else here seems to have held onto their sanity."
+                  },
+                  {
+                    "type": "removeAction",
+                    "id": "self",
+                    "actionName": "What happened here?"
+                  }
+                ],
+                "partial": [
+                  {
+                    "type": "gainStress",
+                    "amount": -1,
+                    "description": "Clearly, this vessel's misson has gone off the rails. It looks like someone was trying to reassure the crew that everything was under control as it became clear that the mission was doomed. At least someone here seems to have held onto their sanity."
+                  },
+                  {
+                    "type": "removeAction",
+                    "id": "self",
+                    "actionName": "What happened here?"
+                  }
+                ],
+                "failure": [
+                  {
+                    "type": "gainStress",
+                    "amount": 1,
+                    "description": "Something has clearly gone very wrong here. You worry that you're too late."
+                  },
+                  {
+                    "type": "removeAction",
+                    "id": "self",
+                    "actionName": "What happened here?"
                   }
                 ]
               }
@@ -608,7 +689,7 @@
           ],
           "tags": [
             "Clue",
-            "Textual"
+            "History"
           ]
         }
       ],
@@ -840,6 +921,88 @@
             "Clue",
             "Log"
           ]
+        },
+        {
+            "id": "cb_npc_dr_lauren_ng",
+            "title": "Dr. Lauren Ng",
+            "description": "A terrified research assistant hiding behind an overturned gurney. She's pale and trembling, her eyes wide with fear.",
+            "availableActions": [
+                {
+                    "name": "Talk to Dr. Ng",
+                    "actionType": "Consort",
+                    "position": "risky",
+                    "effect": "standard",
+                    "outcomes": {
+                        "success": [
+                            {
+                                "type": "triggerConsequences",
+                                "description": "'You have to stop her,' she whispers, her voice shaking. 'She sealed off her main lab... but there's a service tunnel. In the Hydroponics Bay. It leads right to it. Take this... it's her old access code. Maybe it still works.'",
+                                "consequences": [
+                                    {
+                                        "type": "unlockConnection",
+                                        "fromNodeID": "00000000-0000-0000-0000-000000000005",
+                                        "toNodeID": "00000000-0000-0000-0000-000000000007"
+                                    },
+                                    {
+                                        "type": "gainTreasure",
+                                        "treasureId": "cb_dr_thornes_access_code"
+                                    },
+                                    {
+                                        "type": "removeAction",
+                                        "id": "self",
+                                        "actionName": "Talk to Dr. Ng"
+                                    },
+                                    {
+                                        "type": "addAction",
+                                        "id": "self",
+                                        "action": {
+                                            "name": "Ask about the Hydra",
+                                            "actionType": "Study",
+                                            "position": "controlled",
+                                            "effect": "standard",
+                                            "outcomes": {
+                                                "success": [
+                                                    {
+                                                        "type": "gainTreasure",
+                                                        "treasureId": "cb_hydra_intel",
+                                                        "description": "'That thing... it was her husband, Alex. The VFE was supposed to save him, but it just... kept going. It regenerates. As long as the VFE has power, you can't kill it.'"
+                                                    },
+                                                    {
+                                                        "type": "removeAction",
+                                                        "id": "self",
+                                                        "actionName": "Ask about the Hydra"
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    }
+                                ]
+                            }
+                        ],
+                        "partial": [
+                            {
+                                "type": "unlockConnection",
+                                "fromNodeID": "00000000-0000-0000-0000-000000000005",
+                                "toNodeID": "00000000-0000-0000-0000-000000000007",
+                                "description": "'The lab... there's a service tunnel in Hydroponics,' she stammers, but then she shrinks back. 'I can't... she'll know. Please, just go!'"
+                            },
+                            {
+                                "type": "gainStress",
+                                "amount": 1
+                            }
+                        ],
+                        "failure": [
+                            {
+                                "type": "tickClock",
+                                "clockName": "VFE Instability",
+                                "amount": 1,
+                                "description": "'No! Stay away from me!' she screams. Her shout echoes down the corridor, and you hear something heavy shift in a nearby room."
+                            }
+                        ]
+                    }
+                }
+            ],
+            "tags": ["NPC", "Survivor", "Clue"]
         }
       ],
       "connections": [
@@ -972,7 +1135,106 @@
       "id": "00000000-0000-0000-0000-000000000007",
       "name": "VFE Lab (Hidden)",
       "soundProfile": "alien_artifact_hum",
-      "interactables": [],
+      "interactables": [
+        {
+            "id": "cb_npc_dr_aris_thorne",
+            "title": "Dr. Aris Thorne",
+            "description": "A woman in a blood-stained lab coat, her eyes burning with obsessive focus as she adjusts controls on a humming, alien console. She ignores you.",
+            "availableActions": [
+                {
+                    "name": "Confront Dr. Thorne",
+                    "actionType": "Command",
+                    "position": "desperate",
+                    "effect": "standard",
+                    "outcomes": {
+                        "success": [
+                            {
+                                "type": "tickClock",
+                                "clockName": "Reason with Thorne",
+                                "amount": 2,
+                                "description": "'You don't understand,' she says, her voice dangerously calm. 'I'm on the verge of a breakthrough. Alex is still in there. The VFE just needs more time... more power.' She turns a dial on the console."
+                            },
+                            {
+                                "type": "tickClock",
+                                "clockName": "Reactor Overload",
+                                "amount": 1
+                            }
+                        ],
+                        "partial": [
+                            {
+                                "type": "tickClock",
+                                "clockName": "Reason with Thorne",
+                                "amount": 1,
+                                "description": "She glances at you, a flicker of annoyance crossing her face. 'Don't interfere. This is delicate work.'"
+                            }
+                        ],
+                        "failure": [
+                            {
+                                "type": "tickClock",
+                                "clockName": "Thorne's Last Resort",
+                                "amount": 1,
+                                "description": "'Get out!' she shrieks, grabbing a heavy wrench. 'You won't take him from me!'"
+                            }
+                        ]
+                    }
+                }
+            ],
+            "tags": ["NPC", "Hostile", "Thorne"]
+        },
+        {
+            "id": "cb_vfe_console",
+            "title": "VFE Control Terminal",
+            "description": "The alien console hums with a disquieting energy. The controls are unlike anything you've ever seen. A prominent display shows chaotic biological feedback from the Test Chamber.",
+            "availableActions": [
+                {
+                    "name": "Attempt to Deactivate VFE",
+                    "actionType": "Tinker",
+                    "position": "desperate",
+                    "effect": "great",
+                    "outcomes": {
+                        "success": [
+                            {
+                                "type": "triggerEvent",
+                                "eventId": "cb_vfe_deactivated",
+                                "description": "You slam your hand on a large, ominous-looking panel. The humming ceases. The lights on the console die. In the next room, you hear a final, agonized shriek, and then... silence."
+                            },
+                            {
+                                "type": "removeInteractable",
+                                "id": "cb_hydra_unstable"
+                            },
+                            {
+                                "type": "addInteractable",
+                                "inNodeID": "00000000-0000-0000-0000-000000000008",
+                                "interactable": {
+                                    "id": "cb_hydra_dying",
+                                    "title": "The Dying Hydra",
+                                    "description": "The creature that was once Alex Thorne collapses, its flesh rapidly decaying into dust. It is finally, truly dead.",
+                                    "availableActions": []
+                                }
+                            }
+                        ],
+                        "partial": [
+                            {
+                                "type": "tickClock",
+                                "clockName": "Reactor Meltdown",
+                                "amount": 1,
+                                "description": "You manage to disrupt the VFE's power flow, but the feedback loop sends a catastrophic surge toward the reactor."
+                            }
+                        ],
+                        "failure": [
+                            {
+                                "type": "sufferHarm",
+                                "level": "severe",
+                                "familyId": "vfe_cerebral_euphoria",
+                                "description": "You touch the wrong control. Your mind is flooded with a billion alien thoughts, a symphony of cosmic madness. You collapse, drooling."
+                            }
+                        ]
+                    }
+                }
+            ],
+            "tags": ["VFE-touched", "Alien", "Dangerous", "Thorne"]
+        }
+      ],
       "connections": [
         {
           "toNodeID": "00000000-0000-0000-0000-000000000005",
@@ -987,7 +1249,7 @@
         {
           "toNodeID": "00000000-0000-0000-0000-000000000008",
           "description": "Enter Test Chamber",
-          "isUnlocked": false
+          "isUnlocked": true
         },
         {
           "toNodeID": "00000000-0000-0000-0000-000000000009",
@@ -1002,7 +1264,35 @@
       "id": "00000000-0000-0000-0000-000000000008",
       "name": "Test Chamber (Hidden)",
       "soundProfile": "organic_pulsating_horror",
-      "interactables": [],
+      "interactables": [
+        {
+            "id": "cb_hydra_unstable",
+            "title": "The Hydra",
+            "description": "A grotesque, multi-appendaged horror of flesh and bone, constantly regenerating and adapting. It is bound to a modified operating table by frayed restraints, but it strains against them, its many eyes fixing on you.",
+            "isThreat": true,
+            "availableActions": [
+                {
+                    "name": "Attack the Hydra",
+                    "actionType": "Skirmish",
+                    "position": "desperate",
+                    "effect": "limited",
+                    "outcomes": {
+                        "success": [
+                            { "type": "gainStress", "amount": 1, "description": "You blast a chunk of flesh from the creature, but it regrows in seconds, the new tissue pulsing with VFE energy. It seems your attack only made it stronger." },
+                            { "type": "tickClock", "clockName": "VFE Instability", "amount": 1 }
+                        ],
+                        "partial": [
+                            { "type": "sufferHarm", "level": "moderate", "familyId": "vfe_physical_aberration", "description": "You get too close. A fleshy tendril whips out, slamming you against the wall." }
+                        ],
+                        "failure": [
+                            { "type": "sufferHarm", "level": "severe", "familyId": "vfe_physical_aberration", "description": "The Hydra breaks one of its restraints and grabs you, pulling you into its writhing mass. You are consumed." }
+                        ]
+                    }
+                }
+            ],
+            "tags": ["Hydra", "VFE-corrupted", "Hostile", "Dangerous"]
+        }
+      ],
       "connections": [
         {
           "toNodeID": "00000000-0000-0000-0000-000000000007",

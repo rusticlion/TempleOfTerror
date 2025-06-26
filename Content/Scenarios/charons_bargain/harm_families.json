@@ -64,6 +64,22 @@
       "moderate": { "description": "Fragmented Thoughts", "penalty": { "type": "actionPenalty", "actionType": "Study" } },
       "severe": { "description": "Shattered Psyche", "penalty": { "type": "banAction", "actionType": "Command" } },
       "fatal": { "description": "Mind Lost to the Abyss" }
+    },
+    {
+      "id": "electric_shock",
+      "lesser": {
+        "description": "Minor Shock",
+        "penalty": { "type": "actionPenalty", "actionType": "Tinker" }
+      },
+      "moderate": {
+        "description": "Severe Jolt",
+        "penalty": { "type": "reduceEffect" }
+      },
+      "severe": {
+        "description": "Cardiac Arrest",
+        "penalty": { "type": "banAction", "actionType": "Wreck" }
+      },
+      "fatal": { "description": "Electrocuted" }
     }
   ]
 }
