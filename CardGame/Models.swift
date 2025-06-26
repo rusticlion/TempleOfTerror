@@ -91,9 +91,8 @@ struct Modifier: Codable {
             } else {
                 try container.encode(actions, forKey: .applicableActions)
             }
-        } else {
-            try container.encodeIfPresent(applicableToAction, forKey: .applicableToAction)
         }
+        try container.encodeIfPresent(applicableToAction, forKey: .applicableToAction)
         try container.encodeIfPresent(requiredTag, forKey: .requiredTag)
         try container.encode(uses, forKey: .uses)
         try container.encode(isOptionalToApply, forKey: .isOptionalToApply)

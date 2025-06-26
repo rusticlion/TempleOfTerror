@@ -97,8 +97,11 @@ class ContentLoader {
                 print("Failed to decode \(filename): unexpected format")
                 return []
             }
+        } catch let error as DecodingError {
+            print("Failed to decode \(filename) for scenario \(scenario): Decoding Error: \(error.localizedDescription)\nPath: \(error.codingPath.map { $0.stringValue }.joined(separator: "."))\nDebug Description: \(error.debugDescription)")
+            return []
         } catch {
-            print("Failed to decode \(filename): \(error)")
+            print("Failed to decode \(filename) for scenario \(scenario): \(error)")
             return []
         }
     }

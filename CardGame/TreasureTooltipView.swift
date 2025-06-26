@@ -10,7 +10,7 @@ struct TreasureTooltipView: View {
             Text(treasure.description)
                 .font(.body)
                 .fixedSize(horizontal: false, vertical: true)
-            Text(treasure.grantedModifier.description)
+            Text(treasure.grantedModifier.description ?? "[Fill in Modifier description]")
                 .font(.subheadline)
                 .foregroundColor(.secondary)
                 .fixedSize(horizontal: false, vertical: true)

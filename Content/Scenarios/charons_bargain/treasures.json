@@ -46,7 +46,8 @@
       "improveEffect": true,
       "applicableToAction": "Attune",
       "requiredTag": "History",
-      "uses": -1
+      "uses": -1,
+      "description": "from Crew Conflict Intuition"
     }
   },
   {

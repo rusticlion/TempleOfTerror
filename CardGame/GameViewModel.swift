@@ -397,58 +397,44 @@ class GameViewModel: ObservableObject {
 
         var appliedOptionalMods: [Modifier] = []
         var consumedMessages: [String] = []
-        var updatedModifiers: [Modifier] = gameState.party[charIndex].modifiers
-        var updatedTreasures: [Treasure] = gameState.party[charIndex].treasures
-
-        // Map of modifier id to index for quick lookup
-        var idToIndex: [UUID: Int] = [:]
-        for (idx, mod) in updatedModifiers.enumerated() { idToIndex[mod.id] = idx }
-        var treasureIndex: [UUID: Int] = [:]
-        for (idx, treasure) in updatedTreasures.enumerated() {
-            treasureIndex[treasure.grantedModifier.id] = idx
+        
+        // Create a mutable copy of the chosen IDs to handle Push Yourself
+        var mutableChosenIDs = chosenOptionalModifierIDs
+        
+        // Handle Push Yourself: find the ID that doesn't correspond to an existing modifier
+        if let pushIndex = mutableChosenIDs.firstIndex(where: { id in
+            !gameState.party[charIndex].modifiers.contains(where: { $0.id == id })
+        }) {
+            mutableChosenIDs.remove(at: pushIndex)
+            appliedOptionalMods.append(Modifier(bonusDice: 1, uses: 1, isOptionalToApply: true, description: "Push Yourself"))
+            gameState.party[charIndex].stress += 2
+            _ = checkStressOverflow(for: charIndex)
         }
 
-        for id in chosenOptionalModifierIDs {
-            if let idx = idToIndex[id] {
-                var mod = updatedModifiers[idx]
-                appliedOptionalMods.append(mod)
+        // Consume any chosen modifiers with limited uses
+        var modsToKeep: [Modifier] = []
+        var consumedModIDs: [UUID] = []
+        for var mod in gameState.party[charIndex].modifiers {
+            if mutableChosenIDs.contains(mod.id) {
+                appliedOptionalMods.append(mod) // Add to projection calculation
                 if mod.uses > 0 {
                     mod.uses -= 1
-                    if let tIdx = treasureIndex[mod.id] {
-                        if mod.uses == 0 {
-                            let name = mod.description.replacingOccurrences(of: "from ", with: "")
-                            consumedMessages.append("Used up \(name).")
-                            updatedModifiers.remove(at: idx)
-                            updatedTreasures.remove(at: tIdx)
-                            // rebuild indices after removal
-                            idToIndex = [:]
-                            for (i, m) in updatedModifiers.enumerated() { idToIndex[m.id] = i }
-                            treasureIndex = [:]
-                            for (i, t) in updatedTreasures.enumerated() { treasureIndex[t.grantedModifier.id] = i }
-                            continue
-                        } else {
-                            updatedModifiers[idx] = mod
-                            updatedTreasures[tIdx].grantedModifier.uses = mod.uses
-                        }
-                    } else {
-                        if mod.uses == 0 {
-                            let name = mod.description.replacingOccurrences(of: "from ", with: "")
-                            consumedMessages.append("Used up \(name).")
-                            updatedModifiers.remove(at: idx)
-                            idToIndex = [:]
-                            for (i, m) in updatedModifiers.enumerated() { idToIndex[m.id] = i }
-                            continue
-                        } else {
-                            updatedModifiers[idx] = mod
-                        }
+                    if mod.uses == 0 {
+                        consumedModIDs.append(mod.id)
+                        let name = mod.description.replacingOccurrences(of: "from ", with: "")
+                        consumedMessages.append("Used up \(name).")
+                        // Don't add it to modsToKeep
+                        continue
                     }
                 }
-            } else {
-                // Treat as Push Yourself
-                appliedOptionalMods.append(Modifier(bonusDice: 1, uses: 1, isOptionalToApply: true, description: "Push Yourself"))
-                gameState.party[charIndex].stress += 2
-                _ = checkStressOverflow(for: charIndex)
             }
+            modsToKeep.append(mod)
+        }
+        gameState.party[charIndex].modifiers = modsToKeep
+        
+        // If a consumed modifier came from a treasure, remove the treasure
+        gameState.party[charIndex].treasures.removeAll { treasure in
+            consumedModIDs.contains(treasure.grantedModifier.id)
         }
 
         workingProjection = calculateEffectiveProjection(baseProjection: workingProjection, applying: appliedOptionalMods)
@@ -533,21 +519,6 @@ class GameViewModel: ObservableObject {
                 consequencesDescription += "\n" + critMsg
             }
         }
-
-        // Merge in any new modifiers or treasures added by consequences
-        for mod in gameState.party[charIndex].modifiers {
-            if !updatedModifiers.contains(where: { $0.id == mod.id }) {
-                updatedModifiers.append(mod)
-            }
-        }
-        for treasure in gameState.party[charIndex].treasures {
-            if !updatedTreasures.contains(where: { $0.id == treasure.id }) {
-                updatedTreasures.append(treasure)
-            }
-        }
-
-        gameState.party[charIndex].modifiers = updatedModifiers
-        gameState.party[charIndex].treasures = updatedTreasures
         if !consumedMessages.isEmpty {
             AudioManager.shared.play(sound: "sfx_modifier_consume.wav")
             if consequencesDescription.isEmpty {
@@ -758,14 +729,28 @@ class GameViewModel: ObservableObject {
                     }
                 }
             case .gainTreasure:
-                if let treasureId = consequence.treasureId,
-                   let treasure = ContentLoader.shared.treasureTemplates.first(where: { $0.id == treasureId }),
-                   let charIndex = gameState.party.firstIndex(where: { $0.id == character.id }) {
-                    gameState.party[charIndex].treasures.append(treasure)
-                    gameState.party[charIndex].modifiers.append(treasure.grantedModifier)
-                    if !narrativeUsed {
-                        descriptions.append("Gained Treasure: \(treasure.name)!")
+                print("Processing gainTreasure consequence.")
+                if let treasureId = consequence.treasureId {
+                    print("Looking for treasure with ID: \(treasureId)")
+                    if let treasure = ContentLoader.shared.treasureTemplates.first(where: { $0.id == treasureId }) {
+                        print("Treasure found: \(treasure.name)")
+                        if let charIndex = gameState.party.firstIndex(where: { $0.id == character.id }) {
+                            print("Character index found: \(charIndex)")
+                            gameState.party[charIndex].treasures.append(treasure)
+                            print("Treasure count after append: \(gameState.party[charIndex].treasures.count)")
+                            gameState.party[charIndex].modifiers.append(treasure.grantedModifier)
+                            print("Modifier count after append: \(gameState.party[charIndex].modifiers.count)")
+                            if !narrativeUsed {
+                                descriptions.append("Gained Treasure: \(treasure.name)!")
+                            }
+                        } else {
+                            print("Character not found for gainTreasure consequence.")
+                        }
+                    } else {
+                        print("Treasure with ID \(treasureId) not found in ContentLoader.shared.treasureTemplates.")
                     }
+                } else {
+                    print("No treasureId provided for gainTreasure consequence.")
                 }
             case .modifyDice:
                 if let amount = consequence.amount,
