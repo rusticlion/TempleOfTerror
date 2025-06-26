@@ -14,30 +14,11 @@ struct HarmTooltipView: View {
     }
 
     private func penaltyDescription(_ penalty: Penalty) -> String {
-        switch penalty {
-        case .reduceEffect:
-            return "All actions suffer -1 Effect."
-        case .increaseStressCost(let amount):
-            return "Stress costs are increased by \(amount)."
-        case .actionPenalty(let actionType):
-            return "\(actionType) rolls -1 die."
-        case .banAction(let actionType):
-            return "Cannot perform \(actionType)."
-        case .actionPositionPenalty(let actionType):
-            return "\(actionType) rolls at worse Position."
-        case .actionEffectPenalty(let actionType):
-            return "\(actionType) suffers -1 Effect."
-        }
+        penalty.longDescription
     }
 
     private func boonDescription(_ boon: Modifier) -> String {
-        var parts: [String] = []
-        if boon.bonusDice != 0 { parts.append("+\(boon.bonusDice)d") }
-        if boon.improvePosition { parts.append("Improved Position") }
-        if boon.improveEffect { parts.append("+1 Effect") }
-        let detail = parts.joined(separator: ", ")
-        if detail.isEmpty { return boon.description }
-        return "\(detail) - \(boon.description)"
+        boon.longDescription
     }
 
     var body: some View {

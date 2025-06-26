@@ -22,23 +22,11 @@ struct CharacterSheetView: View {
     }
 
     private func shortPenaltyDescription(_ penalty: Penalty) -> String {
-        switch penalty {
-        case .reduceEffect: return "-1 Effect"
-        case .increaseStressCost(let amount): return "+\(amount) Stress cost"
-        case .actionPenalty(let actionType): return "\(actionType) -1d"
-        case .banAction(let actionType): return "No \(actionType)"
-        case .actionPositionPenalty(let actionType): return "\(actionType) Pos-"
-        case .actionEffectPenalty(let actionType): return "\(actionType) Eff-"
-        }
+        return penalty.shortDescription
     }
 
     private func shortBoonDescription(_ boon: Modifier) -> String {
-        var parts: [String] = []
-        if boon.bonusDice != 0 { parts.append("+\(boon.bonusDice)d") }
-        if boon.improvePosition { parts.append("Pos+") }
-        if boon.improveEffect { parts.append("Effect+") }
-        if parts.isEmpty { return boon.description }
-        return parts.joined(separator: ", ")
+        return boon.shortDescription
     }
 
     var body: some View {
