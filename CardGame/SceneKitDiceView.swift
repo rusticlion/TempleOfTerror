@@ -123,11 +123,13 @@ struct SceneKitDiceView: UIViewRepresentable {
         let backWall = SCNNode(geometry: frontBackWallGeometry)
         backWall.position = SCNVector3(0, wallHeight/2 - 0.1, -traySize/2)
         backWall.physicsBody = SCNPhysicsBody.static()
+        backWall.isHidden = true
         scene.rootNode.addChildNode(backWall)
 
         let frontWall = SCNNode(geometry: frontBackWallGeometry)
         frontWall.position = SCNVector3(0, wallHeight/2 - 0.1, traySize/2)
         frontWall.physicsBody = SCNPhysicsBody.static()
+        frontWall.isHidden = true
         scene.rootNode.addChildNode(frontWall)
 
         // Geometry for left/right walls
@@ -142,11 +144,13 @@ struct SceneKitDiceView: UIViewRepresentable {
         let leftWall = SCNNode(geometry: leftRightWallGeometry)
         leftWall.position = SCNVector3(-traySize/2, wallHeight/2 - 0.1, 0)
         leftWall.physicsBody = SCNPhysicsBody.static()
+        leftWall.isHidden = true
         scene.rootNode.addChildNode(leftWall)
 
         let rightWall = SCNNode(geometry: leftRightWallGeometry)
         rightWall.position = SCNVector3(traySize/2, wallHeight/2 - 0.1, 0)
         rightWall.physicsBody = SCNPhysicsBody.static()
+        rightWall.isHidden = true
         scene.rootNode.addChildNode(rightWall)
 
         scnView.isPlaying = true

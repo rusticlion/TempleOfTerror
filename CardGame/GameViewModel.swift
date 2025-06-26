@@ -40,7 +40,7 @@ class GameViewModel: ObservableObject {
     @Published var partyMovementMode: PartyMovementMode = .grouped
 
     /// Enable verbose logging when processing consequences.
-    static var debugConsequences = false
+    static var debugConsequences = true
 
     /// Location of the save file within the app's Documents directory.
     private static var saveURL: URL {
