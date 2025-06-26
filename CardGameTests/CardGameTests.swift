@@ -130,6 +130,44 @@ final class CardGameTests: XCTestCase {
         XCTAssertEqual(Set(names ?? []), Set(["Look", "Open"]))
     }
 
+    func testRemoveInteractableConsequence() throws {
+        let vm = GameViewModel()
+        let nodeID = UUID()
+        let action = ActionOption(name: "Trigger",
+                                  actionType: "Skirmish",
+                                  position: .risky,
+                                  effect: .standard,
+                                  requiresTest: false,
+                                  outcomes: [.success: [.removeInteractable(id: "target")]])
+        let target = Interactable(id: "target",
+                                  title: "Target",
+                                  description: "",
+                                  availableActions: [action])
+        let node = MapNode(id: nodeID,
+                           name: "Room",
+                           soundProfile: "",
+                           interactables: [target],
+                           connections: [])
+        vm.gameState.dungeon = DungeonMap(nodes: [nodeID.uuidString: node],
+                                          startingNodeID: nodeID)
+
+        var character = Character(id: UUID(),
+                                  name: "Hero",
+                                  characterClass: "Rogue",
+                                  stress: 0,
+                                  harm: HarmState(),
+                                  actions: ["Skirmish": 1],
+                                  treasures: [],
+                                  modifiers: [])
+        vm.gameState.party = [character]
+        vm.gameState.characterLocations[character.id.uuidString] = nodeID
+
+        _ = vm.performFreeAction(for: action, with: character, interactableID: "target")
+
+        let remaining = vm.gameState.dungeon?.nodes[nodeID.uuidString]?.interactables
+        XCTAssertTrue(remaining?.isEmpty ?? false)
+    }
+
     func testHealHarmConsequence() throws {
         ContentLoader.shared = ContentLoader()
         let vm = GameViewModel()
