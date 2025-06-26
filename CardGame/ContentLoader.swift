@@ -10,6 +10,34 @@ struct ScenarioManifest: Codable, Identifiable, Hashable {
     var mapFile: String?
 }
 
+extension DecodingError {
+    /// A readable representation of the coding path where the decoding failed.
+    var pathDescription: String {
+        switch self {
+        case .dataCorrupted(let context),
+             .keyNotFound(_, let context),
+             .typeMismatch(_, let context),
+             .valueNotFound(_, let context):
+            return context.codingPath.map { $0.stringValue }.joined(separator: ".")
+        @unknown default:
+            return ""
+        }
+    }
+
+    /// The debug description extracted from the underlying error context.
+    var contextDebugDescription: String {
+        switch self {
+        case .dataCorrupted(let context),
+             .keyNotFound(_, let context),
+             .typeMismatch(_, let context),
+             .valueNotFound(_, let context):
+            return context.debugDescription
+        @unknown default:
+            return localizedDescription
+        }
+    }
+}
+
 class ContentLoader {
     /// Shared loader using the default scenario ("tomb"). This can be
     /// reassigned when the player selects a different scenario from the
@@ -98,7 +126,7 @@ class ContentLoader {
                 return []
             }
         } catch let error as DecodingError {
-            print("Failed to decode \(filename) for scenario \(scenario): Decoding Error: \(error.localizedDescription)\nPath: \(error.codingPath.map { $0.stringValue }.joined(separator: "."))\nDebug Description: \(error.debugDescription)")
+            print("Failed to decode \(filename) for scenario \(scenario): Decoding Error: \(error.localizedDescription)\nPath: \(error.pathDescription)\nDebug Description: \(error.contextDebugDescription)")
             return []
         } catch {
             print("Failed to decode \(filename) for scenario \(scenario): \(error)")
