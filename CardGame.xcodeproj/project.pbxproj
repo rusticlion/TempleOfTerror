@@ -7,11 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		460D624E2DE7934300D50D0C /* CardGameApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 460D624D2DE7934300D50D0C /* CardGameApp.swift */; };
-		460D62502DE7934300D50D0C /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 460D624F2DE7934300D50D0C /* ContentView.swift */; };
 		460D62522DE7934600D50D0C /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 460D62512DE7934600D50D0C /* Assets.xcassets */; };
 		460D62552DE7934600D50D0C /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 460D62542DE7934600D50D0C /* Preview Assets.xcassets */; };
-		460D62572DE7934600D50D0C /* Persistence.swift in Sources */ = {isa = PBXBuildFile; fileRef = 460D62562DE7934600D50D0C /* Persistence.swift */; };
 		460D625A2DE7934600D50D0C /* CardGame.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 460D62582DE7934600D50D0C /* CardGame.xcdatamodeld */; };
 		460D62652DE7934700D50D0C /* CardGameTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 460D62642DE7934700D50D0C /* CardGameTests.swift */; };
 		460D626F2DE7934700D50D0C /* CardGameUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 460D626E2DE7934700D50D0C /* CardGameUITests.swift */; };
@@ -384,11 +381,9 @@
 				460D629A2DE7BD4200D50D0C /* NodeConnectionsView.swift in Sources */,
 				464B59CF2DEA1EF30002EA59 /* MapView.swift in Sources */,
 				4688D5782DF8A18200668E94 /* ActionEmoji.swift in Sources */,
-				460D62572DE7934600D50D0C /* Persistence.swift in Sources */,
 				460D625A2DE7934600D50D0C /* CardGame.xcdatamodeld in Sources */,
 				460D628D2DE7AA3900D50D0C /* ContentView.swift in Sources */,
 				46A9D22B2DE7D2E500FE459E /* StatusSheetView.swift in Sources */,
-				460D62502DE7934300D50D0C /* ContentView.swift in Sources */,
 				464B59D52DEA5EB60002EA59 /* HarmTooltipView.swift in Sources */,
 				460D628E2DE7AA3900D50D0C /* CardGameApp.swift in Sources */,
 				460D628F2DE7AA3900D50D0C /* ClocksView.swift in Sources */,
@@ -404,7 +399,6 @@
 				460D628C2DE7AA3900D50D0C /* GameViewModel.swift in Sources */,
 				464B59CD2DEA1A850002EA59 /* CharacterSheetView.swift in Sources */,
 				46549A122DF0B58900D17D66 /* PartyGenerationService.swift in Sources */,
-				460D624E2DE7934300D50D0C /* CardGameApp.swift in Sources */,
 				46A9D2342DE8001F00FE459E /* AudioManager.swift in Sources */,
 				46A9D2292DE7D14C00FE459E /* HeaderView.swift in Sources */,
 			);
@@ -566,6 +560,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"CardGame/Preview Content\"";
 				DEVELOPMENT_TEAM = 7ZFV6YVFH4;
+				ENABLE_APP_INTENTS_METADATA_GENERATION = NO;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "Dice Delver";
@@ -581,6 +576,7 @@
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = RoaringRobot.CardGame;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_INSTALL_OBJC_HEADER = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -596,6 +592,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"CardGame/Preview Content\"";
 				DEVELOPMENT_TEAM = 7ZFV6YVFH4;
+				ENABLE_APP_INTENTS_METADATA_GENERATION = NO;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "Dice Delver";
@@ -611,6 +608,7 @@
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = RoaringRobot.CardGame;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_INSTALL_OBJC_HEADER = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";

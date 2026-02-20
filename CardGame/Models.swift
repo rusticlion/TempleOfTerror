@@ -5,6 +5,12 @@ enum GameStatus: String, Codable {
     case gameOver
 }
 
+enum RunOutcome: String, Codable {
+    case defeat
+    case escaped
+    case victory
+}
+
 struct GameState: Codable {
     /// Identifier for the scenario that generated this run. Used when loading
     /// to reinitialize the `ContentLoader` with the correct data bundle.
@@ -17,6 +23,8 @@ struct GameState: Codable {
     // Use String keys for JSON compatibility
     var characterLocations: [String: UUID] = [:] // Individual character locations
     var status: GameStatus = .playing
+    var runOutcome: RunOutcome? = nil
+    var runOutcomeText: String? = nil
     // ... other global state can be added later
 }
 
@@ -1116,4 +1124,3 @@ extension GameState {
         return try JSONDecoder().decode(GameState.self, from: data)
     }
 }
-

@@ -182,4 +182,29 @@ final class ModifierSystemTests: XCTestCase {
         XCTAssertTrue(vm.gameState.party[0].modifiers.isEmpty)
         XCTAssertTrue(vm.gameState.party[0].treasures.isEmpty)
     }
+
+    func testPushStressCostIncludesActiveHarmPenalty() throws {
+        ContentLoader.shared = ContentLoader(scenario: "tomb")
+        let vm = GameViewModel()
+        var character = makeTestCharacter()
+        character.stress = 6
+        character.harm.lesser = [(familyId: "mental_anguish", description: "Unease")]
+        vm.gameState.party = [character]
+        vm.gameState.characterLocations[character.id.uuidString] = UUID()
+
+        let action = makeTestAction()
+        let context = vm.getRollContext(for: action, with: character)
+        guard let push = context.optionalModifiers.first(where: { $0.description == "Push Yourself" }) else {
+            return XCTFail("Expected Push Yourself option to be available")
+        }
+        XCTAssertEqual(push.remainingUses, "Costs 3 Stress")
+
+        _ = vm.performAction(for: action,
+                             with: character,
+                             interactableID: nil,
+                             usingDice: [6, 5, 4],
+                             chosenOptionalModifierIDs: [push.id])
+
+        XCTAssertEqual(vm.gameState.party[0].stress, 9)
+    }
 }

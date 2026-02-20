@@ -2,12 +2,6 @@ import Foundation
 
 class DungeonGenerator {
     private let content: ContentLoader
-    private let clockTemplates: [GameClock] = [
-        GameClock(name: "Shifting Walls", segments: 4, progress: 0),
-        GameClock(name: "Ancient Machinery Grinds", segments: 6, progress: 0),
-        GameClock(name: "Torchlight Fading", segments: 4, progress: 0),
-        GameClock(name: "Unearthly Wailing", segments: 6, progress: 0)
-    ]
 
     init(content: ContentLoader = .shared) {
         self.content = content
@@ -18,9 +12,7 @@ class DungeonGenerator {
         if let manifest = manifestToUse,
            let mapFile = manifest.mapFile,
            let predefined = content.loadMap(named: mapFile) {
-            let clockCount = Int.random(in: 1...2)
-            let clocks = Array(clockTemplates.shuffled().prefix(clockCount))
-            return (predefined, clocks)
+            return (predefined, content.clockTemplates)
         } else if let manifest = manifestToUse, manifest.mapFile != nil {
             print("Warning: Failed to load map file \(manifest.mapFile!) for scenario \(manifest.id)")
         }
@@ -113,9 +105,6 @@ class DungeonGenerator {
         let startingNodeID = nodeIDs.first!
         nodes[startingNodeID.uuidString]?.isDiscovered = true
 
-        let clockCount = Int.random(in: 1...2)
-        let clocks = Array(clockTemplates.shuffled().prefix(clockCount))
-
-        return (DungeonMap(nodes: nodes, startingNodeID: startingNodeID), clocks)
+        return (DungeonMap(nodes: nodes, startingNodeID: startingNodeID), content.clockTemplates)
     }
 }

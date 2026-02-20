@@ -33,6 +33,35 @@ struct ContentView: View {
         viewModel.gameState.party.first { $0.id == selectedCharacterID && !$0.isDefeated }
     }
 
+    private var gameOverTitle: String {
+        switch viewModel.gameState.runOutcome {
+        case .victory:
+            return "Victory"
+        case .escaped:
+            return "Run Ended"
+        default:
+            return "Game Over"
+        }
+    }
+
+    private var gameOverBody: String {
+        if let text = viewModel.gameState.runOutcomeText, !text.isEmpty {
+            return text
+        }
+        return "The tomb claims another party."
+    }
+
+    private var gameOverTitleColor: Color {
+        switch viewModel.gameState.runOutcome {
+        case .victory:
+            return .green
+        case .escaped:
+            return .yellow
+        default:
+            return .red
+        }
+    }
+
     private func performTransition(to connection: NodeConnection) {
         withAnimation(.linear(duration: 0.3)) {
             doorProgress = 1
@@ -185,14 +214,15 @@ struct ContentView: View {
             if viewModel.gameState.status == .gameOver {
                 Color.black.opacity(0.75).ignoresSafeArea()
                 VStack(spacing: 20) {
-                    Text("Game Over")
+                    Text(gameOverTitle)
                         .font(.largeTitle)
                         .bold()
-                        .foregroundColor(.red)
-                    Text("The tomb claims another party.")
+                        .foregroundColor(gameOverTitleColor)
+                    Text(gameOverBody)
                         .foregroundColor(.white)
+                        .multilineTextAlignment(.center)
                     Button("Try Again") {
-                        viewModel.startNewRun()
+                        viewModel.restartCurrentScenario()
                         selectedCharacterID = viewModel.gameState.party.first?.id
                     }
                     .buttonStyle(.borderedProminent)

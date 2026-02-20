@@ -3,6 +3,7 @@ import SwiftUI
 struct MainMenuView: View {
     @State private var showingScenarioSelect = false
     @State private var availableScenarios: [ScenarioManifest] = ContentLoader.availableScenarios()
+        .filter { !$0.id.hasPrefix("test_") }
     @State private var path = NavigationPath()
     @State private var continueVM: GameViewModel?
     @State private var continueActive = false

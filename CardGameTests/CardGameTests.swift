@@ -214,4 +214,60 @@ final class CardGameTests: XCTestCase {
         XCTAssertEqual(updated.lesser[0].description, "Twisted Ankle")
     }
 
+    func testRestartCurrentScenarioKeepsScenarioSelection() throws {
+        ContentLoader.shared = ContentLoader(scenario: "charons_bargain")
+        let vm = GameViewModel()
+        vm.startNewRun(scenario: "charons_bargain")
+        vm.restartCurrentScenario()
+
+        XCTAssertEqual(vm.gameState.scenarioName, "charons_bargain")
+        XCTAssertEqual(vm.gameState.dungeon?.startingNodeID.uuidString.lowercased(),
+                       "00000000-0000-0000-0000-000000000001")
+    }
+
+    func testTriggerEventSetsRunEndingState() throws {
+        let cases: [(eventID: String, outcome: RunOutcome)] = [
+            ("game_over_coward_ending", .escaped),
+            ("cb_reactor_meltdown", .defeat),
+            ("cb_vfe_deactivated", .victory)
+        ]
+
+        for testCase in cases {
+            ContentLoader.shared = ContentLoader(scenario: "charons_bargain")
+            let vm = GameViewModel()
+            let nodeID = UUID()
+            let node = MapNode(id: nodeID,
+                               name: "Room",
+                               soundProfile: "",
+                               interactables: [],
+                               connections: [])
+            vm.gameState.dungeon = DungeonMap(nodes: [nodeID.uuidString: node],
+                                              startingNodeID: nodeID)
+
+            let character = Character(id: UUID(),
+                                      name: "Trigger Tester",
+                                      characterClass: "Rogue",
+                                      stress: 0,
+                                      harm: HarmState(),
+                                      actions: ["Study": 1],
+                                      treasures: [],
+                                      modifiers: [])
+            vm.gameState.party = [character]
+            vm.gameState.characterLocations[character.id.uuidString] = nodeID
+
+            let action = ActionOption(name: "Trigger",
+                                      actionType: "Study",
+                                      position: .controlled,
+                                      effect: .standard,
+                                      requiresTest: false,
+                                      outcomes: [.success: [.triggerEvent(id: testCase.eventID)]])
+
+            _ = vm.performFreeAction(for: action, with: character, interactableID: nil)
+
+            XCTAssertEqual(vm.gameState.status, .gameOver)
+            XCTAssertEqual(vm.gameState.runOutcome, testCase.outcome)
+            XCTAssertNotNil(vm.gameState.runOutcomeText)
+        }
+    }
+
 }

@@ -41,6 +41,7 @@ class GameViewModel: ObservableObject {
 
     /// Enable verbose logging when processing consequences.
     static var debugConsequences = true
+    private static let basePushStressCost = 2
 
     /// Location of the save file within the app's Documents directory.
     private static var saveURL: URL {
@@ -318,12 +319,13 @@ class GameViewModel: ObservableObject {
         }
 
         // Push Yourself option
-        if character.stress <= 7 {
+        let pushCost = pushStressCost(for: character, interactableTags: tags)
+        if character.stress + pushCost <= 9 {
             let pushMod = Modifier(bonusDice: 1, uses: 1, isOptionalToApply: true, description: "Push Yourself")
             let pushInfo = SelectableModifierInfo(id: pushMod.id,
                                                  description: "Push Yourself",
                                                  detailedEffect: "+1d",
-                                                 remainingUses: "Costs 2 Stress",
+                                                 remainingUses: "Costs \(pushCost) Stress",
                                                  modifierData: pushMod)
             optionalInfos.append(pushInfo)
         }
@@ -403,15 +405,19 @@ class GameViewModel: ObservableObject {
         
         // Create a mutable copy of the chosen IDs to handle Push Yourself
         var mutableChosenIDs = chosenOptionalModifierIDs
-        
-        // Handle Push Yourself: find the ID that doesn't correspond to an existing modifier
+
+        // Handle Push Yourself: this ID is generated for UI display only, so
+        // we detect it as a chosen id that does not belong to a real modifier.
         if let pushIndex = mutableChosenIDs.firstIndex(where: { id in
             !gameState.party[charIndex].modifiers.contains(where: { $0.id == id })
         }) {
             mutableChosenIDs.remove(at: pushIndex)
-            appliedOptionalMods.append(Modifier(bonusDice: 1, uses: 1, isOptionalToApply: true, description: "Push Yourself"))
-            gameState.party[charIndex].stress += 2
-            _ = checkStressOverflow(for: charIndex)
+            let pushCost = pushStressCost(for: gameState.party[charIndex], interactableTags: tags)
+            if gameState.party[charIndex].stress + pushCost <= 9 {
+                appliedOptionalMods.append(Modifier(bonusDice: 1, uses: 1, isOptionalToApply: true, description: "Push Yourself"))
+                gameState.party[charIndex].stress += pushCost
+                _ = checkStressOverflow(for: charIndex)
+            }
         }
 
         // Consume any chosen modifiers with limited uses
@@ -796,9 +802,13 @@ class GameViewModel: ObservableObject {
                 }
             case .triggerEvent:
                 if let id = consequence.eventId {
-                    // Placeholder for event system
+                    let eventDescription = processTriggeredEvent(id)
                     if !narrativeUsed {
-                        descriptions.append("Event triggered: \(id)")
+                        if let eventDescription {
+                            descriptions.append(eventDescription)
+                        } else {
+                            descriptions.append("Event triggered: \(id)")
+                        }
                     }
                 }
             case .triggerConsequences:
@@ -857,6 +867,65 @@ class GameViewModel: ObservableObject {
             if !conditionMet { return false }
         }
         return true
+    }
+
+    private func pushStressCost(for character: Character, interactableTags tags: [String]) -> Int {
+        var additionalCost = 0
+
+        additionalCost += additionalStressCost(from: character.harm.lesser,
+                                               tier: \.lesser,
+                                               interactableTags: tags)
+        additionalCost += additionalStressCost(from: character.harm.moderate,
+                                               tier: \.moderate,
+                                               interactableTags: tags)
+        additionalCost += additionalStressCost(from: character.harm.severe,
+                                               tier: \.severe,
+                                               interactableTags: tags)
+
+        return max(0, Self.basePushStressCost + additionalCost)
+    }
+
+    private func additionalStressCost(
+        from harms: [(familyId: String, description: String)],
+        tier: KeyPath<HarmFamily, HarmTier>,
+        interactableTags tags: [String]
+    ) -> Int {
+        var total = 0
+
+        for harm in harms {
+            guard let family = HarmLibrary.families[harm.familyId] else { continue }
+            guard let penalty = family[keyPath: tier].penalty else { continue }
+            guard case .increaseStressCost(let amount, let requiredTag) = penalty else { continue }
+            if let requiredTag, !tags.contains(requiredTag) { continue }
+            total += amount
+        }
+
+        return total
+    }
+
+    private func processTriggeredEvent(_ eventID: String) -> String? {
+        switch eventID {
+        case "game_over_coward_ending":
+            gameState.status = .gameOver
+            gameState.runOutcome = .escaped
+            gameState.runOutcomeText = "You escape alive, leaving the mystery of the Styx Transporter unsolved."
+            return "You abandon the freighter and flee to safety."
+
+        case "cb_reactor_meltdown":
+            gameState.status = .gameOver
+            gameState.runOutcome = .defeat
+            gameState.runOutcomeText = "The reactor detonates before you can contain the crisis."
+            return "The reactor goes critical. The freighter is consumed in fire."
+
+        case "cb_vfe_deactivated":
+            gameState.status = .gameOver
+            gameState.runOutcome = .victory
+            gameState.runOutcomeText = "You shut the VFE down and survive Charon's Bargain."
+            return "The VFE powers down. The ship grows still."
+
+        default:
+            return nil
+        }
     }
 
     private func apply(penalty: Penalty, description: String, to actionType: String, tags: [String], diceCount: inout Int, position: inout RollPosition, effect: inout RollEffect, notes: inout [String]) {
@@ -958,7 +1027,8 @@ class GameViewModel: ObservableObject {
 
     func pushYourself(forCharacter character: Character) {
         if let charIndex = gameState.party.firstIndex(where: { $0.id == character.id }) {
-            gameState.party[charIndex].stress += 2
+            let pushCost = pushStressCost(for: gameState.party[charIndex], interactableTags: [])
+            gameState.party[charIndex].stress += pushCost
             _ = checkStressOverflow(for: charIndex)
         }
     }
@@ -1014,9 +1084,15 @@ class GameViewModel: ObservableObject {
         guard let idx = gameState.party.firstIndex(where: { $0.id == characterId }) else { return "" }
         var messages: [String] = []
 
-        let severe = gameState.party[idx].harm.severe
-        gameState.party[idx].harm.severe.removeAll()
-        for entry in severe {
+        let originalSevere = gameState.party[idx].harm.severe
+        let originalModerate = gameState.party[idx].harm.moderate
+        let originalLesser = gameState.party[idx].harm.lesser
+
+        gameState.party[idx].harm.severe = []
+        gameState.party[idx].harm.moderate = []
+        gameState.party[idx].harm.lesser = []
+
+        for entry in originalSevere {
             if let fam = HarmLibrary.families[entry.familyId] {
                 gameState.party[idx].harm.moderate.append((entry.familyId, fam.moderate.description))
                 messages.append("Severe harm '\(entry.description)' downgraded to Moderate.")
@@ -1026,9 +1102,7 @@ class GameViewModel: ObservableObject {
             }
         }
 
-        let moderate = gameState.party[idx].harm.moderate
-        gameState.party[idx].harm.moderate.removeAll()
-        for entry in moderate {
+        for entry in originalModerate {
             if let fam = HarmLibrary.families[entry.familyId] {
                 gameState.party[idx].harm.lesser.append((entry.familyId, fam.lesser.description))
                 messages.append("Moderate harm '\(entry.description)' downgraded to Lesser.")
@@ -1038,9 +1112,7 @@ class GameViewModel: ObservableObject {
             }
         }
 
-        let lesser = gameState.party[idx].harm.lesser
-        gameState.party[idx].harm.lesser.removeAll()
-        for entry in lesser {
+        for entry in originalLesser {
             messages.append("Lesser harm '\(entry.description)' healed.")
         }
 
@@ -1064,12 +1136,12 @@ class GameViewModel: ObservableObject {
         self.gameState = GameState(
             scenarioName: scenario,
             party: initialParty, // Use the generated party here
-            activeClocks: [
-                GameClock(name: "Test Clock", segments: 4, progress: 0)
-            ] + generatedClocks,
+            activeClocks: generatedClocks,
             dungeon: newDungeon,
             characterLocations: [:],
-            status: .playing
+            status: .playing,
+            runOutcome: nil,
+            runOutcomeText: nil
         )
 
         for id in gameState.party.map({ $0.id }) {
@@ -1081,6 +1153,10 @@ class GameViewModel: ObservableObject {
         }
 
         saveGame()
+    }
+
+    func restartCurrentScenario() {
+        startNewRun(scenario: gameState.scenarioName)
     }
 
     /// Check if any party member possesses a treasure with the given tag.
@@ -1141,4 +1217,3 @@ class GameViewModel: ObservableObject {
         }
     }
 }
-
