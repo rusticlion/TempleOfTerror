@@ -51,17 +51,6 @@ struct ContentView: View {
         return "The tomb claims another party."
     }
 
-    private var gameOverTitleColor: Color {
-        switch viewModel.gameState.runOutcome {
-        case .victory:
-            return .green
-        case .escaped:
-            return .yellow
-        default:
-            return .red
-        }
-    }
-
     private func performTransition(to connection: NodeConnection) {
         withAnimation(.linear(duration: 0.3)) {
             doorProgress = 1
@@ -80,16 +69,18 @@ struct ContentView: View {
 
     var body: some View {
         ZStack {
+            Theme.bg.ignoresSafeArea()
+
             VStack(spacing: 0) {
                 HeaderView(
                     title: viewModel.getNodeName(for: selectedCharacterID) ?? "Unknown Location"
                 )
+                Rectangle()
+                    .fill(Theme.leatherLight)
+                    .frame(height: 1)
 
                 ScrollView {
                     VStack(alignment: .leading, spacing: 16) {
-
-
-
                         if let node = viewModel.node(for: selectedCharacterID) {
                             VStack(alignment: .leading, spacing: 16) {
                                 let threats = node.interactables.filter { $0.isThreat }
@@ -124,6 +115,8 @@ struct ContentView: View {
                             .transition(.opacity)
                         } else {
                             Text("Loading dungeon...")
+                                .font(Theme.bodyFont(size: 16, italic: true))
+                                .foregroundColor(Theme.parchmentDark)
                         }
                     }
                     .padding()
@@ -138,16 +131,18 @@ struct ContentView: View {
                             .padding(.horizontal)
                     }
 
-                    VStack(spacing: 4) {
+                    VStack(spacing: 6) {
                         Button {
                             withAnimation {
                                 showingCharacterSheet.toggle()
                             }
                         } label: {
                             Image(systemName: showingCharacterSheet ? "chevron.down" : "chevron.up")
+                                .foregroundColor(Theme.parchmentDark)
                                 .padding(6)
-                                .background(.thinMaterial, in: Circle())
+                                .background(Theme.leatherLight.opacity(0.8), in: Circle())
                         }
+                        .buttonStyle(.plain)
 
                         CharacterSelectorView(characters: viewModel.gameState.party,
                                               selectedCharacterID: $selectedCharacterID,
@@ -155,15 +150,29 @@ struct ContentView: View {
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.horizontal)
+                    .padding(.top, 8)
+                    .padding(.bottom, 10)
+                    .background(Theme.leather)
+                    .overlay(alignment: .top) {
+                        Rectangle()
+                            .fill(Theme.leatherLight)
+                            .frame(height: 1)
+                    }
 
-                    HStack {
+                    HStack(spacing: 12) {
                         Button {
                             viewModel.toggleMovementMode()
                         } label: {
                             Text(viewModel.partyMovementMode == .grouped ? "Split Up" : "Stick Together")
+                                .font(Theme.systemFont(size: 14, weight: .semibold))
+                                .foregroundColor(Theme.parchmentDark)
+                                .padding(.horizontal, 14)
+                                .padding(.vertical, 8)
+                                .background(Theme.leatherLight.opacity(0.5))
+                                .clipShape(Capsule())
+                                .overlay(Capsule().stroke(Theme.inkFaded.opacity(0.3), lineWidth: 1))
                         }
-                        .padding()
-                        .background(.thinMaterial, in: Capsule())
+                        .buttonStyle(.plain)
                         .disabled(viewModel.partyMovementMode == .solo && !viewModel.canRegroup())
                         .opacity(viewModel.partyMovementMode == .solo && !viewModel.canRegroup() ? 0.6 : 1)
 
@@ -172,26 +181,45 @@ struct ContentView: View {
                         Button {
                             showingStatusSheet.toggle()
                         } label: {
-                            Image(systemName: "person.3.fill")
-                            Text("Status")
+                            HStack(spacing: 6) {
+                                Image(systemName: "person.3.fill")
+                                Text("Status")
+                            }
+                            .font(Theme.systemFont(size: 14, weight: .semibold))
+                            .foregroundColor(Theme.parchmentDark)
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 8)
+                            .background(Theme.leatherLight.opacity(0.5))
+                            .clipShape(Capsule())
+                            .overlay(Capsule().stroke(Theme.inkFaded.opacity(0.3), lineWidth: 1))
                         }
-                        .padding()
-                        .background(.thinMaterial, in: Capsule())
+                        .buttonStyle(.plain)
 
                         Spacer()
 
                         Button {
                             showingMap.toggle()
                         } label: {
-                            Image(systemName: "map")
-                            Text("Map")
+                            HStack(spacing: 6) {
+                                Image(systemName: "map")
+                                Text("Map")
+                            }
+                            .font(Theme.systemFont(size: 14, weight: .semibold))
+                            .foregroundColor(Theme.parchmentDark)
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 8)
+                            .background(Theme.leatherLight.opacity(0.5))
+                            .clipShape(Capsule())
+                            .overlay(Capsule().stroke(Theme.inkFaded.opacity(0.3), lineWidth: 1))
                         }
-                        .padding()
-                        .background(.thinMaterial, in: Capsule())
+                        .buttonStyle(.plain)
                     }
                     .padding(.horizontal)
+                    .padding(.bottom, 2)
                 }
-                .padding(.vertical)
+                .padding(.top, 6)
+                .padding(.bottom, 8)
+                .background(Theme.toolbarBackground)
                 .animation(.easeInOut, value: showingCharacterSheet)
             }
             .disabled(viewModel.gameState.status == .gameOver)
@@ -212,22 +240,33 @@ struct ContentView: View {
 
 
             if viewModel.gameState.status == .gameOver {
-                Color.black.opacity(0.75).ignoresSafeArea()
+                Theme.bg.opacity(0.85).ignoresSafeArea()
                 VStack(spacing: 20) {
                     Text(gameOverTitle)
-                        .font(.largeTitle)
-                        .bold()
-                        .foregroundColor(gameOverTitleColor)
+                        .font(Theme.displayFont(size: 36))
+                        .foregroundColor(Theme.danger)
                     Text(gameOverBody)
-                        .foregroundColor(.white)
+                        .font(Theme.bodyFont(size: 16, italic: true))
+                        .foregroundColor(Theme.parchmentDark)
                         .multilineTextAlignment(.center)
                     Button("Try Again") {
                         viewModel.restartCurrentScenario()
                         selectedCharacterID = viewModel.gameState.party.first?.id
                     }
-                    .buttonStyle(.borderedProminent)
-                    .controlSize(.large)
+                    .font(Theme.displayFont(size: 18, weight: .semibold))
+                    .foregroundColor(Theme.ink)
+                    .padding(.horizontal, 32)
+                    .padding(.vertical, 12)
+                    .background(
+                        LinearGradient(
+                            colors: [Theme.gold, Theme.goldDim],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                    )
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
                 }
+                .padding()
             }
         }
         .sheet(isPresented: $showingStatusSheet) {
@@ -247,6 +286,7 @@ struct ContentView: View {
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button(action: {}) {
                     Image(systemName: "gearshape")
+                        .foregroundColor(Theme.parchmentDark)
                 }
             }
         }

@@ -2,15 +2,14 @@ import SwiftUI
 
 struct HeaderView: View {
     let title: String
-    // Only display the current room title. The character selector has moved
-    // to the footer toolbar.
 
     var body: some View {
         Text(title)
-            .font(.largeTitle)
-            .bold()
+            .font(Theme.displayFont(size: 26))
+            .foregroundColor(Theme.parchment)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding([.horizontal, .bottom])
+            .padding(.horizontal)
+            .padding(.bottom, 8)
     }
 }
 

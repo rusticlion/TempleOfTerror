@@ -7,12 +7,14 @@ struct StatusSheetView: View {
         ScrollView {
             VStack(spacing: 20) {
                 ClocksView(viewModel: viewModel)
-                Divider()
+                Theme.InkDivider()
                 PartyStatusView(viewModel: viewModel)
                 Spacer()
             }
             .padding()
         }
+        .background(Theme.bgWarm)
+        .presentationBackground(Theme.bgWarm)
     }
 }
 

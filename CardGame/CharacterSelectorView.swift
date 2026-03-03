@@ -5,28 +5,50 @@ struct CharacterSelectorView: View {
     @Binding var selectedCharacterID: UUID?
     var movementMode: PartyMovementMode
 
+    private func isSelected(_ character: Character) -> Bool {
+        selectedCharacterID == character.id
+    }
+
+    @ViewBuilder
+    private func characterButton(_ character: Character) -> some View {
+        let selected = isSelected(character)
+        Button {
+            selectedCharacterID = character.id
+        } label: {
+            Text(character.name)
+                .font(Theme.displayFont(size: 14, weight: .semibold))
+                .foregroundColor(selected ? Theme.gold : Theme.parchmentDark)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
+                .background(
+                    Capsule()
+                        .fill(selected ? Theme.gold.opacity(0.15) : Color.clear)
+                )
+                .overlay(
+                    Capsule()
+                        .stroke(selected ? Theme.gold : Theme.inkFaded.opacity(0.3), lineWidth: selected ? 2 : 1)
+                )
+        }
+        .buttonStyle(.plain)
+        .disabled(character.isDefeated)
+        .opacity(character.isDefeated ? 0.4 : 1)
+    }
+
     var body: some View {
-        VStack {
+        Group {
             if movementMode == .grouped {
-                Picker("Select Character", selection: $selectedCharacterID) {
-                    ForEach(characters.filter { !$0.isDefeated }) { character in
-                        Text(character.name).tag(character.id as UUID?)
-                    }
-                }
-                .pickerStyle(.segmented)
-            } else {
-                HStack(spacing: 12) {
-                    ForEach(characters.filter { !$0.isDefeated }) { character in
-                        Button {
-                            selectedCharacterID = character.id
-                        } label: {
-                            Text(character.name)
-                                .padding(.vertical, 8)
-                                .padding(.horizontal, 12)
-                                .background(selectedCharacterID == character.id ? Color.accentColor.opacity(0.2) : Color.clear)
-                                .cornerRadius(8)
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 10) {
+                        ForEach(characters) { character in
+                            characterButton(character)
                         }
-                        .buttonStyle(.plain)
+                    }
+                    .padding(.horizontal, 2)
+                }
+            } else {
+                HStack(spacing: 10) {
+                    ForEach(characters) { character in
+                        characterButton(character)
                     }
                 }
             }

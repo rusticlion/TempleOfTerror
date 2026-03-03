@@ -6,7 +6,8 @@ struct PartyStatusView: View {
     var body: some View {
         VStack(alignment: .leading) {
             Text("Status")
-                .font(.headline)
+                .font(Theme.displayFont(size: 18))
+                .foregroundColor(Theme.parchment)
 
             ForEach(viewModel.gameState.party) { character in
                 let loc: String? = {

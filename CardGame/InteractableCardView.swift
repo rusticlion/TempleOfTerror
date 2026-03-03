@@ -86,58 +86,126 @@ struct InteractableCardView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text(interactable.title)
-                .font(.title2).bold()
+                .font(Theme.displayFont(size: 22))
+                .foregroundColor(Theme.ink)
             Text(interactable.description)
-                .font(.body)
+                .font(Theme.bodyFont(size: 15, italic: true))
+                .foregroundColor(Theme.inkLight)
+                .lineSpacing(3)
                 .fixedSize(horizontal: false, vertical: true)
             if !interactable.tags.isEmpty {
                 HStack(spacing: 4) {
                     ForEach(interactable.tags, id: \.self) { tag in
                         Text(tag)
-                            .font(.caption2)
-                            .padding(2)
-                            .background(Color(UIColor.systemGray5))
-                            .cornerRadius(4)
+                            .font(Theme.systemFont(size: 10, weight: .medium))
+                            .tracking(0.5)
+                            .textCase(.uppercase)
+                            .foregroundColor(Theme.inkLight)
+                            .padding(.horizontal, 7)
+                            .padding(.vertical, 2)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 3)
+                                    .stroke(Theme.parchmentDeep.opacity(0.5), lineWidth: 1)
+                            )
                     }
                 }
             }
-            Divider()
+            Theme.InkDivider()
             ForEach(interactable.availableActions, id: \.name) { action in
-                let displayName = action.requiresTest ? action.name : "\(action.name) (Auto)"
+                let displayName = action.name
                 let emoji = ActionEmoji.emoji(for: action.actionType)
-                Button("\(emoji) \(displayName)") {
+                Button {
                     onActionTapped(action)
+                } label: {
+                    HStack(spacing: 10) {
+                        Text(emoji)
+                            .font(.system(size: 18))
+                            .frame(width: 28)
+
+                        VStack(alignment: .leading, spacing: 1) {
+                            HStack(spacing: 6) {
+                                Text(displayName)
+                                    .font(Theme.bodyFontMedium(size: 14))
+                                    .foregroundColor(Theme.ink)
+                                if !action.requiresTest {
+                                    Text("AUTO")
+                                        .font(Theme.systemFont(size: 10, weight: .semibold))
+                                        .foregroundColor(Theme.inkFaded)
+                                }
+                            }
+                            Text(action.actionType)
+                                .font(Theme.systemFont(size: 11))
+                                .foregroundColor(Theme.inkLight)
+                        }
+
+                        Spacer()
+
+                        Circle()
+                            .fill(Theme.positionColor(action.position))
+                            .frame(width: 7, height: 7)
+                            .opacity(0.7)
+                    }
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 10)
+                    .background(Theme.parchmentDark.opacity(0.001))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 6)
+                            .stroke(Theme.parchmentDeep.opacity(0.35), lineWidth: 1)
+                    )
+                    .clipShape(RoundedRectangle(cornerRadius: 6))
                 }
-                .buttonStyle(.bordered)
-                .frame(maxWidth: .infinity)
+                .buttonStyle(.plain)
                 .disabled(actionDisabled(action))
+                .opacity(actionDisabled(action) ? 0.4 : 1)
                 .overlay(alignment: .topTrailing) {
                     if hasPenalty(for: action) {
-                        Image("icon_penalty_action")
-                            .resizable()
+                        Circle()
+                            .fill(Theme.danger)
                             .frame(width: 16, height: 16)
+                            .overlay(
+                                Text("!")
+                                    .font(Theme.systemFont(size: 10, weight: .bold))
+                                    .foregroundColor(.white)
+                            )
+                            .offset(x: 4, y: -4)
                     } else if hasBonus(for: action) {
-                        Image("icon_bonus_action")
-                            .resizable()
+                        Circle()
+                            .fill(Theme.success)
                             .frame(width: 16, height: 16)
+                            .overlay(
+                                Text("+")
+                                    .font(Theme.systemFont(size: 10, weight: .bold))
+                                    .foregroundColor(.white)
+                            )
+                            .offset(x: 4, y: -4)
                     }
                 }
             }
         }
         .padding()
-        .background(Color(UIColor.secondarySystemBackground))
-        .cornerRadius(12)
+        .background(Theme.cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 10))
         .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(interactable.isThreat ? Color.red : Color.clear, lineWidth: 3)
+            RoundedRectangle(cornerRadius: 10)
+                .stroke(
+                    interactable.isThreat ? Theme.danger.opacity(0.5) : Theme.parchmentDeep.opacity(0.55),
+                    lineWidth: interactable.isThreat ? 2 : 1
+                )
         )
-        .overlay(alignment: .topLeading) {
+        .overlay(alignment: .topTrailing) {
             if interactable.isThreat {
-                Image(systemName: "exclamationmark.triangle.fill")
-                    .foregroundColor(.red)
-                    .padding(4)
+                HStack(spacing: 4) {
+                    Text("⚠")
+                        .font(.system(size: 12))
+                    Text("THREAT")
+                        .font(Theme.systemFont(size: 10, weight: .semibold))
+                        .tracking(0.5)
+                }
+                .foregroundColor(Theme.danger)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
             }
         }
-        .shadow(radius: 4)
+        .shadow(color: .black.opacity(0.35), radius: 8, y: 3)
     }
 }
