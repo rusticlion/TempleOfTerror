@@ -2,5 +2,14 @@
   "id": "tomb",
   "title": "Forgotten Tomb",
   "description": "Explore the depths of an ancient tomb.",
-  "entryNode": "start"
+  "partySize": 3,
+  "nativeArchetypeIDs": [
+    "archaeologist",
+    "brawler",
+    "mystic",
+    "scout",
+    "scholar",
+    "thief"
+  ],
+  "stressOverflowHarmFamilyID": "mental_fraying"
 }

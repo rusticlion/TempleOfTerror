@@ -41,7 +41,11 @@ class GameViewModel: ObservableObject {
 
     /// Enable verbose logging when processing consequences.
     static var debugConsequences = true
-    private static let basePushStressCost = 2
+    private let rollRules = RollRulesEngine()
+
+    private func makeConsequenceExecutor() -> ConsequenceExecutor {
+        ConsequenceExecutor(debugLogging: Self.debugConsequences)
+    }
 
     /// Location of the save file within the app's Documents directory.
     private static var saveURL: URL {
@@ -70,9 +74,9 @@ class GameViewModel: ObservableObject {
     }
 
     /// Initialize and immediately start a new game with the given scenario.
-    init(startNewWithScenario scenario: String) {
+    init(startNewWithScenario scenario: String, partyPlan: PartyBuildPlan? = nil) {
         self.gameState = GameState()
-        startNewRun(scenario: scenario)
+        startNewRun(scenario: scenario, partyPlan: partyPlan)
     }
 
     /// Persist the current game state to disk.
@@ -105,257 +109,16 @@ class GameViewModel: ObservableObject {
 
     // --- Core Logic Functions for the Sprint ---
 
-    /// Calculates the projection before the roll.
     func calculateProjection(for action: ActionOption, with character: Character, interactableTags tags: [String] = []) -> RollProjectionDetails {
-        var diceCount = character.actions[action.actionType] ?? 0
-        var position = action.position
-        var effect = action.effect
-        let baseDice = diceCount
-        let basePosition = position
-        let baseEffect = effect
-        var notes: [String] = []
-
-        // Apply penalties from all active harm conditions
-        for harm in character.harm.lesser {
-            if let penalty = HarmLibrary.families[harm.familyId]?.lesser.penalty {
-                apply(penalty: penalty, description: harm.description, to: action.actionType, tags: tags, diceCount: &diceCount, position: &position, effect: &effect, notes: &notes)
-            }
-            if let boon = HarmLibrary.families[harm.familyId]?.lesser.boon {
-                apply(boon: boon, description: harm.description, to: action.actionType, tags: tags, diceCount: &diceCount, position: &position, effect: &effect, notes: &notes)
-            }
-        }
-        for harm in character.harm.moderate {
-            if let penalty = HarmLibrary.families[harm.familyId]?.moderate.penalty {
-                apply(penalty: penalty, description: harm.description, to: action.actionType, tags: tags, diceCount: &diceCount, position: &position, effect: &effect, notes: &notes)
-            }
-            if let boon = HarmLibrary.families[harm.familyId]?.moderate.boon {
-                apply(boon: boon, description: harm.description, to: action.actionType, tags: tags, diceCount: &diceCount, position: &position, effect: &effect, notes: &notes)
-            }
-        }
-        for harm in character.harm.severe {
-            if let penalty = HarmLibrary.families[harm.familyId]?.severe.penalty {
-                apply(penalty: penalty, description: harm.description, to: action.actionType, tags: tags, diceCount: &diceCount, position: &position, effect: &effect, notes: &notes)
-            }
-            if let boon = HarmLibrary.families[harm.familyId]?.severe.boon {
-                apply(boon: boon, description: harm.description, to: action.actionType, tags: tags, diceCount: &diceCount, position: &position, effect: &effect, notes: &notes)
-            }
-        }
-        // Apply bonuses from modifiers
-        for modifier in character.modifiers {
-            if modifier.uses == 0 { continue }
-            if let actions = modifier.applicableActions {
-                if !actions.contains(action.actionType) { continue }
-            } else if let specific = modifier.applicableToAction, specific != action.actionType {
-                continue
-            }
-            if let req = modifier.requiredTag, !tags.contains(req) { continue }
-
-            if modifier.bonusDice != 0 {
-                diceCount += modifier.bonusDice
-                var note = "(+\(modifier.bonusDice)d \(modifier.description)"
-                if modifier.uses > 0 {
-                    note += " (\(modifier.uses) use\(modifier.uses == 1 ? "" : "s") left)"
-                }
-                if modifier.uses == 1 { note += " - will be consumed" }
-                note += ")"
-                notes.append(note)
-            }
-
-            if modifier.improvePosition {
-                position = position.improved()
-                var note = "(Improved Position from \(modifier.description)"
-                if modifier.uses > 0 {
-                    note += " (\(modifier.uses) use\(modifier.uses == 1 ? "" : "s") left)"
-                }
-                if modifier.uses == 1 { note += " - will be consumed" }
-                note += ")"
-                notes.append(note)
-            }
-
-            if modifier.improveEffect {
-                effect = effect.increased()
-                var note = "(+1 Effect from \(modifier.description)"
-                if modifier.uses > 0 {
-                    note += " (\(modifier.uses) use\(modifier.uses == 1 ? "" : "s") left)"
-                }
-                if modifier.uses == 1 { note += " - will be consumed" }
-                note += ")"
-                notes.append(note)
-            }
-        }
-
-        if action.isGroupAction {
-            notes.append("Group Action: party rolls together; best result counts. Leader takes 1 Stress per failed ally.")
-        }
-
-        let rawDicePool = diceCount
-        diceCount = max(diceCount, 0) // Can't roll negative dice
-
-        if baseDice == 0 {
-            notes.append("\(character.name) has 0 rating in \(action.actionType): Rolling 2d6, taking lowest.")
-        }
-
-        let displayDice = (baseDice == 0) ? 2 : diceCount
-
-        return RollProjectionDetails(
-            baseDiceCount: baseDice,
-            finalDiceCount: displayDice,
-            rawDicePool: rawDicePool,
-            basePosition: basePosition,
-            finalPosition: position,
-            baseEffect: baseEffect,
-            finalEffect: effect,
-            notes: notes
-        )
+        rollRules.calculateProjection(for: action, with: character, interactableTags: tags)
     }
 
-    /// Retrieve the base roll projection along with selectable optional modifiers.
     func getRollContext(for action: ActionOption, with character: Character, interactableTags tags: [String] = []) -> (baseProjection: RollProjectionDetails, optionalModifiers: [SelectableModifierInfo]) {
-        var diceCount = character.actions[action.actionType] ?? 0
-        var position = action.position
-        var effect = action.effect
-        let baseDice = diceCount
-        let basePosition = position
-        let baseEffect = effect
-        var notes: [String] = []
-
-        // Non-optional harm penalties/boons
-        for harm in character.harm.lesser {
-            if let penalty = HarmLibrary.families[harm.familyId]?.lesser.penalty {
-                apply(penalty: penalty, description: harm.description, to: action.actionType, tags: tags, diceCount: &diceCount, position: &position, effect: &effect, notes: &notes)
-            }
-            if let boon = HarmLibrary.families[harm.familyId]?.lesser.boon {
-                apply(boon: boon, description: harm.description, to: action.actionType, tags: tags, diceCount: &diceCount, position: &position, effect: &effect, notes: &notes)
-            }
-        }
-        for harm in character.harm.moderate {
-            if let penalty = HarmLibrary.families[harm.familyId]?.moderate.penalty {
-                apply(penalty: penalty, description: harm.description, to: action.actionType, tags: tags, diceCount: &diceCount, position: &position, effect: &effect, notes: &notes)
-            }
-            if let boon = HarmLibrary.families[harm.familyId]?.moderate.boon {
-                apply(boon: boon, description: harm.description, to: action.actionType, tags: tags, diceCount: &diceCount, position: &position, effect: &effect, notes: &notes)
-            }
-        }
-        for harm in character.harm.severe {
-            if let penalty = HarmLibrary.families[harm.familyId]?.severe.penalty {
-                apply(penalty: penalty, description: harm.description, to: action.actionType, tags: tags, diceCount: &diceCount, position: &position, effect: &effect, notes: &notes)
-            }
-            if let boon = HarmLibrary.families[harm.familyId]?.severe.boon {
-                apply(boon: boon, description: harm.description, to: action.actionType, tags: tags, diceCount: &diceCount, position: &position, effect: &effect, notes: &notes)
-            }
-        }
-
-        // Always-on modifiers (include treasure modifiers just in case)
-        let treasureMods = character.treasures.map { $0.grantedModifier }
-        var modDict: [UUID: Modifier] = [:]
-        for m in (character.modifiers + treasureMods) { modDict[m.id] = m }
-        for modifier in modDict.values {
-            if modifier.uses == 0 { continue }
-            if modifier.isOptionalToApply { continue }
-            if let actions = modifier.applicableActions {
-                if !actions.contains(action.actionType) { continue }
-            } else if let specific = modifier.applicableToAction, specific != action.actionType {
-                continue
-            }
-            if let req = modifier.requiredTag, !tags.contains(req) { continue }
-
-            if modifier.bonusDice != 0 {
-                diceCount += modifier.bonusDice
-                notes.append("(+\(modifier.bonusDice)d \(modifier.description))")
-            }
-            if modifier.improvePosition {
-                position = position.improved()
-                notes.append("(Improved Position from \(modifier.description))")
-            }
-            if modifier.improveEffect {
-                effect = effect.increased()
-                notes.append("(+1 Effect from \(modifier.description))")
-            }
-        }
-
-        let rawDicePool = diceCount
-        diceCount = max(diceCount, 0)
-        if baseDice == 0 { notes.append("\(character.name) has 0 rating in \(action.actionType): Rolling 2d6, taking lowest.") }
-
-        let displayDice = (baseDice == 0) ? 2 : diceCount
-        let projection = RollProjectionDetails(
-            baseDiceCount: baseDice,
-            finalDiceCount: displayDice,
-            rawDicePool: rawDicePool,
-            basePosition: basePosition,
-            finalPosition: position,
-            baseEffect: baseEffect,
-            finalEffect: effect,
-            notes: notes
-        )
-
-        // Gather optional modifiers
-        var optionalInfos: [SelectableModifierInfo] = []
-        let treasureMods2 = character.treasures.map { $0.grantedModifier }
-        var modDict2: [UUID: Modifier] = [:]
-        for m in (character.modifiers + treasureMods2) { modDict2[m.id] = m }
-        for mod in modDict2.values {
-            if !mod.isOptionalToApply { continue }
-            if mod.uses == 0 { continue }
-            if let actions = mod.applicableActions {
-                if !actions.contains(action.actionType) { continue }
-            } else if let specific = mod.applicableToAction, specific != action.actionType {
-                continue
-            }
-            if let req = mod.requiredTag, !tags.contains(req) { continue }
-
-            var effectDesc: [String] = []
-            if mod.bonusDice != 0 { effectDesc.append("+\(mod.bonusDice)d") }
-            if mod.improvePosition { effectDesc.append("Improves Position") }
-            if mod.improveEffect { effectDesc.append("+1 Effect") }
-            let detail = effectDesc.joined(separator: ", ")
-            let usesString = mod.uses > 0 ? "\(mod.uses)" : "∞"
-            let info = SelectableModifierInfo(id: mod.id,
-                                              description: mod.description,
-                                              detailedEffect: detail,
-                                              remainingUses: usesString,
-                                              modifierData: mod)
-            optionalInfos.append(info)
-        }
-
-        // Push Yourself option
-        let pushCost = pushStressCost(for: character, interactableTags: tags)
-        if character.stress + pushCost <= 9 {
-            let pushMod = Modifier(bonusDice: 1, uses: 1, isOptionalToApply: true, description: "Push Yourself")
-            let pushInfo = SelectableModifierInfo(id: pushMod.id,
-                                                 description: "Push Yourself",
-                                                 detailedEffect: "+1d",
-                                                 remainingUses: "Costs \(pushCost) Stress",
-                                                 modifierData: pushMod)
-            optionalInfos.append(pushInfo)
-        }
-
-        return (projection, optionalInfos)
+        rollRules.getRollContext(for: action, with: character, interactableTags: tags)
     }
 
-    /// Apply chosen modifiers to a base projection and return the updated projection.
     func calculateEffectiveProjection(baseProjection: RollProjectionDetails, applying chosenModifierStructs: [Modifier]) -> RollProjectionDetails {
-        var result = baseProjection
-        for mod in chosenModifierStructs {
-            if mod.bonusDice != 0 {
-                result.rawDicePool += mod.bonusDice
-                result.notes.append("(+\(mod.bonusDice)d from \(mod.description))")
-            }
-            if mod.improvePosition {
-                result.finalPosition = result.finalPosition.improved()
-                result.notes.append("(Improved Position from \(mod.description))")
-            }
-            if mod.improveEffect {
-                result.finalEffect = result.finalEffect.increased()
-                result.notes.append("(+1 Effect from \(mod.description))")
-            }
-        }
-        if baseProjection.baseDiceCount == 0 {
-            result.finalDiceCount = result.rawDicePool > 0 ? result.rawDicePool : 2
-        } else {
-            result.finalDiceCount = max(result.rawDicePool, 0)
-        }
-        return result
+        rollRules.calculateEffectiveProjection(baseProjection: baseProjection, applying: chosenModifierStructs)
     }
 
     /// Executes a free action that does not require a roll, applying its success
@@ -402,17 +165,17 @@ class GameViewModel: ObservableObject {
 
         var appliedOptionalMods: [Modifier] = []
         var consumedMessages: [String] = []
-        
-        // Create a mutable copy of the chosen IDs to handle Push Yourself
-        var mutableChosenIDs = chosenOptionalModifierIDs
 
-        // Handle Push Yourself: this ID is generated for UI display only, so
-        // we detect it as a chosen id that does not belong to a real modifier.
-        if let pushIndex = mutableChosenIDs.firstIndex(where: { id in
-            !gameState.party[charIndex].modifiers.contains(where: { $0.id == id })
-        }) {
-            mutableChosenIDs.remove(at: pushIndex)
-            let pushCost = pushStressCost(for: gameState.party[charIndex], interactableTags: tags)
+        let pushModifierIDs = Set(
+            context.optionalModifiers
+                .filter { $0.description == "Push Yourself" }
+                .map(\.id)
+        )
+        let mutableChosenIDs = chosenOptionalModifierIDs.filter { !pushModifierIDs.contains($0) }
+        let contextModifiersByID = Dictionary(uniqueKeysWithValues: context.optionalModifiers.map { ($0.id, $0.modifierData) })
+
+        if chosenOptionalModifierIDs.contains(where: { pushModifierIDs.contains($0) }) {
+            let pushCost = rollRules.pushStressCost(for: gameState.party[charIndex], interactableTags: tags)
             if gameState.party[charIndex].stress + pushCost <= 9 {
                 appliedOptionalMods.append(Modifier(bonusDice: 1, uses: 1, isOptionalToApply: true, description: "Push Yourself"))
                 gameState.party[charIndex].stress += pushCost
@@ -440,7 +203,13 @@ class GameViewModel: ObservableObject {
             modsToKeep.append(mod)
         }
         gameState.party[charIndex].modifiers = modsToKeep
-        
+
+        for modifierID in mutableChosenIDs where !appliedOptionalMods.contains(where: { $0.id == modifierID }) {
+            if let contextModifier = contextModifiersByID[modifierID] {
+                appliedOptionalMods.append(contextModifier)
+            }
+        }
+
         // If a consumed modifier came from a treasure, remove the treasure
         gameState.party[charIndex].treasures.removeAll { treasure in
             consumedModIDs.contains(treasure.grantedModifier.id)
@@ -449,58 +218,12 @@ class GameViewModel: ObservableObject {
         workingProjection = calculateEffectiveProjection(baseProjection: workingProjection, applying: appliedOptionalMods)
         var finalEffect = workingProjection.finalEffect
         let finalPosition = workingProjection.finalPosition
-        let rawPool = workingProjection.rawDicePool
-        let useRatingZero = rawPool <= 0
-        let dicePool = useRatingZero ? 2 : rawPool
-        var actualDiceRolled: [Int] = []
-        var highestRoll: Int
-        var isCritical = false
-
-        if let provided = diceResults {
-            actualDiceRolled = provided
-            if useRatingZero {
-                if provided.count >= 2 {
-                    highestRoll = min(provided[0], provided[1])
-                    if provided[0] == 6 && provided[1] == 6 { isCritical = true }
-                } else {
-                    highestRoll = provided.min() ?? 0
-                }
-            } else {
-                highestRoll = provided.max() ?? 0
-                let sixes = provided.filter { $0 == 6 }.count
-                if sixes > 1 { isCritical = true }
-            }
-        } else {
-            if useRatingZero {
-                let d1 = Int.random(in: 1...6)
-                let d2 = Int.random(in: 1...6)
-                actualDiceRolled = [d1, d2]
-                highestRoll = min(d1, d2)
-                if d1 == 6 && d2 == 6 { isCritical = true }
-            } else {
-                for _ in 0..<dicePool {
-                    actualDiceRolled.append(Int.random(in: 1...6))
-                }
-                highestRoll = actualDiceRolled.max() ?? 0
-                let sixes = actualDiceRolled.filter { $0 == 6 }.count
-                if sixes > 1 { isCritical = true }
-            }
-        }
-
-        var consequencesToApply: [Consequence] = []
-        var outcomeString = ""
-
-        switch highestRoll {
-        case 6:
-            outcomeString = "Full Success!"
-            consequencesToApply = action.outcomes[.success] ?? []
-        case 4...5:
-            outcomeString = "Partial Success..."
-            consequencesToApply = action.outcomes[.partial] ?? []
-        default:
-            outcomeString = "Failure."
-            consequencesToApply = action.outcomes[.failure] ?? []
-        }
+        let resolvedRoll = rollRules.resolveRoll(using: diceResults, rawPool: workingProjection.rawDicePool)
+        let outcome = rollRules.outcome(for: resolvedRoll.highestRoll)
+        let highestRoll = resolvedRoll.highestRoll
+        let isCritical = resolvedRoll.isCritical
+        let actualDiceRolled = resolvedRoll.actualDiceRolled
+        let consequencesToApply = action.outcomes[outcome.outcome] ?? []
         var consequencesDescription = ""
 
         if isCritical && highestRoll >= 4 {
@@ -539,7 +262,7 @@ class GameViewModel: ObservableObject {
         saveGame()
 
         return DiceRollResult(highestRoll: highestRoll,
-                              outcome: outcomeString,
+                              outcome: outcome.label,
                               consequences: consequencesDescription,
                               actualDiceRolled: actualDiceRolled,
                               isCritical: isCritical,
@@ -567,20 +290,8 @@ class GameViewModel: ObservableObject {
             if highest <= 3 { failures += 1 }
         }
 
-        var consequences: [Consequence] = []
-        var outcomeString = ""
-
-        switch bestRoll {
-        case 6:
-            outcomeString = "Full Success!"
-            consequences = action.outcomes[.success] ?? []
-        case 4...5:
-            outcomeString = "Partial Success..."
-            consequences = action.outcomes[.partial] ?? []
-        default:
-            outcomeString = "Failure."
-            consequences = action.outcomes[.failure] ?? []
-        }
+        let outcome = rollRules.outcome(for: bestRoll)
+        let consequences = action.outcomes[outcome.outcome] ?? []
 
         let context = ConsequenceContext(character: leader,
                                          interactableID: interactableID,
@@ -603,7 +314,7 @@ class GameViewModel: ObservableObject {
 
         saveGame()
         return DiceRollResult(highestRoll: bestRoll,
-                              outcome: outcomeString,
+                              outcome: outcome.label,
                               consequences: description,
                               actualDiceRolled: nil,
                               isCritical: nil,
@@ -611,517 +322,42 @@ class GameViewModel: ObservableObject {
     }
 
     private func processConsequences(_ consequences: [Consequence], context: ConsequenceContext) -> String {
-        var descriptions: [String] = []
-        let character = context.character
-        let interactableID = context.interactableID
-        let partyMemberId = character.id
-        let currentEffect = context.finalEffect
-        let currentPosition = context.finalPosition
-        for consequence in consequences {
-            if Self.debugConsequences {
-                print("[Consequences] Evaluating \(consequence.kind) for \(character.name)")
-            }
-            if !areConditionsMet(conditions: consequence.conditions,
-                                 forCharacter: character,
-                                 finalEffect: currentEffect,
-                                 finalPosition: currentPosition) {
-                if Self.debugConsequences {
-                    print("[Consequences] Skipping \(consequence.kind) due to unmet conditions")
-                }
-                continue
-            }
-            // First check if we have a narrative description
-            var narrativeUsed = false
-            if let narrative = consequence.description {
-                descriptions.append(narrative)
-                narrativeUsed = true
-            }
-            
-            // Process the mechanical effect
-            switch consequence.kind {
-            case .gainStress:
-                if let amount = consequence.amount,
-                   let charIndex = gameState.party.firstIndex(where: { $0.id == character.id }) {
-                    gameState.party[charIndex].stress += amount
-                    descriptions.append("Gained \(amount) Stress.")
-                    if let overflow = checkStressOverflow(for: charIndex) {
-                        descriptions.append(overflow)
-                    }
-                }
-            case .sufferHarm:
-                if let level = consequence.level,
-                   let familyId = consequence.familyId {
-                    let harmDesc = applyHarm(familyId: familyId, level: level, toCharacter: character.id)
-                    if !narrativeUsed {
-                        descriptions.append(harmDesc)
-                    }
-                }
-            case .healHarm:
-                let healDesc = healHarm(forCharacter: character.id)
-                if !narrativeUsed {
-                    descriptions.append(healDesc)
-                }
-            case .tickClock:
-                if let clockName = consequence.clockName, let amount = consequence.amount {
-                    if let clockIndex = gameState.activeClocks.firstIndex(where: { $0.name == clockName }) {
-                        let clockId = gameState.activeClocks[clockIndex].id
-                        updateClock(id: clockId, ticks: amount, actingCharacter: context.character)
-                        if !narrativeUsed {
-                            descriptions.append("The '\(clockName)' clock progresses by \(amount).")
-                        }
-                    } else if let clockTemplate = ContentLoader.shared.clockTemplates.first(where: { $0.name == clockName }) {
-                        var newClock = clockTemplate
-                        newClock.progress = amount
-                        gameState.activeClocks.append(newClock)
-                        if !narrativeUsed {
-                            descriptions.append("A new situation develops: '\(clockName)' [\(newClock.progress)/\(newClock.segments)].")
-                        }
-                    } else {
-                        print("WARNING: Attempted to tick a clock named '\(clockName)' that does not exist in the scenario's clock registry.")
-                    }
-                }
-            case .unlockConnection:
-                if let fromNodeID = consequence.fromNodeID,
-                   let toNodeID = consequence.toNodeID,
-                   let connIndex = gameState.dungeon?.nodes[fromNodeID.uuidString]?.connections.firstIndex(where: { $0.toNodeID == toNodeID }) {
-                    gameState.dungeon?.nodes[fromNodeID.uuidString]?.connections[connIndex].isUnlocked = true
-                    if !narrativeUsed {
-                        descriptions.append("A path has opened!")
-                    }
-                }
-            case .removeInteractable:
-                if let id = consequence.interactableId,
-                   let nodeID = gameState.characterLocations[partyMemberId.uuidString],
-                   var node = gameState.dungeon?.nodes[nodeID.uuidString] {
-                    let before = node.interactables.count
-                    node.interactables.removeAll(where: { $0.id == id })
-                    gameState.dungeon?.nodes[nodeID.uuidString] = node
-                    if Self.debugConsequences {
-                        let removed = before - node.interactables.count
-                        print("[Consequences] removeInteractable: removed \(removed) with id \(id)")
-                    }
-                    if !narrativeUsed {
-                        descriptions.append("The way is clear.")
-                    }
-                }
-            case .removeSelfInteractable:
-                if let nodeID = gameState.characterLocations[partyMemberId.uuidString],
-                   let interactableStrID = interactableID,
-                   var node = gameState.dungeon?.nodes[nodeID.uuidString] {
-                    node.interactables.removeAll(where: { $0.id == interactableStrID })
-                    gameState.dungeon?.nodes[nodeID.uuidString] = node
-                    if Self.debugConsequences {
-                        print("[Consequences] removeSelfInteractable id \(interactableStrID)")
-                    }
-                    if !narrativeUsed {
-                        descriptions.append("The way is clear.")
-                    }
-                }
-            case .removeAction:
-                if let nodeID = gameState.characterLocations[partyMemberId.uuidString],
-                   let actionName = consequence.actionName {
-                    let targetId = consequence.interactableId ?? interactableID
-                    if let tid = targetId,
-                       let idx = gameState.dungeon?.nodes[nodeID.uuidString]?.interactables.firstIndex(where: { $0.id == tid }) {
-                        gameState.dungeon?.nodes[nodeID.uuidString]?.interactables[idx].availableActions.removeAll(where: { $0.name == actionName })
-                        if !narrativeUsed {
-                            descriptions.append("'\(actionName)' can no longer be taken.")
-                        }
-                    }
-                }
-            case .addAction:
-                if let nodeID = gameState.characterLocations[partyMemberId.uuidString],
-                   let action = consequence.newAction {
-                    let targetId = consequence.interactableId ?? interactableID
-                    if let tid = targetId,
-                       let idx = gameState.dungeon?.nodes[nodeID.uuidString]?.interactables.firstIndex(where: { $0.id == tid }) {
-                        gameState.dungeon?.nodes[nodeID.uuidString]?.interactables[idx].availableActions.append(action)
-                        if !narrativeUsed {
-                            descriptions.append("'\(action.name)' is now available.")
-                        }
-                    }
-                }
-            case .addInteractable:
-                if let inNodeID = consequence.inNodeID, let interactable = consequence.newInteractable {
-                    gameState.dungeon?.nodes[inNodeID.uuidString]?.interactables.append(interactable)
-                    if !narrativeUsed {
-                        descriptions.append("Something new appears.")
-                    }
-                }
-            case .addInteractableHere:
-                if let interactable = consequence.newInteractable,
-                   let nodeID = gameState.characterLocations[partyMemberId.uuidString] {
-                    gameState.dungeon?.nodes[nodeID.uuidString]?.interactables.append(interactable)
-                    if !narrativeUsed {
-                        descriptions.append("Something new appears.")
-                    }
-                }
-            case .gainTreasure:
-                print("Processing gainTreasure consequence.")
-                if let treasureId = consequence.treasureId {
-                    print("Looking for treasure with ID: \(treasureId)")
-                    if let treasure = ContentLoader.shared.treasureTemplates.first(where: { $0.id == treasureId }) {
-                        print("Treasure found: \(treasure.name)")
-                        if let charIndex = gameState.party.firstIndex(where: { $0.id == character.id }) {
-                            print("Character index found: \(charIndex)")
-                            gameState.party[charIndex].treasures.append(treasure)
-                            print("Treasure count after append: \(gameState.party[charIndex].treasures.count)")
-                            gameState.party[charIndex].modifiers.append(treasure.grantedModifier)
-                            print("Modifier count after append: \(gameState.party[charIndex].modifiers.count)")
-                            if !narrativeUsed {
-                                descriptions.append("Gained Treasure: \(treasure.name)!")
-                            }
-                        } else {
-                            print("Character not found for gainTreasure consequence.")
-                        }
-                    } else {
-                        print("Treasure with ID \(treasureId) not found in ContentLoader.shared.treasureTemplates.")
-                    }
-                } else {
-                    print("No treasureId provided for gainTreasure consequence.")
-                }
-            case .modifyDice:
-                if let amount = consequence.amount,
-                   let charIndex = gameState.party.firstIndex(where: { $0.id == character.id }) {
-                    let duration = consequence.duration ?? "next roll"
-                    let uses = duration == "next roll" ? 1 : 99
-                    let modifier = Modifier(bonusDice: amount,
-                                           uses: uses,
-                                           description: "Bonus from consequence")
-                    gameState.party[charIndex].modifiers.append(modifier)
-                    if !narrativeUsed {
-                        descriptions.append("Gain +\(amount)d for \(duration).")
-                    }
-                }
-            case .createChoice:
-                // Choice handling not yet implemented; process first option if available
-                if let option = consequence.choiceOptions?.first {
-                    descriptions.append("Auto-selecting: \(option.title)")
-                    let sub = processConsequences(option.consequences, context: context)
-                    if !sub.isEmpty { descriptions.append(sub) }
-                }
-            case .triggerEvent:
-                if let id = consequence.eventId {
-                    let eventDescription = processTriggeredEvent(id)
-                    if !narrativeUsed {
-                        if let eventDescription {
-                            descriptions.append(eventDescription)
-                        } else {
-                            descriptions.append("Event triggered: \(id)")
-                        }
-                    }
-                }
-            case .triggerConsequences:
-                if let extra = consequence.triggered {
-                    let subDesc = processConsequences(extra, context: context)
-                    if !subDesc.isEmpty { descriptions.append(subDesc) }
-                }
-            }
-        }
-        return descriptions.joined(separator: "\n")
+        let executor = makeConsequenceExecutor()
+        return executor.process(consequences, context: context, gameState: &gameState)
     }
 
-    /// Check if a list of conditions are satisfied for the given character and roll results.
     private func areConditionsMet(
         conditions: [GameCondition]?,
         forCharacter character: Character,
         finalEffect: RollEffect,
         finalPosition: RollPosition
     ) -> Bool {
-        guard let conditions = conditions, !conditions.isEmpty else { return true }
-
-        for condition in conditions {
-            var conditionMet = false
-            switch condition.type {
-            case .requiresMinEffectLevel:
-                if let req = condition.effectParam {
-                    conditionMet = finalEffect.isBetterThanOrEqualTo(req)
-                }
-            case .requiresExactEffectLevel:
-                conditionMet = (condition.effectParam == finalEffect)
-            case .requiresMinPositionLevel:
-                if let req = condition.positionParam {
-                    conditionMet = finalPosition.isWorseThanOrEqualTo(req)
-                }
-            case .requiresExactPositionLevel:
-                conditionMet = (condition.positionParam == finalPosition)
-            case .characterHasTreasureId:
-                if let tId = condition.stringParam {
-                    conditionMet = character.treasures.contains(where: { $0.id == tId })
-                }
-            case .partyHasTreasureWithTag:
-                if let tag = condition.stringParam {
-                    conditionMet = self.partyHasTreasureTag(tag)
-                }
-            case .clockProgress:
-                if let name = condition.stringParam,
-                   let min = condition.intParam,
-                   let clock = gameState.activeClocks.first(where: { $0.name == name }) {
-                    var metMin = clock.progress >= min
-                    if let max = condition.intParamMax {
-                        metMin = metMin && clock.progress <= max
-                    }
-                    conditionMet = metMin
-                }
-            }
-            if !conditionMet { return false }
-        }
-        return true
-    }
-
-    private func pushStressCost(for character: Character, interactableTags tags: [String]) -> Int {
-        var additionalCost = 0
-
-        additionalCost += additionalStressCost(from: character.harm.lesser,
-                                               tier: \.lesser,
-                                               interactableTags: tags)
-        additionalCost += additionalStressCost(from: character.harm.moderate,
-                                               tier: \.moderate,
-                                               interactableTags: tags)
-        additionalCost += additionalStressCost(from: character.harm.severe,
-                                               tier: \.severe,
-                                               interactableTags: tags)
-
-        return max(0, Self.basePushStressCost + additionalCost)
-    }
-
-    private func additionalStressCost(
-        from harms: [(familyId: String, description: String)],
-        tier: KeyPath<HarmFamily, HarmTier>,
-        interactableTags tags: [String]
-    ) -> Int {
-        var total = 0
-
-        for harm in harms {
-            guard let family = HarmLibrary.families[harm.familyId] else { continue }
-            guard let penalty = family[keyPath: tier].penalty else { continue }
-            guard case .increaseStressCost(let amount, let requiredTag) = penalty else { continue }
-            if let requiredTag, !tags.contains(requiredTag) { continue }
-            total += amount
-        }
-
-        return total
-    }
-
-    private func processTriggeredEvent(_ eventID: String) -> String? {
-        switch eventID {
-        case "game_over_coward_ending":
-            gameState.status = .gameOver
-            gameState.runOutcome = .escaped
-            gameState.runOutcomeText = "You escape alive, leaving the mystery of the Styx Transporter unsolved."
-            return "You abandon the freighter and flee to safety."
-
-        case "cb_reactor_meltdown":
-            gameState.status = .gameOver
-            gameState.runOutcome = .defeat
-            gameState.runOutcomeText = "The reactor detonates before you can contain the crisis."
-            return "The reactor goes critical. The freighter is consumed in fire."
-
-        case "cb_vfe_deactivated":
-            gameState.status = .gameOver
-            gameState.runOutcome = .victory
-            gameState.runOutcomeText = "You shut the VFE down and survive Charon's Bargain."
-            return "The VFE powers down. The ship grows still."
-
-        default:
-            return nil
-        }
-    }
-
-    private func apply(penalty: Penalty, description: String, to actionType: String, tags: [String], diceCount: inout Int, position: inout RollPosition, effect: inout RollEffect, notes: inout [String]) {
-        switch penalty {
-        case .reduceEffect(let tag):
-            if let tag = tag, !tags.contains(tag) { break }
-            effect = effect.decreased()
-            notes.append("(-1 Effect from \(description))")
-        case .actionPenalty(let action, let tag) where action == actionType:
-            if let tag = tag, !tags.contains(tag) { break }
-            diceCount -= 1
-            notes.append("(-1d from \(description))")
-        case .banAction(let action, let tag) where action == actionType:
-            if let tag = tag, !tags.contains(tag) { break }
-            diceCount = 0
-            notes.append("(Cannot perform due to \(description))")
-        case .actionPositionPenalty(let action, let tag) where action == actionType:
-            if let tag = tag, !tags.contains(tag) { break }
-            position = position.decreased()
-            notes.append("(-Position from \(description))")
-        case .actionEffectPenalty(let action, let tag) where action == actionType:
-            if let tag = tag, !tags.contains(tag) { break }
-            effect = effect.decreased()
-            notes.append("(-Effect from \(description))")
-        default:
-            break
-        }
-    }
-
-    private func apply(boon: Modifier, description: String, to actionType: String, tags: [String], diceCount: inout Int, position: inout RollPosition, effect: inout RollEffect, notes: inout [String]) {
-        if let actions = boon.applicableActions {
-            if !actions.contains(actionType) { return }
-        } else if let specific = boon.applicableToAction, specific != actionType {
-            return
-        }
-        if let required = boon.requiredTag, !tags.contains(required) { return }
-
-        if boon.bonusDice != 0 {
-            diceCount += boon.bonusDice
-            notes.append("(+\(boon.bonusDice)d from \(description))")
-        }
-
-        if boon.improvePosition {
-            position = position.improved()
-            notes.append("(Improved Position from \(description))")
-        }
-
-        if boon.improveEffect {
-            effect = effect.increased()
-            notes.append("(+1 Effect from \(description))")
-        }
-    }
-
-    private func updateClock(id: UUID, ticks: Int, actingCharacter: Character? = nil) {
-        guard let index = gameState.activeClocks.firstIndex(where: { $0.id == id }) else { return }
-
-        var clock = gameState.activeClocks[index]
-        clock.progress = min(clock.segments, clock.progress + ticks)
-
-        if let tickCons = clock.onTickConsequences {
-            if let char = actingCharacter ?? gameState.party.first {
-                let context = ConsequenceContext(character: char,
-                                                 interactableID: nil,
-                                                 finalEffect: .standard,
-                                                 finalPosition: .controlled,
-                                                 isCritical: false)
-                _ = processConsequences(tickCons, context: context)
-            }
-        }
-
-        if clock.progress >= clock.segments {
-            if let completeCons = clock.onCompleteConsequences,
-               let char = actingCharacter ?? gameState.party.first {
-                let context = ConsequenceContext(character: char,
-                                                 interactableID: nil,
-                                                 finalEffect: .standard,
-                                                 finalPosition: .controlled,
-                                                 isCritical: false)
-                _ = processConsequences(completeCons, context: context)
-            }
-        }
-
-        gameState.activeClocks[index] = clock
+        let executor = makeConsequenceExecutor()
+        return executor.areConditionsMet(
+            conditions: conditions,
+            forCharacter: character,
+            finalEffect: finalEffect,
+            finalPosition: finalPosition,
+            gameState: gameState
+        )
     }
 
     private func checkStressOverflow(for index: Int) -> String? {
-        if gameState.party[index].stress > 9 {
-            return handleStressOverflow(for: index)
-        }
-        return nil
-    }
-
-    private func handleStressOverflow(for index: Int) -> String {
-        let charId = gameState.party[index].id
-        gameState.party[index].stress = 0
-        let harmDesc = applyHarm(familyId: "mental_fraying", level: .lesser, toCharacter: charId)
-        return "Stress Overload!\n" + harmDesc
+        let executor = makeConsequenceExecutor()
+        return executor.checkStressOverflow(for: index, gameState: &gameState)
     }
 
     func pushYourself(forCharacter character: Character) {
         if let charIndex = gameState.party.firstIndex(where: { $0.id == character.id }) {
-            let pushCost = pushStressCost(for: gameState.party[charIndex], interactableTags: [])
+            let pushCost = rollRules.pushStressCost(for: gameState.party[charIndex], interactableTags: [])
             gameState.party[charIndex].stress += pushCost
             _ = checkStressOverflow(for: charIndex)
         }
     }
 
-    private func applyHarm(familyId: String, level: HarmLevel, toCharacter characterId: UUID) -> String {
-        guard let charIndex = gameState.party.firstIndex(where: { $0.id == characterId }) else { return "" }
-        guard let harmFamily = HarmLibrary.families[familyId] else { return "" }
-
-        var currentLevel = level
-
-        while true {
-            switch currentLevel {
-            case .lesser:
-                if gameState.party[charIndex].harm.lesser.count < HarmState.lesserSlots {
-                    let harm = harmFamily.lesser
-                    gameState.party[charIndex].harm.lesser.append((familyId, harm.description))
-                    return "Suffered Lesser Harm: \(harm.description)."
-                } else {
-                    currentLevel = .moderate
-                }
-            case .moderate:
-                if gameState.party[charIndex].harm.moderate.count < HarmState.moderateSlots {
-                    let harm = harmFamily.moderate
-                    gameState.party[charIndex].harm.moderate.append((familyId, harm.description))
-                    return "Suffered Moderate Harm: \(harm.description)."
-                } else {
-                    currentLevel = .severe
-                }
-            case .severe:
-                if gameState.party[charIndex].harm.severe.count < HarmState.severeSlots {
-                    let harm = harmFamily.severe
-                    gameState.party[charIndex].harm.severe.append((familyId, harm.description))
-                    return "Suffered SEVERE Harm: \(harm.description)."
-                } else {
-                    // Character suffers Fatal Harm and is removed from play
-                    gameState.party[charIndex].isDefeated = true
-                    gameState.characterLocations.removeValue(forKey: characterId.uuidString)
-                    let fatalDescription = harmFamily.fatal.description
-
-                    // If no active characters remain, end the run
-                    if gameState.party.allSatisfy({ $0.isDefeated }) {
-                        gameState.status = .gameOver
-                    }
-
-                    saveGame()
-                    return "Suffered FATAL Harm: \(fatalDescription)."
-                }
-            }
-        }
-    }
-
-    private func healHarm(forCharacter characterId: UUID) -> String {
-        guard let idx = gameState.party.firstIndex(where: { $0.id == characterId }) else { return "" }
-        var messages: [String] = []
-
-        let originalSevere = gameState.party[idx].harm.severe
-        let originalModerate = gameState.party[idx].harm.moderate
-        let originalLesser = gameState.party[idx].harm.lesser
-
-        gameState.party[idx].harm.severe = []
-        gameState.party[idx].harm.moderate = []
-        gameState.party[idx].harm.lesser = []
-
-        for entry in originalSevere {
-            if let fam = HarmLibrary.families[entry.familyId] {
-                gameState.party[idx].harm.moderate.append((entry.familyId, fam.moderate.description))
-                messages.append("Severe harm '\(entry.description)' downgraded to Moderate.")
-            } else {
-                gameState.party[idx].harm.moderate.append(entry)
-                messages.append("Severe harm '\(entry.description)' downgraded to Moderate.")
-            }
-        }
-
-        for entry in originalModerate {
-            if let fam = HarmLibrary.families[entry.familyId] {
-                gameState.party[idx].harm.lesser.append((entry.familyId, fam.lesser.description))
-                messages.append("Moderate harm '\(entry.description)' downgraded to Lesser.")
-            } else {
-                gameState.party[idx].harm.lesser.append(entry)
-                messages.append("Moderate harm '\(entry.description)' downgraded to Lesser.")
-            }
-        }
-
-        for entry in originalLesser {
-            messages.append("Lesser harm '\(entry.description)' healed.")
-        }
-
-        return messages.joined(separator: "\n")
-    }
-
     /// Starts a brand new run, resetting the game state. The scenario id
     /// corresponds to a folder within `Content/Scenarios`.
-    func startNewRun(scenario: String = "tomb") {
+    func startNewRun(scenario: String = "tomb", partyPlan: PartyBuildPlan? = nil) {
         // Recreate the shared content loader so subsequent lookups use the
         // selected scenario.
         ContentLoader.shared = ContentLoader(scenario: scenario)
@@ -1129,19 +365,33 @@ class GameViewModel: ObservableObject {
         let manifest = ContentLoader.shared.scenarioManifest
         let (newDungeon, generatedClocks) = generator.generate(level: 1, manifest: manifest)
 
-        // Use the new PartyGenerationService
-        let partyService = PartyGenerationService()
-        let initialParty = partyService.generateRandomParty()
+        let partyBuilder = PartyBuilderService(content: ContentLoader.shared)
+        let resolvedPartyPlan = partyPlan ?? partyBuilder.defaultPlan(for: manifest)
+        let initialParty = partyBuilder.buildParty(using: resolvedPartyPlan)
+        let persistedPartyPlan: PartyBuildPlan
+        switch resolvedPartyPlan.mode {
+        case .manualSelection:
+            persistedPartyPlan = PartyBuildPlan(
+                partySize: resolvedPartyPlan.partySize,
+                nativeArchetypeIDs: resolvedPartyPlan.nativeArchetypeIDs,
+                selectedArchetypeIDs: initialParty.compactMap(\.archetypeID),
+                mode: resolvedPartyPlan.mode
+            )
+        default:
+            persistedPartyPlan = resolvedPartyPlan
+        }
 
         self.gameState = GameState(
             scenarioName: scenario,
             party: initialParty, // Use the generated party here
             activeClocks: generatedClocks,
             dungeon: newDungeon,
+            currentNodeID: newDungeon.startingNodeID,
             characterLocations: [:],
             status: .playing,
             runOutcome: nil,
-            runOutcomeText: nil
+            runOutcomeText: nil,
+            launchPartyPlan: persistedPartyPlan
         )
 
         for id in gameState.party.map({ $0.id }) {
@@ -1156,7 +406,7 @@ class GameViewModel: ObservableObject {
     }
 
     func restartCurrentScenario() {
-        startNewRun(scenario: gameState.scenarioName)
+        startNewRun(scenario: gameState.scenarioName, partyPlan: gameState.launchPartyPlan)
     }
 
     /// Check if any party member possesses a treasure with the given tag.

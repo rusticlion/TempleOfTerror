@@ -41,6 +41,9 @@
 		46A9D2342DE8001F00FE459E /* AudioManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46A9D2332DE8001F00FE459E /* AudioManager.swift */; };
 		46D0A0012DF9EE0000FF1111 /* SceneKitDiceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46D0A0022DF9EE0000FF1111 /* SceneKitDiceView.swift */; };
 		46D0A0032DF9EE0000FF1111 /* DieNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46D0A0042DF9EE0000FF1111 /* DieNode.swift */; };
+		46F1B1032E5A0F2200C0FFEE /* ConsequenceExecutor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46F1B1022E5A0F2200C0FFEE /* ConsequenceExecutor.swift */; };
+		46F1B1012E5A0A1100C0FFEE /* RollRulesEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46F1B1002E5A0A1100C0FFEE /* RollRulesEngine.swift */; };
+		46F1B1052E5A111100C0FFEE /* ScenarioValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46F1B1042E5A111100C0FFEE /* ScenarioValidator.swift */; };
 		47F900A12E1A000100BEEF00 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47F900B12E1A000100BEEF00 /* Theme.swift */; };
 		47F900A22E1A000100BEEF00 /* Fonts in Resources */ = {isa = PBXBuildFile; fileRef = 47F900B22E1A000100BEEF00 /* Fonts */; };
 		47F900A32E1A000100BEEF00 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 47F900B32E1A000100BEEF00 /* LaunchScreen.storyboard */; };
@@ -110,6 +113,9 @@
 		46A9D2332DE8001F00FE459E /* AudioManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AudioManager.swift; sourceTree = "<group>"; };
 		46D0A0022DF9EE0000FF1111 /* SceneKitDiceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneKitDiceView.swift; sourceTree = "<group>"; };
 		46D0A0042DF9EE0000FF1111 /* DieNode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DieNode.swift; sourceTree = "<group>"; };
+		46F1B1022E5A0F2200C0FFEE /* ConsequenceExecutor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConsequenceExecutor.swift; sourceTree = "<group>"; };
+		46F1B1002E5A0A1100C0FFEE /* RollRulesEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RollRulesEngine.swift; sourceTree = "<group>"; };
+		46F1B1042E5A111100C0FFEE /* ScenarioValidator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScenarioValidator.swift; sourceTree = "<group>"; };
 		47F900B12E1A000100BEEF00 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 		47F900B22E1A000100BEEF00 /* Fonts */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Fonts; sourceTree = "<group>"; };
 		47F900B32E1A000100BEEF00 /* LaunchScreen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
@@ -177,6 +183,8 @@
 				47F900B22E1A000100BEEF00 /* Fonts */,
 				47F900B12E1A000100BEEF00 /* Theme.swift */,
 				46A9D2332DE8001F00FE459E /* AudioManager.swift */,
+				46F1B1022E5A0F2200C0FFEE /* ConsequenceExecutor.swift */,
+				46F1B1042E5A111100C0FFEE /* ScenarioValidator.swift */,
 				46A9D2312DE7FAF100FE459E /* DungeonGenerator.swift */,
 				46A9D22C2DE7F81F00FE459E /* ContentLoader.swift */,
 				46A9D22A2DE7D2E500FE459E /* StatusSheetView.swift */,
@@ -194,6 +202,7 @@
 				460D62862DE7AA3900D50D0C /* ClocksView.swift */,
 				460D62872DE7AA3900D50D0C /* ContentView.swift */,
 				460D627F2DE7AA3900D50D0C /* GameViewModel.swift */,
+				46F1B1002E5A0A1100C0FFEE /* RollRulesEngine.swift */,
 				460D62802DE7AA3900D50D0C /* Info.plist */,
 				460D628B2DE7AA3900D50D0C /* Models.swift */,
 				460D62882DE7AA3900D50D0C /* PartyStatusView.swift */,
@@ -408,6 +417,9 @@
 				46D0A0032DF9EE0000FF1111 /* DieNode.swift in Sources */,
 				460D62912DE7AA3900D50D0C /* PartyStatusView.swift in Sources */,
 				460D628C2DE7AA3900D50D0C /* GameViewModel.swift in Sources */,
+				46F1B1032E5A0F2200C0FFEE /* ConsequenceExecutor.swift in Sources */,
+				46F1B1052E5A111100C0FFEE /* ScenarioValidator.swift in Sources */,
+				46F1B1012E5A0A1100C0FFEE /* RollRulesEngine.swift in Sources */,
 				464B59CD2DEA1A850002EA59 /* CharacterSheetView.swift in Sources */,
 				46549A122DF0B58900D17D66 /* PartyGenerationService.swift in Sources */,
 				46A9D2342DE8001F00FE459E /* AudioManager.swift in Sources */,

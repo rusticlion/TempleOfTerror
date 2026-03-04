@@ -8,6 +8,9 @@ struct ScenarioManifest: Codable, Identifiable, Hashable {
     var entryNode: String?
     /// Name of a JSON file defining a fixed map for this scenario.
     var mapFile: String?
+    var partySize: Int?
+    var nativeArchetypeIDs: [String]?
+    var stressOverflowHarmFamilyID: String?
 }
 
 extension DecodingError {
@@ -51,31 +54,48 @@ class ContentLoader {
     let harmFamilyDict: [String: HarmFamily]
     let treasureTemplates: [Treasure]
     let clockTemplates: [GameClock]
+    let archetypeTemplates: [ArchetypeDefinition]
+    let archetypeDict: [String: ArchetypeDefinition]
+    let eventTemplates: [ScenarioEvent]
+    let eventDict: [String: ScenarioEvent]
 
     /// Initialize a loader for a specific scenario directory.
     init(scenario: String = "tomb") {
         self.scenarioName = scenario
         self.scenarioManifest = Self.loadManifest(for: scenario)
         self.interactableTemplates = Self.load("interactables.json", for: scenario)
-        self.harmFamilies = Self.load("harm_families.json", for: scenario)
+        self.harmFamilies = Self.loadMergedByID("harm_families.json", for: scenario)
         self.harmFamilyDict = Dictionary(uniqueKeysWithValues: harmFamilies.map { ($0.id, $0) })
         self.treasureTemplates = Self.load("treasures.json", for: scenario)
         self.clockTemplates = Self.load("clocks.json", for: scenario)
+        self.archetypeTemplates = Self.loadScenarioOnly("archetypes.json", for: scenario)
+        self.archetypeDict = Dictionary(uniqueKeysWithValues: archetypeTemplates.map { ($0.id, $0) })
+        self.eventTemplates = Self.loadOptional("events.json", for: scenario)
+        self.eventDict = Dictionary(uniqueKeysWithValues: eventTemplates.map { ($0.id, $0) })
     }
 
-    private static func url(for filename: String, scenario: String) -> URL? {
-        if let url = Bundle.main.url(forResource: filename,
-                                     withExtension: nil,
-                                     subdirectory: "Content/Scenarios/\(scenario)") {
-            return url
-        }
-        return Bundle.main.url(forResource: filename,
-                               withExtension: nil,
-                               subdirectory: "Content")
+    private static func scenarioURL(for filename: String, scenario: String) -> URL? {
+        Bundle.main.url(
+            forResource: filename,
+            withExtension: nil,
+            subdirectory: "Content/Scenarios/\(scenario)"
+        )
+    }
+
+    private static func globalURL(for filename: String) -> URL? {
+        Bundle.main.url(
+            forResource: filename,
+            withExtension: nil,
+            subdirectory: "Content"
+        )
+    }
+
+    private static func preferredURL(for filename: String, scenario: String) -> URL? {
+        scenarioURL(for: filename, scenario: scenario) ?? globalURL(for: filename)
     }
 
     private static func loadManifest(for scenario: String) -> ScenarioManifest? {
-        guard let url = url(for: "scenario.json", scenario: scenario) else { return nil }
+        guard let url = preferredURL(for: "scenario.json", scenario: scenario) else { return nil }
         do {
             let data = try Data(contentsOf: url)
             return try JSONDecoder().decode(ScenarioManifest.self, from: data)
@@ -107,10 +127,51 @@ class ContentLoader {
     }
 
     private static func load<T: Decodable>(_ filename: String, for scenario: String) -> [T] {
-        guard let url = url(for: filename, scenario: scenario) else {
+        guard let url = preferredURL(for: filename, scenario: scenario) else {
             print("Failed to locate \(filename) for scenario \(scenario)")
             return []
         }
+        return decodeCollection(T.self, from: url, filename: filename, scenario: scenario) ?? []
+    }
+
+    private static func loadScenarioOnly<T: Decodable>(_ filename: String, for scenario: String) -> [T] {
+        guard let url = scenarioURL(for: filename, scenario: scenario) else {
+            print("Failed to locate scenario-local \(filename) for scenario \(scenario)")
+            return []
+        }
+        return decodeCollection(T.self, from: url, filename: filename, scenario: scenario) ?? []
+    }
+
+    private static func loadMergedByID<T: Decodable & Identifiable>(
+        _ filename: String,
+        for scenario: String
+    ) -> [T] where T.ID == String {
+        let globalValues = globalURL(for: filename).flatMap {
+            decodeCollection(T.self, from: $0, filename: filename, scenario: "global")
+        } ?? []
+        let scenarioValues = scenarioURL(for: filename, scenario: scenario).flatMap {
+            decodeCollection(T.self, from: $0, filename: filename, scenario: scenario)
+        } ?? []
+
+        var mergedByID: [String: T] = [:]
+        var order: [String] = []
+
+        for value in globalValues + scenarioValues {
+            if mergedByID[value.id] == nil {
+                order.append(value.id)
+            }
+            mergedByID[value.id] = value
+        }
+
+        return order.compactMap { mergedByID[$0] }
+    }
+
+    private static func decodeCollection<T: Decodable>(
+        _ type: T.Type,
+        from url: URL,
+        filename: String,
+        scenario: String
+    ) -> [T]? {
         do {
             let data = try Data(contentsOf: url)
             let decoder = JSONDecoder()
@@ -123,20 +184,27 @@ class ContentLoader {
                 return dict.flatMap { $0.value }
             } else {
                 print("Failed to decode \(filename): unexpected format")
-                return []
+                return nil
             }
         } catch let error as DecodingError {
             print("Failed to decode \(filename) for scenario \(scenario): Decoding Error: \(error.localizedDescription)\nPath: \(error.pathDescription)\nDebug Description: \(error.contextDebugDescription)")
-            return []
+            return nil
         } catch {
             print("Failed to decode \(filename) for scenario \(scenario): \(error)")
+            return nil
+        }
+    }
+
+    private static func loadOptional<T: Decodable>(_ filename: String, for scenario: String) -> [T] {
+        guard let url = preferredURL(for: filename, scenario: scenario) else {
             return []
         }
+        return decodeCollection(T.self, from: url, filename: filename, scenario: scenario) ?? []
     }
 
     /// Load a predefined DungeonMap from the given file name within this scenario.
     func loadMap(named file: String) -> DungeonMap? {
-        guard let url = Self.url(for: file, scenario: scenarioName) else {
+        guard let url = Self.preferredURL(for: file, scenario: scenarioName) else {
             print("Failed to locate map file \(file) for scenario \(scenarioName)")
             return nil
         }

@@ -110,76 +110,85 @@ struct InteractableCardView: View {
                     }
                 }
             }
-            Theme.InkDivider()
-            ForEach(interactable.availableActions, id: \.name) { action in
-                let displayName = action.name
-                let emoji = ActionEmoji.emoji(for: action.actionType)
-                Button {
-                    onActionTapped(action)
-                } label: {
-                    HStack(spacing: 10) {
-                        Text(emoji)
-                            .font(.system(size: 18))
-                            .frame(width: 28)
+            if !interactable.availableActions.isEmpty {
+                Theme.InkDivider()
+                ForEach(interactable.availableActions, id: \.name) { action in
+                    let displayName = action.name
+                    let emoji = ActionEmoji.emoji(for: action.actionType)
+                    Button {
+                        onActionTapped(action)
+                    } label: {
+                        HStack(spacing: 10) {
+                            Text(emoji)
+                                .font(.system(size: 18))
+                                .frame(width: 28)
 
-                        VStack(alignment: .leading, spacing: 1) {
-                            HStack(spacing: 6) {
-                                Text(displayName)
-                                    .font(Theme.bodyFontMedium(size: 14))
-                                    .foregroundColor(Theme.ink)
-                                if !action.requiresTest {
-                                    Text("AUTO")
-                                        .font(Theme.systemFont(size: 10, weight: .semibold))
-                                        .foregroundColor(Theme.inkFaded)
+                            VStack(alignment: .leading, spacing: 1) {
+                                HStack(spacing: 6) {
+                                    Text(displayName)
+                                        .font(Theme.bodyFontMedium(size: 14))
+                                        .foregroundColor(Theme.ink)
+                                    if !action.requiresTest {
+                                        Text("AUTO")
+                                            .font(Theme.systemFont(size: 10, weight: .semibold))
+                                            .foregroundColor(Theme.inkFaded)
+                                    }
                                 }
+                                Text(action.actionType)
+                                    .font(Theme.systemFont(size: 11))
+                                    .foregroundColor(Theme.inkLight)
                             }
-                            Text(action.actionType)
-                                .font(Theme.systemFont(size: 11))
-                                .foregroundColor(Theme.inkLight)
+
+                            Spacer()
+
+                            Circle()
+                                .fill(Theme.positionColor(action.position))
+                                .frame(width: 7, height: 7)
+                                .opacity(0.7)
                         }
-
-                        Spacer()
-
-                        Circle()
-                            .fill(Theme.positionColor(action.position))
-                            .frame(width: 7, height: 7)
-                            .opacity(0.7)
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 10)
+                        .background(Theme.parchmentDark.opacity(0.001))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 6)
+                                .stroke(Theme.parchmentDeep.opacity(0.35), lineWidth: 1)
+                        )
+                        .clipShape(RoundedRectangle(cornerRadius: 6))
                     }
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 10)
-                    .background(Theme.parchmentDark.opacity(0.001))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 6)
-                            .stroke(Theme.parchmentDeep.opacity(0.35), lineWidth: 1)
-                    )
-                    .clipShape(RoundedRectangle(cornerRadius: 6))
-                }
-                .buttonStyle(.plain)
-                .disabled(actionDisabled(action))
-                .opacity(actionDisabled(action) ? 0.4 : 1)
-                .overlay(alignment: .topTrailing) {
-                    if hasPenalty(for: action) {
-                        Circle()
-                            .fill(Theme.danger)
-                            .frame(width: 16, height: 16)
-                            .overlay(
-                                Text("!")
-                                    .font(Theme.systemFont(size: 10, weight: .bold))
-                                    .foregroundColor(.white)
-                            )
-                            .offset(x: 4, y: -4)
-                    } else if hasBonus(for: action) {
-                        Circle()
-                            .fill(Theme.success)
-                            .frame(width: 16, height: 16)
-                            .overlay(
-                                Text("+")
-                                    .font(Theme.systemFont(size: 10, weight: .bold))
-                                    .foregroundColor(.white)
-                            )
-                            .offset(x: 4, y: -4)
+                    .buttonStyle(.plain)
+                    .disabled(actionDisabled(action))
+                    .opacity(actionDisabled(action) ? 0.4 : 1)
+                    .overlay(alignment: .topTrailing) {
+                        if hasPenalty(for: action) {
+                            Circle()
+                                .fill(Theme.danger)
+                                .frame(width: 16, height: 16)
+                                .overlay(
+                                    Text("!")
+                                        .font(Theme.systemFont(size: 10, weight: .bold))
+                                        .foregroundColor(.white)
+                                )
+                                .offset(x: 4, y: -4)
+                        } else if hasBonus(for: action) {
+                            Circle()
+                                .fill(Theme.success)
+                                .frame(width: 16, height: 16)
+                                .overlay(
+                                    Text("+")
+                                        .font(Theme.systemFont(size: 10, weight: .bold))
+                                        .foregroundColor(.white)
+                                )
+                                .offset(x: 4, y: -4)
+                        }
                     }
                 }
+            } else if interactable.isDisplayOnly {
+                Theme.InkDivider()
+                Text("Reference")
+                    .font(Theme.systemFont(size: 11, weight: .semibold))
+                    .tracking(0.6)
+                    .textCase(.uppercase)
+                    .foregroundColor(Theme.inkFaded)
             }
         }
         .padding()

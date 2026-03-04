@@ -183,6 +183,34 @@ final class ModifierSystemTests: XCTestCase {
         XCTAssertTrue(vm.gameState.party[0].treasures.isEmpty)
     }
 
+    func testPerformActionCanUseOptionalTreasureModifierFromRollContext() throws {
+        let vm = GameViewModel()
+        var character = makeTestCharacter()
+        character.actions["Tinker"] = 0
+
+        let mod = Modifier(bonusDice: 1, applicableToAction: "Tinker", uses: 1, isOptionalToApply: true, description: "Scrap Parts")
+        let treasure = Treasure(id: "test_scrap", name: "Scrap", description: "", grantedModifier: mod)
+        character.treasures = [treasure]
+
+        vm.gameState.party = [character]
+        vm.gameState.characterLocations[character.id.uuidString] = UUID()
+
+        let action = ActionOption(name: "Repair", actionType: "Tinker", position: .risky, effect: .standard)
+        let context = vm.getRollContext(for: action, with: character)
+        guard let treasureModifier = context.optionalModifiers.first(where: { $0.description == "Scrap Parts" }) else {
+            return XCTFail("Expected treasure modifier to be available")
+        }
+
+        let result = vm.performAction(for: action,
+                                      with: character,
+                                      interactableID: nil,
+                                      usingDice: [1, 6],
+                                      chosenOptionalModifierIDs: [treasureModifier.id])
+
+        XCTAssertEqual(result.outcome, "Full Success!")
+        XCTAssertEqual(vm.gameState.party[0].stress, 0)
+    }
+
     func testPushStressCostIncludesActiveHarmPenalty() throws {
         ContentLoader.shared = ContentLoader(scenario: "tomb")
         let vm = GameViewModel()

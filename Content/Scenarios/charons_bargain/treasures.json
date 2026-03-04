@@ -87,6 +87,19 @@
     "tags": ["Log", "Clue"]
   },
   {
+    "id": "cb_vfe_interface_schematic",
+    "name": "VFE Interface Schematic",
+    "description": "A partial schematic of the VFE's interface architecture. It highlights emergency cutoffs and alien power-routing anomalies.",
+    "grantedModifier": {
+      "improveEffect": true,
+      "applicableToAction": "Tinker",
+      "requiredTag": "VFE-touched",
+      "uses": -1,
+      "description": "from VFE Interface Schematic"
+    },
+    "tags": ["Technical", "Clue", "VFE"]
+  },
+  {
     "id": "cb_dr_thornes_early_vfe_notes",
     "name": "Dr. Thorne's Early VFE Notes",
     "description": "Early, less deranged notes from Dr. Thorne on the VFE's properties. Contains some technical specifications.",

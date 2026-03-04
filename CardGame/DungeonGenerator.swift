@@ -7,11 +7,32 @@ class DungeonGenerator {
         self.content = content
     }
 
+    static func resolveEntryNodeID(_ entryNode: String, in map: DungeonMap) -> UUID? {
+        if let uuid = UUID(uuidString: entryNode),
+           map.nodes[uuid.uuidString] != nil {
+            return uuid
+        }
+
+        let matches = map.nodes.values.filter {
+            $0.name.compare(entryNode, options: [.caseInsensitive, .diacriticInsensitive]) == .orderedSame
+        }
+        guard matches.count == 1 else { return nil }
+        return matches[0].id
+    }
+
     func generate(level: Int, manifest: ScenarioManifest? = nil) -> (DungeonMap, [GameClock]) {
         let manifestToUse = manifest ?? content.scenarioManifest
         if let manifest = manifestToUse,
            let mapFile = manifest.mapFile,
-           let predefined = content.loadMap(named: mapFile) {
+           var predefined = content.loadMap(named: mapFile) {
+            if let entryNode = manifest.entryNode {
+                if let resolvedEntryNodeID = Self.resolveEntryNodeID(entryNode, in: predefined) {
+                    predefined.startingNodeID = resolvedEntryNodeID
+                    predefined.nodes[resolvedEntryNodeID.uuidString]?.isDiscovered = true
+                } else {
+                    print("Warning: Failed to resolve entry node '\(entryNode)' for scenario \(manifest.id)")
+                }
+            }
             return (predefined, content.clockTemplates)
         } else if let manifest = manifestToUse, manifest.mapFile != nil {
             print("Warning: Failed to load map file \(manifest.mapFile!) for scenario \(manifest.id)")
@@ -36,7 +57,7 @@ class DungeonGenerator {
 
             let theme = themes.randomElement()
 
-            var newNode = MapNode(
+            let newNode = MapNode(
                 id: UUID(),
                 name: "Forgotten Antechamber \(i + 1)",
                 soundProfile: soundProfiles.randomElement() ?? "silent_tomb",

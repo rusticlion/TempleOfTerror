@@ -2,5 +2,12 @@
   "id": "test_tag_penalty",
   "title": "Test Tag Penalty",
   "description": "Scenario for tag penalty tests",
-  "entryNode": null
+  "entryNode": null,
+  "partySize": 3,
+  "nativeArchetypeIDs": [
+    "scientist",
+    "engineer",
+    "scavenger"
+  ],
+  "stressOverflowHarmFamilyID": "flora_allergy"
 }

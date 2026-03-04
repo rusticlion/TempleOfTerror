@@ -727,7 +727,8 @@
           "id": "cb_crew_quarters_terminal",
           "title": "Crew Quarters Terminal",
           "description": "A terminal with a list of crew members and their assigned quarters.",
-          "availableActions": []
+          "availableActions": [],
+          "isDisplayOnly": true
         }
       ],
       "connections": [
@@ -1209,7 +1210,8 @@
                                     "id": "cb_hydra_dying",
                                     "title": "The Dying Hydra",
                                     "description": "The creature that was once Alex Thorne collapses, its flesh rapidly decaying into dust. It is finally, truly dead.",
-                                    "availableActions": []
+                                    "availableActions": [],
+                                    "isDisplayOnly": true
                                 }
                             }
                         ],

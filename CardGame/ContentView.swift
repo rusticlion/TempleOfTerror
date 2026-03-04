@@ -16,9 +16,9 @@ struct ContentView: View {
     @State private var doorProgress: CGFloat = 0 // For sliding door transition
     @Environment(\.scenePhase) private var scenePhase
 
-    init(scenario: String = "tomb") {
+    init(scenario: String = "tomb", partyPlan: PartyBuildPlan? = nil) {
         // Start a new game using the provided scenario
-        let vm = GameViewModel(startNewWithScenario: scenario)
+        let vm = GameViewModel(startNewWithScenario: scenario, partyPlan: partyPlan)
         _viewModel = StateObject(wrappedValue: vm)
         _selectedCharacterID = State(initialValue: vm.gameState.party.first?.id)
     }
@@ -283,7 +283,7 @@ struct ContentView: View {
         }
         .navigationBarBackButtonHidden(true)
         .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
+            ToolbarItem(placement: .automatic) {
                 Button(action: {}) {
                     Image(systemName: "gearshape")
                         .foregroundColor(Theme.parchmentDark)

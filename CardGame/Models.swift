@@ -11,6 +11,19 @@ enum RunOutcome: String, Codable {
     case victory
 }
 
+enum PartyBuildMode: String, Codable, Equatable {
+    case randomNative
+    case randomFullRoster
+    case manualSelection
+}
+
+struct PartyBuildPlan: Codable, Equatable {
+    var partySize: Int
+    var nativeArchetypeIDs: [String]
+    var selectedArchetypeIDs: [String]
+    var mode: PartyBuildMode
+}
+
 struct GameState: Codable {
     /// Identifier for the scenario that generated this run. Used when loading
     /// to reinitialize the `ContentLoader` with the correct data bundle.
@@ -25,7 +38,80 @@ struct GameState: Codable {
     var status: GameStatus = .playing
     var runOutcome: RunOutcome? = nil
     var runOutcomeText: String? = nil
+    var scenarioFlags: [String: Bool] = [:]
+    var scenarioCounters: [String: Int] = [:]
+    var launchPartyPlan: PartyBuildPlan? = nil
     // ... other global state can be added later
+
+    enum CodingKeys: String, CodingKey {
+        case scenarioName, party, activeClocks, dungeon, currentNodeID
+        case characterLocations, status, runOutcome, runOutcomeText
+        case scenarioFlags, scenarioCounters, launchPartyPlan
+    }
+
+    init(
+        scenarioName: String = "tomb",
+        party: [Character] = [],
+        activeClocks: [GameClock] = [],
+        dungeon: DungeonMap? = nil,
+        currentNodeID: UUID? = nil,
+        characterLocations: [String: UUID] = [:],
+        status: GameStatus = .playing,
+        runOutcome: RunOutcome? = nil,
+        runOutcomeText: String? = nil,
+        scenarioFlags: [String: Bool] = [:],
+        scenarioCounters: [String: Int] = [:],
+        launchPartyPlan: PartyBuildPlan? = nil
+    ) {
+        self.scenarioName = scenarioName
+        self.party = party
+        self.activeClocks = activeClocks
+        self.dungeon = dungeon
+        self.currentNodeID = currentNodeID
+        self.characterLocations = characterLocations
+        self.status = status
+        self.runOutcome = runOutcome
+        self.runOutcomeText = runOutcomeText
+        self.scenarioFlags = scenarioFlags
+        self.scenarioCounters = scenarioCounters
+        self.launchPartyPlan = launchPartyPlan
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        scenarioName = try container.decodeIfPresent(String.self, forKey: .scenarioName) ?? "tomb"
+        party = try container.decodeIfPresent([Character].self, forKey: .party) ?? []
+        activeClocks = try container.decodeIfPresent([GameClock].self, forKey: .activeClocks) ?? []
+        dungeon = try container.decodeIfPresent(DungeonMap.self, forKey: .dungeon)
+        currentNodeID = try container.decodeIfPresent(UUID.self, forKey: .currentNodeID)
+        characterLocations = try container.decodeIfPresent([String: UUID].self, forKey: .characterLocations) ?? [:]
+        status = try container.decodeIfPresent(GameStatus.self, forKey: .status) ?? .playing
+        runOutcome = try container.decodeIfPresent(RunOutcome.self, forKey: .runOutcome)
+        runOutcomeText = try container.decodeIfPresent(String.self, forKey: .runOutcomeText)
+        scenarioFlags = try container.decodeIfPresent([String: Bool].self, forKey: .scenarioFlags) ?? [:]
+        scenarioCounters = try container.decodeIfPresent([String: Int].self, forKey: .scenarioCounters) ?? [:]
+        launchPartyPlan = try container.decodeIfPresent(PartyBuildPlan.self, forKey: .launchPartyPlan)
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(scenarioName, forKey: .scenarioName)
+        try container.encode(party, forKey: .party)
+        try container.encode(activeClocks, forKey: .activeClocks)
+        try container.encodeIfPresent(dungeon, forKey: .dungeon)
+        try container.encodeIfPresent(currentNodeID, forKey: .currentNodeID)
+        try container.encode(characterLocations, forKey: .characterLocations)
+        try container.encode(status, forKey: .status)
+        try container.encodeIfPresent(runOutcome, forKey: .runOutcome)
+        try container.encodeIfPresent(runOutcomeText, forKey: .runOutcomeText)
+        if !scenarioFlags.isEmpty {
+            try container.encode(scenarioFlags, forKey: .scenarioFlags)
+        }
+        if !scenarioCounters.isEmpty {
+            try container.encode(scenarioCounters, forKey: .scenarioCounters)
+        }
+        try container.encodeIfPresent(launchPartyPlan, forKey: .launchPartyPlan)
+    }
 }
 
 /// A general-purpose modifier that can adjust action rolls.
@@ -181,6 +267,7 @@ struct Treasure: Codable, Identifiable {
 struct Character: Identifiable, Codable {
     let id: UUID
     var name: String
+    var archetypeID: String?
     var characterClass: String
     var stress: Int
     var harm: HarmState
@@ -192,11 +279,12 @@ struct Character: Identifiable, Codable {
     var isDefeated: Bool = false
 
     enum CodingKeys: String, CodingKey {
-        case id, name, characterClass, stress, harm, actions, treasures, modifiers, isDefeated
+        case id, name, archetypeID, characterClass, stress, harm, actions, treasures, modifiers, isDefeated
     }
 
     init(id: UUID,
          name: String,
+         archetypeID: String? = nil,
          characterClass: String,
          stress: Int,
          harm: HarmState,
@@ -206,6 +294,7 @@ struct Character: Identifiable, Codable {
          isDefeated: Bool = false) {
         self.id = id
         self.name = name
+        self.archetypeID = archetypeID
         self.characterClass = characterClass
         self.stress = stress
         self.harm = harm
@@ -219,6 +308,7 @@ struct Character: Identifiable, Codable {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         id = try container.decode(UUID.self, forKey: .id)
         name = try container.decode(String.self, forKey: .name)
+        archetypeID = try container.decodeIfPresent(String.self, forKey: .archetypeID)
         characterClass = try container.decode(String.self, forKey: .characterClass)
         stress = try container.decode(Int.self, forKey: .stress)
         harm = try container.decode(HarmState.self, forKey: .harm)
@@ -232,6 +322,7 @@ struct Character: Identifiable, Codable {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(id, forKey: .id)
         try container.encode(name, forKey: .name)
+        try container.encodeIfPresent(archetypeID, forKey: .archetypeID)
         try container.encode(characterClass, forKey: .characterClass)
         try container.encode(stress, forKey: .stress)
         try container.encode(harm, forKey: .harm)
@@ -460,6 +551,13 @@ struct HarmLibrary {
     }
 }
 
+struct ArchetypeDefinition: Codable, Identifiable, Hashable {
+    let id: String
+    var name: String
+    var description: String
+    var defaultActions: [String: Int]
+}
+
 struct GameClock: Identifiable, Codable {
     let id: UUID = UUID()
     var name: String
@@ -511,10 +609,11 @@ struct Interactable: Codable, Identifiable {
     var description: String
     var availableActions: [ActionOption]
     var isThreat: Bool = false
+    var isDisplayOnly: Bool = false
     var tags: [String] = []
 
     enum CodingKeys: String, CodingKey {
-        case id, title, description, availableActions, isThreat, tags
+        case id, title, description, availableActions, isThreat, isDisplayOnly, tags
     }
 
     init(id: String,
@@ -522,12 +621,14 @@ struct Interactable: Codable, Identifiable {
          description: String,
          availableActions: [ActionOption],
          isThreat: Bool = false,
+         isDisplayOnly: Bool = false,
          tags: [String] = []) {
         self.id = id
         self.title = title
         self.description = description
         self.availableActions = availableActions
         self.isThreat = isThreat
+        self.isDisplayOnly = isDisplayOnly
         self.tags = tags
     }
 
@@ -538,6 +639,7 @@ struct Interactable: Codable, Identifiable {
         description = try container.decode(String.self, forKey: .description)
         availableActions = try container.decode([ActionOption].self, forKey: .availableActions)
         isThreat = try container.decodeIfPresent(Bool.self, forKey: .isThreat) ?? false
+        isDisplayOnly = try container.decodeIfPresent(Bool.self, forKey: .isDisplayOnly) ?? false
         tags = try container.decodeIfPresent([String].self, forKey: .tags) ?? []
     }
 
@@ -549,6 +651,9 @@ struct Interactable: Codable, Identifiable {
         try container.encode(availableActions, forKey: .availableActions)
         if isThreat {
             try container.encode(isThreat, forKey: .isThreat)
+        }
+        if isDisplayOnly {
+            try container.encode(isDisplayOnly, forKey: .isDisplayOnly)
         }
         if !tags.isEmpty {
             try container.encode(tags, forKey: .tags)
@@ -649,6 +754,8 @@ struct GameCondition: Codable {
         case characterHasTreasureId
         case partyHasTreasureWithTag
         case clockProgress
+        case scenarioFlagSet
+        case scenarioCounter
     }
 
     let type: ConditionType
@@ -671,6 +778,13 @@ struct GameCondition: Codable {
         self.effectParam = effectParam
         self.positionParam = positionParam
     }
+}
+
+struct ScenarioEvent: Codable, Identifiable {
+    let id: String
+    var description: String?
+    var conditions: [GameCondition]?
+    var consequences: [Consequence]
 }
 
 /// Represents a selectable option in a `createChoice` consequence.
@@ -697,6 +811,11 @@ struct Consequence: Codable {
         case triggerEvent
         case triggerConsequences
         case healHarm
+        case setScenarioFlag
+        case clearScenarioFlag
+        case incrementScenarioCounter
+        case setScenarioCounter
+        case endRun
     }
 
     var kind: ConsequenceKind
@@ -718,6 +837,10 @@ struct Consequence: Codable {
     var choiceOptions: [ChoiceOption]?
     var eventId: String?
     var triggered: [Consequence]?
+    var flagId: String?
+    var counterId: String?
+    var endingOutcome: RunOutcome?
+    var endingText: String?
 
     // Gating Conditions
     var conditions: [GameCondition]?
@@ -731,6 +854,7 @@ struct Consequence: Codable {
         case interactable, treasure, treasureId
         case duration, options, eventId, consequences
         case actionName, action, conditions, description
+        case flagId, counterId, runOutcome, runOutcomeText
     }
 
     init(kind: ConsequenceKind) {
@@ -757,6 +881,10 @@ struct Consequence: Codable {
         choiceOptions = try container.decodeIfPresent([ChoiceOption].self, forKey: .options)
         eventId = try container.decodeIfPresent(String.self, forKey: .eventId)
         triggered = try container.decodeIfPresent([Consequence].self, forKey: .consequences)
+        flagId = try container.decodeIfPresent(String.self, forKey: .flagId)
+        counterId = try container.decodeIfPresent(String.self, forKey: .counterId)
+        endingOutcome = try container.decodeIfPresent(RunOutcome.self, forKey: .runOutcome)
+        endingText = try container.decodeIfPresent(String.self, forKey: .runOutcomeText)
 
         if resolvedKind == .removeInteractable, interactableId == "self" {
             resolvedKind = .removeSelfInteractable
@@ -865,6 +993,24 @@ struct Consequence: Codable {
             try container.encodeIfPresent(triggered, forKey: .consequences)
         case .healHarm:
             try container.encode(ConsequenceKind.healHarm, forKey: .type)
+        case .setScenarioFlag:
+            try container.encode(ConsequenceKind.setScenarioFlag, forKey: .type)
+            try container.encodeIfPresent(flagId, forKey: .flagId)
+        case .clearScenarioFlag:
+            try container.encode(ConsequenceKind.clearScenarioFlag, forKey: .type)
+            try container.encodeIfPresent(flagId, forKey: .flagId)
+        case .incrementScenarioCounter:
+            try container.encode(ConsequenceKind.incrementScenarioCounter, forKey: .type)
+            try container.encodeIfPresent(counterId, forKey: .counterId)
+            try container.encodeIfPresent(amount, forKey: .amount)
+        case .setScenarioCounter:
+            try container.encode(ConsequenceKind.setScenarioCounter, forKey: .type)
+            try container.encodeIfPresent(counterId, forKey: .counterId)
+            try container.encodeIfPresent(amount, forKey: .amount)
+        case .endRun:
+            try container.encode(ConsequenceKind.endRun, forKey: .type)
+            try container.encodeIfPresent(endingOutcome, forKey: .runOutcome)
+            try container.encodeIfPresent(endingText, forKey: .runOutcomeText)
         }
 
         try container.encodeIfPresent(conditions, forKey: .conditions)
@@ -974,6 +1120,39 @@ extension Consequence {
     static func triggerEvent(id: String) -> Consequence {
         var c = Consequence(kind: .triggerEvent)
         c.eventId = id
+        return c
+    }
+
+    static func setScenarioFlag(_ flagId: String) -> Consequence {
+        var c = Consequence(kind: .setScenarioFlag)
+        c.flagId = flagId
+        return c
+    }
+
+    static func clearScenarioFlag(_ flagId: String) -> Consequence {
+        var c = Consequence(kind: .clearScenarioFlag)
+        c.flagId = flagId
+        return c
+    }
+
+    static func incrementScenarioCounter(_ counterId: String, amount: Int = 1) -> Consequence {
+        var c = Consequence(kind: .incrementScenarioCounter)
+        c.counterId = counterId
+        c.amount = amount
+        return c
+    }
+
+    static func setScenarioCounter(_ counterId: String, value: Int) -> Consequence {
+        var c = Consequence(kind: .setScenarioCounter)
+        c.counterId = counterId
+        c.amount = value
+        return c
+    }
+
+    static func endRun(_ outcome: RunOutcome, text: String? = nil) -> Consequence {
+        var c = Consequence(kind: .endRun)
+        c.endingOutcome = outcome
+        c.endingText = text
         return c
     }
 
