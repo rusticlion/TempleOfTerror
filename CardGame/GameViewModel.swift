@@ -11,15 +11,6 @@ struct RollProjectionDetails {
     var notes: [String]
 }
 
-/// Context information used when processing a list of consequences.
-struct ConsequenceContext {
-    let character: Character
-    let interactableID: String?
-    let finalEffect: RollEffect
-    let finalPosition: RollPosition
-    let isCritical: Bool
-}
-
 /// Lightweight info about a selectable modifier for the DiceRollView.
 struct SelectableModifierInfo: Identifiable {
     let id: UUID
@@ -38,52 +29,59 @@ enum PartyMovementMode {
 class GameViewModel: ObservableObject {
     @Published var gameState: GameState
     @Published var partyMovementMode: PartyMovementMode = .grouped
+    @Published var debugFixedDiceEnabled: Bool = false
+    @Published var debugFixedDiceValues: [Int] = [6]
 
     /// Enable verbose logging when processing consequences.
     static var debugConsequences = true
     private let rollRules = RollRulesEngine()
+    private let runtime: ScenarioRuntime
+    private let saveStore: SaveGameStore
 
     private func makeConsequenceExecutor() -> ConsequenceExecutor {
-        ConsequenceExecutor(debugLogging: Self.debugConsequences)
+        ConsequenceExecutor(debugLogging: Self.debugConsequences, runtime: runtime)
     }
 
-    /// Location of the save file within the app's Documents directory.
-    private static var saveURL: URL {
-        FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-            .appendingPathComponent("savegame.json")
+    private func syncAmbientAudio(for node: MapNode?) {
+        guard let node else { return }
+        AudioManager.shared.play(sound: "ambient_\(node.soundProfile).wav", loop: true)
     }
 
     /// Whether a saved game exists on disk.
     static var saveExists: Bool {
-        FileManager.default.fileExists(atPath: saveURL.path)
+        SaveGameStore().saveExists()
     }
 
 
     // Retrieve the node a specific character is currently in
     func node(for characterID: UUID?) -> MapNode? {
-        guard let id = characterID,
-              let nodeID = gameState.characterLocations[id.uuidString],
-              let map = gameState.dungeon else { return nil }
-        return map.nodes[nodeID.uuidString]
+        runtime.node(for: characterID, in: gameState)
     }
 
 
     /// Initialize a blank view model intended for loading a game.
-    init() {
+    init(runtime: ScenarioRuntime = ScenarioRuntime(), saveStore: SaveGameStore = SaveGameStore()) {
         self.gameState = GameState()
+        self.runtime = runtime
+        self.saveStore = saveStore
     }
 
     /// Initialize and immediately start a new game with the given scenario.
-    init(startNewWithScenario scenario: String, partyPlan: PartyBuildPlan? = nil) {
+    init(startNewWithScenario scenario: String,
+         partyPlan: PartyBuildPlan? = nil,
+         runtime: ScenarioRuntime = ScenarioRuntime(),
+         saveStore: SaveGameStore = SaveGameStore()) {
         self.gameState = GameState()
+        self.runtime = runtime
+        self.saveStore = saveStore
         startNewRun(scenario: scenario, partyPlan: partyPlan)
     }
 
     /// Persist the current game state to disk.
     func saveGame() {
         do {
-            print("Attempting to save game to: \(Self.saveURL.path)")
-            try gameState.save(to: Self.saveURL)
+            print("Attempting to save game to: \(saveStore.saveURL.path)")
+            try saveStore.save(gameState)
         } catch {
             print("Failed to save game: \(error)")
         }
@@ -91,14 +89,12 @@ class GameViewModel: ObservableObject {
 
     /// Attempt to load a saved game from disk. Returns `true` on success.
     func loadGame() -> Bool {
-        guard Self.saveExists else { return false }
+        guard saveStore.saveExists() else { return false }
         do {
-            let loaded = try GameState.load(from: Self.saveURL)
-            self.gameState = loaded
-            ContentLoader.shared = ContentLoader(scenario: loaded.scenarioName)
-            if let anyID = loaded.characterLocations.first?.value,
-               let node = loaded.dungeon?.nodes[anyID.uuidString] {
-                AudioManager.shared.play(sound: "ambient_\(node.soundProfile).wav", loop: true)
+            let loaded = try saveStore.load()
+            self.gameState = runtime.prepareLoadedState(loaded)
+            if let anyID = gameState.characterLocations.first?.value {
+                syncAmbientAudio(for: gameState.dungeon?.nodes[anyID.uuidString])
             }
             return true
         } catch {
@@ -121,16 +117,82 @@ class GameViewModel: ObservableObject {
         rollRules.calculateEffectiveProjection(baseProjection: baseProjection, applying: chosenModifierStructs)
     }
 
+    func clearPendingResolution() {
+        gameState.pendingResolution = nil
+        saveGame()
+    }
+
+    func pendingResolutionText() -> String {
+        gameState.pendingResolution?.resolvedText ?? ""
+    }
+
+    private func appendToPendingResolutionLog(_ text: String) {
+        guard !text.isEmpty, gameState.pendingResolution != nil else { return }
+        gameState.pendingResolution?.resolvedDescriptions.append(text)
+    }
+
+    func pendingResolutionCharacter() -> Character? {
+        guard let context = gameState.pendingResolution?.activeContext else { return nil }
+        return context.character(in: gameState)
+    }
+
+    func pendingResistanceAttribute() -> ResistanceAttribute? {
+        gameState.pendingResolution?.pendingResistance?.attribute
+    }
+
+    func pendingResistanceDicePool() -> Int? {
+        guard let attribute = pendingResistanceAttribute(),
+              let character = pendingResolutionCharacter() else { return nil }
+        return attribute.dicePool(for: character)
+    }
+
+    @discardableResult
+    func choosePendingChoice(at index: Int) -> String {
+        guard let pendingResolution = gameState.pendingResolution else { return "" }
+        let executor = makeConsequenceExecutor()
+        let result = executor.chooseOption(at: index, in: pendingResolution, gameState: &gameState)
+        gameState.pendingResolution = result.pendingResolution
+        saveGame()
+        return result.description
+    }
+
+    @discardableResult
+    func acceptPendingResistance() -> String {
+        guard let pendingResolution = gameState.pendingResolution else { return "" }
+        let executor = makeConsequenceExecutor()
+        let result = executor.acceptResistance(in: pendingResolution, gameState: &gameState)
+        gameState.pendingResolution = result.pendingResolution
+        saveGame()
+        return result.description
+    }
+
+    @discardableResult
+    func resistPendingConsequence(usingDice diceResults: [Int]? = nil) -> ConsequenceExecutor.ResistanceRollOutcome? {
+        guard let pendingResolution = gameState.pendingResolution else { return nil }
+        let executor = makeConsequenceExecutor()
+        let resolvedDice = diceResults ?? debugResistanceDiceOverride()
+        guard let (result, rollOutcome) = executor.resist(
+            in: pendingResolution,
+            usingDice: resolvedDice,
+            gameState: &gameState
+        ) else {
+            return nil
+        }
+        gameState.pendingResolution = result.pendingResolution
+        saveGame()
+        return rollOutcome
+    }
+
     /// Executes a free action that does not require a roll, applying its success
     /// consequences immediately.
     func performFreeAction(for action: ActionOption, with character: Character, interactableID: String?) -> String {
         let consequences = action.outcomes[.success] ?? []
-        let context = ConsequenceContext(character: character,
+        let context = ConsequenceContext(characterID: character.id,
                                          interactableID: interactableID,
                                          finalEffect: action.effect,
                                          finalPosition: action.position,
                                          isCritical: false)
-        let description = processConsequences(consequences, context: context)
+        let description = processConsequences(consequences, context: context, source: .freeAction, rollPresentation: nil)
         saveGame()
         return description
     }
@@ -150,7 +212,8 @@ class GameViewModel: ObservableObject {
                                   consequences: "Character not found.",
                                   actualDiceRolled: nil,
                                   isCritical: nil,
-                                  finalEffect: nil)
+                                  finalEffect: nil,
+                                  isAwaitingDecision: false)
         }
 
         var tags: [String] = []
@@ -236,12 +299,26 @@ class GameViewModel: ObservableObject {
                              finalEffect: finalEffect,
                              finalPosition: finalPosition)
         }
-        let consequenceProcessingContext = ConsequenceContext(character: character,
+        let consequenceProcessingContext = ConsequenceContext(characterID: character.id,
                                          interactableID: interactableID,
                                          finalEffect: finalEffect,
                                          finalPosition: finalPosition,
                                          isCritical: isCritical)
-        consequencesDescription = processConsequences(eligible, context: consequenceProcessingContext)
+        let rollPresentation = PendingRollPresentation(
+            characterID: character.id,
+            actionName: action.name,
+            highestRoll: highestRoll,
+            outcome: outcome.label,
+            actualDiceRolled: actualDiceRolled,
+            isCritical: isCritical,
+            finalEffect: finalEffect
+        )
+        consequencesDescription = processConsequences(
+            eligible,
+            context: consequenceProcessingContext,
+            source: .roll,
+            rollPresentation: rollPresentation
+        )
 
         if isCritical && highestRoll >= 4 {
             let critMsg = "Critical Success! Effect increased to \(finalEffect.rawValue.capitalized)."
@@ -250,14 +327,17 @@ class GameViewModel: ObservableObject {
             } else {
                 consequencesDescription += "\n" + critMsg
             }
+            appendToPendingResolutionLog(critMsg)
         }
         if !consumedMessages.isEmpty {
             AudioManager.shared.play(sound: "sfx_modifier_consume.wav")
+            let consumedText = consumedMessages.joined(separator: "\n")
             if consequencesDescription.isEmpty {
-                consequencesDescription = consumedMessages.joined(separator: "\n")
+                consequencesDescription = consumedText
             } else {
-                consequencesDescription += "\n" + consumedMessages.joined(separator: "\n")
+                consequencesDescription += "\n" + consumedText
             }
+            appendToPendingResolutionLog(consumedText)
         }
         saveGame()
 
@@ -266,7 +346,8 @@ class GameViewModel: ObservableObject {
                               consequences: consequencesDescription,
                               actualDiceRolled: actualDiceRolled,
                               isCritical: isCritical,
-                              finalEffect: finalEffect)
+                              finalEffect: finalEffect,
+                              isAwaitingDecision: gameState.pendingResolution?.isAwaitingDecision == true)
     }
 
     private func performGroupAction(for action: ActionOption, leader: Character, interactableID: String?) -> DiceRollResult {
@@ -276,7 +357,8 @@ class GameViewModel: ObservableObject {
                                   consequences: "Party must be together for a group action.",
                                   actualDiceRolled: nil,
                                   isCritical: nil,
-                                  finalEffect: nil)
+                                  finalEffect: nil,
+                                  isAwaitingDecision: false)
         }
 
         var bestRoll = 0
@@ -293,22 +375,39 @@ class GameViewModel: ObservableObject {
         let outcome = rollRules.outcome(for: bestRoll)
         let consequences = action.outcomes[outcome.outcome] ?? []
 
-        let context = ConsequenceContext(character: leader,
+        let context = ConsequenceContext(characterID: leader.id,
                                          interactableID: interactableID,
                                          finalEffect: action.effect,
                                          finalPosition: action.position,
                                          isCritical: false)
-        var description = processConsequences(consequences, context: context)
+        let rollPresentation = PendingRollPresentation(
+            characterID: leader.id,
+            actionName: action.name,
+            highestRoll: bestRoll,
+            outcome: outcome.label,
+            actualDiceRolled: nil,
+            isCritical: false,
+            finalEffect: nil
+        )
+        var description = processConsequences(
+            consequences,
+            context: context,
+            source: .roll,
+            rollPresentation: rollPresentation
+        )
 
         if let leaderIndex = gameState.party.firstIndex(where: { $0.id == leader.id }) {
             gameState.party[leaderIndex].stress += failures
             if let overflow = checkStressOverflow(for: leaderIndex) {
                 if !description.isEmpty { description += "\n" }
                 description += overflow
+                appendToPendingResolutionLog(overflow)
             }
             if failures > 0 {
                 if !description.isEmpty { description += "\n" }
-                description += "Leader takes \(failures) Stress from allies' slips."
+                let failureText = "Leader takes \(failures) Stress from allies' slips."
+                description += failureText
+                appendToPendingResolutionLog(failureText)
             }
         }
 
@@ -318,12 +417,26 @@ class GameViewModel: ObservableObject {
                               consequences: description,
                               actualDiceRolled: nil,
                               isCritical: nil,
-                              finalEffect: nil)
+                              finalEffect: nil,
+                              isAwaitingDecision: gameState.pendingResolution?.isAwaitingDecision == true)
     }
 
-    private func processConsequences(_ consequences: [Consequence], context: ConsequenceContext) -> String {
+    private func processConsequences(
+        _ consequences: [Consequence],
+        context: ConsequenceContext,
+        source: ResolutionSource,
+        rollPresentation: PendingRollPresentation?
+    ) -> String {
         let executor = makeConsequenceExecutor()
-        return executor.process(consequences, context: context, gameState: &gameState)
+        let result = executor.process(
+            consequences,
+            context: context,
+            source: source,
+            rollPresentation: rollPresentation,
+            gameState: &gameState
+        )
+        gameState.pendingResolution = result.pendingResolution
+        return result.description
     }
 
     private func areConditionsMet(
@@ -358,50 +471,10 @@ class GameViewModel: ObservableObject {
     /// Starts a brand new run, resetting the game state. The scenario id
     /// corresponds to a folder within `Content/Scenarios`.
     func startNewRun(scenario: String = "tomb", partyPlan: PartyBuildPlan? = nil) {
-        // Recreate the shared content loader so subsequent lookups use the
-        // selected scenario.
-        ContentLoader.shared = ContentLoader(scenario: scenario)
-        let generator = DungeonGenerator(content: ContentLoader.shared)
-        let manifest = ContentLoader.shared.scenarioManifest
-        let (newDungeon, generatedClocks) = generator.generate(level: 1, manifest: manifest)
-
-        let partyBuilder = PartyBuilderService(content: ContentLoader.shared)
-        let resolvedPartyPlan = partyPlan ?? partyBuilder.defaultPlan(for: manifest)
-        let initialParty = partyBuilder.buildParty(using: resolvedPartyPlan)
-        let persistedPartyPlan: PartyBuildPlan
-        switch resolvedPartyPlan.mode {
-        case .manualSelection:
-            persistedPartyPlan = PartyBuildPlan(
-                partySize: resolvedPartyPlan.partySize,
-                nativeArchetypeIDs: resolvedPartyPlan.nativeArchetypeIDs,
-                selectedArchetypeIDs: initialParty.compactMap(\.archetypeID),
-                mode: resolvedPartyPlan.mode
-            )
-        default:
-            persistedPartyPlan = resolvedPartyPlan
+        self.gameState = runtime.newGameState(scenario: scenario, partyPlan: partyPlan)
+        if let startingNodeID = gameState.dungeon?.startingNodeID {
+            syncAmbientAudio(for: gameState.dungeon?.nodes[startingNodeID.uuidString])
         }
-
-        self.gameState = GameState(
-            scenarioName: scenario,
-            party: initialParty, // Use the generated party here
-            activeClocks: generatedClocks,
-            dungeon: newDungeon,
-            currentNodeID: newDungeon.startingNodeID,
-            characterLocations: [:],
-            status: .playing,
-            runOutcome: nil,
-            runOutcomeText: nil,
-            launchPartyPlan: persistedPartyPlan
-        )
-
-        for id in gameState.party.map({ $0.id }) {
-            gameState.characterLocations[id.uuidString] = newDungeon.startingNodeID
-        }
-
-        if let startingNode = newDungeon.nodes[newDungeon.startingNodeID.uuidString] {
-            AudioManager.shared.play(sound: "ambient_\(startingNode.soundProfile).wav", loop: true)
-        }
-
         saveGame()
     }
 
@@ -422,39 +495,30 @@ class GameViewModel: ObservableObject {
 
     /// Move one or all party members depending on the current movement mode.
     func move(characterID: UUID, to connection: NodeConnection) {
-        guard connection.isUnlocked else { return }
-
-        if partyMovementMode == .solo {
-            gameState.characterLocations[characterID.uuidString] = connection.toNodeID
-        } else {
-            for member in gameState.party where !member.isDefeated {
-                gameState.characterLocations[member.id.uuidString] = connection.toNodeID
-            }
+        let outcome = runtime.move(
+            characterID: characterID,
+            to: connection,
+            movingGroupedParty: partyMovementMode == .grouped,
+            in: &gameState
+        )
+        guard outcome.didMove else { return }
+        if let node = outcome.enteredNode {
+            syncAmbientAudio(for: node)
         }
-
-        if let node = gameState.dungeon?.nodes[connection.toNodeID.uuidString] {
-            gameState.dungeon?.nodes[connection.toNodeID.uuidString]?.isDiscovered = true
-            AudioManager.shared.play(sound: "ambient_\(node.soundProfile).wav", loop: true)
-        }
-
         saveGame()
     }
 
     func getNodeName(for characterID: UUID?) -> String? {
-        guard let id = characterID,
-              let nodeID = gameState.characterLocations[id.uuidString],
-              let node = gameState.dungeon?.nodes[nodeID.uuidString] else { return nil }
-        return node.name
+        runtime.nodeName(for: characterID, in: gameState)
     }
 
     func isPartyActuallySplit() -> Bool {
-        let unique = Set(gameState.characterLocations.values)
-        return unique.count > 1
+        runtime.isPartyActuallySplit(in: gameState)
     }
 
     /// Whether all party members currently share the same node.
     func canRegroup() -> Bool {
-        !isPartyActuallySplit()
+        runtime.canRegroup(in: gameState)
     }
 
     func toggleMovementMode() {
@@ -465,5 +529,155 @@ class GameViewModel: ObservableObject {
                 partyMovementMode = .grouped
             }
         }
+    }
+
+    var debugFixedDiceSummary: String {
+        debugFixedDiceValues.map(String.init).joined(separator: ",")
+    }
+
+    @discardableResult
+    func setDebugFixedDice(from rawValue: String) -> Bool {
+        guard let parsed = Self.parseDebugDiceValues(from: rawValue) else {
+            return false
+        }
+        debugFixedDiceValues = parsed
+        return true
+    }
+
+    func debugActionDiceOverride(rawPool: Int) -> [Int]? {
+        guard debugFixedDiceEnabled else { return nil }
+        let diceCount = rawPool <= 0 ? 2 : rawPool
+        return expandedDebugDiceValues(forCount: max(diceCount, 1))
+    }
+
+    func debugResistanceDiceOverride() -> [Int]? {
+        guard debugFixedDiceEnabled else { return nil }
+        let pool = pendingResistanceDicePool() ?? 0
+        let diceCount = pool > 0 ? pool : 2
+        return expandedDebugDiceValues(forCount: max(diceCount, 1))
+    }
+
+    @discardableResult
+    func debugJumpParty(to nodeID: UUID) -> Bool {
+        guard let node = gameState.dungeon?.nodes[nodeID.uuidString] else { return false }
+        for member in gameState.party where !member.isDefeated {
+            gameState.characterLocations[member.id.uuidString] = nodeID
+        }
+        gameState.dungeon?.nodes[nodeID.uuidString]?.isDiscovered = true
+        gameState.currentNodeID = nodeID
+        syncAmbientAudio(for: node)
+        saveGame()
+        return true
+    }
+
+    @discardableResult
+    func debugJump(characterID: UUID, to nodeID: UUID) -> Bool {
+        guard let node = gameState.dungeon?.nodes[nodeID.uuidString] else { return false }
+        gameState.characterLocations[characterID.uuidString] = nodeID
+        gameState.dungeon?.nodes[nodeID.uuidString]?.isDiscovered = true
+        gameState.currentNodeID = nodeID
+        syncAmbientAudio(for: node)
+        saveGame()
+        return true
+    }
+
+    func debugSetFlag(_ flagID: String, isSet: Bool) {
+        let trimmed = flagID.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+        if isSet {
+            gameState.scenarioFlags[trimmed] = true
+        } else {
+            gameState.scenarioFlags.removeValue(forKey: trimmed)
+        }
+        saveGame()
+    }
+
+    func debugSetCounter(_ counterID: String, value: Int) {
+        let trimmed = counterID.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+        gameState.scenarioCounters[trimmed] = value
+        saveGame()
+    }
+
+    func debugAdjustCounter(_ counterID: String, by amount: Int) {
+        let trimmed = counterID.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+        gameState.scenarioCounters[trimmed, default: 0] += amount
+        saveGame()
+    }
+
+    @discardableResult
+    func debugGrantTreasure(_ treasureID: String, to characterID: UUID) -> Bool {
+        guard let characterIndex = gameState.party.firstIndex(where: { $0.id == characterID }),
+              let treasure = ContentLoader.shared.treasureTemplates.first(where: { $0.id == treasureID }) else {
+            return false
+        }
+
+        if gameState.party[characterIndex].treasures.contains(where: { $0.id == treasureID }) {
+            return false
+        }
+
+        gameState.party[characterIndex].treasures.append(treasure)
+        if !gameState.party[characterIndex].modifiers.contains(where: { $0.id == treasure.grantedModifier.id }) {
+            gameState.party[characterIndex].modifiers.append(treasure.grantedModifier)
+        }
+        saveGame()
+        return true
+    }
+
+    @discardableResult
+    func debugGrantModifier(
+        to characterID: UUID,
+        bonusDice: Int = 0,
+        improvePosition: Bool = false,
+        improveEffect: Bool = false,
+        uses: Int = 1,
+        description: String
+    ) -> Bool {
+        guard let characterIndex = gameState.party.firstIndex(where: { $0.id == characterID }) else {
+            return false
+        }
+
+        let trimmedDescription = description.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedDescription.isEmpty else {
+            return false
+        }
+
+        let modifier = Modifier(
+            bonusDice: bonusDice,
+            improvePosition: improvePosition,
+            improveEffect: improveEffect,
+            uses: max(uses, 0),
+            isOptionalToApply: true,
+            description: trimmedDescription
+        )
+        gameState.party[characterIndex].modifiers.append(modifier)
+        saveGame()
+        return true
+    }
+
+    private static func parseDebugDiceValues(from rawValue: String) -> [Int]? {
+        let parts = rawValue
+            .split(whereSeparator: { $0 == "," || $0 == " " || $0 == "\n" || $0 == "\t" })
+            .map(String.init)
+
+        let values = parts.compactMap(Int.init)
+        guard !values.isEmpty else { return nil }
+        guard values.allSatisfy({ (1...6).contains($0) }) else { return nil }
+        return values
+    }
+
+    private func expandedDebugDiceValues(forCount count: Int) -> [Int] {
+        let sanitizedValues = debugFixedDiceValues.filter { (1...6).contains($0) }
+        let baseValues = sanitizedValues.isEmpty ? [6] : sanitizedValues
+        if baseValues.count >= count {
+            return Array(baseValues.prefix(count))
+        }
+
+        var expanded = baseValues
+        while expanded.count < count {
+            expanded.append(baseValues[(expanded.count - baseValues.count) % baseValues.count])
+        }
+        return expanded
     }
 }

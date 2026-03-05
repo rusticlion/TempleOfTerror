@@ -129,3 +129,200 @@ class DungeonGenerator {
         return (DungeonMap(nodes: nodes, startingNodeID: startingNodeID), content.clockTemplates)
     }
 }
+
+struct ScenarioRuntime {
+    struct MoveOutcome {
+        let didMove: Bool
+        let enteredNode: MapNode?
+    }
+
+    private let contentLoaderFactory: (String) -> ContentLoader
+    private let dungeonGeneratorFactory: (ContentLoader) -> DungeonGenerator
+    private let partyBuilderFactory: (ContentLoader) -> PartyBuilderService
+
+    init(
+        contentLoaderFactory: @escaping (String) -> ContentLoader = { ContentLoader(scenario: $0) },
+        dungeonGeneratorFactory: @escaping (ContentLoader) -> DungeonGenerator = { DungeonGenerator(content: $0) },
+        partyBuilderFactory: @escaping (ContentLoader) -> PartyBuilderService = { PartyBuilderService(content: $0) }
+    ) {
+        self.contentLoaderFactory = contentLoaderFactory
+        self.dungeonGeneratorFactory = dungeonGeneratorFactory
+        self.partyBuilderFactory = partyBuilderFactory
+    }
+
+    @discardableResult
+    func activateScenario(named scenario: String) -> ContentLoader {
+        let loader = contentLoaderFactory(scenario)
+        ContentLoader.shared = loader
+        return loader
+    }
+
+    func newGameState(scenario: String = "tomb", partyPlan: PartyBuildPlan? = nil) -> GameState {
+        let content = activateScenario(named: scenario)
+        let generator = dungeonGeneratorFactory(content)
+        let manifest = content.scenarioManifest
+        let (newDungeon, generatedClocks) = generator.generate(level: 1, manifest: manifest)
+
+        let partyBuilder = partyBuilderFactory(content)
+        let resolvedPartyPlan = partyPlan ?? partyBuilder.defaultPlan(for: manifest)
+        let initialParty = partyBuilder.buildParty(using: resolvedPartyPlan)
+        let persistedPartyPlan: PartyBuildPlan
+        switch resolvedPartyPlan.mode {
+        case .manualSelection:
+            persistedPartyPlan = PartyBuildPlan(
+                partySize: resolvedPartyPlan.partySize,
+                nativeArchetypeIDs: resolvedPartyPlan.nativeArchetypeIDs,
+                selectedArchetypeIDs: initialParty.compactMap(\.archetypeID),
+                mode: resolvedPartyPlan.mode
+            )
+        default:
+            persistedPartyPlan = resolvedPartyPlan
+        }
+
+        var gameState = GameState(
+            scenarioName: scenario,
+            party: initialParty,
+            activeClocks: generatedClocks,
+            dungeon: newDungeon,
+            currentNodeID: newDungeon.startingNodeID,
+            characterLocations: [:],
+            status: .playing,
+            runOutcome: nil,
+            runOutcomeText: nil,
+            launchPartyPlan: persistedPartyPlan
+        )
+
+        for id in gameState.party.map(\.id) {
+            gameState.characterLocations[id.uuidString] = newDungeon.startingNodeID
+        }
+
+        return gameState
+    }
+
+    func prepareLoadedState(_ storedGameState: GameState) -> GameState {
+        _ = activateScenario(named: storedGameState.scenarioName)
+        return storedGameState
+    }
+
+    func node(for characterID: UUID?, in gameState: GameState) -> MapNode? {
+        guard let id = characterID,
+              let nodeID = gameState.characterLocations[id.uuidString],
+              let map = gameState.dungeon else { return nil }
+        return map.nodes[nodeID.uuidString]
+    }
+
+    func nodeName(for characterID: UUID?, in gameState: GameState) -> String? {
+        node(for: characterID, in: gameState)?.name
+    }
+
+    func isPartyActuallySplit(in gameState: GameState) -> Bool {
+        Set(gameState.characterLocations.values).count > 1
+    }
+
+    func canRegroup(in gameState: GameState) -> Bool {
+        !isPartyActuallySplit(in: gameState)
+    }
+
+    @discardableResult
+    func move(
+        characterID: UUID,
+        to connection: NodeConnection,
+        movingGroupedParty: Bool,
+        in gameState: inout GameState
+    ) -> MoveOutcome {
+        guard connection.isUnlocked else {
+            return MoveOutcome(didMove: false, enteredNode: nil)
+        }
+
+        if movingGroupedParty {
+            for member in gameState.party where !member.isDefeated {
+                gameState.characterLocations[member.id.uuidString] = connection.toNodeID
+            }
+        } else {
+            gameState.characterLocations[characterID.uuidString] = connection.toNodeID
+        }
+
+        gameState.dungeon?.nodes[connection.toNodeID.uuidString]?.isDiscovered = true
+        let enteredNode = gameState.dungeon?.nodes[connection.toNodeID.uuidString]
+        return MoveOutcome(didMove: true, enteredNode: enteredNode)
+    }
+
+    @discardableResult
+    func unlockConnection(
+        fromNodeID: UUID,
+        toNodeID: UUID,
+        in gameState: inout GameState
+    ) -> Bool {
+        guard let connectionIndex = gameState.dungeon?.nodes[fromNodeID.uuidString]?.connections.firstIndex(where: { $0.toNodeID == toNodeID }) else {
+            return false
+        }
+        gameState.dungeon?.nodes[fromNodeID.uuidString]?.connections[connectionIndex].isUnlocked = true
+        return true
+    }
+
+    @discardableResult
+    func removeInteractable(
+        id interactableID: String,
+        fromNodeID nodeID: UUID,
+        in gameState: inout GameState
+    ) -> Int? {
+        guard var node = gameState.dungeon?.nodes[nodeID.uuidString] else { return nil }
+        let before = node.interactables.count
+        node.interactables.removeAll(where: { $0.id == interactableID })
+        gameState.dungeon?.nodes[nodeID.uuidString] = node
+        return before - node.interactables.count
+    }
+
+    @discardableResult
+    func removeAction(
+        named actionName: String,
+        fromInteractable interactableID: String,
+        inNodeID nodeID: UUID,
+        in gameState: inout GameState
+    ) -> Bool {
+        guard let targetIndex = gameState.dungeon?.nodes[nodeID.uuidString]?.interactables.firstIndex(where: { $0.id == interactableID }) else {
+            return false
+        }
+        gameState.dungeon?.nodes[nodeID.uuidString]?.interactables[targetIndex].availableActions.removeAll(where: { $0.name == actionName })
+        return true
+    }
+
+    @discardableResult
+    func addAction(
+        _ action: ActionOption,
+        toInteractable interactableID: String,
+        inNodeID nodeID: UUID,
+        in gameState: inout GameState
+    ) -> Bool {
+        guard let targetIndex = gameState.dungeon?.nodes[nodeID.uuidString]?.interactables.firstIndex(where: { $0.id == interactableID }) else {
+            return false
+        }
+        gameState.dungeon?.nodes[nodeID.uuidString]?.interactables[targetIndex].availableActions.append(action)
+        return true
+    }
+
+    @discardableResult
+    func addInteractable(
+        _ interactable: Interactable,
+        inNodeID nodeID: UUID,
+        in gameState: inout GameState
+    ) -> Bool {
+        guard gameState.dungeon?.nodes[nodeID.uuidString] != nil else { return false }
+        gameState.dungeon?.nodes[nodeID.uuidString]?.interactables.append(interactable)
+        return true
+    }
+
+    @discardableResult
+    func addInteractableHere(
+        _ interactable: Interactable,
+        forCharacterID characterID: UUID,
+        in gameState: inout GameState
+    ) -> Bool {
+        guard let nodeID = currentNodeID(for: characterID, in: gameState) else { return false }
+        return addInteractable(interactable, inNodeID: nodeID, in: &gameState)
+    }
+
+    func currentNodeID(for characterID: UUID, in gameState: GameState) -> UUID? {
+        gameState.characterLocations[characterID.uuidString]
+    }
+}

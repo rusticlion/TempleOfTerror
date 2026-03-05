@@ -1,0 +1,228 @@
+# Scenario Authoring Reference (v1)
+
+This is the authoritative reference for scenario authors.
+
+It describes the current runtime contract for authored content in the anthology-focused Forged in the Dark engine.
+
+## Scope and Stability
+
+The following content surfaces are considered v1-stable for authoring:
+
+- scenario manifests
+- archetypes and party-building inputs
+- fixed maps and node connections
+- interactables and actions
+- tags
+- treasures and modifiers
+- clocks
+- consequences
+- events
+- scenario flags and counters
+- endings
+
+If behavior in older docs conflicts with this file, this file wins.
+
+## Scenario Folder Contract
+
+Each scenario lives in `Content/Scenarios/<scenario_id>/`.
+
+Required files:
+
+- `scenario.json`
+- `archetypes.json`
+
+Required global file (shared across all scenarios):
+
+- `Content/harm_families.json`
+
+Optional scenario-local files:
+
+- `harm_families.json` (overrides/extends global harm families by id)
+- `clocks.json`
+- `treasures.json`
+- `events.json`
+
+Map/procgen split:
+
+- Fixed-map scenario:
+  - set `mapFile` in `scenario.json`
+  - provide that map file in the scenario folder
+  - `entryNode` is consumed (UUID string or unique node name)
+- Procgen scenario:
+  - omit `mapFile`
+  - provide `interactables.json` templates
+  - `entryNode` is ignored
+
+## `scenario.json`
+
+```json
+{
+  "id": "charons_bargain",
+  "title": "Charon's Bargain",
+  "description": "You board a distressed freighter.",
+  "entryNode": "Docking Bay",
+  "mapFile": "map_charons_bargain.json",
+  "partySize": 3,
+  "nativeArchetypeIDs": ["scientist", "mercenary", "pilot"],
+  "stressOverflowHarmFamilyID": "vfe_cerebral_euphoria"
+}
+```
+
+Field notes:
+
+- `id`, `title`, `description` are required.
+- `partySize` must be greater than zero when provided.
+- `nativeArchetypeIDs` must reference ids from scenario-local `archetypes.json`.
+- `stressOverflowHarmFamilyID` should be set explicitly.
+  - If omitted, runtime defaults to `mental_fraying`.
+
+## Actions
+
+Supported `actionType` values are fixed for v1:
+
+- `Study`, `Survey`, `Hunt`, `Tinker`
+- `Prowl`, `Finesse`, `Wreck`, `Skirmish`
+- `Attune`, `Command`, `Consort`, `Sway`
+
+Validator treats any other `actionType` as an error.
+
+Roll outcomes use keys:
+
+- `success`
+- `partial`
+- `failure`
+
+## Conditions
+
+Supported `GameCondition.type` values:
+
+- `requiresMinEffectLevel` (`effectParam`)
+- `requiresExactEffectLevel` (`effectParam`)
+- `requiresMinPositionLevel` (`positionParam`)
+- `requiresExactPositionLevel` (`positionParam`)
+- `characterHasTreasureId` (`stringParam` treasure id)
+- `partyHasTreasureWithTag` (`stringParam` tag)
+- `clockProgress` (`stringParam` clock name, `intParam` minimum progress, optional `intParamMax`)
+- `scenarioFlagSet` (`stringParam` flag id)
+- `scenarioCounter` (`stringParam` counter id, optional `intParam` min and `intParamMax` max)
+
+## Consequences
+
+Supported `Consequence.type` values and required params:
+
+- `gainStress`: `amount`
+- `sufferHarm`: `level`, `familyId`
+- `tickClock`: `clockName`, `amount`
+- `unlockConnection`: `fromNodeID`, `toNodeID` (fixed-map usage)
+- `removeInteractable`: `id` (or `id: "self"` for remove-self behavior)
+- `removeAction`: `id`, `actionName`
+- `addAction`: `id`, `action` payload
+- `addInteractable`: `inNodeID`, `interactable` payload (`"current"` maps to add-here behavior)
+- `gainTreasure`: `treasureId`
+- `modifyDice`: `amount` (and optional `duration`)
+- `createChoice`: `options` (one or more)
+- `triggerEvent`: `eventId`
+- `triggerConsequences`: `consequences` (nested)
+- `healHarm`: no params
+- `setScenarioFlag`: `flagId`
+- `clearScenarioFlag`: `flagId`
+- `incrementScenarioCounter`: `counterId`, optional `amount` (defaults to 1)
+- `setScenarioCounter`: `counterId`, `amount` (target value)
+- `endRun`: optional `runOutcome`, optional `runOutcomeText`
+
+Each consequence may also include:
+
+- `conditions`: optional array of `GameCondition`
+- `description`: optional narrative line
+- `resistance`: optional explicit resistance rule
+
+### Resistance Rules
+
+Clock ticks are resistible in v1.
+
+If `resistance` is omitted, runtime defaults are:
+
+- `sufferHarm` -> `prowess`, mitigates by 1 harm level
+- `gainStress` -> `resolve`, mitigates by 2 stress
+- `tickClock` -> `insight`, mitigates by 2 clock ticks
+
+Explicit `resistance.amount` must be `>= 0`.
+
+## Events, Flags, and Counters
+
+- `events.json` defines conditional consequence bundles.
+- `triggerEvent` executes an event only when its conditions pass.
+- `scenarioFlags` and `scenarioCounters` are global scenario state primitives and are the intended v1 way to gate authored branches.
+
+## Endings
+
+Use `endRun` to terminate the run.
+
+`runOutcome` values:
+
+- `victory`
+- `escaped`
+- `defeat`
+
+`runOutcomeText` is optional narrative shown on the game-over screen.
+
+## Validator Workflow
+
+Run across all scenarios:
+
+```bash
+./Scripts/validate_scenarios.sh
+```
+
+Run for one scenario directory:
+
+```bash
+./Scripts/validate_scenarios.sh Content/Scenarios/<scenario_id>
+```
+
+Validator highlights:
+
+- schema/required-field errors
+- unknown action types
+- missing references (events, treasures, clocks)
+- fixed-map reachability from entry
+- likely soft-lock nodes (no unlocked exits and no obvious progression path)
+- flag/counter reads without writes
+
+Errors block content; warnings are design-quality signals.
+
+## Author Tooling (Local Playtest)
+
+In debug builds, open a run and tap the toolbar wrench icon to open **Author Tools**.
+
+Current tools:
+
+- fixed dice pattern override (for deterministic branch testing)
+- node jump (party or selected character)
+- scenario state inspection (locations and clock progress)
+- quick flag/counter editing
+- quick treasure grants and modifier grants
+
+These tools are for local branch verification and should not be used as runtime dependencies in authored content.
+
+## Deferred / Not in v1 Contract
+
+Explicitly deferred from authoring contract:
+
+- meta-progression systems
+- procgen expansion beyond current scenario-template flow
+- bespoke class ability systems beyond archetype defaults and modifiers
+- custom/experimental condition or consequence types not listed above
+- custom action families beyond the 12 supported FitD actions
+
+## New Scenario Checklist
+
+1. Create `Content/Scenarios/<scenario_id>/`.
+2. Add `scenario.json` and `archetypes.json`.
+3. Add either:
+   - fixed map file + `mapFile`, or
+   - `interactables.json` for procgen.
+4. Add optional `events.json`, `clocks.json`, `treasures.json`, scenario-local `harm_families.json`.
+5. Validate with `./Scripts/validate_scenarios.sh Content/Scenarios/<scenario_id>`.
+6. Launch the app and branch-test with Author Tools.
+7. Resolve validator errors, then review warnings before content sign-off.

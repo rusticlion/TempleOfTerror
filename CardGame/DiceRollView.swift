@@ -1,5 +1,164 @@
 import SwiftUI
 
+struct ResolutionNarrativeView: View {
+    let text: String
+
+    var body: some View {
+        ScrollView {
+            if text.isEmpty {
+                Text("Awaiting your decision.")
+                    .font(Theme.bodyFont(size: 14, italic: true))
+                    .foregroundColor(Theme.inkFaded)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding()
+            } else {
+                Text(text)
+                    .font(Theme.bodyFont(size: 14))
+                    .foregroundColor(Theme.parchmentDark)
+                    .lineSpacing(4)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .multilineTextAlignment(.leading)
+                    .padding()
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .frame(maxHeight: 260)
+        .background(Theme.parchment.opacity(0.05))
+        .clipShape(RoundedRectangle(cornerRadius: 8))
+        .overlay(
+            RoundedRectangle(cornerRadius: 8)
+                .stroke(Theme.parchmentDeep.opacity(0.15), lineWidth: 1)
+        )
+    }
+}
+
+struct ResolutionDecisionCard: View {
+    @ObservedObject var viewModel: GameViewModel
+    @State private var showingResistanceRoll = false
+
+    var body: some View {
+        Group {
+            if let choice = viewModel.gameState.pendingResolution?.pendingChoice {
+                VStack(alignment: .leading, spacing: 12) {
+                    Text(choice.prompt ?? "Choose what happens next.")
+                        .font(Theme.bodyFont(size: 15))
+                        .foregroundColor(Theme.parchment)
+
+                    ForEach(Array(choice.options.enumerated()), id: \.offset) { index, option in
+                        Button {
+                            showingResistanceRoll = false
+                            _ = viewModel.choosePendingChoice(at: index)
+                        } label: {
+                            HStack {
+                                Text(option.title)
+                                    .font(Theme.bodyFont(size: 14))
+                                    .foregroundColor(Theme.parchment)
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                                    .font(.system(size: 11, weight: .bold))
+                                    .foregroundColor(Theme.gold)
+                            }
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 12)
+                            .background(Theme.parchment.opacity(0.06))
+                            .clipShape(RoundedRectangle(cornerRadius: 8))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .stroke(Theme.parchmentDeep.opacity(0.2), lineWidth: 1)
+                            )
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding(16)
+                .background(Theme.leather.opacity(0.65))
+                .clipShape(RoundedRectangle(cornerRadius: 10))
+            } else if let resistance = viewModel.gameState.pendingResolution?.pendingResistance {
+                VStack(alignment: .leading, spacing: 12) {
+                    Text(resistance.prompt ?? "A consequence is about to land.")
+                        .font(Theme.bodyFont(size: 15))
+                        .foregroundColor(Theme.parchment)
+
+                    Text("Resist with \(resistance.attribute.title)")
+                        .font(Theme.displayFont(size: 18))
+                        .foregroundColor(Theme.gold)
+
+                    Text(resistance.attribute.actionTypes.joined(separator: ", "))
+                        .font(Theme.systemFont(size: 11))
+                        .foregroundColor(Theme.inkFaded)
+
+                    if showingResistanceRoll {
+                        let pool = viewModel.pendingResistanceDicePool() ?? 0
+                        Text(pool > 0
+                             ? "Roll \(pool)d6 and pay 6 minus the highest result in Stress."
+                             : "Roll 2d6, keep the lower die, and pay 6 minus that result in Stress.")
+                            .font(Theme.systemFont(size: 12))
+                            .foregroundColor(Theme.parchmentDark)
+
+                        HStack(spacing: 12) {
+                            Button("Back") {
+                                showingResistanceRoll = false
+                            }
+                            .font(Theme.systemFont(size: 13, weight: .semibold))
+                            .foregroundColor(Theme.parchmentDark)
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 10)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .stroke(Theme.parchmentDeep.opacity(0.35), lineWidth: 1)
+                            )
+
+                            Button("Roll Resistance") {
+                                _ = viewModel.resistPendingConsequence()
+                                showingResistanceRoll = false
+                            }
+                            .font(Theme.systemFont(size: 13, weight: .semibold))
+                            .foregroundColor(Theme.ink)
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 10)
+                            .background(Theme.gold)
+                            .clipShape(RoundedRectangle(cornerRadius: 8))
+                        }
+                    } else {
+                        HStack(spacing: 12) {
+                            Button("Take It") {
+                                _ = viewModel.acceptPendingResistance()
+                            }
+                            .font(Theme.systemFont(size: 13, weight: .semibold))
+                            .foregroundColor(Theme.parchmentDark)
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 10)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .stroke(Theme.parchmentDeep.opacity(0.35), lineWidth: 1)
+                            )
+
+                            Button("Resist") {
+                                showingResistanceRoll = true
+                            }
+                            .font(Theme.systemFont(size: 13, weight: .semibold))
+                            .foregroundColor(Theme.ink)
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 10)
+                            .background(Theme.gold)
+                            .clipShape(RoundedRectangle(cornerRadius: 8))
+                        }
+                    }
+                }
+                .padding(16)
+                .background(Theme.leather.opacity(0.65))
+                .clipShape(RoundedRectangle(cornerRadius: 10))
+            }
+        }
+        .onChange(of: viewModel.gameState.pendingResolution?.pendingResistance?.attribute.rawValue) { _ in
+            showingResistanceRoll = false
+        }
+        .onChange(of: viewModel.gameState.pendingResolution?.pendingChoice?.options.count) { _ in
+            showingResistanceRoll = false
+        }
+    }
+}
+
 struct DiceRollView: View {
     @ObservedObject var viewModel: GameViewModel
     let action: ActionOption
@@ -55,10 +214,14 @@ struct DiceRollView: View {
         AudioManager.shared.play(sound: "sfx_dice_land.wav")
         showVignette = false
         isRolling = false
+        let debugOverride = displayedProjection.flatMap { projection in
+            viewModel.debugActionDiceOverride(rawPool: projection.rawDicePool)
+        }
+        let resolvedDice = debugOverride ?? results
         let rollResult = viewModel.performAction(for: action,
                                                  with: character,
                                                  interactableID: interactableID,
-                                                 usingDice: results,
+                                                 usingDice: resolvedDice,
                                                  chosenOptionalModifierIDs: Array(chosenModifierIDs))
         self.result = rollResult
         if let rolled = rollResult.actualDiceRolled {
@@ -109,6 +272,17 @@ struct DiceRollView: View {
         default:
             return Theme.parchment
         }
+    }
+
+    private var displayedConsequenceText: String {
+        if let pending = viewModel.gameState.pendingResolution {
+            return pending.resolvedText
+        }
+        return result?.consequences ?? ""
+    }
+
+    private var canDismiss: Bool {
+        viewModel.gameState.pendingResolution?.isAwaitingDecision != true
     }
 
     var body: some View {
@@ -162,24 +336,14 @@ struct DiceRollView: View {
 
                 Spacer()
 
-                if let result = result, showOutcome {
-                    ScrollView {
-                        Text(result.consequences)
-                            .font(Theme.bodyFont(size: 14))
-                            .foregroundColor(Theme.parchmentDark)
-                            .lineSpacing(4)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .multilineTextAlignment(.leading)
-                            .padding()
-                            .fixedSize(horizontal: false, vertical: true)
+                if result != nil, showOutcome {
+                    VStack(spacing: 14) {
+                        ResolutionNarrativeView(text: displayedConsequenceText)
+
+                        if viewModel.gameState.pendingResolution?.isAwaitingDecision == true {
+                            ResolutionDecisionCard(viewModel: viewModel)
+                        }
                     }
-                    .frame(maxHeight: 300)
-                    .background(Theme.parchment.opacity(0.05))
-                    .clipShape(RoundedRectangle(cornerRadius: 8))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 8)
-                            .stroke(Theme.parchmentDeep.opacity(0.15), lineWidth: 1)
-                    )
                 } else if let proj = displayedProjection {
                     VStack(spacing: 12) {
                         Text("\(proj.finalDiceCount)d6")
@@ -326,6 +490,13 @@ struct DiceRollView: View {
                 Spacer()
 
                 if result == nil {
+                    if let projection = displayedProjection,
+                       let debugDice = viewModel.debugActionDiceOverride(rawPool: projection.rawDicePool) {
+                        Text("Debug fixed roll: \(debugDice.map(String.init).joined(separator: ", "))")
+                            .font(Theme.systemFont(size: 11))
+                            .foregroundColor(Theme.goldDim)
+                    }
+
                     let canRoll = !isRolling && diceController.isViewportReady && !diceValues.isEmpty
                     Button("Roll the Dice") {
                         guard canRoll else { return }
@@ -350,6 +521,9 @@ struct DiceRollView: View {
                     .opacity(canRoll ? 1 : 0.55)
                 } else {
                     Button("Done") {
+                        if viewModel.gameState.pendingResolution?.isComplete == true {
+                            viewModel.clearPendingResolution()
+                        }
                         dismiss()
                     }
                     .font(Theme.displayFont(size: 16, weight: .semibold))
@@ -360,6 +534,8 @@ struct DiceRollView: View {
                         RoundedRectangle(cornerRadius: 6)
                             .stroke(Theme.parchmentDeep.opacity(0.4), lineWidth: 1)
                     )
+                    .disabled(!canDismiss)
+                    .opacity(canDismiss ? 1 : 0.45)
                 }
             }
             .padding(30)
@@ -392,5 +568,6 @@ struct DiceRollView: View {
                 }
             }
         )
+        .interactiveDismissDisabled(!canDismiss)
     }
 }

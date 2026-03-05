@@ -406,6 +406,95 @@ final class CardGameTests: XCTestCase {
         )
     }
 
+    func testScenarioValidatorRejectsUnsupportedActionTypes() throws {
+        let scenarioID = "validator_bad_action"
+        let fixture = try makeValidatorFixtureRoot(scenarioID: scenarioID)
+        defer { try? FileManager.default.removeItem(at: fixture.rootURL) }
+
+        let invalidAction = ActionOption(
+            name: "Do Something Impossible",
+            actionType: "Dance",
+            position: .risky,
+            effect: .standard,
+            outcomes: [.success: [.gainStress(1)]]
+        )
+        let interactable = Interactable(
+            id: "invalid_action_test",
+            title: "Broken Console",
+            description: "This should fail validation.",
+            availableActions: [invalidAction]
+        )
+        try writeJSON([interactable], to: fixture.scenarioURL.appendingPathComponent("interactables.json"))
+
+        let report = ScenarioValidator().validateScenario(at: fixture.scenarioURL)
+        XCTAssertTrue(
+            report.errors.contains(where: { $0.message.contains("Unsupported actionType 'Dance'") }),
+            report.formattedDescription
+        )
+    }
+
+    func testScenarioValidatorWarnsForUnreachableFixedMapNodes() throws {
+        let scenarioID = "validator_unreachable_node"
+        let fixture = try makeValidatorFixtureRoot(scenarioID: scenarioID, mapFile: "map.json")
+        defer { try? FileManager.default.removeItem(at: fixture.rootURL) }
+
+        let entryNodeID = UUID(uuidString: "00000000-0000-0000-0000-000000000101")!
+        let unreachableNodeID = UUID(uuidString: "00000000-0000-0000-0000-000000000102")!
+        let map = DungeonMap(
+            nodes: [
+                entryNodeID.uuidString: MapNode(
+                    id: entryNodeID,
+                    name: "Entry",
+                    soundProfile: "",
+                    interactables: [],
+                    connections: [NodeConnection(toNodeID: entryNodeID, description: "Loop")]
+                ),
+                unreachableNodeID.uuidString: MapNode(
+                    id: unreachableNodeID,
+                    name: "Isolated Wing",
+                    soundProfile: "",
+                    interactables: [],
+                    connections: []
+                )
+            ],
+            startingNodeID: entryNodeID
+        )
+        try writeJSON(map, to: fixture.scenarioURL.appendingPathComponent("map.json"))
+
+        let report = ScenarioValidator().validateScenario(at: fixture.scenarioURL)
+        XCTAssertTrue(
+            report.warnings.contains(where: { $0.message.contains("Node is unreachable from the scenario entry node.") }),
+            report.formattedDescription
+        )
+    }
+
+    func testScenarioValidatorWarnsForLikelySoftLockNodes() throws {
+        let scenarioID = "validator_soft_lock"
+        let fixture = try makeValidatorFixtureRoot(scenarioID: scenarioID, mapFile: "map.json")
+        defer { try? FileManager.default.removeItem(at: fixture.rootURL) }
+
+        let entryNodeID = UUID(uuidString: "00000000-0000-0000-0000-000000000201")!
+        let map = DungeonMap(
+            nodes: [
+                entryNodeID.uuidString: MapNode(
+                    id: entryNodeID,
+                    name: "Dead End",
+                    soundProfile: "",
+                    interactables: [],
+                    connections: []
+                )
+            ],
+            startingNodeID: entryNodeID
+        )
+        try writeJSON(map, to: fixture.scenarioURL.appendingPathComponent("map.json"))
+
+        let report = ScenarioValidator().validateScenario(at: fixture.scenarioURL)
+        XCTAssertTrue(
+            report.warnings.contains(where: { $0.message.contains("possible soft-lock") }),
+            report.formattedDescription
+        )
+    }
+
     func testStartNewRunUsesScenarioNativeArchetypes() throws {
         ContentLoader.shared = ContentLoader(scenario: "charons_bargain")
         let vm = GameViewModel()
@@ -523,6 +612,306 @@ final class CardGameTests: XCTestCase {
         )
 
         XCTAssertEqual(DungeonGenerator.resolveEntryNodeID("Docking Bay", in: map), dockingBayID)
+    }
+
+    func testSaveGameStoreRoundTripsGameState() throws {
+        let tempDirectory = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        let saveURL = tempDirectory.appendingPathComponent("savegame.json")
+        let store = SaveGameStore(saveURL: saveURL)
+
+        let partyMember = Character(
+            id: UUID(),
+            name: "Saver",
+            characterClass: "Scholar",
+            stress: 2,
+            harm: HarmState(),
+            actions: ["Study": 2]
+        )
+        let gameState = GameState(
+            scenarioName: "charons_bargain",
+            party: [partyMember],
+            scenarioFlags: ["flag": true],
+            scenarioCounters: ["counter": 3]
+        )
+
+        defer { try? store.delete() }
+
+        try store.save(gameState)
+        XCTAssertTrue(store.saveExists())
+
+        let loaded = try store.load()
+        XCTAssertEqual(loaded.scenarioName, "charons_bargain")
+        XCTAssertEqual(loaded.party.count, 1)
+        XCTAssertEqual(loaded.party[0].name, "Saver")
+        XCTAssertEqual(loaded.scenarioFlags["flag"], true)
+        XCTAssertEqual(loaded.scenarioCounters["counter"], 3)
+    }
+
+    func testCreateChoicePausesResolutionAndPersistsAcrossSaveLoad() throws {
+        let tempDirectory = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        let saveURL = tempDirectory.appendingPathComponent("savegame.json")
+        let store = SaveGameStore(saveURL: saveURL)
+        defer { try? store.delete() }
+
+        let character = Character(
+            id: UUID(),
+            name: "Decider",
+            characterClass: "Scholar",
+            stress: 0,
+            harm: HarmState(),
+            actions: ["Study": 2]
+        )
+        let vm = GameViewModel(saveStore: store)
+        vm.gameState.party = [character]
+
+        let leftChoice = ChoiceOption(
+            title: "Take the left idol",
+            consequences: [.setScenarioFlag("took_left_idol")]
+        )
+        let rightChoice = ChoiceOption(
+            title: "Pocket the silver key",
+            consequences: [.incrementScenarioCounter("silver_keys", amount: 1)]
+        )
+        var choiceConsequence = Consequence.createChoice(options: [leftChoice, rightChoice])
+        choiceConsequence.description = "Which prize do you claim?"
+
+        let freeAction = ActionOption(
+            name: "Search the dais",
+            actionType: "Study",
+            position: .controlled,
+            effect: .standard,
+            requiresTest: false,
+            outcomes: [
+                .success: [
+                    .setScenarioFlag("dais_opened"),
+                    choiceConsequence,
+                    .incrementScenarioCounter("after_choice", amount: 1)
+                ]
+            ]
+        )
+
+        _ = vm.performFreeAction(for: freeAction, with: character, interactableID: nil)
+
+        XCTAssertEqual(vm.gameState.scenarioFlags["dais_opened"], true)
+        XCTAssertNil(vm.gameState.scenarioFlags["took_left_idol"])
+        XCTAssertNil(vm.gameState.scenarioCounters["silver_keys"])
+        XCTAssertNil(vm.gameState.scenarioCounters["after_choice"])
+        XCTAssertEqual(vm.gameState.pendingResolution?.pendingChoice?.prompt, "Which prize do you claim?")
+
+        let loadedVM = GameViewModel(saveStore: store)
+        XCTAssertTrue(loadedVM.loadGame())
+        XCTAssertEqual(loadedVM.gameState.pendingResolution?.pendingChoice?.options.count, 2)
+        XCTAssertEqual(loadedVM.gameState.scenarioFlags["dais_opened"], true)
+
+        _ = loadedVM.choosePendingChoice(at: 1)
+
+        XCTAssertEqual(loadedVM.gameState.scenarioCounters["silver_keys"], 1)
+        XCTAssertEqual(loadedVM.gameState.scenarioCounters["after_choice"], 1)
+        XCTAssertNil(loadedVM.gameState.scenarioFlags["took_left_idol"])
+        XCTAssertNil(loadedVM.gameState.pendingResolution?.pendingChoice)
+        XCTAssertTrue(loadedVM.gameState.pendingResolution?.isComplete == true)
+    }
+
+    func testResistingStressConsequenceUsesResolveAndReducesAppliedStress() throws {
+        let character = Character(
+            id: UUID(),
+            name: "Occultist",
+            characterClass: "Whisper",
+            stress: 0,
+            harm: HarmState(),
+            actions: ["Attune": 2]
+        )
+        let vm = GameViewModel()
+        vm.gameState.party = [character]
+
+        let action = ActionOption(
+            name: "Touch the glyph",
+            actionType: "Attune",
+            position: .risky,
+            effect: .standard,
+            outcomes: [.success: [.gainStress(3)]]
+        )
+
+        let result = vm.performAction(for: action, with: character, interactableID: nil, usingDice: [6])
+
+        XCTAssertTrue(result.isAwaitingDecision)
+        XCTAssertEqual(vm.pendingResistanceAttribute(), .resolve)
+
+        let resistance = vm.resistPendingConsequence(usingDice: [6])
+
+        XCTAssertEqual(resistance?.highestRoll, 6)
+        XCTAssertEqual(resistance?.stressCost, 0)
+        XCTAssertEqual(vm.gameState.party[0].stress, 1)
+        XCTAssertTrue(vm.gameState.pendingResolution?.isComplete == true)
+        XCTAssertEqual(vm.gameState.pendingResolution?.resolvedText.contains("Resisted with Resolve"), true)
+    }
+
+    func testResistingClockTickReducesProgress() throws {
+        let character = Character(
+            id: UUID(),
+            name: "Scout",
+            characterClass: "Scout",
+            stress: 0,
+            harm: HarmState(),
+            actions: ["Study": 1]
+        )
+        let vm = GameViewModel()
+        vm.gameState.party = [character]
+        vm.gameState.activeClocks = [GameClock(name: "Alarm", segments: 4, progress: 1)]
+
+        let action = ActionOption(
+            name: "Probe the mechanism",
+            actionType: "Study",
+            position: .risky,
+            effect: .standard,
+            outcomes: [.success: [.tickClock(name: "Alarm", amount: 3)]]
+        )
+
+        _ = vm.performAction(for: action, with: character, interactableID: nil, usingDice: [6])
+        XCTAssertEqual(vm.pendingResistanceAttribute(), .insight)
+
+        _ = vm.resistPendingConsequence(usingDice: [6])
+
+        XCTAssertEqual(vm.gameState.activeClocks.first?.progress, 2)
+        XCTAssertTrue(vm.gameState.pendingResolution?.isComplete == true)
+    }
+
+    func testResistanceStressOverflowAppliesOverflowHarm() throws {
+        ContentLoader.shared = ContentLoader()
+
+        let character = Character(
+            id: UUID(),
+            name: "Overloaded",
+            characterClass: "Scholar",
+            stress: 9,
+            harm: HarmState(),
+            actions: ["Study": 1]
+        )
+        let vm = GameViewModel()
+        vm.gameState.party = [character]
+        vm.gameState.activeClocks = [GameClock(name: "Alarm", segments: 4, progress: 0)]
+
+        let action = ActionOption(
+            name: "Read the omen",
+            actionType: "Study",
+            position: .risky,
+            effect: .standard,
+            outcomes: [.success: [.tickClock(name: "Alarm", amount: 2)]]
+        )
+
+        _ = vm.performAction(for: action, with: character, interactableID: nil, usingDice: [6])
+        let resistance = vm.resistPendingConsequence(usingDice: [1])
+
+        XCTAssertEqual(resistance?.stressCost, 5)
+        XCTAssertEqual(vm.gameState.party[0].stress, 0)
+        XCTAssertFalse(vm.gameState.party[0].harm.lesser.isEmpty)
+        XCTAssertTrue(vm.gameState.pendingResolution?.resolvedText.contains("Stress Overload!") == true)
+    }
+
+    func testScenarioRuntimeGroupedMoveUpdatesPartyLocationsAndDiscovery() throws {
+        let startID = UUID()
+        let nextID = UUID()
+        let connection = NodeConnection(toNodeID: nextID, description: "Forward")
+        let runtime = ScenarioRuntime()
+
+        let startNode = MapNode(
+            id: startID,
+            name: "Start",
+            soundProfile: "",
+            interactables: [],
+            connections: [connection]
+        )
+        let nextNode = MapNode(
+            id: nextID,
+            name: "Next",
+            soundProfile: "",
+            interactables: [],
+            connections: [],
+            isDiscovered: false
+        )
+
+        let scout = Character(id: UUID(), name: "Scout", characterClass: "Scout", stress: 0, harm: HarmState(), actions: ["Prowl": 1])
+        let scholar = Character(id: UUID(), name: "Scholar", characterClass: "Scholar", stress: 0, harm: HarmState(), actions: ["Study": 1])
+        var gameState = GameState(
+            party: [scout, scholar],
+            dungeon: DungeonMap(
+                nodes: [
+                    startID.uuidString: startNode,
+                    nextID.uuidString: nextNode
+                ],
+                startingNodeID: startID
+            ),
+            characterLocations: [
+                scout.id.uuidString: startID,
+                scholar.id.uuidString: startID
+            ]
+        )
+
+        let outcome = runtime.move(
+            characterID: scout.id,
+            to: connection,
+            movingGroupedParty: true,
+            in: &gameState
+        )
+
+        XCTAssertTrue(outcome.didMove)
+        XCTAssertEqual(gameState.characterLocations[scout.id.uuidString], nextID)
+        XCTAssertEqual(gameState.characterLocations[scholar.id.uuidString], nextID)
+        XCTAssertEqual(gameState.dungeon?.nodes[nextID.uuidString]?.isDiscovered, true)
+        XCTAssertEqual(outcome.enteredNode?.id, nextID)
+    }
+
+    private func makeValidatorFixtureRoot(
+        scenarioID: String,
+        mapFile: String? = nil,
+        entryNode: String? = nil
+    ) throws -> (rootURL: URL, scenarioURL: URL) {
+        let rootURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        let scenariosURL = rootURL.appendingPathComponent("Scenarios", isDirectory: true)
+        let scenarioURL = scenariosURL.appendingPathComponent(scenarioID, isDirectory: true)
+
+        try FileManager.default.createDirectory(at: scenarioURL, withIntermediateDirectories: true)
+
+        let globalHarmFamily = HarmFamily(
+            id: "test_harm",
+            lesser: HarmTier(description: "Minor strain"),
+            moderate: HarmTier(description: "Moderate strain"),
+            severe: HarmTier(description: "Severe strain"),
+            fatal: HarmTier(description: "Fatal strain")
+        )
+        try writeJSON([globalHarmFamily], to: rootURL.appendingPathComponent("harm_families.json"))
+
+        let manifest = ScenarioManifest(
+            id: scenarioID,
+            title: "Validator Fixture",
+            description: "Generated by unit tests.",
+            entryNode: entryNode,
+            mapFile: mapFile,
+            partySize: 1,
+            nativeArchetypeIDs: ["tester"],
+            stressOverflowHarmFamilyID: "test_harm"
+        )
+        try writeJSON(manifest, to: scenarioURL.appendingPathComponent("scenario.json"))
+
+        let archetype = ArchetypeDefinition(
+            id: "tester",
+            name: "Tester",
+            description: "Validation test archetype.",
+            defaultActions: ["Study": 1]
+        )
+        try writeJSON([archetype], to: scenarioURL.appendingPathComponent("archetypes.json"))
+
+        return (rootURL, scenarioURL)
+    }
+
+    private func writeJSON<T: Encodable>(_ value: T, to url: URL) throws {
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+        let data = try encoder.encode(value)
+        try data.write(to: url, options: .atomic)
     }
 
 }

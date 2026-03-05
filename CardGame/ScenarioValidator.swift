@@ -58,6 +58,11 @@ struct ScenarioValidationReport {
 struct ScenarioValidator {
     private let fileManager: FileManager
     private let decoder: JSONDecoder
+    private static let supportedActionTypes: Set<String> = [
+        "Study", "Survey", "Hunt", "Tinker",
+        "Prowl", "Finesse", "Wreck", "Skirmish",
+        "Attune", "Command", "Consort", "Sway"
+    ]
 
     init(fileManager: FileManager = .default) {
         self.fileManager = fileManager
@@ -214,20 +219,26 @@ struct ScenarioValidator {
             treasureIDs: Set(treasures.map(\.id)),
             eventIDs: Set(events.map(\.id)),
             harmFamilyIDs: Set(harmFamilies.map(\.id)),
-            archetypeIDs: Set(archetypes.map(\.id))
+            archetypeIDs: Set(archetypes.map(\.id)),
+            supportedActionTypes: Self.supportedActionTypes
         )
 
+        let resolvedEntryNodeID: UUID?
         if let entryNode = manifest.entryNode {
             if let map {
-                if resolveEntryNodeID(entryNode, in: map) == nil {
+                if let resolved = resolveEntryNodeID(entryNode, in: map) {
+                    resolvedEntryNodeID = resolved
+                } else {
                     state.report.add(
                         severity: .error,
                         file: manifest.mapFile ?? "map.json",
                         path: "entryNode",
                         message: "Scenario entryNode '\(entryNode)' does not match any fixed-map node id or unique node name."
                     )
+                    resolvedEntryNodeID = map.startingNodeID
                 }
             } else {
+                resolvedEntryNodeID = nil
                 state.report.add(
                     severity: .warning,
                     file: "scenario.json",
@@ -235,6 +246,10 @@ struct ScenarioValidator {
                     message: "entryNode is only consumed by fixed-map scenarios."
                 )
             }
+        } else if let map {
+            resolvedEntryNodeID = map.startingNodeID
+        } else {
+            resolvedEntryNodeID = nil
         }
 
         let stressOverflowHarmFamilyID = manifest.stressOverflowHarmFamilyID ?? "mental_fraying"
@@ -290,7 +305,13 @@ struct ScenarioValidator {
         }
 
         if let map {
-            validateMap(map, mapFile: manifest.mapFile ?? "map.json", catalog: catalog, state: &state)
+            validateMap(
+                map,
+                mapFile: manifest.mapFile ?? "map.json",
+                entryNodeID: resolvedEntryNodeID ?? map.startingNodeID,
+                catalog: catalog,
+                state: &state
+            )
         }
 
         for interactable in interactables {
@@ -341,12 +362,35 @@ struct ScenarioValidator {
             )
         }
 
+        let unreferencedTreasures = catalog.treasureIDs.subtracting(state.referencedTreasureIDs)
+        for treasureID in unreferencedTreasures.sorted() {
+            state.report.add(
+                severity: .warning,
+                file: "treasures.json",
+                path: "treasure[\(treasureID)]",
+                message: "Treasure is defined but never referenced by gainTreasure or characterHasTreasureId."
+            )
+        }
+
+        let unreferencedClocks = catalog.clockNames
+            .subtracting(state.referencedClockNames)
+            .subtracting(state.intrinsicallyReferencedClockNames)
+        for clockName in unreferencedClocks.sorted() {
+            state.report.add(
+                severity: .warning,
+                file: "clocks.json",
+                path: "clock[\(clockName)]",
+                message: "Clock is defined but never referenced by tickClock/clockProgress and has no intrinsic behavior."
+            )
+        }
+
         return state.report
     }
 
     private func validateMap(
         _ map: DungeonMap,
         mapFile: String,
+        entryNodeID: UUID,
         catalog: ValidationCatalog,
         state: inout ValidationState
     ) {
@@ -358,6 +402,18 @@ struct ScenarioValidator {
                 message: "startingNodeID does not exist in the map node table."
             )
         }
+
+        if !catalog.nodeIDs.contains(entryNodeID) {
+            state.report.add(
+                severity: .error,
+                file: mapFile,
+                path: "entryNode",
+                message: "Resolved entry node \(entryNodeID.uuidString) does not exist in the map node table."
+            )
+            return
+        }
+
+        let reachableNodeIDs = computeReachableNodeIDs(from: entryNodeID, in: map)
 
         for (key, node) in map.nodes {
             if key != node.id.uuidString {
@@ -380,6 +436,22 @@ struct ScenarioValidator {
                 }
             }
 
+            if !reachableNodeIDs.contains(node.id) {
+                state.report.add(
+                    severity: .warning,
+                    file: mapFile,
+                    path: "node[\(node.id.uuidString)]",
+                    message: "Node is unreachable from the scenario entry node."
+                )
+            } else if isLikelySoftLockNode(node) {
+                state.report.add(
+                    severity: .warning,
+                    file: mapFile,
+                    path: "node[\(node.id.uuidString)]",
+                    message: "Node has no unlocked exits and no obvious consequence path to unlock/finish the run (possible soft-lock)."
+                )
+            }
+
             for interactable in node.interactables {
                 validateInteractable(
                     interactable,
@@ -397,6 +469,10 @@ struct ScenarioValidator {
         catalog: ValidationCatalog,
         state: inout ValidationState
     ) {
+        if clock.progress > 0 || clock.onTickConsequences != nil || clock.onCompleteConsequences != nil {
+            state.intrinsicallyReferencedClockNames.insert(clock.name)
+        }
+
         if clock.segments <= 0 {
             state.report.add(
                 severity: .error,
@@ -497,6 +573,87 @@ struct ScenarioValidator {
         return matches[0].id
     }
 
+    private func computeReachableNodeIDs(from startNodeID: UUID, in map: DungeonMap) -> Set<UUID> {
+        guard map.nodes[startNodeID.uuidString] != nil else { return [] }
+
+        var visited: Set<UUID> = [startNodeID]
+        var queue: [UUID] = [startNodeID]
+        var head = 0
+
+        while head < queue.count {
+            let currentNodeID = queue[head]
+            head += 1
+
+            guard let node = map.nodes[currentNodeID.uuidString] else { continue }
+            for connection in node.connections {
+                guard map.nodes[connection.toNodeID.uuidString] != nil else { continue }
+                if visited.insert(connection.toNodeID).inserted {
+                    queue.append(connection.toNodeID)
+                }
+            }
+        }
+
+        return visited
+    }
+
+    private func isLikelySoftLockNode(_ node: MapNode) -> Bool {
+        if node.connections.contains(where: { $0.isUnlocked }) {
+            return false
+        }
+
+        for interactable in node.interactables {
+            for action in interactable.availableActions {
+                if actionHasProgressionPath(action) {
+                    return false
+                }
+            }
+        }
+
+        return true
+    }
+
+    private func actionHasProgressionPath(_ action: ActionOption) -> Bool {
+        action.outcomes.values.contains { consequencesContainProgressionPath($0) }
+    }
+
+    private func consequencesContainProgressionPath(_ consequences: [Consequence]) -> Bool {
+        for consequence in consequences {
+            switch consequence.kind {
+            case .unlockConnection, .triggerEvent, .endRun:
+                return true
+
+            case .createChoice:
+                if let options = consequence.choiceOptions,
+                   options.contains(where: { consequencesContainProgressionPath($0.consequences) }) {
+                    return true
+                }
+
+            case .triggerConsequences:
+                if let nested = consequence.triggered,
+                   consequencesContainProgressionPath(nested) {
+                    return true
+                }
+
+            case .addAction:
+                if let action = consequence.newAction,
+                   actionHasProgressionPath(action) {
+                    return true
+                }
+
+            case .addInteractable, .addInteractableHere:
+                if let interactable = consequence.newInteractable,
+                   interactable.availableActions.contains(where: actionHasProgressionPath(_:)) {
+                    return true
+                }
+
+            default:
+                continue
+            }
+        }
+
+        return false
+    }
+
     private func validateAction(
         _ action: ActionOption,
         file: String,
@@ -504,6 +661,16 @@ struct ScenarioValidator {
         catalog: ValidationCatalog,
         state: inout ValidationState
     ) {
+        if !catalog.supportedActionTypes.contains(action.actionType) {
+            let supported = catalog.supportedActionTypes.sorted().joined(separator: ", ")
+            state.report.add(
+                severity: .error,
+                file: file,
+                path: path,
+                message: "Unsupported actionType '\(action.actionType)'. Supported values: \(supported)."
+            )
+        }
+
         let orderedOutcomes: [RollOutcome] = [.success, .partial, .failure]
         for outcome in orderedOutcomes {
             guard let consequences = action.outcomes[outcome] else { continue }
@@ -579,6 +746,7 @@ struct ScenarioValidator {
                     state: &state
                 )
                 if let clockName = consequence.clockName {
+                    state.referencedClockNames.insert(clockName)
                     if !catalog.clockNames.contains(clockName) {
                         state.report.add(
                             severity: .error,
@@ -728,6 +896,7 @@ struct ScenarioValidator {
 
             case .gainTreasure:
                 if let treasureID = consequence.treasureId {
+                    state.referencedTreasureIDs.insert(treasureID)
                     if !catalog.treasureIDs.contains(treasureID) {
                         state.report.add(
                             severity: .error,
@@ -873,6 +1042,17 @@ struct ScenarioValidator {
                     )
                 }
             }
+
+            if let resistance = consequence.resistance,
+               let amount = resistance.amount,
+               amount < 0 {
+                state.report.add(
+                    severity: .error,
+                    file: file,
+                    path: "\(consequencePath).resistance.amount",
+                    message: "resistance.amount must be zero or greater."
+                )
+            }
         }
     }
 
@@ -908,6 +1088,7 @@ struct ScenarioValidator {
 
             case .characterHasTreasureId:
                 if let treasureID = condition.stringParam {
+                    state.referencedTreasureIDs.insert(treasureID)
                     if !catalog.treasureIDs.contains(treasureID) {
                         state.report.add(
                             severity: .error,
@@ -944,6 +1125,7 @@ struct ScenarioValidator {
                 )
 
                 if let clockName = condition.stringParam {
+                    state.referencedClockNames.insert(clockName)
                     if !catalog.clockNames.contains(clockName) {
                         state.report.add(
                             severity: .error,
@@ -1102,11 +1284,15 @@ struct ScenarioValidator {
         let eventIDs: Set<String>
         let harmFamilyIDs: Set<String>
         let archetypeIDs: Set<String>
+        let supportedActionTypes: Set<String>
     }
 
     private struct ValidationState {
         var report: ScenarioValidationReport
         var referencedEventIDs: Set<String> = []
+        var referencedTreasureIDs: Set<String> = []
+        var referencedClockNames: Set<String> = []
+        var intrinsicallyReferencedClockNames: Set<String> = []
         var writtenFlagIDs: Set<String> = []
         var readFlagIDs: Set<String> = []
         var writtenCounterIDs: Set<String> = []

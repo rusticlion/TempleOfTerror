@@ -24,6 +24,107 @@ struct PartyBuildPlan: Codable, Equatable {
     var mode: PartyBuildMode
 }
 
+enum ResistanceAttribute: String, Codable, CaseIterable {
+    case insight
+    case prowess
+    case resolve
+
+    var title: String {
+        rawValue.capitalized
+    }
+
+    var actionTypes: [String] {
+        switch self {
+        case .insight:
+            return ["Study", "Survey", "Hunt", "Tinker"]
+        case .prowess:
+            return ["Prowl", "Finesse", "Wreck", "Skirmish"]
+        case .resolve:
+            return ["Attune", "Command", "Consort", "Sway"]
+        }
+    }
+
+    func dicePool(for character: Character) -> Int {
+        actionTypes.reduce(0) { partialResult, actionType in
+            partialResult + max(character.actions[actionType] ?? 0, 0)
+        }
+    }
+}
+
+struct ResistanceRule: Codable {
+    var attribute: ResistanceAttribute
+    var amount: Int? = nil
+}
+
+struct ConsequenceContext: Codable {
+    let characterID: UUID
+    let interactableID: String?
+    let finalEffect: RollEffect
+    let finalPosition: RollPosition
+    let isCritical: Bool
+
+    func character(in gameState: GameState) -> Character? {
+        gameState.party.first(where: { $0.id == characterID })
+    }
+}
+
+enum ResolutionSource: String, Codable {
+    case roll
+    case freeAction
+}
+
+struct PendingRollPresentation: Codable {
+    var characterID: UUID
+    var actionName: String
+    var highestRoll: Int
+    var outcome: String
+    var actualDiceRolled: [Int]?
+    var isCritical: Bool
+    var finalEffect: RollEffect?
+}
+
+struct PendingChoiceState: Codable {
+    var prompt: String?
+    var options: [ChoiceOption]
+}
+
+struct PendingResistanceState: Codable {
+    var consequence: Consequence
+    var prompt: String?
+    var attribute: ResistanceAttribute
+}
+
+struct ConsequenceResolutionFrame: Codable {
+    var context: ConsequenceContext
+    var remainingConsequences: [Consequence]
+}
+
+struct PendingConsequenceResolution: Codable {
+    var source: ResolutionSource
+    var frames: [ConsequenceResolutionFrame]
+    var resolvedDescriptions: [String]
+    var pendingChoice: PendingChoiceState?
+    var pendingResistance: PendingResistanceState?
+    var rollPresentation: PendingRollPresentation?
+    var requiresAcknowledgement: Bool = false
+
+    var resolvedText: String {
+        resolvedDescriptions.joined(separator: "\n")
+    }
+
+    var isAwaitingDecision: Bool {
+        pendingChoice != nil || pendingResistance != nil
+    }
+
+    var isComplete: Bool {
+        !isAwaitingDecision && frames.isEmpty
+    }
+
+    var activeContext: ConsequenceContext? {
+        frames.first?.context
+    }
+}
+
 struct GameState: Codable {
     /// Identifier for the scenario that generated this run. Used when loading
     /// to reinitialize the `ContentLoader` with the correct data bundle.
@@ -41,12 +142,13 @@ struct GameState: Codable {
     var scenarioFlags: [String: Bool] = [:]
     var scenarioCounters: [String: Int] = [:]
     var launchPartyPlan: PartyBuildPlan? = nil
+    var pendingResolution: PendingConsequenceResolution? = nil
     // ... other global state can be added later
 
     enum CodingKeys: String, CodingKey {
         case scenarioName, party, activeClocks, dungeon, currentNodeID
         case characterLocations, status, runOutcome, runOutcomeText
-        case scenarioFlags, scenarioCounters, launchPartyPlan
+        case scenarioFlags, scenarioCounters, launchPartyPlan, pendingResolution
     }
 
     init(
@@ -61,7 +163,8 @@ struct GameState: Codable {
         runOutcomeText: String? = nil,
         scenarioFlags: [String: Bool] = [:],
         scenarioCounters: [String: Int] = [:],
-        launchPartyPlan: PartyBuildPlan? = nil
+        launchPartyPlan: PartyBuildPlan? = nil,
+        pendingResolution: PendingConsequenceResolution? = nil
     ) {
         self.scenarioName = scenarioName
         self.party = party
@@ -75,6 +178,7 @@ struct GameState: Codable {
         self.scenarioFlags = scenarioFlags
         self.scenarioCounters = scenarioCounters
         self.launchPartyPlan = launchPartyPlan
+        self.pendingResolution = pendingResolution
     }
 
     init(from decoder: Decoder) throws {
@@ -91,6 +195,7 @@ struct GameState: Codable {
         scenarioFlags = try container.decodeIfPresent([String: Bool].self, forKey: .scenarioFlags) ?? [:]
         scenarioCounters = try container.decodeIfPresent([String: Int].self, forKey: .scenarioCounters) ?? [:]
         launchPartyPlan = try container.decodeIfPresent(PartyBuildPlan.self, forKey: .launchPartyPlan)
+        pendingResolution = try container.decodeIfPresent(PendingConsequenceResolution.self, forKey: .pendingResolution)
     }
 
     func encode(to encoder: Encoder) throws {
@@ -111,6 +216,7 @@ struct GameState: Codable {
             try container.encode(scenarioCounters, forKey: .scenarioCounters)
         }
         try container.encodeIfPresent(launchPartyPlan, forKey: .launchPartyPlan)
+        try container.encodeIfPresent(pendingResolution, forKey: .pendingResolution)
     }
 }
 
@@ -841,6 +947,7 @@ struct Consequence: Codable {
     var counterId: String?
     var endingOutcome: RunOutcome?
     var endingText: String?
+    var resistance: ResistanceRule?
 
     // Gating Conditions
     var conditions: [GameCondition]?
@@ -854,7 +961,7 @@ struct Consequence: Codable {
         case interactable, treasure, treasureId
         case duration, options, eventId, consequences
         case actionName, action, conditions, description
-        case flagId, counterId, runOutcome, runOutcomeText
+        case flagId, counterId, runOutcome, runOutcomeText, resistance
     }
 
     init(kind: ConsequenceKind) {
@@ -885,6 +992,7 @@ struct Consequence: Codable {
         counterId = try container.decodeIfPresent(String.self, forKey: .counterId)
         endingOutcome = try container.decodeIfPresent(RunOutcome.self, forKey: .runOutcome)
         endingText = try container.decodeIfPresent(String.self, forKey: .runOutcomeText)
+        resistance = try container.decodeIfPresent(ResistanceRule.self, forKey: .resistance)
 
         if resolvedKind == .removeInteractable, interactableId == "self" {
             resolvedKind = .removeSelfInteractable
@@ -1015,6 +1123,26 @@ struct Consequence: Codable {
 
         try container.encodeIfPresent(conditions, forKey: .conditions)
         try container.encodeIfPresent(description, forKey: .description)
+        try container.encodeIfPresent(resistance, forKey: .resistance)
+    }
+}
+
+extension Consequence {
+    var effectiveResistanceRule: ResistanceRule? {
+        if let resistance {
+            return resistance
+        }
+
+        switch kind {
+        case .sufferHarm:
+            return ResistanceRule(attribute: .prowess, amount: 1)
+        case .gainStress:
+            return ResistanceRule(attribute: .resolve, amount: 2)
+        case .tickClock:
+            return ResistanceRule(attribute: .insight, amount: 2)
+        default:
+            return nil
+        }
     }
 }
 
@@ -1260,6 +1388,7 @@ struct DiceRollResult {
     let actualDiceRolled: [Int]?
     let isCritical: Bool?
     let finalEffect: RollEffect?
+    let isAwaitingDecision: Bool
 }
 
 

@@ -14,6 +14,9 @@ struct ContentView: View {
     @State private var showingMap = false // Controls the map sheet
     @State private var showingCharacterSheet = false // Controls the character drawer
     @State private var doorProgress: CGFloat = 0 // For sliding door transition
+#if DEBUG
+    @State private var showingDebugTools = false
+#endif
     @Environment(\.scenePhase) private var scenePhase
 
     init(scenario: String = "tomb", partyPlan: PartyBuildPlan? = nil) {
@@ -49,6 +52,19 @@ struct ContentView: View {
             return text
         }
         return "The tomb claims another party."
+    }
+
+    private var showingPendingResolution: Binding<Bool> {
+        Binding(
+            get: { pendingRoll == nil && viewModel.gameState.pendingResolution != nil },
+            set: { isPresented in
+                if !isPresented,
+                   pendingRoll == nil,
+                   viewModel.gameState.pendingResolution?.isComplete == true {
+                    viewModel.clearPendingResolution()
+                }
+            }
+        )
     }
 
     private func performTransition(to connection: NodeConnection) {
@@ -235,6 +251,9 @@ struct ContentView: View {
                     Text("No action selected")
                 }
             }
+            .sheet(isPresented: showingPendingResolution) {
+                PendingResolutionView(viewModel: viewModel)
+            }
 
             SlidingDoor(progress: doorProgress)
 
@@ -276,6 +295,15 @@ struct ContentView: View {
         .sheet(isPresented: $showingMap) {
             MapView(viewModel: viewModel)
         }
+#if DEBUG
+        .sheet(isPresented: $showingDebugTools) {
+            DebugToolsView(
+                viewModel: viewModel,
+                selectedCharacterID: $selectedCharacterID
+            )
+            .presentationDetents([.large])
+        }
+#endif
         .onChange(of: scenePhase) { phase in
             if phase != .active {
                 viewModel.saveGame()
@@ -284,10 +312,19 @@ struct ContentView: View {
         .navigationBarBackButtonHidden(true)
         .toolbar {
             ToolbarItem(placement: .automatic) {
+#if DEBUG
+                Button {
+                    showingDebugTools = true
+                } label: {
+                    Image(systemName: "wrench.and.screwdriver.fill")
+                        .foregroundColor(Theme.parchmentDark)
+                }
+#else
                 Button(action: {}) {
                     Image(systemName: "gearshape")
                         .foregroundColor(Theme.parchmentDark)
                 }
+#endif
             }
         }
     }
@@ -296,6 +333,70 @@ struct ContentView: View {
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
         ContentView()
+    }
+}
+
+struct PendingResolutionView: View {
+    @ObservedObject var viewModel: GameViewModel
+    @Environment(\.dismiss) private var dismiss
+
+    private var canDismiss: Bool {
+        viewModel.gameState.pendingResolution?.isAwaitingDecision != true
+    }
+
+    var body: some View {
+        ZStack {
+            Theme.dramaticBackground.ignoresSafeArea()
+
+            VStack(spacing: 20) {
+                if let rollPresentation = viewModel.gameState.pendingResolution?.rollPresentation {
+                    Text(rollPresentation.actionName)
+                        .font(Theme.displayFont(size: 24))
+                        .foregroundColor(Theme.parchment)
+
+                    Text(rollPresentation.outcome.uppercased())
+                        .font(Theme.displayFont(size: 34))
+                        .foregroundColor(Theme.gold)
+
+                    Text("Rolled a \(rollPresentation.highestRoll)")
+                        .font(Theme.systemFont(size: 12))
+                        .foregroundColor(Theme.inkFaded)
+                } else {
+                    Text("Decision")
+                        .font(Theme.displayFont(size: 30))
+                        .foregroundColor(Theme.parchment)
+                }
+
+                if let character = viewModel.pendingResolutionCharacter() {
+                    Text(character.name)
+                        .font(Theme.systemFont(size: 12, weight: .semibold))
+                        .foregroundColor(Theme.inkFaded)
+                }
+
+                ResolutionNarrativeView(text: viewModel.pendingResolutionText())
+
+                if viewModel.gameState.pendingResolution?.isAwaitingDecision == true {
+                    ResolutionDecisionCard(viewModel: viewModel)
+                }
+
+                Button("Done") {
+                    viewModel.clearPendingResolution()
+                    dismiss()
+                }
+                .font(Theme.displayFont(size: 16, weight: .semibold))
+                .foregroundColor(Theme.parchment)
+                .padding(.horizontal, 36)
+                .padding(.vertical, 10)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 6)
+                        .stroke(Theme.parchmentDeep.opacity(0.4), lineWidth: 1)
+                )
+                .disabled(!canDismiss)
+                .opacity(canDismiss ? 1 : 0.45)
+            }
+            .padding(30)
+        }
+        .interactiveDismissDisabled(!canDismiss)
     }
 }
 
@@ -316,3 +417,301 @@ struct SlidingDoor: View {
         .allowsHitTesting(false)
     }
 }
+
+#if DEBUG
+struct DebugToolsView: View {
+    @ObservedObject var viewModel: GameViewModel
+    @Binding var selectedCharacterID: UUID?
+    @Environment(\.dismiss) private var dismiss
+
+    @State private var fixedDiceInput: String = ""
+    @State private var selectedNodeID: UUID? = nil
+    @State private var moveWholeParty = true
+    @State private var selectedGrantCharacterID: UUID? = nil
+    @State private var selectedTreasureID: String? = nil
+    @State private var flagKey: String = ""
+    @State private var counterKey: String = ""
+    @State private var counterValue: String = "0"
+    @State private var modifierDescription: String = "Debug +1d"
+    @State private var modifierBonusDice: String = "1"
+    @State private var modifierUses: String = "1"
+    @State private var modifierImprovesPosition = false
+    @State private var modifierImprovesEffect = false
+    @State private var statusMessage: String = ""
+
+    private var nodes: [MapNode] {
+        guard let map = viewModel.gameState.dungeon else { return [] }
+        return map.nodes.values.sorted { $0.name < $1.name }
+    }
+
+    private var activeCharacters: [Character] {
+        viewModel.gameState.party.filter { !$0.isDefeated }
+    }
+
+    private var availableTreasures: [Treasure] {
+        ContentLoader.shared.treasureTemplates.sorted { $0.name < $1.name }
+    }
+
+    private var effectiveTargetCharacterID: UUID? {
+        selectedGrantCharacterID ?? selectedCharacterID ?? activeCharacters.first?.id
+    }
+
+    private func parseInteger(_ text: String, fallback: Int = 0) -> Int {
+        Int(text.trimmingCharacters(in: .whitespacesAndNewlines)) ?? fallback
+    }
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section("Dice Override") {
+                    Toggle("Enable Fixed Dice Pattern", isOn: $viewModel.debugFixedDiceEnabled)
+                    TextField("e.g. 6,5,3", text: $fixedDiceInput)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+                    Button("Apply Pattern") {
+                        if viewModel.setDebugFixedDice(from: fixedDiceInput) {
+                            statusMessage = "Fixed dice set to [\(viewModel.debugFixedDiceSummary)]."
+                        } else {
+                            statusMessage = "Dice pattern must be one or more values between 1 and 6."
+                        }
+                    }
+                    Text("Current: [\(viewModel.debugFixedDiceSummary)]")
+                        .font(Theme.systemFont(size: 11))
+                        .foregroundColor(Theme.inkFaded)
+                }
+
+                Section("Node Jump") {
+                    if nodes.isEmpty {
+                        Text("No fixed-map nodes are loaded in this run.")
+                            .font(Theme.systemFont(size: 12))
+                            .foregroundColor(Theme.inkFaded)
+                    } else {
+                        Picker("Target Node", selection: $selectedNodeID) {
+                            ForEach(nodes, id: \.id) { node in
+                                Text(node.name).tag(Optional(node.id))
+                            }
+                        }
+
+                        Toggle("Move Entire Party", isOn: $moveWholeParty)
+
+                        Button("Jump") {
+                            guard let targetNodeID = selectedNodeID else { return }
+                            if moveWholeParty {
+                                if viewModel.debugJumpParty(to: targetNodeID) {
+                                    statusMessage = "Moved entire party to target node."
+                                } else {
+                                    statusMessage = "Failed to move party."
+                                }
+                            } else if let characterID = selectedCharacterID ?? activeCharacters.first?.id {
+                                if viewModel.debugJump(characterID: characterID, to: targetNodeID) {
+                                    statusMessage = "Moved selected character to target node."
+                                } else {
+                                    statusMessage = "Failed to move selected character."
+                                }
+                            } else {
+                                statusMessage = "No active character selected."
+                            }
+                        }
+                    }
+                }
+
+                Section("Scenario State") {
+                    ForEach(activeCharacters, id: \.id) { character in
+                        let nodeName = viewModel.getNodeName(for: character.id) ?? "Unknown"
+                        Text("\(character.name): \(nodeName)")
+                            .font(Theme.systemFont(size: 12))
+                    }
+
+                    if viewModel.gameState.activeClocks.isEmpty {
+                        Text("No active clocks.")
+                            .font(Theme.systemFont(size: 12))
+                            .foregroundColor(Theme.inkFaded)
+                    } else {
+                        ForEach(viewModel.gameState.activeClocks, id: \.id) { clock in
+                            Text("\(clock.name): \(clock.progress)/\(clock.segments)")
+                                .font(Theme.systemFont(size: 12))
+                        }
+                    }
+                }
+
+                Section("Flags and Counters") {
+                    TextField("Flag ID", text: $flagKey)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+                    HStack {
+                        Button("Set Flag") {
+                            viewModel.debugSetFlag(flagKey, isSet: true)
+                            statusMessage = "Flag set."
+                        }
+                        Button("Clear Flag") {
+                            viewModel.debugSetFlag(flagKey, isSet: false)
+                            statusMessage = "Flag cleared."
+                        }
+                    }
+
+                    TextField("Counter ID", text: $counterKey)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+                    TextField("Counter Value", text: $counterValue)
+                        .keyboardType(.numberPad)
+                    HStack {
+                        Button("Set Counter") {
+                            viewModel.debugSetCounter(counterKey, value: parseInteger(counterValue))
+                            statusMessage = "Counter set."
+                        }
+                        Button("+1") {
+                            viewModel.debugAdjustCounter(counterKey, by: 1)
+                            statusMessage = "Counter incremented."
+                        }
+                        Button("-1") {
+                            viewModel.debugAdjustCounter(counterKey, by: -1)
+                            statusMessage = "Counter decremented."
+                        }
+                    }
+
+                    if viewModel.gameState.scenarioFlags.isEmpty {
+                        Text("Flags: none")
+                            .font(Theme.systemFont(size: 11))
+                            .foregroundColor(Theme.inkFaded)
+                    } else {
+                        let sortedFlags = viewModel.gameState.scenarioFlags.keys.sorted()
+                        ForEach(sortedFlags, id: \.self) { key in
+                            Text("Flag \(key) = \(viewModel.gameState.scenarioFlags[key] == true ? "true" : "false")")
+                                .font(Theme.systemFont(size: 11))
+                        }
+                    }
+
+                    if viewModel.gameState.scenarioCounters.isEmpty {
+                        Text("Counters: none")
+                            .font(Theme.systemFont(size: 11))
+                            .foregroundColor(Theme.inkFaded)
+                    } else {
+                        let sortedCounters = viewModel.gameState.scenarioCounters.keys.sorted()
+                        ForEach(sortedCounters, id: \.self) { key in
+                            Text("Counter \(key) = \(viewModel.gameState.scenarioCounters[key] ?? 0)")
+                                .font(Theme.systemFont(size: 11))
+                        }
+                    }
+                }
+
+                Section("Treasure and Modifier Grants") {
+                    if activeCharacters.isEmpty {
+                        Text("No active party members available.")
+                            .font(Theme.systemFont(size: 12))
+                            .foregroundColor(Theme.inkFaded)
+                    } else {
+                        Picker("Character", selection: $selectedGrantCharacterID) {
+                            ForEach(activeCharacters, id: \.id) { character in
+                                Text(character.name).tag(Optional(character.id))
+                            }
+                        }
+                    }
+
+                    if availableTreasures.isEmpty {
+                        Text("No treasure templates are available for this scenario.")
+                            .font(Theme.systemFont(size: 12))
+                            .foregroundColor(Theme.inkFaded)
+                    } else {
+                        Picker("Treasure", selection: $selectedTreasureID) {
+                            ForEach(availableTreasures, id: \.id) { treasure in
+                                Text(treasure.name).tag(Optional(treasure.id))
+                            }
+                        }
+                        Button("Grant Treasure") {
+                            guard let characterID = effectiveTargetCharacterID,
+                                  let treasureID = selectedTreasureID else {
+                                statusMessage = "Choose a character and treasure first."
+                                return
+                            }
+                            if viewModel.debugGrantTreasure(treasureID, to: characterID) {
+                                statusMessage = "Treasure granted."
+                            } else {
+                                statusMessage = "Treasure grant failed (already owned or missing template)."
+                            }
+                        }
+                    }
+
+                    HStack {
+                        Button("+1d") {
+                            guard let characterID = effectiveTargetCharacterID else { return }
+                            _ = viewModel.debugGrantModifier(
+                                to: characterID,
+                                bonusDice: 1,
+                                uses: 1,
+                                description: "Debug +1d"
+                            )
+                            statusMessage = "Granted +1d modifier."
+                        }
+                        Button("Pos+") {
+                            guard let characterID = effectiveTargetCharacterID else { return }
+                            _ = viewModel.debugGrantModifier(
+                                to: characterID,
+                                improvePosition: true,
+                                uses: 1,
+                                description: "Debug Position Boost"
+                            )
+                            statusMessage = "Granted position-boost modifier."
+                        }
+                        Button("Eff+") {
+                            guard let characterID = effectiveTargetCharacterID else { return }
+                            _ = viewModel.debugGrantModifier(
+                                to: characterID,
+                                improveEffect: true,
+                                uses: 1,
+                                description: "Debug Effect Boost"
+                            )
+                            statusMessage = "Granted effect-boost modifier."
+                        }
+                    }
+
+                    TextField("Modifier Description", text: $modifierDescription)
+                    TextField("Bonus Dice", text: $modifierBonusDice)
+                        .keyboardType(.numberPad)
+                    TextField("Uses (0 = unlimited)", text: $modifierUses)
+                        .keyboardType(.numberPad)
+                    Toggle("Improve Position", isOn: $modifierImprovesPosition)
+                    Toggle("Improve Effect", isOn: $modifierImprovesEffect)
+                    Button("Grant Custom Modifier") {
+                        guard let characterID = effectiveTargetCharacterID else {
+                            statusMessage = "Choose a character first."
+                            return
+                        }
+                        let success = viewModel.debugGrantModifier(
+                            to: characterID,
+                            bonusDice: parseInteger(modifierBonusDice),
+                            improvePosition: modifierImprovesPosition,
+                            improveEffect: modifierImprovesEffect,
+                            uses: parseInteger(modifierUses, fallback: 1),
+                            description: modifierDescription
+                        )
+                        statusMessage = success ? "Custom modifier granted." : "Custom modifier grant failed."
+                    }
+                }
+
+                if !statusMessage.isEmpty {
+                    Section("Last Action") {
+                        Text(statusMessage)
+                            .font(Theme.systemFont(size: 12))
+                    }
+                }
+            }
+            .navigationTitle("Author Tools")
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Close") { dismiss() }
+                }
+            }
+            .onAppear {
+                fixedDiceInput = viewModel.debugFixedDiceSummary
+                selectedGrantCharacterID = selectedCharacterID ?? activeCharacters.first?.id
+                selectedTreasureID = availableTreasures.first?.id
+                if let characterID = selectedCharacterID ?? activeCharacters.first?.id {
+                    selectedNodeID = viewModel.gameState.characterLocations[characterID.uuidString]
+                } else {
+                    selectedNodeID = nodes.first?.id
+                }
+            }
+        }
+    }
+}
+#endif
