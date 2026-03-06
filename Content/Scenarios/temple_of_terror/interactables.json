@@ -1,0 +1,190 @@
+{
+  "hazards": [
+    {
+      "id": "tot_loose_flagstones",
+      "title": "Loose Flagstones",
+      "description": "The floor gives just enough underfoot to suggest something underneath wants to move.",
+      "availableActions": [
+        {
+          "name": "Mark a safe path",
+          "actionType": "Survey",
+          "position": "controlled",
+          "effect": "standard",
+          "outcomes": {
+            "success": [
+              { "type": "removeInteractable", "id": "self" }
+            ],
+            "partial": [
+              { "type": "gainStress", "amount": 1 },
+              { "type": "removeInteractable", "id": "self" }
+            ],
+            "failure": [
+              { "type": "tickClock", "clockName": "Temple Collapse", "amount": 1 }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "tot_poison_dart_slits",
+      "title": "Poison Dart Slits",
+      "description": "Rows of tiny holes stare out from the walls at chest height.",
+      "availableActions": [
+        {
+          "name": "Slip past the firing line",
+          "actionType": "Finesse",
+          "position": "risky",
+          "effect": "standard",
+          "outcomes": {
+            "success": [
+              { "type": "removeInteractable", "id": "self" }
+            ],
+            "failure": [
+              { "type": "sufferHarm", "level": "lesser", "familyId": "leg_injury" },
+              { "type": "tickClock", "clockName": "Temple Collapse", "amount": 1 }
+            ]
+          }
+        },
+        {
+          "name": "Jam the mechanism",
+          "actionType": "Tinker",
+          "position": "risky",
+          "effect": "standard",
+          "outcomes": {
+            "success": [
+              { "type": "removeInteractable", "id": "self" }
+            ],
+            "partial": [
+              { "type": "tickClock", "clockName": "Temple Collapse", "amount": 1 },
+              { "type": "removeInteractable", "id": "self" }
+            ],
+            "failure": [
+              { "type": "sufferHarm", "level": "moderate", "familyId": "gear_damage" }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "tot_whispering_reliquary",
+      "title": "Whispering Reliquary",
+      "description": "Something sealed inside this cracked box keeps trying to finish a sentence.",
+      "availableActions": [
+        {
+          "name": "Listen to the warning",
+          "actionType": "Attune",
+          "position": "risky",
+          "effect": "standard",
+          "outcomes": {
+            "success": [
+              { "type": "gainTreasure", "treasureId": "tot_warding_charm" },
+              { "type": "removeInteractable", "id": "self" }
+            ],
+            "partial": [
+              { "type": "gainTreasure", "treasureId": "tot_warding_charm" },
+              { "type": "gainStress", "amount": 1 },
+              { "type": "removeInteractable", "id": "self" }
+            ],
+            "failure": [
+              { "type": "tickClock", "clockName": "Idol's Curse", "amount": 1 }
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "opportunities": [
+    {
+      "id": "tot_buried_satchel",
+      "title": "Buried Satchel",
+      "description": "Canvas and brass fittings jut from the dust beside a collapsed wall.",
+      "availableActions": [
+        {
+          "name": "Dig it free",
+          "actionType": "Survey",
+          "position": "controlled",
+          "effect": "standard",
+          "outcomes": {
+            "success": [
+              { "type": "gainTreasure", "treasureId": "tot_silk_rope" },
+              { "type": "removeInteractable", "id": "self" }
+            ],
+            "failure": [
+              { "type": "gainStress", "amount": 1 }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "tot_old_mural",
+      "title": "Old Expedition Mural",
+      "description": "A frieze shows previous grave robbers fleeing from a smiling idol.",
+      "availableActions": [
+        {
+          "name": "Copy the route markings",
+          "actionType": "Study",
+          "position": "controlled",
+          "effect": "limited",
+          "outcomes": {
+            "success": [
+              { "type": "gainTreasure", "treasureId": "tot_rubbed_tablet" },
+              { "type": "removeInteractable", "id": "self" }
+            ],
+            "partial": [
+              { "type": "gainTreasure", "treasureId": "tot_rubbed_tablet" },
+              { "type": "tickClock", "clockName": "Idol's Curse", "amount": 1 },
+              { "type": "removeInteractable", "id": "self" }
+            ],
+            "failure": [
+              { "type": "tickClock", "clockName": "Idol's Curse", "amount": 1 }
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "threats": [
+    {
+      "id": "tot_temple_guardian",
+      "title": "Temple Guardian",
+      "description": "A lacquered corpse in ceremonial mail lurches upright with a bronze spear.",
+      "isThreat": true,
+      "availableActions": [
+        {
+          "name": "Fight it down",
+          "actionType": "Skirmish",
+          "position": "risky",
+          "effect": "standard",
+          "outcomes": {
+            "success": [
+              { "type": "removeInteractable", "id": "self" }
+            ],
+            "partial": [
+              { "type": "sufferHarm", "level": "lesser", "familyId": "head_trauma" },
+              { "type": "removeInteractable", "id": "self" }
+            ],
+            "failure": [
+              { "type": "sufferHarm", "level": "moderate", "familyId": "head_trauma" }
+            ]
+          }
+        },
+        {
+          "name": "Slip around it",
+          "actionType": "Finesse",
+          "position": "desperate",
+          "effect": "limited",
+          "outcomes": {
+            "success": [
+              { "type": "removeInteractable", "id": "self" }
+            ],
+            "failure": [
+              { "type": "tickClock", "clockName": "Temple Collapse", "amount": 1 },
+              { "type": "sufferHarm", "level": "lesser", "familyId": "leg_injury" }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

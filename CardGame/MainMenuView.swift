@@ -2,11 +2,16 @@ import SwiftUI
 
 struct MainMenuView: View {
     @State private var showingScenarioSelect = false
-    @State private var availableScenarios: [ScenarioManifest] = ContentLoader.availableScenarios()
-        .filter { !$0.id.hasPrefix("test_") }
+    @State private var availableScenarios: [ResolvedScenarioCatalogEntry] = ContentLoader.availableScenarioCatalogEntries()
     @State private var path = NavigationPath()
     @State private var continueVM: GameViewModel?
     @State private var continueActive = false
+    @State private var storefrontNotice: StorefrontNotice?
+
+    private var preferredScenario: ResolvedScenarioCatalogEntry? {
+        availableScenarios.first(where: { $0.recommendedStart && $0.isStartable })
+            ?? availableScenarios.first(where: \.isStartable)
+    }
 
     var body: some View {
         NavigationStack(path: $path) {
@@ -31,7 +36,7 @@ struct MainMenuView: View {
                     Spacer(minLength: 12)
 
                     Button {
-                        if let scenario = availableScenarios.first(where: { $0.id == "tomb" }) ?? availableScenarios.first {
+                        if let scenario = preferredScenario {
                             path.append(scenario)
                         }
                     } label: {
@@ -51,6 +56,8 @@ struct MainMenuView: View {
                             .shadow(color: Theme.gold.opacity(0.3), radius: 12, y: 4)
                     }
                     .buttonStyle(.plain)
+                    .disabled(preferredScenario == nil)
+                    .opacity(preferredScenario == nil ? 0.55 : 1)
 
                     Button {
                         let vm = GameViewModel()
@@ -105,8 +112,8 @@ struct MainMenuView: View {
                 }
                 .padding(.horizontal, 30)
             }
-            .navigationDestination(for: ScenarioManifest.self) { manifest in
-                PartySetupView(manifest: manifest)
+            .navigationDestination(for: ResolvedScenarioCatalogEntry.self) { scenario in
+                PartySetupView(scenarioEntry: scenario)
             }
             .navigationDestination(isPresented: $continueActive) {
                 if let vm = continueVM {
@@ -119,35 +126,113 @@ struct MainMenuView: View {
                 ScenarioSelectView(available: availableScenarios) { manifest in
                     path.append(manifest)
                     showingScenarioSelect = false
+                } onPurchase: { scenario in
+                    storefrontNotice = StorefrontNotice(
+                        title: scenario.title,
+                        message: "StoreKit purchase flow is not wired yet. This catalog entry is configured as \(scenario.priceLabel)."
+                    )
                 }
                 .presentationBackground(Theme.bgWarm)
+            }
+            .alert(item: $storefrontNotice) { notice in
+                Alert(
+                    title: Text(notice.title),
+                    message: Text(notice.message),
+                    dismissButton: .default(Text("OK"))
+                )
             }
         }
     }
 }
 
+private struct StorefrontNotice: Identifiable {
+    let id = UUID()
+    let title: String
+    let message: String
+}
+
 private struct ScenarioSelectView: View {
-    var available: [ScenarioManifest]
-    var onSelect: (ScenarioManifest) -> Void
+    var available: [ResolvedScenarioCatalogEntry]
+    var onSelect: (ResolvedScenarioCatalogEntry) -> Void
+    var onPurchase: (ResolvedScenarioCatalogEntry) -> Void
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
         NavigationStack {
             List(available, id: \.id) { scenario in
-                VStack(alignment: .leading) {
-                    Text(scenario.title)
-                        .font(Theme.displayFont(size: 18, weight: .semibold))
-                        .foregroundColor(Theme.ink)
-                    Text(scenario.description)
+                VStack(alignment: .leading, spacing: 10) {
+                    HStack(alignment: .top, spacing: 8) {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(scenario.title)
+                                .font(Theme.displayFont(size: 18, weight: .semibold))
+                                .foregroundColor(Theme.ink)
+                            Text(scenario.tagline)
+                                .font(Theme.systemFont(size: 12, weight: .semibold))
+                                .foregroundColor(Theme.inkFaded)
+                        }
+
+                        Spacer(minLength: 12)
+
+                        if scenario.recommendedStart {
+                            ScenarioBadge(text: "Recommended", fill: Theme.gold.opacity(0.18), stroke: Theme.goldDim, foreground: Theme.ink)
+                        }
+
+                        ScenarioBadge(
+                            text: scenario.availabilityLabel,
+                            fill: scenario.isStartable ? Theme.success.opacity(0.14) : Theme.parchment.opacity(0.55),
+                            stroke: scenario.isStartable ? Theme.success.opacity(0.4) : Theme.parchmentDeep.opacity(0.45),
+                            foreground: Theme.ink
+                        )
+                    }
+
+                    Text(scenario.shortDescription)
                         .font(Theme.bodyFont(size: 14))
                         .foregroundColor(Theme.inkLight)
                         .fixedSize(horizontal: false, vertical: true)
+
+                    if !scenario.catalogEntry.nativeArchetypePreview.isEmpty {
+                        Text(scenario.catalogEntry.nativeArchetypePreview.joined(separator: "  •  "))
+                            .font(Theme.systemFont(size: 12, weight: .medium))
+                            .foregroundColor(Theme.inkFaded)
+                    }
+
+                    HStack(spacing: 10) {
+                        if scenario.isStartable {
+                            Button("Play") {
+                                onSelect(scenario)
+                                dismiss()
+                            }
+                            .font(Theme.systemFont(size: 13, weight: .semibold))
+                            .foregroundColor(Theme.ink)
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 9)
+                            .background(Theme.gold)
+                            .clipShape(Capsule())
+                        } else if scenario.isPurchasable {
+                            Button("Buy \(scenario.priceLabel)") {
+                                onPurchase(scenario)
+                            }
+                            .font(Theme.systemFont(size: 13, weight: .semibold))
+                            .foregroundColor(Theme.parchment)
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 9)
+                            .background(Theme.ink)
+                            .clipShape(Capsule())
+                        } else {
+                            Text(scenario.availabilityLabel)
+                                .font(Theme.systemFont(size: 12, weight: .semibold))
+                                .foregroundColor(Theme.inkFaded)
+                        }
+
+                        Spacer()
+
+                        Text(scenario.catalogEntry.complexityTier.rawValue.capitalized)
+                            .font(Theme.systemFont(size: 11, weight: .semibold))
+                            .foregroundColor(Theme.inkFaded)
+                            .textCase(.uppercase)
+                    }
                 }
                 .listRowBackground(Theme.parchment.opacity(0.9))
-                .onTapGesture {
-                    onSelect(scenario)
-                    dismiss()
-                }
             }
             .scrollContentBackground(.hidden)
             .background(Theme.bgWarm)
@@ -163,8 +248,31 @@ private struct ScenarioSelectView: View {
     }
 }
 
+private struct ScenarioBadge: View {
+    let text: String
+    let fill: Color
+    let stroke: Color
+    let foreground: Color
+
+    var body: some View {
+        Text(text)
+            .font(Theme.systemFont(size: 10, weight: .semibold))
+            .foregroundColor(foreground)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 5)
+            .background(fill)
+            .clipShape(Capsule())
+            .overlay(
+                Capsule()
+                    .stroke(stroke, lineWidth: 1)
+            )
+    }
+}
+
 private struct PartySetupView: View {
+    let scenarioEntry: ResolvedScenarioCatalogEntry
     let manifest: ScenarioManifest
+    let runtimeScenarioID: String
 
     @State private var selectedArchetypeIDs: [String]
     @State private var pendingPlan: PartyBuildPlan?
@@ -173,9 +281,21 @@ private struct PartySetupView: View {
     private let content: ContentLoader
     private let partyBuilder: PartyBuilderService
 
-    init(manifest: ScenarioManifest) {
-        self.manifest = manifest
-        let content = ContentLoader(scenario: manifest.id)
+    init(scenarioEntry: ResolvedScenarioCatalogEntry) {
+        let resolvedScenarioID = scenarioEntry.runtimeScenarioID ?? scenarioEntry.catalogEntry.scenarioID
+        self.scenarioEntry = scenarioEntry
+        self.runtimeScenarioID = resolvedScenarioID
+        self.manifest = scenarioEntry.runtimeManifest ?? ScenarioManifest(
+            id: resolvedScenarioID,
+            title: scenarioEntry.title,
+            description: scenarioEntry.shortDescription,
+            entryNode: nil,
+            mapFile: nil,
+            partySize: nil,
+            nativeArchetypeIDs: nil,
+            stressOverflowHarmFamilyID: nil
+        )
+        let content = ContentLoader(scenario: resolvedScenarioID)
         self.content = content
         self.partyBuilder = PartyBuilderService(content: content)
 
@@ -208,14 +328,21 @@ private struct PartySetupView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
-                Text(manifest.description)
+                Text(scenarioEntry.shortDescription)
                     .font(Theme.bodyFont(size: 16, italic: true))
                     .foregroundColor(Theme.inkLight)
                     .lineSpacing(4)
 
+                Text(scenarioEntry.tagline)
+                    .font(Theme.systemFont(size: 12, weight: .semibold))
+                    .foregroundColor(Theme.inkFaded)
+                    .textCase(.uppercase)
+                    .tracking(0.8)
+
                 HStack(spacing: 10) {
                     SetupPill(label: "Party Size", value: "\(partySize)")
                     SetupPill(label: "Roster", value: "\(availableArchetypes.count) native")
+                    SetupPill(label: "Tier", value: scenarioEntry.catalogEntry.complexityTier.rawValue.capitalized)
                 }
 
                 VStack(alignment: .leading, spacing: 10) {
@@ -320,10 +447,10 @@ private struct PartySetupView: View {
             .padding(20)
         }
         .background(Theme.bgWarm)
-        .navigationTitle(manifest.title)
+        .navigationTitle(scenarioEntry.title)
         .navigationDestination(isPresented: $startActive) {
             if let pendingPlan {
-                ContentView(scenario: manifest.id, partyPlan: pendingPlan)
+                ContentView(scenario: runtimeScenarioID, partyPlan: pendingPlan)
             } else {
                 EmptyView()
             }

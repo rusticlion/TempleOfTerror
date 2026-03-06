@@ -13,6 +13,116 @@ struct ScenarioManifest: Codable, Identifiable, Hashable {
     var stressOverflowHarmFamilyID: String?
 }
 
+enum ScenarioCatalogComplexityTier: String, Codable, Hashable {
+    case standard
+    case premium
+}
+
+enum ScenarioCatalogPriceTier: String, Codable, Hashable {
+    case standard
+    case premium
+}
+
+enum ScenarioCatalogAvailabilityModel: String, Codable, Hashable {
+    case included
+    case iap
+    case comingSoon
+}
+
+enum ScenarioCatalogContentStatus: String, Codable, Hashable {
+    case bundled
+    case placeholder
+}
+
+struct ScenarioCatalogEntry: Codable, Identifiable, Hashable {
+    let scenarioID: String
+    let legacyScenarioIDs: [String]
+    let title: String
+    let tagline: String
+    let shortDescription: String
+    let sortOrder: Int
+    let recommendedStart: Bool
+    let complexityTier: ScenarioCatalogComplexityTier
+    let priceTier: ScenarioCatalogPriceTier
+    let availabilityModel: ScenarioCatalogAvailabilityModel
+    let productID: String?
+    let toneTags: [String]
+    let nativeArchetypePreview: [String]
+    let coverArtAsset: String
+    let accentColorHex: String
+    let contentStatus: ScenarioCatalogContentStatus
+
+    var id: String { scenarioID }
+
+    var allScenarioIDs: [String] {
+        [scenarioID] + legacyScenarioIDs
+    }
+
+    func matches(scenarioID: String) -> Bool {
+        allScenarioIDs.contains(scenarioID)
+    }
+}
+
+struct ScenarioCatalogManifest: Codable, Hashable {
+    let schemaVersion: Int
+    let scenarios: [ScenarioCatalogEntry]
+
+    func entry(for scenarioID: String) -> ScenarioCatalogEntry? {
+        scenarios.first(where: { $0.matches(scenarioID: scenarioID) })
+    }
+}
+
+struct ResolvedScenarioCatalogEntry: Identifiable, Hashable {
+    let catalogEntry: ScenarioCatalogEntry
+    let runtimeScenarioID: String?
+    let runtimeManifest: ScenarioManifest?
+
+    var id: String { catalogEntry.id }
+
+    var title: String { catalogEntry.title }
+    var tagline: String { catalogEntry.tagline }
+    var shortDescription: String { catalogEntry.shortDescription }
+    var recommendedStart: Bool { catalogEntry.recommendedStart }
+    var availabilityModel: ScenarioCatalogAvailabilityModel { catalogEntry.availabilityModel }
+    var contentStatus: ScenarioCatalogContentStatus { catalogEntry.contentStatus }
+
+    var isImplemented: Bool {
+        runtimeScenarioID != nil && runtimeManifest != nil
+    }
+
+    var isStartable: Bool {
+        availabilityModel == .included && isImplemented
+    }
+
+    var isPurchasable: Bool {
+        availabilityModel == .iap
+    }
+
+    var isComingSoon: Bool {
+        contentStatus == .placeholder || availabilityModel == .comingSoon
+    }
+
+    var priceLabel: String {
+        switch catalogEntry.priceTier {
+        case .standard:
+            return "$2.99"
+        case .premium:
+            return "$4.99"
+        }
+    }
+
+    var availabilityLabel: String {
+        switch availabilityModel {
+        case .included:
+            return isStartable ? "Included" : "Included Soon"
+        case .iap:
+            return "Premium"
+        case .comingSoon:
+            return "Coming Soon"
+        }
+    }
+}
+
 extension DecodingError {
     /// A readable representation of the coding path where the decoding failed.
     var pathDescription: String {
@@ -74,16 +184,16 @@ class ContentLoader {
         self.eventDict = Dictionary(uniqueKeysWithValues: eventTemplates.map { ($0.id, $0) })
     }
 
-    private static func scenarioURL(for filename: String, scenario: String) -> URL? {
-        Bundle.main.url(
+    private static func scenarioURL(for filename: String, scenario: String, bundle: Bundle = .main) -> URL? {
+        bundle.url(
             forResource: filename,
             withExtension: nil,
             subdirectory: "Content/Scenarios/\(scenario)"
         )
     }
 
-    private static func globalURL(for filename: String) -> URL? {
-        Bundle.main.url(
+    private static func globalURL(for filename: String, bundle: Bundle = .main) -> URL? {
+        bundle.url(
             forResource: filename,
             withExtension: nil,
             subdirectory: "Content"
@@ -94,11 +204,61 @@ class ContentLoader {
         scenarioURL(for: filename, scenario: scenario) ?? globalURL(for: filename)
     }
 
+    static func availableScenarioCatalog(bundle: Bundle = .main) -> ScenarioCatalogManifest? {
+        guard let url = globalURL(for: "scenario_catalog.json", bundle: bundle) else {
+            print("Failed to locate scenario_catalog.json in bundled Content resources.")
+            return nil
+        }
+
+        do {
+            return try loadScenarioCatalog(from: url)
+        } catch let error as DecodingError {
+            print("Failed to decode scenario_catalog.json: Decoding Error: \(error.localizedDescription)\nPath: \(error.pathDescription)\nDebug Description: \(error.contextDebugDescription)")
+            return nil
+        } catch {
+            print("Failed to decode scenario_catalog.json: \(error)")
+            return nil
+        }
+    }
+
+    static func loadScenarioCatalog(from url: URL) throws -> ScenarioCatalogManifest {
+        try decodeFile(ScenarioCatalogManifest.self, from: url)
+    }
+
+    static func resolveCatalogEntries(
+        _ catalog: ScenarioCatalogManifest,
+        availableScenarios: [ScenarioManifest]
+    ) -> [ResolvedScenarioCatalogEntry] {
+        catalog.scenarios
+            .sorted { lhs, rhs in
+                if lhs.sortOrder == rhs.sortOrder {
+                    return lhs.title < rhs.title
+                }
+                return lhs.sortOrder < rhs.sortOrder
+            }
+            .map { entry in
+                let matchedManifest =
+                    availableScenarios.first(where: { $0.id == entry.scenarioID })
+                    ?? availableScenarios.first(where: { entry.legacyScenarioIDs.contains($0.id) })
+                return ResolvedScenarioCatalogEntry(
+                    catalogEntry: entry,
+                    runtimeScenarioID: matchedManifest?.id,
+                    runtimeManifest: matchedManifest
+                )
+            }
+    }
+
+    static func availableScenarioCatalogEntries(bundle: Bundle = .main) -> [ResolvedScenarioCatalogEntry] {
+        guard let catalog = availableScenarioCatalog(bundle: bundle) else {
+            return []
+        }
+        return resolveCatalogEntries(catalog, availableScenarios: availableScenarios(bundle: bundle))
+    }
+
     private static func loadManifest(for scenario: String) -> ScenarioManifest? {
         guard let url = preferredURL(for: "scenario.json", scenario: scenario) else { return nil }
         do {
-            let data = try Data(contentsOf: url)
-            return try JSONDecoder().decode(ScenarioManifest.self, from: data)
+            return try decodeFile(ScenarioManifest.self, from: url)
         } catch {
             print("Failed to decode scenario.json for \(scenario): \(error)")
             return nil
@@ -106,8 +266,8 @@ class ContentLoader {
     }
 
     /// Retrieve all scenario manifests packaged with the app.
-    static func availableScenarios() -> [ScenarioManifest] {
-        guard let baseURL = Bundle.main.resourceURL?.appendingPathComponent("Content/Scenarios") else {
+    static func availableScenarios(bundle: Bundle = .main) -> [ScenarioManifest] {
+        guard let baseURL = bundle.resourceURL?.appendingPathComponent("Content/Scenarios") else {
             return []
         }
         let fm = FileManager.default
@@ -117,7 +277,7 @@ class ContentLoader {
         var manifests: [ScenarioManifest] = []
         for dir in contents where dir.hasDirectoryPath {
             let name = dir.lastPathComponent
-            if let url = Bundle.main.url(forResource: "scenario.json", withExtension: nil, subdirectory: "Content/Scenarios/\(name)"),
+            if let url = bundle.url(forResource: "scenario.json", withExtension: nil, subdirectory: "Content/Scenarios/\(name)"),
                let data = try? Data(contentsOf: url),
                let manifest = try? JSONDecoder().decode(ScenarioManifest.self, from: data) {
                 manifests.append(manifest)
@@ -202,6 +362,13 @@ class ContentLoader {
         return decodeCollection(T.self, from: url, filename: filename, scenario: scenario) ?? []
     }
 
+    private static func decodeFile<T: Decodable>(_ type: T.Type, from url: URL) throws -> T {
+        let data = try Data(contentsOf: url)
+        let decoder = JSONDecoder()
+        decoder.keyDecodingStrategy = .useDefaultKeys
+        return try decoder.decode(T.self, from: data)
+    }
+
     /// Load a predefined DungeonMap from the given file name within this scenario.
     func loadMap(named file: String) -> DungeonMap? {
         guard let url = Self.preferredURL(for: file, scenario: scenarioName) else {
@@ -209,8 +376,7 @@ class ContentLoader {
             return nil
         }
         do {
-            let data = try Data(contentsOf: url)
-            return try JSONDecoder().decode(DungeonMap.self, from: data)
+            return try Self.decodeFile(DungeonMap.self, from: url)
         } catch {
             print("Failed to decode map file \(file): \(error)")
             return nil

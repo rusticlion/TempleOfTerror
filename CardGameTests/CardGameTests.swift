@@ -16,6 +16,13 @@ final class CardGameTests: XCTestCase {
             .appendingPathComponent("Content/Scenarios", isDirectory: true)
     }
 
+    private static var contentRootURL: URL {
+        URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .appendingPathComponent("Content", isDirectory: true)
+    }
+
     override func setUpWithError() throws {
         // Put setup code here. This method is called before the invocation of each test method in the class.
     }
@@ -404,6 +411,92 @@ final class CardGameTests: XCTestCase {
             failingReports.isEmpty,
             failingReports.map(\.formattedDescription).joined(separator: "\n\n")
         )
+    }
+
+    func testScenarioCatalogLoadsFromContentManifest() throws {
+        let catalogURL = Self.contentRootURL.appendingPathComponent("scenario_catalog.json")
+        let manifest = try ContentLoader.loadScenarioCatalog(from: catalogURL)
+
+        XCTAssertEqual(manifest.schemaVersion, 1)
+        XCTAssertEqual(manifest.scenarios.map(\.scenarioID), [
+            "temple_of_terror",
+            "shadow_of_a_doubt",
+            "charons_bargain"
+        ])
+    }
+
+    func testScenarioCatalogIncludesLaunchPricingAndPurchaseMetadata() throws {
+        let catalogURL = Self.contentRootURL.appendingPathComponent("scenario_catalog.json")
+        let manifest = try ContentLoader.loadScenarioCatalog(from: catalogURL)
+
+        let temple = try XCTUnwrap(manifest.entry(for: "temple_of_terror"))
+        XCTAssertEqual(temple.availabilityModel, .included)
+        XCTAssertEqual(temple.priceTier, .standard)
+        XCTAssertEqual(temple.contentStatus, .bundled)
+        XCTAssertTrue(temple.recommendedStart)
+        XCTAssertNil(temple.productID)
+        XCTAssertTrue(temple.matches(scenarioID: "tomb"))
+
+        let bargain = try XCTUnwrap(manifest.entry(for: "charons_bargain"))
+        XCTAssertEqual(bargain.availabilityModel, .iap)
+        XCTAssertEqual(bargain.priceTier, .premium)
+        XCTAssertEqual(bargain.contentStatus, .bundled)
+        XCTAssertEqual(bargain.productID, "com.russellbates.dicedelver.scenario.charons_bargain")
+    }
+
+    func testCatalogResolutionBridgesTempleToLegacyTombRuntime() throws {
+        let catalogURL = Self.contentRootURL.appendingPathComponent("scenario_catalog.json")
+        let catalog = try ContentLoader.loadScenarioCatalog(from: catalogURL)
+        let resolved = ContentLoader.resolveCatalogEntries(
+            catalog,
+            availableScenarios: [
+                ScenarioManifest(
+                    id: "tomb",
+                    title: "Forgotten Tomb",
+                    description: "Legacy tomb prototype."
+                ),
+                ScenarioManifest(
+                    id: "charons_bargain",
+                    title: "Charon's Bargain",
+                    description: "Premium freighter horror scenario."
+                )
+            ]
+        )
+
+        let temple = try XCTUnwrap(resolved.first(where: { $0.catalogEntry.scenarioID == "temple_of_terror" }))
+        XCTAssertEqual(temple.runtimeScenarioID, "tomb")
+        XCTAssertEqual(temple.runtimeManifest?.id, "tomb")
+        XCTAssertTrue(temple.isStartable)
+
+        let shadow = try XCTUnwrap(resolved.first(where: { $0.catalogEntry.scenarioID == "shadow_of_a_doubt" }))
+        XCTAssertNil(shadow.runtimeScenarioID)
+        XCTAssertFalse(shadow.isStartable)
+        XCTAssertTrue(shadow.isComingSoon)
+    }
+
+    func testCatalogResolutionPrefersTempleRuntimeOverLegacyTombWhenBothExist() throws {
+        let catalogURL = Self.contentRootURL.appendingPathComponent("scenario_catalog.json")
+        let catalog = try ContentLoader.loadScenarioCatalog(from: catalogURL)
+        let resolved = ContentLoader.resolveCatalogEntries(
+            catalog,
+            availableScenarios: [
+                ScenarioManifest(
+                    id: "tomb",
+                    title: "Forgotten Tomb",
+                    description: "Legacy tomb prototype."
+                ),
+                ScenarioManifest(
+                    id: "temple_of_terror",
+                    title: "Temple of Terror",
+                    description: "New fixed-map temple scenario."
+                )
+            ]
+        )
+
+        let temple = try XCTUnwrap(resolved.first(where: { $0.catalogEntry.scenarioID == "temple_of_terror" }))
+        XCTAssertEqual(temple.runtimeScenarioID, "temple_of_terror")
+        XCTAssertEqual(temple.runtimeManifest?.title, "Temple of Terror")
+        XCTAssertTrue(temple.isStartable)
     }
 
     func testScenarioValidatorRejectsUnsupportedActionTypes() throws {
