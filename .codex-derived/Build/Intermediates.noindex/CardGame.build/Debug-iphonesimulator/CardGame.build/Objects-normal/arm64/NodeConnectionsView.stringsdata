@@ -1,0 +1,32 @@
+{
+  "source": "/Users/russellbates/JunkDrawer/Temple Of Terror/CardGame/NodeConnectionsView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Paths from this room",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 9
+        }
+      },
+      {
+        "comment": "",
+        "key": "↳",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 21
+        }
+      },
+      {
+        "comment": "",
+        "key": "→",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 37
+        }
+      }
+    ]
+  },
+  "version": 1
+}

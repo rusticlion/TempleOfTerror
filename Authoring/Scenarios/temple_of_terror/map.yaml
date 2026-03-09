@@ -1,0 +1,357 @@
+startingNode: river_landing
+nodes:
+  river_landing:
+    uuid: 00000000-0000-0000-0000-000000000301
+    name: River Landing
+    soundProfile: cave_drips
+    theme: approach
+    isDiscovered: true
+    interactables:
+      - id: tot_field_journal
+        title: Abandoned Field Journal
+        description: A rival archaeologist's notebook lies open beneath a coil of dead vines.
+        availableActions:
+          - name: Review the sketches
+            actionType: Study
+            position: controlled
+            effect: standard
+            outcomes:
+              success:
+                - type: gainTreasure
+                  treasureId: tot_rubbed_tablet
+                - type: removeInteractable
+                  id: self
+              partial:
+                - type: gainTreasure
+                  treasureId: tot_rubbed_tablet
+                - type: gainStress
+                  amount: 1
+                - type: removeInteractable
+                  id: self
+              failure:
+                - type: gainStress
+                  amount: 1
+      - id: tot_riverboat
+        title: Charter Riverboat
+        description: The boatman is still waiting below the steps, one hand on the tiller and the other on his shotgun.
+        availableActions:
+          - name: Call off the expedition
+            actionType: Consort
+            position: controlled
+            effect: standard
+            requiresTest: false
+            isGroupAction: true
+            outcomes:
+              success:
+                - type: endRun
+                  runOutcome: escaped
+                  runOutcomeText: You signal the boatman, abandon the dig, and head downriver with your nerves intact and your pride bruised.
+        tags:
+          - Exit
+    connections:
+      - to: sun_gate
+        isUnlocked: true
+        description: Climb the vine-hung steps
+  sun_gate:
+    uuid: 00000000-0000-0000-0000-000000000302
+    name: Sun Gate
+    soundProfile: silent_tomb
+    theme: gatehouse
+    isDiscovered: false
+    interactables:
+      - id: tot_sun_seal
+        title: Sealed Sun Door
+        description: A circular stone door is fixed in place beneath glyphs warning that the sun below never forgives thieves.
+        availableActions:
+          - name: Translate the warning glyphs
+            actionType: Study
+            position: risky
+            effect: standard
+            outcomes:
+              success:
+                - type: unlockConnection
+                  fromNode: sun_gate
+                  toNode: gallery_of_blades
+                - type: removeInteractable
+                  id: self
+              partial:
+                - type: unlockConnection
+                  fromNode: sun_gate
+                  toNode: gallery_of_blades
+                - type: tickClock
+                  clockName: Idol's Curse
+                  amount: 1
+                - type: gainStress
+                  amount: 1
+                - type: removeInteractable
+                  id: self
+              failure:
+                - type: tickClock
+                  clockName: Temple Collapse
+                  amount: 1
+                - type: gainStress
+                  amount: 1
+          - name: Blast the seal apart
+            actionType: Wreck
+            position: desperate
+            effect: great
+            outcomes:
+              success:
+                - type: unlockConnection
+                  fromNode: sun_gate
+                  toNode: gallery_of_blades
+                - type: removeInteractable
+                  id: self
+              partial:
+                - type: unlockConnection
+                  fromNode: sun_gate
+                  toNode: gallery_of_blades
+                - type: tickClock
+                  clockName: Temple Collapse
+                  amount: 2
+                - type: sufferHarm
+                  level: lesser
+                  familyId: gear_damage
+                - type: removeInteractable
+                  id: self
+              failure:
+                - type: sufferHarm
+                  level: moderate
+                  familyId: head_trauma
+                - type: tickClock
+                  clockName: Temple Collapse
+                  amount: 2
+      - id: tot_guardian_relief
+        title: Guardian Relief
+        description: The carved face of a forgotten priest seems to shift whenever anyone mentions the idol.
+        availableActions:
+          - name: Ask what it guards
+            actionType: Attune
+            position: controlled
+            effect: limited
+            outcomes:
+              success:
+                - type: gainTreasure
+                  treasureId: tot_warding_charm
+                - type: removeInteractable
+                  id: self
+              partial:
+                - type: gainTreasure
+                  treasureId: tot_warding_charm
+                - type: tickClock
+                  clockName: Idol's Curse
+                  amount: 1
+                - type: removeInteractable
+                  id: self
+              failure:
+                - type: tickClock
+                  clockName: Idol's Curse
+                  amount: 1
+    connections:
+      - to: river_landing
+        isUnlocked: true
+        description: Back to the river landing
+      - to: flooded_reliquary
+        isUnlocked: true
+        description: Wade into the flooded side chamber
+      - to: gallery_of_blades
+        isUnlocked: false
+        description: Pass beneath the sun door
+  flooded_reliquary:
+    uuid: 00000000-0000-0000-0000-000000000303
+    name: Flooded Reliquary
+    soundProfile: cave_drips
+    theme: side_chamber
+    isDiscovered: false
+    interactables:
+      - id: tot_flooded_cache
+        title: Flooded Cache
+        description: A half-submerged explorer's satchel bobs against a cracked altar.
+        availableActions:
+          - name: Fish out the satchel
+            actionType: Finesse
+            position: risky
+            effect: standard
+            outcomes:
+              success:
+                - type: gainTreasure
+                  treasureId: tot_silk_rope
+                - type: removeInteractable
+                  id: self
+              partial:
+                - type: gainTreasure
+                  treasureId: tot_silk_rope
+                - type: sufferHarm
+                  level: lesser
+                  familyId: leg_injury
+                - type: removeInteractable
+                  id: self
+              failure:
+                - type: tickClock
+                  clockName: Temple Collapse
+                  amount: 1
+          - name: Search the altar basin
+            actionType: Survey
+            position: controlled
+            effect: standard
+            outcomes:
+              success:
+                - type: gainTreasure
+                  treasureId: tot_jade_scarab
+                - type: removeInteractable
+                  id: self
+              failure:
+                - type: gainStress
+                  amount: 1
+    connections:
+      - to: sun_gate
+        isUnlocked: true
+        description: Back to the sun gate
+  gallery_of_blades:
+    uuid: 00000000-0000-0000-0000-000000000304
+    name: Gallery of Blades
+    soundProfile: chasm_wind
+    theme: trap_hall
+    isDiscovered: false
+    interactables:
+      - id: tot_blade_corridor
+        title: Blade Corridor
+        description: Rows of polished bronze blades sweep out of the walls with a rhythm that almost looks learnable.
+        availableActions:
+          - name: Dash between the blades
+            actionType: Finesse
+            position: desperate
+            effect: standard
+            outcomes:
+              success:
+                - type: removeInteractable
+                  id: self
+              partial:
+                - type: gainStress
+                  amount: 1
+                - type: sufferHarm
+                  level: lesser
+                  familyId: leg_injury
+                - type: removeInteractable
+                  id: self
+              failure:
+                - type: tickClock
+                  clockName: Temple Collapse
+                  amount: 2
+                - type: sufferHarm
+                  level: moderate
+                  familyId: leg_injury
+          - name: Jam the timing gears
+            actionType: Tinker
+            position: risky
+            effect: standard
+            outcomes:
+              success:
+                - type: removeInteractable
+                  id: self
+              partial:
+                - type: tickClock
+                  clockName: Temple Collapse
+                  amount: 1
+                - type: removeInteractable
+                  id: self
+              failure:
+                - type: sufferHarm
+                  level: moderate
+                  familyId: gear_damage
+    connections:
+      - to: sun_gate
+        isUnlocked: true
+        description: Retreat to the gatehouse
+      - to: idol_sanctum
+        isUnlocked: true
+        description: Descend to the idol sanctum
+  idol_sanctum:
+    uuid: 00000000-0000-0000-0000-000000000305
+    name: Idol Sanctum
+    soundProfile: silent_tomb
+    theme: sanctum
+    isDiscovered: false
+    interactables:
+      - id: tot_sun_idol_pedestal
+        title: Sun Idol on Pedestal
+        description: The idol sits on a black stone plinth above a pit full of broken decoys and older, less fortunate thieves.
+        availableActions:
+          - name: Swap in a decoy
+            actionType: Finesse
+            position: desperate
+            effect: great
+            outcomes:
+              success:
+                - type: gainTreasure
+                  treasureId: tot_sun_idol
+                - type: endRun
+                  runOutcome: victory
+                  runOutcomeText: The decoy settles, the idol comes free, and your party races for daylight before the temple realizes it has been robbed.
+              partial:
+                - type: gainTreasure
+                  treasureId: tot_sun_idol
+                - type: tickClock
+                  clockName: Temple Collapse
+                  amount: 2
+                - type: endRun
+                  runOutcome: victory
+                  runOutcomeText: The idol comes free with a grinding roar. You get out with the relic, but the whole temple starts coming apart behind you.
+              failure:
+                - type: tickClock
+                  clockName: Temple Collapse
+                  amount: 3
+                - type: tickClock
+                  clockName: Idol's Curse
+                  amount: 1
+                - type: sufferHarm
+                  level: moderate
+                  familyId: head_trauma
+          - name: Rip it free
+            actionType: Wreck
+            position: desperate
+            effect: great
+            outcomes:
+              success:
+                - type: gainTreasure
+                  treasureId: tot_sun_idol
+                - type: tickClock
+                  clockName: Temple Collapse
+                  amount: 1
+                - type: endRun
+                  runOutcome: victory
+                  runOutcomeText: You tear the idol loose by brute force and sprint for the exit as ancient stone crashes down behind you.
+              partial:
+                - type: gainTreasure
+                  treasureId: tot_sun_idol
+                - type: tickClock
+                  clockName: Temple Collapse
+                  amount: 2
+                - type: endRun
+                  runOutcome: victory
+                  runOutcomeText: You wrench the idol free and escape in a storm of dust, barely ahead of the collapsing sanctum.
+              failure:
+                - type: sufferHarm
+                  level: severe
+                  familyId: head_trauma
+                - type: tickClock
+                  clockName: Temple Collapse
+                  amount: 3
+          - name: Leave it on the altar
+            actionType: Study
+            position: controlled
+            effect: limited
+            requiresTest: false
+            isGroupAction: true
+            outcomes:
+              success:
+                - type: endRun
+                  runOutcome: escaped
+                  runOutcomeText: You back away from the altar, alive and empty-handed, leaving the temple to keep its prize a little longer.
+        tags:
+          - Relic
+          - Finale
+    connections:
+      - to: gallery_of_blades
+        isUnlocked: true
+        description: Back through the blade hall

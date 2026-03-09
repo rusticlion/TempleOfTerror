@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>colors</key>
+	<array/>
+	<key>images</key>
+	<array>
+		<dict>
+			<key>catalogPath</key>
+			<string>/Users/russellbates/JunkDrawer/Temple Of Terror/CardGame/Assets.xcassets</string>
+			<key>objcSymbol</key>
+			<string>ACImageNameIconBonusAction</string>
+			<key>relativePath</key>
+			<string>./icon_bonus_action.imageset</string>
+			<key>swiftSymbol</key>
+			<string>iconBonusAction</string>
+		</dict>
+		<dict>
+			<key>catalogPath</key>
+			<string>/Users/russellbates/JunkDrawer/Temple Of Terror/CardGame/Assets.xcassets</string>
+			<key>objcSymbol</key>
+			<string>ACImageNameIconHarmLesserEmpty</string>
+			<key>relativePath</key>
+			<string>./icon_harm_lesser_empty.imageset</string>
+			<key>swiftSymbol</key>
+			<string>iconHarmLesserEmpty</string>
+		</dict>
+		<dict>
+			<key>catalogPath</key>
+			<string>/Users/russellbates/JunkDrawer/Temple Of Terror/CardGame/Assets.xcassets</string>
+			<key>objcSymbol</key>
+			<string>ACImageNameIconHarmLesserFull</string>
+			<key>relativePath</key>
+			<string>./icon_harm_lesser_full.imageset</string>
+			<key>swiftSymbol</key>
+			<string>iconHarmLesserFull</string>
+		</dict>
+		<dict>
+			<key>catalogPath</key>
+			<string>/Users/russellbates/JunkDrawer/Temple Of Terror/CardGame/Assets.xcassets</string>
+			<key>objcSymbol</key>
+			<string>ACImageNameIconHarmModerateEmpty</string>
+			<key>relativePath</key>
+			<string>./icon_harm_moderate_empty.imageset</string>
+			<key>swiftSymbol</key>
+			<string>iconHarmModerateEmpty</string>
+		</dict>
+		<dict>
+			<key>catalogPath</key>
+			<string>/Users/russellbates/JunkDrawer/Temple Of Terror/CardGame/Assets.xcassets</string>
+			<key>objcSymbol</key>
+			<string>ACImageNameIconHarmModerateFull</string>
+			<key>relativePath</key>
+			<string>./icon_harm_moderate_full.imageset</string>
+			<key>swiftSymbol</key>
+			<string>iconHarmModerateFull</string>
+		</dict>
+		<dict>
+			<key>catalogPath</key>
+			<string>/Users/russellbates/JunkDrawer/Temple Of Terror/CardGame/Assets.xcassets</string>
+			<key>objcSymbol</key>
+			<string>ACImageNameIconHarmSevereEmpty</string>
+			<key>relativePath</key>
+			<string>./icon_harm_severe_empty.imageset</string>
+			<key>swiftSymbol</key>
+			<string>iconHarmSevereEmpty</string>
+		</dict>
+		<dict>
+			<key>catalogPath</key>
+			<string>/Users/russellbates/JunkDrawer/Temple Of Terror/CardGame/Assets.xcassets</string>
+			<key>objcSymbol</key>
+			<string>ACImageNameIconHarmSevereFull</string>
+			<key>relativePath</key>
+			<string>./icon_harm_severe_full.imageset</string>
+			<key>swiftSymbol</key>
+			<string>iconHarmSevereFull</string>
+		</dict>
+		<dict>
+			<key>catalogPath</key>
+			<string>/Users/russellbates/JunkDrawer/Temple Of Terror/CardGame/Assets.xcassets</string>
+			<key>objcSymbol</key>
+			<string>ACImageNameIconPenaltyAction</string>
+			<key>relativePath</key>
+			<string>./icon_penalty_action.imageset</string>
+			<key>swiftSymbol</key>
+			<string>iconPenaltyAction</string>
+		</dict>
+		<dict>
+			<key>catalogPath</key>
+			<string>/Users/russellbates/JunkDrawer/Temple Of Terror/CardGame/Assets.xcassets</string>
+			<key>objcSymbol</key>
+			<string>ACImageNameIconStressPipLit</string>
+			<key>relativePath</key>
+			<string>./icon_stress_pip_lit.imageset</string>
+			<key>swiftSymbol</key>
+			<string>iconStressPipLit</string>
+		</dict>
+		<dict>
+			<key>catalogPath</key>
+			<string>/Users/russellbates/JunkDrawer/Temple Of Terror/CardGame/Assets.xcassets</string>
+			<key>objcSymbol</key>
+			<string>ACImageNameIconStressPipUnlit</string>
+			<key>relativePath</key>
+			<string>./icon_stress_pip_unlit.imageset</string>
+			<key>swiftSymbol</key>
+			<string>iconStressPipUnlit</string>
+		</dict>
+		<dict>
+			<key>catalogPath</key>
+			<string>/Users/russellbates/JunkDrawer/Temple Of Terror/CardGame/Assets.xcassets</string>
+			<key>objcSymbol</key>
+			<string>ACImageNameTextureDicetraySurface</string>
+			<key>relativePath</key>
+			<string>./texture_dicetray_surface.imageset</string>
+			<key>swiftSymbol</key>
+			<string>textureDicetraySurface</string>
+		</dict>
+		<dict>
+			<key>catalogPath</key>
+			<string>/Users/russellbates/JunkDrawer/Temple Of Terror/CardGame/Assets.xcassets</string>
+			<key>objcSymbol</key>
+			<string>ACImageNameTextureStoneDoor</string>
+			<key>relativePath</key>
+			<string>./texture_stone_door.imageset</string>
+			<key>swiftSymbol</key>
+			<string>textureStoneDoor</string>
+		</dict>
+		<dict>
+			<key>catalogPath</key>
+			<string>/Users/russellbates/JunkDrawer/Temple Of Terror/CardGame/Assets.xcassets</string>
+			<key>objcSymbol</key>
+			<string>ACImageNameVfxDamageVignette</string>
+			<key>relativePath</key>
+			<string>./vfx_damage_vignette.imageset</string>
+			<key>swiftSymbol</key>
+			<string>vfxDamageVignette</string>
+		</dict>
+	</array>
+	<key>symbols</key>
+	<array/>
+</dict>
+</plist>

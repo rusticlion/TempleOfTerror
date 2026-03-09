@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 1,
+  "scenarios": [
+    {
+      "scenarioID": "temple_of_terror",
+      "legacyScenarioIDs": ["tomb"],
+      "title": "Temple of Terror",
+      "tagline": "A 1970s pulp expedition into a trap-laden tomb.",
+      "shortDescription": "Race deeper into a cursed archaeological site full of traps, relics, dead ends, and bad decisions.",
+      "sortOrder": 10,
+      "recommendedStart": true,
+      "complexityTier": "standard",
+      "priceTier": "standard",
+      "availabilityModel": "included",
+      "toneTags": ["pulp", "archaeology", "traps", "adventure"],
+      "nativeArchetypePreview": ["Archaeologist", "Linguist", "Guide"],
+      "coverArtAsset": "catalog_temple_of_terror",
+      "accentColorHex": "#A56A2A",
+      "contentStatus": "bundled"
+    },
+    {
+      "scenarioID": "shadow_of_a_doubt",
+      "legacyScenarioIDs": [],
+      "title": "Shadow of a Doubt",
+      "tagline": "A haunted house where consciousness itself is under attack.",
+      "shortDescription": "Unravel a cult's doctrine of annihilating consciousness while surviving ghosts, rituals, and a house that wants you hollowed out.",
+      "sortOrder": 20,
+      "recommendedStart": false,
+      "complexityTier": "standard",
+      "priceTier": "standard",
+      "availabilityModel": "included",
+      "toneTags": ["haunted-house", "occult", "cosmic-horror", "mystery"],
+      "nativeArchetypePreview": ["Detective", "Cultist", "Ghost Hunter"],
+      "coverArtAsset": "catalog_shadow_of_a_doubt",
+      "accentColorHex": "#4E5A78",
+      "contentStatus": "placeholder"
+    },
+    {
+      "scenarioID": "charons_bargain",
+      "legacyScenarioIDs": [],
+      "title": "Charon's Bargain",
+      "tagline": "A compromised freighter, a secret lab, and a grotesque bargain against death.",
+      "shortDescription": "Respond to a medical distress signal aboard a drifting freighter and confront the monstrous cost of refusing to let the dead go.",
+      "sortOrder": 30,
+      "recommendedStart": false,
+      "complexityTier": "premium",
+      "priceTier": "premium",
+      "availabilityModel": "iap",
+      "productID": "com.russellbates.dicedelver.scenario.charons_bargain",
+      "toneTags": ["sci-fi", "body-horror", "survival-horror", "investigation"],
+      "nativeArchetypePreview": ["Pilot", "Scavenger", "Mercenary"],
+      "coverArtAsset": "catalog_charons_bargain",
+      "accentColorHex": "#2B6D7A",
+      "contentStatus": "bundled"
+    }
+  ]
+}

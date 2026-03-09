@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>logFormatVersion</key>
+	<integer>12</integer>
+	<key>logs</key>
+	<dict>
+		<key>77E25DD9-F188-454C-8114-D95C67762B2D</key>
+		<dict>
+			<key>className</key>
+			<string>IDECommandLineBuildLog</string>
+			<key>documentTypeString</key>
+			<string>&lt;nil&gt;</string>
+			<key>domainType</key>
+			<string>Xcode.IDEActivityLogDomainType.BuildLog</string>
+			<key>fileName</key>
+			<string>77E25DD9-F188-454C-8114-D95C67762B2D.xcactivitylog</string>
+			<key>hasPrimaryLog</key>
+			<true/>
+			<key>primaryObservable</key>
+			<dict>
+				<key>highLevelStatus</key>
+				<string>W</string>
+				<key>totalNumberOfAnalyzerIssues</key>
+				<integer>0</integer>
+				<key>totalNumberOfErrors</key>
+				<integer>0</integer>
+				<key>totalNumberOfTestFailures</key>
+				<integer>0</integer>
+				<key>totalNumberOfWarnings</key>
+				<integer>4</integer>
+			</dict>
+			<key>schemeIdentifier-containerName</key>
+			<string>CardGame project</string>
+			<key>schemeIdentifier-schemeName</key>
+			<string>CardGame</string>
+			<key>schemeIdentifier-sharedScheme</key>
+			<integer>1</integer>
+			<key>signature</key>
+			<string>Testing project CardGame with scheme CardGame</string>
+			<key>timeStartedRecording</key>
+			<real>794770558.14905906</real>
+			<key>timeStoppedRecording</key>
+			<real>794770575.61236894</real>
+			<key>title</key>
+			<string>Testing project CardGame with scheme CardGame</string>
+			<key>uniqueIdentifier</key>
+			<string>77E25DD9-F188-454C-8114-D95C67762B2D</string>
+		</dict>
+		<key>8A3B8CD5-D8E3-4352-943B-3C88A5C55EF5</key>
+		<dict>
+			<key>className</key>
+			<string>IDECommandLineBuildLog</string>
+			<key>documentTypeString</key>
+			<string>&lt;nil&gt;</string>
+			<key>domainType</key>
+			<string>Xcode.IDEActivityLogDomainType.BuildLog</string>
+			<key>fileName</key>
+			<string>8A3B8CD5-D8E3-4352-943B-3C88A5C55EF5.xcactivitylog</string>
+			<key>hasPrimaryLog</key>
+			<true/>
+			<key>primaryObservable</key>
+			<dict>
+				<key>highLevelStatus</key>
+				<string>W</string>
+				<key>totalNumberOfAnalyzerIssues</key>
+				<integer>0</integer>
+				<key>totalNumberOfErrors</key>
+				<integer>0</integer>
+				<key>totalNumberOfTestFailures</key>
+				<integer>0</integer>
+				<key>totalNumberOfWarnings</key>
+				<integer>4</integer>
+			</dict>
+			<key>schemeIdentifier-containerName</key>
+			<string>CardGame project</string>
+			<key>schemeIdentifier-schemeName</key>
+			<string>CardGame</string>
+			<key>schemeIdentifier-sharedScheme</key>
+			<integer>1</integer>
+			<key>signature</key>
+			<string>Building project CardGame with scheme CardGame and configuration Debug</string>
+			<key>timeStartedRecording</key>
+			<real>794771099.17798805</real>
+			<key>timeStoppedRecording</key>
+			<real>794771108.75891197</real>
+			<key>title</key>
+			<string>Building project CardGame with scheme CardGame and configuration Debug</string>
+			<key>uniqueIdentifier</key>
+			<string>8A3B8CD5-D8E3-4352-943B-3C88A5C55EF5</string>
+		</dict>
+	</dict>
+</dict>
+</plist>

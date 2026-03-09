@@ -648,15 +648,6 @@ struct HarmState: Codable {
     }
 }
 
-/// Central catalog of all harm families available in the game.
-/// This dictionary is populated from the JSON content loaded by `ContentLoader`.
-struct HarmLibrary {
-    /// Access the harm families for the currently loaded scenario.
-    static var families: [String: HarmFamily] {
-        return ContentLoader.shared.harmFamilyDict
-    }
-}
-
 struct ArchetypeDefinition: Codable, Identifiable, Hashable {
     let id: String
     var name: String
@@ -715,11 +706,12 @@ struct Interactable: Codable, Identifiable {
     var description: String
     var availableActions: [ActionOption]
     var isThreat: Bool = false
+    var usableUnderThreat: Bool = false
     var isDisplayOnly: Bool = false
     var tags: [String] = []
 
     enum CodingKeys: String, CodingKey {
-        case id, title, description, availableActions, isThreat, isDisplayOnly, tags
+        case id, title, description, availableActions, isThreat, usableUnderThreat, isDisplayOnly, tags
     }
 
     init(id: String,
@@ -727,6 +719,7 @@ struct Interactable: Codable, Identifiable {
          description: String,
          availableActions: [ActionOption],
          isThreat: Bool = false,
+         usableUnderThreat: Bool = false,
          isDisplayOnly: Bool = false,
          tags: [String] = []) {
         self.id = id
@@ -734,6 +727,7 @@ struct Interactable: Codable, Identifiable {
         self.description = description
         self.availableActions = availableActions
         self.isThreat = isThreat
+        self.usableUnderThreat = usableUnderThreat
         self.isDisplayOnly = isDisplayOnly
         self.tags = tags
     }
@@ -745,6 +739,7 @@ struct Interactable: Codable, Identifiable {
         description = try container.decode(String.self, forKey: .description)
         availableActions = try container.decode([ActionOption].self, forKey: .availableActions)
         isThreat = try container.decodeIfPresent(Bool.self, forKey: .isThreat) ?? false
+        usableUnderThreat = try container.decodeIfPresent(Bool.self, forKey: .usableUnderThreat) ?? false
         isDisplayOnly = try container.decodeIfPresent(Bool.self, forKey: .isDisplayOnly) ?? false
         tags = try container.decodeIfPresent([String].self, forKey: .tags) ?? []
     }
@@ -757,6 +752,9 @@ struct Interactable: Codable, Identifiable {
         try container.encode(availableActions, forKey: .availableActions)
         if isThreat {
             try container.encode(isThreat, forKey: .isThreat)
+        }
+        if usableUnderThreat {
+            try container.encode(usableUnderThreat, forKey: .usableUnderThreat)
         }
         if isDisplayOnly {
             try container.encode(isDisplayOnly, forKey: .isDisplayOnly)

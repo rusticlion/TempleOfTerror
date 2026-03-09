@@ -1,0 +1,33 @@
+[
+  {
+    "id": "scout",
+    "name": "Scout",
+    "description": "Moves first, sees trouble early, and survives by staying hard to pin down.",
+    "defaultActions": {
+      "Finesse": 1,
+      "Hunt": 1,
+      "Survey": 1,
+      "Prowl": 1
+    }
+  },
+  {
+    "id": "archaeologist",
+    "name": "Archaeologist",
+    "description": "Reads ruins, relics, and the people reckless enough to disturb them.",
+    "defaultActions": {
+      "Study": 2,
+      "Survey": 1,
+      "Tinker": 1
+    }
+  },
+  {
+    "id": "scholar",
+    "name": "Scholar",
+    "description": "Wins through knowledge, memory, and dangerous curiosity.",
+    "defaultActions": {
+      "Study": 2,
+      "Attune": 1,
+      "Consort": 1
+    }
+  }
+]

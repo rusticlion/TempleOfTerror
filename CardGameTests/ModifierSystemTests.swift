@@ -2,6 +2,14 @@ import XCTest
 @testable import CardGame
 
 final class ModifierSystemTests: XCTestCase {
+    private func makeViewModel(scenario: String = "tomb") -> GameViewModel {
+        var runtime = ScenarioRuntime()
+        _ = runtime.activateScenario(named: scenario)
+        let viewModel = GameViewModel(runtime: runtime)
+        viewModel.gameState.scenarioName = scenario
+        return viewModel
+    }
+
     func makeTestCharacter() -> Character {
         Character(id: UUID(),
                   name: "Tester",
@@ -21,13 +29,12 @@ final class ModifierSystemTests: XCTestCase {
     }
 
     func testRollContextIncludesOptionalModsAndPush() throws {
-        ContentLoader.shared = ContentLoader()
         var character = makeTestCharacter()
         let optional = Modifier(bonusDice: 1, uses: 1, isOptionalToApply: true, description: "Lucky Charm")
         let alwaysOn = Modifier(bonusDice: 1, uses: 1, isOptionalToApply: false, description: "Battle Fury")
         character.modifiers = [optional, alwaysOn]
 
-        let viewModel = GameViewModel()
+        let viewModel = makeViewModel()
         let context = viewModel.getRollContext(for: makeTestAction(), with: character)
 
         XCTAssertEqual(context.baseProjection.finalDiceCount, 3)
@@ -69,11 +76,10 @@ final class ModifierSystemTests: XCTestCase {
     }
 
     func testPerformActionConsumesModifier() throws {
-        ContentLoader.shared = ContentLoader()
         var character = makeTestCharacter()
         let mod = Modifier(bonusDice: 1, uses: 1, isOptionalToApply: true, description: "Charm")
         character.modifiers = [mod]
-        let vm = GameViewModel()
+        let vm = makeViewModel()
         vm.gameState.party = [character]
         vm.gameState.characterLocations[character.id.uuidString] = UUID()
 
@@ -106,8 +112,7 @@ final class ModifierSystemTests: XCTestCase {
     }
 
     func testActionEffectPenalty() throws {
-        ContentLoader.shared = ContentLoader(scenario: "test_penalty")
-        let vm = GameViewModel()
+        let vm = makeViewModel(scenario: "test_penalty")
         var character = makeTestCharacter()
         character.actions["Prowl"] = 2
         character.harm.lesser = [(familyId: "sprain", description: "Ankle Sprain")]
@@ -134,8 +139,7 @@ final class ModifierSystemTests: XCTestCase {
     }
 
     func testTagConditionalPenalty() throws {
-        ContentLoader.shared = ContentLoader(scenario: "test_tag_penalty")
-        let vm = GameViewModel()
+        let vm = makeViewModel(scenario: "test_tag_penalty")
         var character = makeTestCharacter()
         character.actions["Tinker"] = 2
         character.harm.lesser = [(familyId: "flora_allergy", description: "Allergic Reaction")]
@@ -163,13 +167,12 @@ final class ModifierSystemTests: XCTestCase {
     }
 
     func testTreasureRemovedWhenUsesDepleted() throws {
-        ContentLoader.shared = ContentLoader()
         var character = makeTestCharacter()
         let mod = Modifier(bonusDice: 1, uses: 1, isOptionalToApply: true, description: "Charm")
         let treasure = Treasure(id: "test_charm", name: "Charm Stone", description: "", grantedModifier: mod)
         character.modifiers = [mod]
         character.treasures = [treasure]
-        let vm = GameViewModel()
+        let vm = makeViewModel()
         vm.gameState.party = [character]
         vm.gameState.characterLocations[character.id.uuidString] = UUID()
 
@@ -212,8 +215,7 @@ final class ModifierSystemTests: XCTestCase {
     }
 
     func testPushStressCostIncludesActiveHarmPenalty() throws {
-        ContentLoader.shared = ContentLoader(scenario: "tomb")
-        let vm = GameViewModel()
+        let vm = makeViewModel()
         var character = makeTestCharacter()
         character.stress = 6
         character.harm.lesser = [(familyId: "mental_anguish", description: "Unease")]

@@ -35,11 +35,27 @@ class GameViewModel: ObservableObject {
     /// Enable verbose logging when processing consequences.
     static var debugConsequences = true
     private let rollRules = RollRulesEngine()
-    private let runtime: ScenarioRuntime
+    private var runtime: ScenarioRuntime
     private let saveStore: SaveGameStore
 
+    private var activeContent: ContentLoader {
+        runtime.content
+    }
+
+    private var activeHarmFamilies: [String: HarmFamily] {
+        activeContent.harmFamilyDict
+    }
+
+    var harmFamilies: [String: HarmFamily] {
+        activeHarmFamilies
+    }
+
     private func makeConsequenceExecutor() -> ConsequenceExecutor {
-        ConsequenceExecutor(debugLogging: Self.debugConsequences, runtime: runtime)
+        ConsequenceExecutor(
+            debugLogging: Self.debugConsequences,
+            runtime: runtime,
+            content: activeContent
+        )
     }
 
     private func syncAmbientAudio(for node: MapNode?) {
@@ -106,11 +122,21 @@ class GameViewModel: ObservableObject {
     // --- Core Logic Functions for the Sprint ---
 
     func calculateProjection(for action: ActionOption, with character: Character, interactableTags tags: [String] = []) -> RollProjectionDetails {
-        rollRules.calculateProjection(for: action, with: character, interactableTags: tags)
+        rollRules.calculateProjection(
+            for: action,
+            with: character,
+            interactableTags: tags,
+            harmFamilies: activeHarmFamilies
+        )
     }
 
     func getRollContext(for action: ActionOption, with character: Character, interactableTags tags: [String] = []) -> (baseProjection: RollProjectionDetails, optionalModifiers: [SelectableModifierInfo]) {
-        rollRules.getRollContext(for: action, with: character, interactableTags: tags)
+        rollRules.getRollContext(
+            for: action,
+            with: character,
+            interactableTags: tags,
+            harmFamilies: activeHarmFamilies
+        )
     }
 
     func calculateEffectiveProjection(baseProjection: RollProjectionDetails, applying chosenModifierStructs: [Modifier]) -> RollProjectionDetails {
@@ -238,7 +264,11 @@ class GameViewModel: ObservableObject {
         let contextModifiersByID = Dictionary(uniqueKeysWithValues: context.optionalModifiers.map { ($0.id, $0.modifierData) })
 
         if chosenOptionalModifierIDs.contains(where: { pushModifierIDs.contains($0) }) {
-            let pushCost = rollRules.pushStressCost(for: gameState.party[charIndex], interactableTags: tags)
+            let pushCost = rollRules.pushStressCost(
+                for: gameState.party[charIndex],
+                interactableTags: tags,
+                harmFamilies: activeHarmFamilies
+            )
             if gameState.party[charIndex].stress + pushCost <= 9 {
                 appliedOptionalMods.append(Modifier(bonusDice: 1, uses: 1, isOptionalToApply: true, description: "Push Yourself"))
                 gameState.party[charIndex].stress += pushCost
@@ -462,7 +492,11 @@ class GameViewModel: ObservableObject {
 
     func pushYourself(forCharacter character: Character) {
         if let charIndex = gameState.party.firstIndex(where: { $0.id == character.id }) {
-            let pushCost = rollRules.pushStressCost(for: gameState.party[charIndex], interactableTags: [])
+            let pushCost = rollRules.pushStressCost(
+                for: gameState.party[charIndex],
+                interactableTags: [],
+                harmFamilies: activeHarmFamilies
+            )
             gameState.party[charIndex].stress += pushCost
             _ = checkStressOverflow(for: charIndex)
         }
@@ -510,6 +544,18 @@ class GameViewModel: ObservableObject {
 
     func getNodeName(for characterID: UUID?) -> String? {
         runtime.nodeName(for: characterID, in: gameState)
+    }
+
+    func visibleInteractables(for characterID: UUID?) -> [Interactable] {
+        runtime.visibleInteractables(for: characterID, in: gameState)
+    }
+
+    func activeThreats(for characterID: UUID?) -> [Interactable] {
+        runtime.threats(for: characterID, in: gameState)
+    }
+
+    func isCharacterEngaged(_ characterID: UUID?) -> Bool {
+        runtime.isCharacterEngaged(characterID, in: gameState)
     }
 
     func isPartyActuallySplit() -> Bool {
@@ -609,7 +655,7 @@ class GameViewModel: ObservableObject {
     @discardableResult
     func debugGrantTreasure(_ treasureID: String, to characterID: UUID) -> Bool {
         guard let characterIndex = gameState.party.firstIndex(where: { $0.id == characterID }),
-              let treasure = ContentLoader.shared.treasureTemplates.first(where: { $0.id == treasureID }) else {
+              let treasure = activeContent.treasureTemplates.first(where: { $0.id == treasureID }) else {
             return false
         }
 
@@ -623,6 +669,10 @@ class GameViewModel: ObservableObject {
         }
         saveGame()
         return true
+    }
+
+    var availableTreasureTemplates: [Treasure] {
+        activeContent.treasureTemplates
     }
 
     @discardableResult

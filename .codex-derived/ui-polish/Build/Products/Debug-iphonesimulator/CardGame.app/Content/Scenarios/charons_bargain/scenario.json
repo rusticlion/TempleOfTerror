@@ -1,0 +1,17 @@
+{
+  "id": "charons_bargain",
+  "title": "Charon's Bargain",
+  "description": "You respond to a medical distress signal from a space freighter, but not all is as it seems. What are you willing to do to survive?",
+  "entryNode": "Docking Bay",
+  "mapFile": "map_charons_bargain.json",
+  "partySize": 3,
+  "nativeArchetypeIDs": [
+    "scientist",
+    "mercenary",
+    "pilot",
+    "scavenger",
+    "medic",
+    "engineer"
+  ],
+  "stressOverflowHarmFamilyID": "vfe_cerebral_euphoria"
+}

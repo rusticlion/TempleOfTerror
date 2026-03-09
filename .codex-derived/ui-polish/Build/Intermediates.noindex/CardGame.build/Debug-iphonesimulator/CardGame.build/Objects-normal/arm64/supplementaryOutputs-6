@@ -1,0 +1,23 @@
+{
+  "/Users/russellbates/JunkDrawer/Temple Of Terror/CardGame/DiceRollView.swift" : {
+    "const-values" : "/Users/russellbates/JunkDrawer/Temple Of Terror/.codex-derived/ui-polish/Build/Intermediates.noindex/CardGame.build/Debug-iphonesimulator/CardGame.build/Objects-normal/arm64/DiceRollView.swiftconstvalues",
+    "dependencies" : "/Users/russellbates/JunkDrawer/Temple Of Terror/.codex-derived/ui-polish/Build/Intermediates.noindex/CardGame.build/Debug-iphonesimulator/CardGame.build/Objects-normal/arm64/DiceRollView.d",
+    "diagnostics" : "/Users/russellbates/JunkDrawer/Temple Of Terror/.codex-derived/ui-polish/Build/Intermediates.noindex/CardGame.build/Debug-iphonesimulator/CardGame.build/Objects-normal/arm64/DiceRollView.dia",
+    "object" : "/Users/russellbates/JunkDrawer/Temple Of Terror/.codex-derived/ui-polish/Build/Intermediates.noindex/CardGame.build/Debug-iphonesimulator/CardGame.build/Objects-normal/arm64/DiceRollView.o",
+    "swift-dependencies" : "/Users/russellbates/JunkDrawer/Temple Of Terror/.codex-derived/ui-polish/Build/Intermediates.noindex/CardGame.build/Debug-iphonesimulator/CardGame.build/Objects-normal/arm64/DiceRollView.swiftdeps"
+  },
+  "/Users/russellbates/JunkDrawer/Temple Of Terror/CardGame/Models.swift" : {
+    "const-values" : "/Users/russellbates/JunkDrawer/Temple Of Terror/.codex-derived/ui-polish/Build/Intermediates.noindex/CardGame.build/Debug-iphonesimulator/CardGame.build/Objects-normal/arm64/Models.swiftconstvalues",
+    "dependencies" : "/Users/russellbates/JunkDrawer/Temple Of Terror/.codex-derived/ui-polish/Build/Intermediates.noindex/CardGame.build/Debug-iphonesimulator/CardGame.build/Objects-normal/arm64/Models.d",
+    "diagnostics" : "/Users/russellbates/JunkDrawer/Temple Of Terror/.codex-derived/ui-polish/Build/Intermediates.noindex/CardGame.build/Debug-iphonesimulator/CardGame.build/Objects-normal/arm64/Models.dia",
+    "object" : "/Users/russellbates/JunkDrawer/Temple Of Terror/.codex-derived/ui-polish/Build/Intermediates.noindex/CardGame.build/Debug-iphonesimulator/CardGame.build/Objects-normal/arm64/Models.o",
+    "swift-dependencies" : "/Users/russellbates/JunkDrawer/Temple Of Terror/.codex-derived/ui-polish/Build/Intermediates.noindex/CardGame.build/Debug-iphonesimulator/CardGame.build/Objects-normal/arm64/Models.swiftdeps"
+  },
+  "/Users/russellbates/JunkDrawer/Temple Of Terror/CardGame/SceneKitDiceView.swift" : {
+    "const-values" : "/Users/russellbates/JunkDrawer/Temple Of Terror/.codex-derived/ui-polish/Build/Intermediates.noindex/CardGame.build/Debug-iphonesimulator/CardGame.build/Objects-normal/arm64/SceneKitDiceView.swiftconstvalues",
+    "dependencies" : "/Users/russellbates/JunkDrawer/Temple Of Terror/.codex-derived/ui-polish/Build/Intermediates.noindex/CardGame.build/Debug-iphonesimulator/CardGame.build/Objects-normal/arm64/SceneKitDiceView.d",
+    "diagnostics" : "/Users/russellbates/JunkDrawer/Temple Of Terror/.codex-derived/ui-polish/Build/Intermediates.noindex/CardGame.build/Debug-iphonesimulator/CardGame.build/Objects-normal/arm64/SceneKitDiceView.dia",
+    "object" : "/Users/russellbates/JunkDrawer/Temple Of Terror/.codex-derived/ui-polish/Build/Intermediates.noindex/CardGame.build/Debug-iphonesimulator/CardGame.build/Objects-normal/arm64/SceneKitDiceView.o",
+    "swift-dependencies" : "/Users/russellbates/JunkDrawer/Temple Of Terror/.codex-derived/ui-polish/Build/Intermediates.noindex/CardGame.build/Debug-iphonesimulator/CardGame.build/Objects-normal/arm64/SceneKitDiceView.swiftdeps"
+  }
+}

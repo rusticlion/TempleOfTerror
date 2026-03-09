@@ -1,0 +1,49 @@
+- id: tot_rubbed_tablet
+  name: Rubbed Tablet
+  description: Charcoal rubbings of the temple's warning glyphs.
+  grantedModifier:
+    improveEffect: true
+    uses: 1
+    description: from Rubbed Tablet
+    isOptionalToApply: true
+- id: tot_silk_rope
+  name: Silk Rope
+  description: A neatly coiled climbing rope still dry inside a waxed satchel.
+  grantedModifier:
+    improvePosition: true
+    applicableActions:
+      - Finesse
+      - Prowl
+    uses: 1
+    description: from Silk Rope
+    isOptionalToApply: true
+- id: tot_warding_charm
+  name: Warding Charm
+  description: A stamped bronze charm that pushes back the temple's whispers for a moment.
+  grantedModifier:
+    bonusDice: 1
+    applicableToAction: Attune
+    uses: 1
+    description: from Warding Charm
+    isOptionalToApply: true
+- id: tot_jade_scarab
+  name: Jade Scarab
+  description: A fist-sized scarab carved from cool green stone.
+  grantedModifier:
+    bonusDice: 1
+    applicableActions:
+      - Survey
+      - Finesse
+    uses: 1
+    description: from Jade Scarab
+    isOptionalToApply: true
+- id: tot_sun_idol
+  name: Sun Idol
+  description: A relic of hammered gold whose smile looks almost triumphant.
+  grantedModifier:
+    bonusDice: 1
+    uses: 1
+    description: Fortune of the Sun Idol
+    isOptionalToApply: true
+  tags:
+    - Relic

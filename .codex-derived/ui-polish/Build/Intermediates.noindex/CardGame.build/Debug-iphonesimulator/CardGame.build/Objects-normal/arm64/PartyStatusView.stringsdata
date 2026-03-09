@@ -1,0 +1,16 @@
+{
+  "source": "/Users/russellbates/JunkDrawer/Temple Of Terror/CardGame/PartyStatusView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Status",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 8
+        }
+      }
+    ]
+  },
+  "version": 1
+}

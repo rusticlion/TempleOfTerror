@@ -13,7 +13,7 @@ struct NodeConnectionsView: View {
                 .foregroundColor(Theme.inkFaded)
 
             if let node = currentNode {
-                ForEach(Array(node.connections.enumerated()), id: \.0) { _, connection in
+                ForEach(Array(node.connections.enumerated()), id: \.0) { index, connection in
                     Button {
                         onMove(connection)
                     } label: {
@@ -50,6 +50,7 @@ struct NodeConnectionsView: View {
                     .buttonStyle(.plain)
                     .disabled(!connection.isUnlocked)
                     .opacity(connection.isUnlocked ? 1 : 0.5)
+                    .accessibilityIdentifier("connectionButton_\(index)")
                 }
             }
         }

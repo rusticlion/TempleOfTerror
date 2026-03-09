@@ -36,6 +36,15 @@ struct ContentView: View {
         viewModel.gameState.party.first { $0.id == selectedCharacterID && !$0.isDefeated }
     }
 
+    private var characterLocationNames: [UUID: String] {
+        Dictionary(
+            uniqueKeysWithValues: viewModel.gameState.party.compactMap { character in
+                guard let locationName = viewModel.getNodeName(for: character.id) else { return nil }
+                return (character.id, locationName)
+            }
+        )
+    }
+
     private var gameOverTitle: String {
         switch viewModel.gameState.runOutcome {
         case .victory:
@@ -52,6 +61,10 @@ struct ContentView: View {
             return text
         }
         return "The tomb claims another party."
+    }
+
+    private var movementButtonTitle: String {
+        viewModel.partyMovementMode == .grouped ? "Split Up" : "Regroup"
     }
 
     private var showingPendingResolution: Binding<Bool> {
@@ -99,8 +112,8 @@ struct ContentView: View {
                     VStack(alignment: .leading, spacing: 16) {
                         if let node = viewModel.node(for: selectedCharacterID) {
                             VStack(alignment: .leading, spacing: 16) {
-                                let threats = node.interactables.filter { $0.isThreat }
-                                let items = threats.isEmpty ? node.interactables : threats
+                                let items = viewModel.visibleInteractables(for: selectedCharacterID)
+                                let isEngaged = viewModel.isCharacterEngaged(selectedCharacterID)
 
                                 let vm = viewModel
                                 ForEach(items, id: \.id) { interactable in
@@ -119,7 +132,20 @@ struct ContentView: View {
                                     .transition(.scale(scale: 0.9).combined(with: .opacity))
                                 }
 
-                                if threats.isEmpty {
+                                if isEngaged {
+                                    Text("Threat in play. You can't leave this node until the danger here is dealt with.")
+                                        .font(Theme.systemFont(size: 12, weight: .medium))
+                                        .foregroundColor(Theme.danger)
+                                        .padding(.horizontal, 12)
+                                        .padding(.vertical, 10)
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                        .background(Theme.danger.opacity(0.08))
+                                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 8)
+                                                .stroke(Theme.danger.opacity(0.25), lineWidth: 1)
+                                        )
+                                } else {
                                     Divider()
 
                                     NodeConnectionsView(currentNode: viewModel.node(for: selectedCharacterID)) { connection in
@@ -142,7 +168,11 @@ struct ContentView: View {
 
                 VStack(spacing: 8) {
                     if showingCharacterSheet, let character = selectedCharacter {
-                        CharacterSheetView(character: character)
+                        CharacterSheetView(
+                            character: character,
+                            locationName: viewModel.getNodeName(for: character.id),
+                            harmFamilies: viewModel.harmFamilies
+                        )
                             .transition(.move(edge: .bottom))
                             .padding(.horizontal)
                     }
@@ -160,9 +190,16 @@ struct ContentView: View {
                         }
                         .buttonStyle(.plain)
 
+                        PartyMovementStatusView(
+                            viewModel: viewModel,
+                            selectedCharacterID: selectedCharacterID,
+                            characterLocationNames: characterLocationNames
+                        )
+
                         CharacterSelectorView(characters: viewModel.gameState.party,
                                               selectedCharacterID: $selectedCharacterID,
-                                              movementMode: viewModel.partyMovementMode)
+                                              movementMode: viewModel.partyMovementMode,
+                                              locationNames: characterLocationNames)
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.horizontal)
@@ -175,60 +212,44 @@ struct ContentView: View {
                             .frame(height: 1)
                     }
 
-                    HStack(spacing: 12) {
+                    HStack(spacing: 10) {
                         Button {
                             viewModel.toggleMovementMode()
                         } label: {
-                            Text(viewModel.partyMovementMode == .grouped ? "Split Up" : "Stick Together")
-                                .font(Theme.systemFont(size: 14, weight: .semibold))
-                                .foregroundColor(Theme.parchmentDark)
-                                .padding(.horizontal, 14)
-                                .padding(.vertical, 8)
-                                .background(Theme.leatherLight.opacity(0.5))
-                                .clipShape(Capsule())
-                                .overlay(Capsule().stroke(Theme.inkFaded.opacity(0.3), lineWidth: 1))
+                            BottomToolbarButtonLabel(
+                                title: movementButtonTitle,
+                                systemImage: "arrow.triangle.branch"
+                            )
                         }
                         .buttonStyle(.plain)
+                        .frame(maxWidth: .infinity)
                         .disabled(viewModel.partyMovementMode == .solo && !viewModel.canRegroup())
                         .opacity(viewModel.partyMovementMode == .solo && !viewModel.canRegroup() ? 0.6 : 1)
-
-                        Spacer()
+                        .accessibilityIdentifier("movementModeButton")
 
                         Button {
                             showingStatusSheet.toggle()
                         } label: {
-                            HStack(spacing: 6) {
-                                Image(systemName: "person.3.fill")
-                                Text("Status")
-                            }
-                            .font(Theme.systemFont(size: 14, weight: .semibold))
-                            .foregroundColor(Theme.parchmentDark)
-                            .padding(.horizontal, 14)
-                            .padding(.vertical, 8)
-                            .background(Theme.leatherLight.opacity(0.5))
-                            .clipShape(Capsule())
-                            .overlay(Capsule().stroke(Theme.inkFaded.opacity(0.3), lineWidth: 1))
+                            BottomToolbarButtonLabel(
+                                title: "Status",
+                                systemImage: "person.3.fill"
+                            )
                         }
                         .buttonStyle(.plain)
-
-                        Spacer()
+                        .frame(maxWidth: .infinity)
+                        .accessibilityIdentifier("statusButton")
 
                         Button {
                             showingMap.toggle()
                         } label: {
-                            HStack(spacing: 6) {
-                                Image(systemName: "map")
-                                Text("Map")
-                            }
-                            .font(Theme.systemFont(size: 14, weight: .semibold))
-                            .foregroundColor(Theme.parchmentDark)
-                            .padding(.horizontal, 14)
-                            .padding(.vertical, 8)
-                            .background(Theme.leatherLight.opacity(0.5))
-                            .clipShape(Capsule())
-                            .overlay(Capsule().stroke(Theme.inkFaded.opacity(0.3), lineWidth: 1))
+                            BottomToolbarButtonLabel(
+                                title: "Map",
+                                systemImage: "map"
+                            )
                         }
                         .buttonStyle(.plain)
+                        .frame(maxWidth: .infinity)
+                        .accessibilityIdentifier("mapButton")
                     }
                     .padding(.horizontal)
                     .padding(.bottom, 2)
@@ -336,6 +357,28 @@ struct ContentView_Previews: PreviewProvider {
     }
 }
 
+private struct BottomToolbarButtonLabel: View {
+    let title: String
+    let systemImage: String
+
+    var body: some View {
+        HStack(spacing: 6) {
+            Image(systemName: systemImage)
+            Text(title)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+        }
+        .font(Theme.systemFont(size: 14, weight: .semibold))
+        .foregroundColor(Theme.parchmentDark)
+        .frame(maxWidth: .infinity)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 8)
+        .background(Theme.leatherLight.opacity(0.5))
+        .clipShape(Capsule())
+        .overlay(Capsule().stroke(Theme.inkFaded.opacity(0.3), lineWidth: 1))
+    }
+}
+
 struct PendingResolutionView: View {
     @ObservedObject var viewModel: GameViewModel
     @Environment(\.dismiss) private var dismiss
@@ -400,6 +443,150 @@ struct PendingResolutionView: View {
     }
 }
 
+struct PartyMovementStatusView: View {
+    @ObservedObject var viewModel: GameViewModel
+    let selectedCharacterID: UUID?
+    let characterLocationNames: [UUID: String]
+
+    private struct LocationGroup: Identifiable {
+        let id: String
+        let name: String
+        let characters: [Character]
+    }
+
+    private var activeCharacters: [Character] {
+        viewModel.gameState.party.filter { !$0.isDefeated }
+    }
+
+    private var locationGroups: [LocationGroup] {
+        let grouped = Dictionary(grouping: activeCharacters) { character in
+            characterLocationNames[character.id] ?? "Unknown Location"
+        }
+
+        return grouped
+            .map { key, value in
+                LocationGroup(
+                    id: key,
+                    name: key,
+                    characters: value.sorted { $0.name < $1.name }
+                )
+            }
+            .sorted { lhs, rhs in lhs.name < rhs.name }
+    }
+
+    private var title: String {
+        switch viewModel.partyMovementMode {
+        case .grouped:
+            return "Moving Together"
+        case .solo where viewModel.isPartyActuallySplit():
+            return "Split Up"
+        case .solo:
+            return "Independent Movement"
+        }
+    }
+
+    private var subtitle: String {
+        switch viewModel.partyMovementMode {
+        case .grouped:
+            return "All active explorers travel as one party."
+        case .solo where viewModel.isPartyActuallySplit():
+            return "The party is spread across \(locationGroups.count) rooms."
+        case .solo:
+            return "Pick one explorer to move without dragging the rest along."
+        }
+    }
+
+    private var selectedCharacterName: String? {
+        guard let selectedCharacterID else { return nil }
+        return activeCharacters.first(where: { $0.id == selectedCharacterID })?.name
+    }
+
+    private var statusIcon: String {
+        switch viewModel.partyMovementMode {
+        case .grouped:
+            return "person.3.fill"
+        case .solo where viewModel.isPartyActuallySplit():
+            return "arrow.triangle.branch"
+        case .solo:
+            return "figure.walk.motion"
+        }
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(alignment: .top, spacing: 10) {
+                Image(systemName: statusIcon)
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundColor(viewModel.partyMovementMode == .grouped ? Theme.success : Theme.gold)
+                    .frame(width: 28, height: 28)
+                    .background(Theme.bg.opacity(0.45), in: Circle())
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(title)
+                        .font(Theme.systemFont(size: 12, weight: .semibold))
+                        .foregroundColor(Theme.parchment)
+                        .textCase(.uppercase)
+                        .tracking(0.7)
+
+                    Text(subtitle)
+                        .font(Theme.bodyFont(size: 13))
+                        .foregroundColor(Theme.parchmentDark)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                Spacer(minLength: 12)
+
+                if let selectedCharacterName, viewModel.partyMovementMode == .solo {
+                    Text(selectedCharacterName)
+                        .font(Theme.systemFont(size: 11, weight: .semibold))
+                        .foregroundColor(Theme.ink)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        .background(Theme.gold.opacity(0.85), in: Capsule())
+                }
+            }
+
+            if viewModel.partyMovementMode == .solo {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        ForEach(locationGroups) { group in
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text(group.name)
+                                    .font(Theme.systemFont(size: 11, weight: .semibold))
+                                    .foregroundColor(Theme.parchment)
+                                    .lineLimit(1)
+
+                                Text(group.characters.map(\.name).joined(separator: ", "))
+                                    .font(Theme.systemFont(size: 10, weight: .medium))
+                                    .foregroundColor(Theme.inkFaded)
+                                    .lineLimit(2)
+                            }
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 8)
+                            .background(Theme.bg.opacity(0.4), in: RoundedRectangle(cornerRadius: 10))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 10)
+                                    .stroke(Theme.parchmentDeep.opacity(0.2), lineWidth: 1)
+                            )
+                        }
+                    }
+                    .padding(.horizontal, 2)
+                }
+            }
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+        .background(
+            RoundedRectangle(cornerRadius: 14)
+                .fill(Theme.leatherLight.opacity(0.55))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(Theme.parchmentDeep.opacity(0.18), lineWidth: 1)
+        )
+    }
+}
+
 struct SlidingDoor: View {
     var progress: CGFloat
     var body: some View {
@@ -449,7 +636,7 @@ struct DebugToolsView: View {
     }
 
     private var availableTreasures: [Treasure] {
-        ContentLoader.shared.treasureTemplates.sorted { $0.name < $1.name }
+        viewModel.availableTreasureTemplates.sorted { $0.name < $1.name }
     }
 
     private var effectiveTargetCharacterID: UUID? {

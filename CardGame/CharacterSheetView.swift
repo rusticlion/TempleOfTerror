@@ -9,11 +9,12 @@ struct CharacterSheetView: View {
 
     let character: Character
     var locationName: String? = nil
+    let harmFamilies: [String: HarmFamily]
     @State private var selectedTreasure: Treasure? = nil
     @State private var selectedHarm: SelectedHarm? = nil
 
     private func tier(for familyId: String, level: HarmLevel) -> HarmTier? {
-        guard let family = HarmLibrary.families[familyId] else { return nil }
+        guard let family = harmFamilies[familyId] else { return nil }
         switch level {
         case .lesser: return family.lesser
         case .moderate: return family.moderate
@@ -203,36 +204,17 @@ struct CharacterSheetView: View {
                         .font(Theme.systemFont(size: 11, weight: .medium))
                         .foregroundColor(Theme.inkLight)
                     ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 8) {
+                        HStack(spacing: 12) {
                             ForEach(character.treasures) { treasure in
                                 Button {
                                     selectedTreasure = treasure
                                 } label: {
-                                    HStack(spacing: 4) {
-                                        Text("◆")
-                                            .foregroundColor(Theme.gold)
-                                            .font(.system(size: 9))
-                                        Text(treasure.name)
-                                            .font(Theme.bodyFont(size: 11))
-                                            .foregroundColor(Theme.ink)
-                                        if treasure.grantedModifier.uses > 0 {
-                                            Text("×\(treasure.grantedModifier.uses)")
-                                                .font(Theme.systemFont(size: 9))
-                                                .foregroundColor(Theme.inkFaded)
-                                        }
-                                    }
-                                    .padding(.horizontal, 8)
-                                    .padding(.vertical, 3)
-                                    .background(Theme.gold.opacity(0.1))
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 4)
-                                            .stroke(Theme.gold.opacity(0.25), lineWidth: 1)
-                                    )
-                                    .clipShape(RoundedRectangle(cornerRadius: 4))
+                                    TreasureSummaryCard(treasure: treasure)
                                 }
                                 .buttonStyle(.plain)
                             }
                         }
+                        .padding(.vertical, 2)
                     }
                 }
             }
@@ -249,7 +231,79 @@ struct CharacterSheetView: View {
             TreasureTooltipView(treasure: treasure)
         }
         .popover(item: $selectedHarm) { harm in
-            HarmTooltipView(familyId: harm.familyId, level: harm.level)
+            HarmTooltipView(familyId: harm.familyId, level: harm.level, harmFamilies: harmFamilies)
         }
+    }
+}
+
+private struct TreasureSummaryCard: View {
+    let treasure: Treasure
+
+    private var useLabel: String {
+        if treasure.grantedModifier.uses > 0 {
+            let uses = treasure.grantedModifier.uses
+            return "\(uses) use" + (uses == 1 ? "" : "s")
+        }
+        return "Reusable"
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(alignment: .top) {
+                Text("Treasure")
+                    .font(Theme.systemFont(size: 10, weight: .semibold))
+                    .foregroundColor(Theme.goldDim)
+                    .textCase(.uppercase)
+                    .tracking(0.7)
+
+                Spacer(minLength: 8)
+
+                Text(useLabel)
+                    .font(Theme.systemFont(size: 9, weight: .semibold))
+                    .foregroundColor(Theme.ink)
+                    .padding(.horizontal, 7)
+                    .padding(.vertical, 4)
+                    .background(Theme.gold.opacity(0.2), in: Capsule())
+            }
+
+            Text(treasure.name)
+                .font(Theme.displayFont(size: 16, weight: .semibold))
+                .foregroundColor(Theme.ink)
+                .lineLimit(2)
+
+            Text(treasure.description)
+                .font(Theme.bodyFont(size: 12, italic: true))
+                .foregroundColor(Theme.inkLight)
+                .lineLimit(3)
+
+            Theme.InkDivider()
+
+            Text(treasure.grantedModifier.longDescription)
+                .font(Theme.systemFont(size: 10, weight: .medium))
+                .foregroundColor(Theme.inkFaded)
+                .lineLimit(3)
+
+            if !treasure.tags.isEmpty {
+                Text(treasure.tags.joined(separator: "  •  "))
+                    .font(Theme.systemFont(size: 9, weight: .semibold))
+                    .foregroundColor(Theme.goldDim)
+                    .lineLimit(1)
+            }
+        }
+        .frame(width: 170, alignment: .leading)
+        .padding(12)
+        .background(
+            LinearGradient(
+                colors: [Theme.parchment, Theme.gold.opacity(0.14), Theme.parchmentDark.opacity(0.92)],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Theme.goldDim.opacity(0.45), lineWidth: 1)
+        )
+        .shadow(color: Theme.gold.opacity(0.18), radius: 6, y: 3)
     }
 }

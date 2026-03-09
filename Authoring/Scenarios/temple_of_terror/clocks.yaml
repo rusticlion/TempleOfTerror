@@ -1,0 +1,18 @@
+- name: Temple Collapse
+  segments: 6
+  progress: 0
+  onCompleteConsequences:
+    - type: endRun
+      runOutcome: defeat
+      runOutcomeText: The temple finally gives way. Stone, dust, and screaming darkness bury the expedition before anyone can reach daylight.
+- name: Idol's Curse
+  segments: 4
+  progress: 0
+  onCompleteConsequences:
+    - type: gainStress
+      amount: 2
+      description: The idol's hateful presence worms into your thoughts.
+    - type: tickClock
+      clockName: Temple Collapse
+      amount: 1
+      description: The curse stirs ancient machinery deeper in the stone.

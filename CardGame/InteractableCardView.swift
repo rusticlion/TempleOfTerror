@@ -6,55 +6,60 @@ struct InteractableCardView: View {
     let selectedCharacter: Character?
     let onActionTapped: (ActionOption) -> Void
 
+    private var harmFamilies: [String: HarmFamily] {
+        viewModel.harmFamilies
+    }
+
+    private func penalty(
+        for familyID: String,
+        at level: HarmLevel
+    ) -> Penalty? {
+        guard let family = harmFamilies[familyID] else { return nil }
+        switch level {
+        case .lesser:
+            return family.lesser.penalty
+        case .moderate:
+            return family.moderate.penalty
+        case .severe:
+            return family.severe.penalty
+        }
+    }
+
+    private func penaltyApplies(
+        _ penalty: Penalty,
+        to action: ActionOption,
+        tags: [String]
+    ) -> Bool {
+        switch penalty {
+        case .actionPenalty(let type, let tag),
+             .banAction(let type, let tag),
+             .actionPositionPenalty(let type, let tag),
+             .actionEffectPenalty(let type, let tag):
+            return type == action.actionType && (tag == nil || tags.contains(tag!))
+        default:
+            return false
+        }
+    }
+
     private func hasPenalty(for action: ActionOption) -> Bool {
         guard let character = selectedCharacter else { return false }
         let tags = interactable.tags
         for harm in character.harm.lesser {
-            if let penalty = HarmLibrary.families[harm.familyId]?.lesser.penalty {
-                switch penalty {
-                case .actionPenalty(let t, let tag) where t == action.actionType && (tag == nil || tags.contains(tag!)):
-                    return true
-                case .banAction(let t, let tag) where t == action.actionType && (tag == nil || tags.contains(tag!)):
-                    return true
-                case .actionPositionPenalty(let t, let tag) where t == action.actionType && (tag == nil || tags.contains(tag!)):
-                    return true
-                case .actionEffectPenalty(let t, let tag) where t == action.actionType && (tag == nil || tags.contains(tag!)):
-                    return true
-                default:
-                    break
-                }
+            if let penalty = penalty(for: harm.familyId, at: .lesser),
+               penaltyApplies(penalty, to: action, tags: tags) {
+                return true
             }
         }
         for harm in character.harm.moderate {
-            if let penalty = HarmLibrary.families[harm.familyId]?.moderate.penalty {
-                switch penalty {
-                case .actionPenalty(let t, let tag) where t == action.actionType && (tag == nil || tags.contains(tag!)):
-                    return true
-                case .banAction(let t, let tag) where t == action.actionType && (tag == nil || tags.contains(tag!)):
-                    return true
-                case .actionPositionPenalty(let t, let tag) where t == action.actionType && (tag == nil || tags.contains(tag!)):
-                    return true
-                case .actionEffectPenalty(let t, let tag) where t == action.actionType && (tag == nil || tags.contains(tag!)):
-                    return true
-                default:
-                    break
-                }
+            if let penalty = penalty(for: harm.familyId, at: .moderate),
+               penaltyApplies(penalty, to: action, tags: tags) {
+                return true
             }
         }
         for harm in character.harm.severe {
-            if let penalty = HarmLibrary.families[harm.familyId]?.severe.penalty {
-                switch penalty {
-                case .actionPenalty(let t, let tag) where t == action.actionType && (tag == nil || tags.contains(tag!)):
-                    return true
-                case .banAction(let t, let tag) where t == action.actionType && (tag == nil || tags.contains(tag!)):
-                    return true
-                case .actionPositionPenalty(let t, let tag) where t == action.actionType && (tag == nil || tags.contains(tag!)):
-                    return true
-                case .actionEffectPenalty(let t, let tag) where t == action.actionType && (tag == nil || tags.contains(tag!)):
-                    return true
-                default:
-                    break
-                }
+            if let penalty = penalty(for: harm.familyId, at: .severe),
+               penaltyApplies(penalty, to: action, tags: tags) {
+                return true
             }
         }
         return false

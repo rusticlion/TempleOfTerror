@@ -16,7 +16,11 @@ struct PartyStatusView: View {
                     }
                     return nil
                 }()
-                CharacterSheetView(character: character, locationName: loc)
+                CharacterSheetView(
+                    character: character,
+                    locationName: loc,
+                    harmFamilies: viewModel.harmFamilies
+                )
             }
         }
     }

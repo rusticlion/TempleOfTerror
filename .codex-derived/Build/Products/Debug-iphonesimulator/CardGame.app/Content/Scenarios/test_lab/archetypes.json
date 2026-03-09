@@ -1,0 +1,29 @@
+[
+  {
+    "id": "scientist",
+    "name": "Scientist",
+    "description": "Solves problems through theory, procedure, and risky experimentation.",
+    "defaultActions": {
+      "Study": 3,
+      "Tinker": 1
+    }
+  },
+  {
+    "id": "engineer",
+    "name": "Engineer",
+    "description": "Understands systems well enough to mend them or tear them apart.",
+    "defaultActions": {
+      "Tinker": 2,
+      "Wreck": 2
+    }
+  },
+  {
+    "id": "medic",
+    "name": "Medic",
+    "description": "Keeps bodies and nerves together long after they should have failed.",
+    "defaultActions": {
+      "Study": 2,
+      "Consort": 2
+    }
+  }
+]

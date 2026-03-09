@@ -1,0 +1,122 @@
+[
+  {
+    "id": "treasure_purified_idol_shard",
+    "name": "Purified Idol Shard",
+    "description": "A fragment of the idol, cleansed of its curse.",
+    "grantedModifier": {
+      "bonusDice": 1,
+      "description": "Blessing of the Idol",
+      "isOptionalToApply": true
+    }
+  },
+  {
+    "id": "treasure_ancient_coin",
+    "name": "Ancient Coin",
+    "description": "A coin from a forgotten empire.",
+    "grantedModifier": {
+      "improveEffect": true,
+      "description": "Lucky Find",
+      "isOptionalToApply": true
+    }
+  },
+  {
+    "id": "treasure_steadying_herbs",
+    "name": "Steadying Herbs",
+    "description": "Chewing these calms the nerves, for a time.",
+    "grantedModifier": {
+      "improvePosition": true,
+      "uses": 1,
+      "description": "from Steadying Herbs",
+      "isOptionalToApply": true
+    }
+  },
+  {
+    "id": "treasure_precise_tools",
+    "name": "Set of Precise Tools",
+    "description": "Ideal instruments for delicate work.",
+    "grantedModifier": {
+      "bonusDice": 1,
+      "applicableToAction": "Tinker",
+      "uses": 2,
+      "description": "from Precise Tools",
+      "isOptionalToApply": true
+    }
+  },
+  {
+    "id": "treasure_charmed_talisman",
+    "name": "Charmed Talisman",
+    "description": "Offers fleeting protection from dark thoughts.",
+    "grantedModifier": {
+      "bonusDice": 1,
+      "applicableToAction": "Attune",
+      "uses": 1,
+      "description": "from Charmed Talisman",
+      "isOptionalToApply": true
+    }
+  },
+  {
+    "id": "treasure_map_fragment",
+    "name": "Map Fragment",
+    "description": "Hints at a secret room somewhere in the tomb.",
+    "grantedModifier": {
+      "improveEffect": true,
+      "uses": 1,
+      "description": "from Map Fragment",
+      "isOptionalToApply": true
+    }
+  },
+  {
+    "id": "treasure_cursed_lantern",
+    "name": "Cursed Lantern",
+    "description": "An old lantern that glows with an eerie light.",
+    "grantedModifier": {
+      "bonusDice": 1,
+      "description": "from Cursed Lantern",
+      "isOptionalToApply": true
+    },
+    "tags": ["Haunted", "Light Source"]
+  },
+  {
+    "id": "treasure_silver_key",
+    "name": "Silver Key",
+    "description": "Opens a locked door somewhere in the tomb.",
+    "grantedModifier": {
+      "bonusDice": 1,
+      "description": "from Silver Key",
+      "isOptionalToApply": true
+    },
+  "tags": ["Key"]
+  },
+  {
+    "id": "treasure_test_gem",
+    "name": "Test Gem",
+    "description": "Glows with uncertain power.",
+    "grantedModifier": { "bonusDice": 1, "description": "from Test Gem", "isOptionalToApply": true },
+    "tags": ["Test"]
+  },
+  {
+    "id": "treasure_minor_blessing",
+    "name": "Minor Blessing",
+    "description": "A fleeting boon from mysterious forces.",
+    "grantedModifier": {
+      "bonusDice": 1,
+      "uses": 1,
+      "description": "from Minor Blessing",
+      "isOptionalToApply": true
+    },
+    "tags": ["Test"]
+  },
+  {
+    "id": "treasure_major_blessing",
+    "name": "Major Blessing",
+    "description": "Power surges through this relic.",
+    "grantedModifier": {
+      "bonusDice": 1,
+      "improveEffect": true,
+      "uses": 1,
+      "description": "from Major Blessing",
+      "isOptionalToApply": true
+    },
+    "tags": ["Test"]
+  }
+]

@@ -1,0 +1,160 @@
+{
+  "source": "/Users/russellbates/JunkDrawer/Temple Of Terror/CardGame/DiceRollView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Awaiting your decision.",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 9
+        }
+      },
+      {
+        "comment": "",
+        "key": "Resist with %@",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 82
+        }
+      },
+      {
+        "comment": "",
+        "key": "Roll %lldd6 and pay 6 minus the highest result in Stress.",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 93
+        }
+      },
+      {
+        "comment": "",
+        "key": "Roll 2d6, keep the lower die, and pay 6 minus that result in Stress.",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 94
+        }
+      },
+      {
+        "comment": "",
+        "key": "Back",
+        "location": {
+          "startingColumn": 36,
+          "startingLine": 99
+        }
+      },
+      {
+        "comment": "",
+        "key": "Roll Resistance",
+        "location": {
+          "startingColumn": 36,
+          "startingLine": 111
+        }
+      },
+      {
+        "comment": "",
+        "key": "Take It",
+        "location": {
+          "startingColumn": 36,
+          "startingLine": 124
+        }
+      },
+      {
+        "comment": "",
+        "key": "Resist",
+        "location": {
+          "startingColumn": 36,
+          "startingLine": 136
+        }
+      },
+      {
+        "comment": "",
+        "key": "is attempting to...",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 324
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@: %lld",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 332
+        }
+      },
+      {
+        "comment": "",
+        "key": "Debug fixed roll: %@",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 495
+        }
+      },
+      {
+        "comment": "",
+        "key": "Roll the Dice",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 501
+        }
+      },
+      {
+        "comment": "",
+        "key": "Done",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 523
+        }
+      },
+      {
+        "comment": "",
+        "key": "✦ CRITICAL ✦",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 307
+        }
+      },
+      {
+        "comment": "",
+        "key": "Rolled a %lld",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 313
+        }
+      },
+      {
+        "comment": "",
+        "key": "Effect: %@",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 318
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lldd6",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 349
+        }
+      },
+      {
+        "comment": "",
+        "key": "POSITION",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 355
+        }
+      },
+      {
+        "comment": "",
+        "key": "EFFECT",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 369
+        }
+      }
+    ]
+  },
+  "version": 1
+}

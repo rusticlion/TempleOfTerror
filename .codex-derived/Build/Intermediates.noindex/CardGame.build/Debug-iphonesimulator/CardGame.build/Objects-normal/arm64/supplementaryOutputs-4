@@ -1,0 +1,23 @@
+{
+  "/Users/russellbates/JunkDrawer/Temple Of Terror/CardGame/CardGameApp.swift" : {
+    "const-values" : "/Users/russellbates/JunkDrawer/Temple Of Terror/.codex-derived/Build/Intermediates.noindex/CardGame.build/Debug-iphonesimulator/CardGame.build/Objects-normal/arm64/CardGameApp.swiftconstvalues",
+    "dependencies" : "/Users/russellbates/JunkDrawer/Temple Of Terror/.codex-derived/Build/Intermediates.noindex/CardGame.build/Debug-iphonesimulator/CardGame.build/Objects-normal/arm64/CardGameApp.d",
+    "diagnostics" : "/Users/russellbates/JunkDrawer/Temple Of Terror/.codex-derived/Build/Intermediates.noindex/CardGame.build/Debug-iphonesimulator/CardGame.build/Objects-normal/arm64/CardGameApp.dia",
+    "object" : "/Users/russellbates/JunkDrawer/Temple Of Terror/.codex-derived/Build/Intermediates.noindex/CardGame.build/Debug-iphonesimulator/CardGame.build/Objects-normal/arm64/CardGameApp.o",
+    "swift-dependencies" : "/Users/russellbates/JunkDrawer/Temple Of Terror/.codex-derived/Build/Intermediates.noindex/CardGame.build/Debug-iphonesimulator/CardGame.build/Objects-normal/arm64/CardGameApp.swiftdeps"
+  },
+  "/Users/russellbates/JunkDrawer/Temple Of Terror/CardGame/ClocksView.swift" : {
+    "const-values" : "/Users/russellbates/JunkDrawer/Temple Of Terror/.codex-derived/Build/Intermediates.noindex/CardGame.build/Debug-iphonesimulator/CardGame.build/Objects-normal/arm64/ClocksView.swiftconstvalues",
+    "dependencies" : "/Users/russellbates/JunkDrawer/Temple Of Terror/.codex-derived/Build/Intermediates.noindex/CardGame.build/Debug-iphonesimulator/CardGame.build/Objects-normal/arm64/ClocksView.d",
+    "diagnostics" : "/Users/russellbates/JunkDrawer/Temple Of Terror/.codex-derived/Build/Intermediates.noindex/CardGame.build/Debug-iphonesimulator/CardGame.build/Objects-normal/arm64/ClocksView.dia",
+    "object" : "/Users/russellbates/JunkDrawer/Temple Of Terror/.codex-derived/Build/Intermediates.noindex/CardGame.build/Debug-iphonesimulator/CardGame.build/Objects-normal/arm64/ClocksView.o",
+    "swift-dependencies" : "/Users/russellbates/JunkDrawer/Temple Of Terror/.codex-derived/Build/Intermediates.noindex/CardGame.build/Debug-iphonesimulator/CardGame.build/Objects-normal/arm64/ClocksView.swiftdeps"
+  },
+  "/Users/russellbates/JunkDrawer/Temple Of Terror/CardGame/InteractableCardView.swift" : {
+    "const-values" : "/Users/russellbates/JunkDrawer/Temple Of Terror/.codex-derived/Build/Intermediates.noindex/CardGame.build/Debug-iphonesimulator/CardGame.build/Objects-normal/arm64/InteractableCardView.swiftconstvalues",
+    "dependencies" : "/Users/russellbates/JunkDrawer/Temple Of Terror/.codex-derived/Build/Intermediates.noindex/CardGame.build/Debug-iphonesimulator/CardGame.build/Objects-normal/arm64/InteractableCardView.d",
+    "diagnostics" : "/Users/russellbates/JunkDrawer/Temple Of Terror/.codex-derived/Build/Intermediates.noindex/CardGame.build/Debug-iphonesimulator/CardGame.build/Objects-normal/arm64/InteractableCardView.dia",
+    "object" : "/Users/russellbates/JunkDrawer/Temple Of Terror/.codex-derived/Build/Intermediates.noindex/CardGame.build/Debug-iphonesimulator/CardGame.build/Objects-normal/arm64/InteractableCardView.o",
+    "swift-dependencies" : "/Users/russellbates/JunkDrawer/Temple Of Terror/.codex-derived/Build/Intermediates.noindex/CardGame.build/Debug-iphonesimulator/CardGame.build/Objects-normal/arm64/InteractableCardView.swiftdeps"
+  }
+}

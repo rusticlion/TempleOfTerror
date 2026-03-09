@@ -26,6 +26,28 @@ If behavior in older docs conflicts with this file, this file wins.
 
 Each scenario lives in `Content/Scenarios/<scenario_id>/`.
 
+Experimental YAML authoring sources can also live in `Authoring/Scenarios/<scenario_id>/`.
+
+Current workflow:
+
+1. Edit YAML source files in `Authoring/Scenarios/<scenario_id>/`
+2. Run `./Scripts/compile_scenarios.sh <scenario_id>` (or no arg to compile all authored scenarios)
+3. Review the generated runtime JSON in `Content/Scenarios/<scenario_id>/`
+4. Run `./Scripts/validate_scenarios.sh`
+
+Current YAML compiler support:
+
+- direct YAML equivalents of `scenario.json`, `archetypes.json`, `clocks.json`, `treasures.json`, `harm_families.json`, and `interactables.json`
+- `map.yaml` with symbolic node ids and symbolic node references
+- optional `events.yaml` or `events/*.yaml`, compiled into `events.json`
+
+`map.yaml` is the only place where authoring sugar exists in v1:
+
+- top-level `startingNode` may use a symbolic node id
+- node keys are symbolic ids
+- `connections[].to`, `fromNode`, `toNode`, and `inNode` compile back into UUID-based runtime fields
+- authors may pin migrated maps to existing UUIDs with a node-local `uuid` field
+
 Required files:
 
 - `scenario.json`
@@ -75,6 +97,64 @@ Field notes:
 - `nativeArchetypeIDs` must reference ids from scenario-local `archetypes.json`.
 - `stressOverflowHarmFamilyID` should be set explicitly.
   - If omitted, runtime defaults to `mental_fraying`.
+
+## Interactables and Threat Pressure
+
+`Interactable` supports these authored fields:
+
+- `id`, `title`, `description`, `availableActions`
+- optional `isThreat`
+- optional `usableUnderThreat`
+- optional `isDisplayOnly`
+- optional `tags`
+
+Threat behavior in v1:
+
+- A node containing one or more unresolved threat interactables engages characters in that node.
+- Engaged characters cannot leave the node through normal movement until all local threats are resolved.
+- Threats do not remove sibling interactables from the node.
+- While a threat is present, only:
+  - threat interactables, and
+  - sibling interactables with `usableUnderThreat: true`
+  remain actionable in the node UI.
+
+Use `usableUnderThreat` for room elements that are intended to function as immediate counterplay under pressure:
+
+- environmental shutdowns
+- override consoles
+- barricades, doors, vents, cranes, wards
+- urgent objective grabs that are still reachable while the threat is active
+
+Example:
+
+```json
+{
+  "id": "engineering_override_console",
+  "title": "Engineering Override Console",
+  "description": "A scorched control station still responds to manual reroutes.",
+  "usableUnderThreat": true,
+  "availableActions": [
+    {
+      "name": "Trigger Emergency Shutdown",
+      "actionType": "Tinker",
+      "position": "risky",
+      "effect": "standard",
+      "requiresTest": false,
+      "outcomes": {
+        "success": [
+          { "type": "removeInteractable", "id": "cb_corrupted_maintenance_droid" }
+        ]
+      }
+    }
+  ]
+}
+```
+
+Authoring guidance:
+
+- In a threat node, prefer one or two `usableUnderThreat` siblings rather than many.
+- Treat them as pressure options, not general room clutter.
+- Split-party play becomes interesting when one character is pinned by a local threat while offsite characters pursue tools, intel, or clocks elsewhere.
 
 ## Actions
 

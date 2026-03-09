@@ -3,7 +3,7 @@ import Foundation
 class PartyBuilderService {
     private let archetypeDict: [String: ArchetypeDefinition]
 
-    init(content: ContentLoader = .shared) {
+    init(content: ContentLoader) {
         self.archetypeDict = content.archetypeDict
     }
 

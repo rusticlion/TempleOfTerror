@@ -1,0 +1,11 @@
+{
+  "families": [
+    {
+      "id": "sprain",
+      "lesser": { "description": "Ankle Sprain", "penalty": { "type": "actionEffectPenalty", "actionType": "Prowl" } },
+      "moderate": { "description": "Torn Ligament", "penalty": { "type": "actionPenalty", "actionType": "Prowl" } },
+      "severe": { "description": "Broken Leg", "penalty": { "type": "actionPositionPenalty", "actionType": "Prowl" } },
+      "fatal": { "description": "Crippling Injury" }
+    }
+  ]
+}

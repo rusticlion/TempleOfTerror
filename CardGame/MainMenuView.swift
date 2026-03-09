@@ -58,6 +58,7 @@ struct MainMenuView: View {
                     .buttonStyle(.plain)
                     .disabled(preferredScenario == nil)
                     .opacity(preferredScenario == nil ? 0.55 : 1)
+                    .accessibilityIdentifier("startNewGameButton")
 
                     Button {
                         let vm = GameViewModel()
@@ -443,6 +444,7 @@ private struct PartySetupView: View {
                 .buttonStyle(.plain)
                 .disabled(!canStart)
                 .opacity(canStart ? 1 : 0.55)
+                .accessibilityIdentifier("beginScenarioButton")
             }
             .padding(20)
         }

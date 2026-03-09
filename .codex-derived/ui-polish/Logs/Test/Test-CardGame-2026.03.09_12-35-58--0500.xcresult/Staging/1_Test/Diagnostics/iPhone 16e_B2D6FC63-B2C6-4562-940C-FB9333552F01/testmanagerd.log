@@ -1,0 +1,54 @@
+12:36:17.808 xcodebuild[46712:13388050] Got a sim device notification for iPhone 16e: {
+    notification = "availableDevices_changed";
+}
+12:36:17.809 xcodebuild[46712:13388050] Got a sim device notification for iPhone 16e: {
+    device = "iPhone 16e (B2D6FC63-B2C6-4562-940C-FB9333552F01, iOS 26.2, Booting)";
+    "last_booted_at" = "2026-03-09 17:36:17 +0000";
+    "new_state" = 2;
+    notification = "device_state";
+    "prev_state" = 1;
+}
+12:36:17.809 xcodebuild[46712:13388050] Sim iPhone 16e state changed to 2
+12:36:17.810 xcodebuild[46712:13388050] Got a sim device notification for iPhone 16e: {
+    "SimDeviceNotification_NewBootStatus" = "SimDeviceBootInfo { status = 0 (Booting), elapsed = 0.000000, isTerminal = 0, info = (null) }";
+    device = "iPhone 16e (B2D6FC63-B2C6-4562-940C-FB9333552F01, iOS 26.2, Booting)";
+    notification = "SimDeviceNotificationType_BootStatus";
+}
+12:36:18.059 xcodebuild[46712:13387921] Got a sim device notification for iPhone 16e: {
+    notification = "availableDevices_changed";
+}
+12:36:18.059 xcodebuild[46712:13387921] Got a sim device notification for iPhone 16e: {
+    device = "iPhone 16e (B2D6FC63-B2C6-4562-940C-FB9333552F01, iOS 26.2, Booted)";
+    "new_state" = 3;
+    notification = "device_state";
+    "prev_state" = 2;
+}
+12:36:18.060 xcodebuild[46712:13387921] Sim iPhone 16e state changed to 3
+12:36:18.060 xcodebuild[46712:13387921] Sim iPhone 16e: Unregistering for sim device notification with token 3
+12:36:18.060 xcodebuild[46712:13387921] Calling -[SimDevice getenv:error:] for TESTMANAGERD_SIM_SOCK
+12:36:18.066 xcodebuild[46712:13387921] Sim iPhone 16e is booted but getenv returned nil for test connection socket path; getenv error: Error Domain=NSPOSIXErrorDomain Code=2 "No such file or directory".
+ Will retry in 1s (1 attempts so far).
+12:36:19.132 xcodebuild[46712:13388052] Calling -[SimDevice getenv:error:] for TESTMANAGERD_SIM_SOCK
+12:36:19.134 xcodebuild[46712:13388052] Sim iPhone 16e has testmanagerd socket at /private/tmp/com.apple.launchd.GbWEkljuRf/com.apple.testmanagerd.unix-domain.socket
+12:36:19.134 xcodebuild[46712:13388052] Validating test connection socket path (/private/tmp/com.apple.launchd.GbWEkljuRf/com.apple.testmanagerd.unix-domain.socket)
+12:36:19.134 xcodebuild[46712:13388052] Constructing transport for test connection socket
+12:36:19.134 xcodebuild[46712:13388052] Connected socket 39 to testmanagerd for Sim iPhone 16e
+12:36:19.134 xcodebuild[46712:13388052] Initiating control session with IDE capabilities: <XCTCapabilities: 0x13cd59470>: {
+}
+12:36:22.716 xcodebuild[46712:13388052] Got reply to control session initiation request (result:error): <XCTCapabilities: 0x13cd59770>: {
+    "authorize test session capability" = 1;
+    "automation mode" = 1;
+    "daemon container sandbox extension" = 1;
+    "initiate daemon control session capability" = 4;
+    "initiate test runner session capability" = 2;
+    "record UI interaction capability" = 2;
+    "recording events as source code" = 1;
+    "report crashes capability" = 1;
+    "request log archive capability" = 1;
+    "supports delayed attachment transfers" = 1;
+}: (null)
+12:36:22.717 xcodebuild[46712:13387921] Requesting crash report collection for process names: SpringBoard, xctest, CardGameUITests-Runner, CardGameUITests, DTServiceHub, CardGame, debugserver, assertiond, runningboardd, FrontBoard, testmanagerd, backboardd
+12:36:22.745 xcodebuild[46712:13388052] Got reply to crash report collection request (error: (null))
+12:38:58.786 xcodebuild[46712:13399112] Requesting authorization for pid 47925
+12:38:58.807 xcodebuild[46712:13399112] Got reply to authorization request for pid 47925 (result:error): 1: (null)
+12:39:20.185 xcodebuild[46712:13406147] <XCTDaemonControlSession: 0x13cc0ee90> lost connection to daemon

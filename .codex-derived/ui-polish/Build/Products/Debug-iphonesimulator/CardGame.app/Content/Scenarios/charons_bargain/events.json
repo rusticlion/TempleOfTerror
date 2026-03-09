@@ -1,0 +1,329 @@
+[
+  {
+    "id": "game_over_coward_ending",
+    "consequences": [
+      {
+        "type": "endRun",
+        "runOutcome": "escaped",
+        "runOutcomeText": "You escape alive, leaving the mystery of the Styx Transporter unsolved."
+      }
+    ]
+  },
+  {
+    "id": "cb_reactor_meltdown",
+    "description": "The reactor goes critical. The freighter is consumed in fire.",
+    "consequences": [
+      {
+        "type": "endRun",
+        "runOutcome": "defeat",
+        "runOutcomeText": "The reactor detonates before you can contain the crisis."
+      }
+    ]
+  },
+  {
+    "id": "cb_vfe_deactivated",
+    "description": "The VFE powers down. The ship grows still.",
+    "consequences": [
+      {
+        "type": "endRun",
+        "runOutcome": "victory",
+        "runOutcomeText": "You shut the VFE down and survive Charon's Bargain."
+      }
+    ]
+  },
+  {
+    "id": "cb_beacon_partially_active",
+    "consequences": [
+      {
+        "type": "setScenarioFlag",
+        "flagId": "cb_beacon_partially_active"
+      }
+    ]
+  },
+  {
+    "id": "cb_cargo_loader_activated",
+    "consequences": [
+      {
+        "type": "setScenarioFlag",
+        "flagId": "cb_cargo_loader_activated"
+      }
+    ]
+  },
+  {
+    "id": "cb_ng_reveals_lab_location",
+    "description": "Ng's logs identify a hidden VFE lab somewhere behind the ship's service spaces.",
+    "consequences": [
+      {
+        "type": "setScenarioFlag",
+        "flagId": "cb_lab_location_known"
+      }
+    ]
+  },
+  {
+    "id": "cb_ng_partial_lab_info",
+    "description": "The fragmented logs point toward sealed workspaces tied to the VFE project.",
+    "consequences": [
+      {
+        "type": "incrementScenarioCounter",
+        "counterId": "cb_ng_partial_lab_clues",
+        "amount": 1
+      }
+    ]
+  },
+  {
+    "id": "cb_droid_evaded_moves_node",
+    "consequences": [
+      {
+        "type": "removeSelfInteractable",
+        "description": "You slip past the droid as it clatters into the ship's ventilation shafts."
+      },
+      {
+        "type": "addInteractable",
+        "inNodeID": "00000000-0000-0000-0000-000000000002",
+        "description": "A moment later, your tracker pings from the Main Corridor.",
+        "interactable": {
+          "id": "cb_corrupted_maintenance_droid",
+          "title": "Corrupted Maintenance Droid",
+          "description": "Its optical sensors are overgrown with twitching organic matter. It moves erratically.",
+          "isThreat": true,
+          "availableActions": [
+            {
+              "name": "Disable Droid",
+              "actionType": "Wreck",
+              "position": "risky",
+              "effect": "standard",
+              "outcomes": {
+                "success": [
+                  {
+                    "type": "removeSelfInteractable"
+                  }
+                ],
+                "partial": [
+                  {
+                    "type": "sufferHarm",
+                    "level": "lesser",
+                    "familyId": "vfe_physical_aberration"
+                  },
+                  {
+                    "type": "gainStress",
+                    "amount": 1
+                  }
+                ],
+                "failure": [
+                  {
+                    "type": "sufferHarm",
+                    "level": "moderate",
+                    "familyId": "vfe_physical_aberration"
+                  }
+                ]
+              }
+            },
+            {
+              "name": "Evade Droid",
+              "actionType": "Finesse",
+              "position": "desperate",
+              "effect": "limited",
+              "outcomes": {
+                "success": [
+                  {
+                    "type": "triggerEvent",
+                    "eventId": "cb_droid_evaded_moves_node"
+                  }
+                ],
+                "failure": [
+                  {
+                    "type": "tickClock",
+                    "clockName": "Droid Pursuit",
+                    "amount": 1
+                  }
+                ]
+              }
+            }
+          ],
+          "tags": [
+            "Mechanical",
+            "VFE-corrupted",
+            "Hostile"
+          ]
+        },
+        "conditions": [
+          {
+            "type": "scenarioCounter",
+            "stringParam": "cb_droid_relocations",
+            "intParam": 0,
+            "intParamMax": 0
+          }
+        ]
+      },
+      {
+        "type": "addInteractable",
+        "inNodeID": "00000000-0000-0000-0000-000000000003",
+        "description": "The sound of metal on decking erupts again up in the Crew Quarters.",
+        "interactable": {
+          "id": "cb_corrupted_maintenance_droid",
+          "title": "Corrupted Maintenance Droid",
+          "description": "Its optical sensors are overgrown with twitching organic matter. It moves erratically.",
+          "isThreat": true,
+          "availableActions": [
+            {
+              "name": "Disable Droid",
+              "actionType": "Wreck",
+              "position": "risky",
+              "effect": "standard",
+              "outcomes": {
+                "success": [
+                  {
+                    "type": "removeSelfInteractable"
+                  }
+                ],
+                "partial": [
+                  {
+                    "type": "sufferHarm",
+                    "level": "lesser",
+                    "familyId": "vfe_physical_aberration"
+                  },
+                  {
+                    "type": "gainStress",
+                    "amount": 1
+                  }
+                ],
+                "failure": [
+                  {
+                    "type": "sufferHarm",
+                    "level": "moderate",
+                    "familyId": "vfe_physical_aberration"
+                  }
+                ]
+              }
+            },
+            {
+              "name": "Evade Droid",
+              "actionType": "Finesse",
+              "position": "desperate",
+              "effect": "limited",
+              "outcomes": {
+                "success": [
+                  {
+                    "type": "triggerEvent",
+                    "eventId": "cb_droid_evaded_moves_node"
+                  }
+                ],
+                "failure": [
+                  {
+                    "type": "tickClock",
+                    "clockName": "Droid Pursuit",
+                    "amount": 1
+                  }
+                ]
+              }
+            }
+          ],
+          "tags": [
+            "Mechanical",
+            "VFE-corrupted",
+            "Hostile"
+          ]
+        },
+        "conditions": [
+          {
+            "type": "scenarioCounter",
+            "stringParam": "cb_droid_relocations",
+            "intParam": 1,
+            "intParamMax": 1
+          }
+        ]
+      },
+      {
+        "type": "addInteractable",
+        "inNodeID": "00000000-0000-0000-0000-000000000010",
+        "description": "The droid races ahead, stalking the route toward the escape pods.",
+        "interactable": {
+          "id": "cb_corrupted_maintenance_droid",
+          "title": "Corrupted Maintenance Droid",
+          "description": "Its optical sensors are overgrown with twitching organic matter. It moves erratically.",
+          "isThreat": true,
+          "availableActions": [
+            {
+              "name": "Disable Droid",
+              "actionType": "Wreck",
+              "position": "risky",
+              "effect": "standard",
+              "outcomes": {
+                "success": [
+                  {
+                    "type": "removeSelfInteractable"
+                  }
+                ],
+                "partial": [
+                  {
+                    "type": "sufferHarm",
+                    "level": "lesser",
+                    "familyId": "vfe_physical_aberration"
+                  },
+                  {
+                    "type": "gainStress",
+                    "amount": 1
+                  }
+                ],
+                "failure": [
+                  {
+                    "type": "sufferHarm",
+                    "level": "moderate",
+                    "familyId": "vfe_physical_aberration"
+                  }
+                ]
+              }
+            },
+            {
+              "name": "Evade Droid",
+              "actionType": "Finesse",
+              "position": "desperate",
+              "effect": "limited",
+              "outcomes": {
+                "success": [
+                  {
+                    "type": "triggerEvent",
+                    "eventId": "cb_droid_evaded_moves_node"
+                  }
+                ],
+                "failure": [
+                  {
+                    "type": "tickClock",
+                    "clockName": "Droid Pursuit",
+                    "amount": 1
+                  }
+                ]
+              }
+            }
+          ],
+          "tags": [
+            "Mechanical",
+            "VFE-corrupted",
+            "Hostile"
+          ]
+        },
+        "conditions": [
+          {
+            "type": "scenarioCounter",
+            "stringParam": "cb_droid_relocations",
+            "intParam": 2,
+            "intParamMax": 2
+          }
+        ]
+      },
+      {
+        "type": "incrementScenarioCounter",
+        "counterId": "cb_droid_relocations",
+        "amount": 1,
+        "conditions": [
+          {
+            "type": "scenarioCounter",
+            "stringParam": "cb_droid_relocations",
+            "intParam": 0,
+            "intParamMax": 2
+          }
+        ]
+      }
+    ]
+  }
+]

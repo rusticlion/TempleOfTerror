@@ -3,7 +3,7 @@ import Foundation
 class DungeonGenerator {
     private let content: ContentLoader
 
-    init(content: ContentLoader = .shared) {
+    init(content: ContentLoader) {
         self.content = content
     }
 
@@ -139,8 +139,10 @@ struct ScenarioRuntime {
     private let contentLoaderFactory: (String) -> ContentLoader
     private let dungeonGeneratorFactory: (ContentLoader) -> DungeonGenerator
     private let partyBuilderFactory: (ContentLoader) -> PartyBuilderService
+    private var activeContentLoader: ContentLoader
 
     init(
+        defaultScenario: String = "tomb",
         contentLoaderFactory: @escaping (String) -> ContentLoader = { ContentLoader(scenario: $0) },
         dungeonGeneratorFactory: @escaping (ContentLoader) -> DungeonGenerator = { DungeonGenerator(content: $0) },
         partyBuilderFactory: @escaping (ContentLoader) -> PartyBuilderService = { PartyBuilderService(content: $0) }
@@ -148,16 +150,21 @@ struct ScenarioRuntime {
         self.contentLoaderFactory = contentLoaderFactory
         self.dungeonGeneratorFactory = dungeonGeneratorFactory
         self.partyBuilderFactory = partyBuilderFactory
+        self.activeContentLoader = contentLoaderFactory(defaultScenario)
+    }
+
+    var content: ContentLoader {
+        activeContentLoader
     }
 
     @discardableResult
-    func activateScenario(named scenario: String) -> ContentLoader {
+    mutating func activateScenario(named scenario: String) -> ContentLoader {
         let loader = contentLoaderFactory(scenario)
-        ContentLoader.shared = loader
+        activeContentLoader = loader
         return loader
     }
 
-    func newGameState(scenario: String = "tomb", partyPlan: PartyBuildPlan? = nil) -> GameState {
+    mutating func newGameState(scenario: String = "tomb", partyPlan: PartyBuildPlan? = nil) -> GameState {
         let content = activateScenario(named: scenario)
         let generator = dungeonGeneratorFactory(content)
         let manifest = content.scenarioManifest
@@ -199,7 +206,7 @@ struct ScenarioRuntime {
         return gameState
     }
 
-    func prepareLoadedState(_ storedGameState: GameState) -> GameState {
+    mutating func prepareLoadedState(_ storedGameState: GameState) -> GameState {
         _ = activateScenario(named: storedGameState.scenarioName)
         return storedGameState
     }
@@ -213,6 +220,27 @@ struct ScenarioRuntime {
 
     func nodeName(for characterID: UUID?, in gameState: GameState) -> String? {
         node(for: characterID, in: gameState)?.name
+    }
+
+    func threats(for characterID: UUID?, in gameState: GameState) -> [Interactable] {
+        guard let node = node(for: characterID, in: gameState) else { return [] }
+        return node.interactables.filter(\.isThreat)
+    }
+
+    func isCharacterEngaged(_ characterID: UUID?, in gameState: GameState) -> Bool {
+        !threats(for: characterID, in: gameState).isEmpty
+    }
+
+    func visibleInteractables(for characterID: UUID?, in gameState: GameState) -> [Interactable] {
+        guard let node = node(for: characterID, in: gameState) else { return [] }
+
+        let threats = node.interactables.filter(\.isThreat)
+        guard !threats.isEmpty else {
+            return node.interactables
+        }
+
+        let pressureOptions = node.interactables.filter { !$0.isThreat && $0.usableUnderThreat }
+        return threats + pressureOptions
     }
 
     func isPartyActuallySplit(in gameState: GameState) -> Bool {
@@ -230,7 +258,7 @@ struct ScenarioRuntime {
         movingGroupedParty: Bool,
         in gameState: inout GameState
     ) -> MoveOutcome {
-        guard connection.isUnlocked else {
+        guard connection.isUnlocked, !isCharacterEngaged(characterID, in: gameState) else {
             return MoveOutcome(didMove: false, enteredNode: nil)
         }
 

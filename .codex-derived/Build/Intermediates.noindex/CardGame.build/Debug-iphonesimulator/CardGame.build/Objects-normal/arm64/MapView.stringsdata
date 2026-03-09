@@ -1,0 +1,56 @@
+{
+  "source": "/Users/russellbates/JunkDrawer/Temple Of Terror/CardGame/MapView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Dungeon Map",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 107
+        }
+      },
+      {
+        "comment": "",
+        "key": "No Map",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 290
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld",
+        "location": {
+          "startingColumn": 58,
+          "startingLine": 191
+        }
+      },
+      {
+        "comment": "",
+        "key": "Party Present: %@",
+        "location": {
+          "startingColumn": 54,
+          "startingLine": 264
+        }
+      },
+      {
+        "comment": "",
+        "key": "Discovered node",
+        "location": {
+          "startingColumn": 78,
+          "startingLine": 257
+        }
+      },
+      {
+        "comment": "",
+        "key": "Undiscovered node",
+        "location": {
+          "startingColumn": 98,
+          "startingLine": 257
+        }
+      }
+    ]
+  },
+  "version": 1
+}

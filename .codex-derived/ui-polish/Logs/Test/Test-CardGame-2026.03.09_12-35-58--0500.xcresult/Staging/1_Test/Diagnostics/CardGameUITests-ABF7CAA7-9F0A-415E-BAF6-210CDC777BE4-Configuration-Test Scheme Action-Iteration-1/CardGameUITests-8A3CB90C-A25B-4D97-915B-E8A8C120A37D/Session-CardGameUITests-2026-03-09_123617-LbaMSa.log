@@ -1,0 +1,557 @@
+Xcode version: 26.2 (17C52)
+12:36:17.475 xcodebuild[46712:13387917] Beginning test session CardGameUITests-820D1B24-1610-4491-8D0D-E215ADF1D20E at 2026-03-09 12:36:17.473 on target <DVTiPhoneSimulator: 0x1143b2cf0> {
+		SimDevice: iPhone 16e (B2D6FC63-B2C6-4562-940C-FB9333552F01, iOS 26.2, Shutdown)
+} (26.2 (23C54))
+12:36:17.475 xcodebuild[46712:13387917] 	/Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild
+test
+-project
+CardGame.xcodeproj
+-scheme
+CardGame
+-configuration
+Debug
+-destination
+platform=iOS Simulator,id=B2D6FC63-B2C6-4562-940C-FB9333552F01
+-derivedDataPath
+.codex-derived/ui-polish
+-only-testing:CardGameUITests/testNarrowWidthPolishCapture
+12:36:17.475 xcodebuild[46712:13387917] Test standard output and standard error is at /Users/russellbates/JunkDrawer/Temple Of Terror/.codex-derived/ui-polish/Logs/Test/Test-CardGame-2026.03.09_12-35-58--0500.xcresult/Staging/1_Test/Diagnostics/CardGameUITests-ABF7CAA7-9F0A-415E-BAF6-210CDC777BE4-Configuration-Test Scheme Action-Iteration-1/CardGameUITests-8A3CB90C-A25B-4D97-915B-E8A8C120A37D/StandardOutputAndStandardError.txt
+12:36:17.810 xcodebuild[46712:13387917] B2D6FC63-B2C6-4562-940C-FB9333552F01: Received sim device notification: {
+    notification = "availableDevices_changed";
+}
+12:36:17.811 xcodebuild[46712:13387917] B2D6FC63-B2C6-4562-940C-FB9333552F01: Received sim device notification: {
+    device = "iPhone 16e (B2D6FC63-B2C6-4562-940C-FB9333552F01, iOS 26.2, Booting)";
+    "last_booted_at" = "2026-03-09 17:36:17 +0000";
+    "new_state" = 2;
+    notification = "device_state";
+    "prev_state" = 1;
+}
+12:36:17.810 xcodebuild[46712:13387920] /Users/russellbates/Library/Developer/CoreSimulator/Devices: Received sim device set notification: {
+    device = "iPhone 16e (B2D6FC63-B2C6-4562-940C-FB9333552F01, iOS 26.2, Booting)";
+    "last_booted_at" = "2026-03-09 17:36:17 +0000";
+    "new_state" = 2;
+    notification = "device_state";
+    "prev_state" = 1;
+}
+12:36:17.864 xcodebuild[46712:13387917] /Users/russellbates/Library/Developer/CoreSimulator/Devices: Received sim device set notification: {
+    device = "iPhone 16e (B2D6FC63-B2C6-4562-940C-FB9333552F01, iOS 26.2, Booting)";
+    "last_booted_at" = "2026-03-09 17:36:17 +0000";
+    "new_state" = 2;
+    notification = "device_state";
+    "prev_state" = 1;
+}
+12:36:17.864 xcodebuild[46712:13387917] /Users/russellbates/Library/Developer/CoreSimulator/Devices: Received sim device set notification: {
+    device = "iPhone 16e (B2D6FC63-B2C6-4562-940C-FB9333552F01, iOS 26.2, Booting)";
+    "last_booted_at" = "2026-03-09 17:36:17 +0000";
+    "new_state" = 2;
+    notification = "device_state";
+    "prev_state" = 1;
+}
+12:36:17.865 xcodebuild[46712:13387917] /Users/russellbates/Library/Developer/CoreSimulator/Devices: Received sim device set notification: {
+    device = "iPhone 16e (B2D6FC63-B2C6-4562-940C-FB9333552F01, iOS 26.2, Booting)";
+    "last_booted_at" = "2026-03-09 17:36:17 +0000";
+    "new_state" = 2;
+    notification = "device_state";
+    "prev_state" = 1;
+}
+12:36:17.865 xcodebuild[46712:13387917] /Users/russellbates/Library/Developer/CoreSimulator/Devices: Received sim device set notification: {
+    device = "iPhone 16e (B2D6FC63-B2C6-4562-940C-FB9333552F01, iOS 26.2, Booting)";
+    "last_booted_at" = "2026-03-09 17:36:17 +0000";
+    "new_state" = 2;
+    notification = "device_state";
+    "prev_state" = 1;
+}
+12:36:17.865 xcodebuild[46712:13387917] /Users/russellbates/Library/Developer/CoreSimulator/Devices: Received sim device set notification: {
+    device = "iPhone 16e (B2D6FC63-B2C6-4562-940C-FB9333552F01, iOS 26.2, Booting)";
+    "last_booted_at" = "2026-03-09 17:36:17 +0000";
+    "new_state" = 2;
+    notification = "device_state";
+    "prev_state" = 1;
+}
+12:36:17.865 xcodebuild[46712:13387917] /Users/russellbates/Library/Developer/CoreSimulator/Devices: Received sim device set notification: {
+    device = "iPhone 16e (B2D6FC63-B2C6-4562-940C-FB9333552F01, iOS 26.2, Booting)";
+    "last_booted_at" = "2026-03-09 17:36:17 +0000";
+    "new_state" = 2;
+    notification = "device_state";
+    "prev_state" = 1;
+}
+12:36:17.865 xcodebuild[46712:13387917] /Users/russellbates/Library/Developer/CoreSimulator/Devices: Received sim device set notification: {
+    device = "iPhone 16e (B2D6FC63-B2C6-4562-940C-FB9333552F01, iOS 26.2, Booting)";
+    "last_booted_at" = "2026-03-09 17:36:17 +0000";
+    "new_state" = 2;
+    notification = "device_state";
+    "prev_state" = 1;
+}
+12:36:17.865 xcodebuild[46712:13387917] /Users/russellbates/Library/Developer/CoreSimulator/Devices: Received sim device set notification: {
+    device = "iPhone 16e (B2D6FC63-B2C6-4562-940C-FB9333552F01, iOS 26.2, Booting)";
+    "last_booted_at" = "2026-03-09 17:36:17 +0000";
+    "new_state" = 2;
+    notification = "device_state";
+    "prev_state" = 1;
+}
+12:36:17.865 xcodebuild[46712:13387917] /Users/russellbates/Library/Developer/CoreSimulator/Devices: Received sim device set notification: {
+    device = "iPhone 16e (B2D6FC63-B2C6-4562-940C-FB9333552F01, iOS 26.2, Booting)";
+    "last_booted_at" = "2026-03-09 17:36:17 +0000";
+    "new_state" = 2;
+    notification = "device_state";
+    "prev_state" = 1;
+}
+12:36:17.865 xcodebuild[46712:13387917] /Users/russellbates/Library/Developer/CoreSimulator/Devices: Received sim device set notification: {
+    device = "iPhone 16e (B2D6FC63-B2C6-4562-940C-FB9333552F01, iOS 26.2, Booting)";
+    "last_booted_at" = "2026-03-09 17:36:17 +0000";
+    "new_state" = 2;
+    notification = "device_state";
+    "prev_state" = 1;
+}
+12:36:17.865 xcodebuild[46712:13387917] /Users/russellbates/Library/Developer/CoreSimulator/Devices: Received sim device set notification: {
+    device = "iPhone 16e (B2D6FC63-B2C6-4562-940C-FB9333552F01, iOS 26.2, Booting)";
+    "last_booted_at" = "2026-03-09 17:36:17 +0000";
+    "new_state" = 2;
+    notification = "device_state";
+    "prev_state" = 1;
+}
+12:36:18.059 xcodebuild[46712:13387917] B2D6FC63-B2C6-4562-940C-FB9333552F01: Received sim device notification: {
+    notification = "availableDevices_changed";
+}
+12:36:18.060 xcodebuild[46712:13387917] B2D6FC63-B2C6-4562-940C-FB9333552F01: Received sim device notification: {
+    device = "iPhone 16e (B2D6FC63-B2C6-4562-940C-FB9333552F01, iOS 26.2, Booted)";
+    "new_state" = 3;
+    notification = "device_state";
+    "prev_state" = 2;
+}
+12:36:18.060 xcodebuild[46712:13389942] /Users/russellbates/Library/Developer/CoreSimulator/Devices: Received sim device set notification: {
+    device = "iPhone 16e (B2D6FC63-B2C6-4562-940C-FB9333552F01, iOS 26.2, Booted)";
+    "new_state" = 3;
+    notification = "device_state";
+    "prev_state" = 2;
+}
+12:36:18.060 xcodebuild[46712:13387969] 📱<DVTiPhoneSimulator (0x1143b2cf0), iPhone 16e, unknown class, 26.2 (23C54), B2D6FC63-B2C6-4562-940C-FB9333552F01> claim LaunchSessionClaim_0x121b5e370 on simulator was issued, 2 claims exist.
+12:36:18.100 xcodebuild[46712:13387917] /Users/russellbates/Library/Developer/CoreSimulator/Devices: Received sim device set notification: {
+    device = "iPhone 16e (B2D6FC63-B2C6-4562-940C-FB9333552F01, iOS 26.2, Booted)";
+    "new_state" = 3;
+    notification = "device_state";
+    "prev_state" = 2;
+}
+12:36:18.100 xcodebuild[46712:13387917] /Users/russellbates/Library/Developer/CoreSimulator/Devices: Received sim device set notification: {
+    device = "iPhone 16e (B2D6FC63-B2C6-4562-940C-FB9333552F01, iOS 26.2, Booted)";
+    "new_state" = 3;
+    notification = "device_state";
+    "prev_state" = 2;
+}
+12:36:18.100 xcodebuild[46712:13387917] /Users/russellbates/Library/Developer/CoreSimulator/Devices: Received sim device set notification: {
+    device = "iPhone 16e (B2D6FC63-B2C6-4562-940C-FB9333552F01, iOS 26.2, Booted)";
+    "new_state" = 3;
+    notification = "device_state";
+    "prev_state" = 2;
+}
+12:36:18.102 xcodebuild[46712:13387917] /Users/russellbates/Library/Developer/CoreSimulator/Devices: Received sim device set notification: {
+    device = "iPhone 16e (B2D6FC63-B2C6-4562-940C-FB9333552F01, iOS 26.2, Booted)";
+    "new_state" = 3;
+    notification = "device_state";
+    "prev_state" = 2;
+}
+12:36:18.102 xcodebuild[46712:13387917] /Users/russellbates/Library/Developer/CoreSimulator/Devices: Received sim device set notification: {
+    device = "iPhone 16e (B2D6FC63-B2C6-4562-940C-FB9333552F01, iOS 26.2, Booted)";
+    "new_state" = 3;
+    notification = "device_state";
+    "prev_state" = 2;
+}
+12:36:18.102 xcodebuild[46712:13387917] /Users/russellbates/Library/Developer/CoreSimulator/Devices: Received sim device set notification: {
+    device = "iPhone 16e (B2D6FC63-B2C6-4562-940C-FB9333552F01, iOS 26.2, Booted)";
+    "new_state" = 3;
+    notification = "device_state";
+    "prev_state" = 2;
+}
+12:36:18.103 xcodebuild[46712:13387917] /Users/russellbates/Library/Developer/CoreSimulator/Devices: Received sim device set notification: {
+    device = "iPhone 16e (B2D6FC63-B2C6-4562-940C-FB9333552F01, iOS 26.2, Booted)";
+    "new_state" = 3;
+    notification = "device_state";
+    "prev_state" = 2;
+}
+12:36:18.103 xcodebuild[46712:13387917] /Users/russellbates/Library/Developer/CoreSimulator/Devices: Received sim device set notification: {
+    device = "iPhone 16e (B2D6FC63-B2C6-4562-940C-FB9333552F01, iOS 26.2, Booted)";
+    "new_state" = 3;
+    notification = "device_state";
+    "prev_state" = 2;
+}
+12:36:18.103 xcodebuild[46712:13387917] /Users/russellbates/Library/Developer/CoreSimulator/Devices: Received sim device set notification: {
+    device = "iPhone 16e (B2D6FC63-B2C6-4562-940C-FB9333552F01, iOS 26.2, Booted)";
+    "new_state" = 3;
+    notification = "device_state";
+    "prev_state" = 2;
+}
+12:36:18.103 xcodebuild[46712:13387917] /Users/russellbates/Library/Developer/CoreSimulator/Devices: Received sim device set notification: {
+    device = "iPhone 16e (B2D6FC63-B2C6-4562-940C-FB9333552F01, iOS 26.2, Booted)";
+    "new_state" = 3;
+    notification = "device_state";
+    "prev_state" = 2;
+}
+12:36:18.103 xcodebuild[46712:13387917] /Users/russellbates/Library/Developer/CoreSimulator/Devices: Received sim device set notification: {
+    device = "iPhone 16e (B2D6FC63-B2C6-4562-940C-FB9333552F01, iOS 26.2, Booted)";
+    "new_state" = 3;
+    notification = "device_state";
+    "prev_state" = 2;
+}
+12:36:18.103 xcodebuild[46712:13387917] Setting up test runner session
+12:36:18.103 xcodebuild[46712:13389942] Sim iPhone 16e: Unregistering for sim device notification with token 5
+12:36:18.103 xcodebuild[46712:13389942] Calling -[SimDevice getenv:error:] for TESTMANAGERD_SIM_SOCK
+12:36:18.106 xcodebuild[46712:13387917] Registering/updating daemon-based crash report observer for process names (
+    xctest,
+    debugserver,
+    FrontBoard,
+    assertiond,
+    runningboardd,
+    SpringBoard,
+    testmanagerd,
+    backboardd,
+    DTServiceHub,
+    CardGame,
+    "CardGameUITests-Runner",
+    CardGameUITests
+)
+12:36:18.253 xcodebuild[46712:13389942] Sim iPhone 16e has testmanagerd socket at /private/tmp/com.apple.launchd.GbWEkljuRf/com.apple.testmanagerd.unix-domain.socket
+12:36:18.253 xcodebuild[46712:13389942] Validating test connection socket path (/private/tmp/com.apple.launchd.GbWEkljuRf/com.apple.testmanagerd.unix-domain.socket)
+12:36:18.253 xcodebuild[46712:13389942] Constructing transport for test connection socket
+12:36:18.253 xcodebuild[46712:13389942] Connected socket 37 to testmanagerd for Sim iPhone 16e
+12:36:18.256 xcodebuild[46712:13389942] Received connection for test runner session
+12:36:18.256 xcodebuild[46712:13389942] Listening for proxy connection request from the test bundle
+12:36:18.257 xcodebuild[46712:13387917] Test runner session acquired connection.
+12:36:18.257 xcodebuild[46712:13389942] Initiating session with identifier: 820D1B24-1610-4491-8D0D-E215ADF1D20E
+12:36:22.720 xcodebuild[46712:13388052] Got reply to session initiation request with identifier 820D1B24-1610-4491-8D0D-E215ADF1D20E (error: (null))
+12:36:22.745 xcodebuild[46712:13387917] Finished requesting crash reports. Continuing with testing.
+12:36:22.771 xcodebuild[46712:13387917] Launch session started.
+12:36:22.807 xcodebuild[46712:13388050] 📱<DVTiPhoneSimulator (0x1143b2cf0), iPhone 16e, unknown class, 26.2 (23C54), B2D6FC63-B2C6-4562-940C-FB9333552F01> claim LaunchSessionClaim_0x121b5e370 on simulator was issued, 2 claims exist.
+12:36:22.836 xcodebuild[46712:13388052] 📱<DVTiPhoneSimulator (0x1143b2cf0), iPhone 16e, unknown class, 26.2 (23C54), B2D6FC63-B2C6-4562-940C-FB9333552F01> claim LaunchSessionClaim_0x121b5e370 on simulator was issued, 2 claims exist.
+12:36:22.837 xcodebuild[46712:13388052] B2D6FC63-B2C6-4562-940C-FB9333552F01: Registered for sim device notification, got token 8
+12:36:22.838 xcodebuild[46712:13388050] B2D6FC63-B2C6-4562-940C-FB9333552F01: Unregistering for sim device notification with token 8
+12:36:22.937 xcodebuild[46712:13388050] B2D6FC63-B2C6-4562-940C-FB9333552F01: Installing app at path: /Users/russellbates/JunkDrawer/Temple Of Terror/.codex-derived/ui-polish/Build/Products/Debug-iphonesimulator/CardGameUITests-Runner.app and options: {
+    SkipWatchAppInstall = 1;
+}
+12:37:52.253 xcodebuild[46712:13388050] B2D6FC63-B2C6-4562-940C-FB9333552F01: Installed app at path: /Users/russellbates/JunkDrawer/Temple Of Terror/.codex-derived/ui-polish/Build/Products/Debug-iphonesimulator/CardGameUITests-Runner.app and options: {
+    SkipWatchAppInstall = 1;
+}
+12:37:52.861 xcodebuild[46712:13388050] B2D6FC63-B2C6-4562-940C-FB9333552F01: Launching app with identifier: RoaringRobot.CardGameUITests.xctrunner and options: {
+    "activate_suspended" = 1;
+    arguments =     (
+    );
+    environment =     {
+        "APP_DISTRIBUTOR_ID_OVERRIDE" = "com.apple.AppStore";
+        "CA_ASSERT_MAIN_THREAD_TRANSACTIONS" = 0;
+        "CA_DEBUG_TRANSACTIONS" = 0;
+        "DYLD_FRAMEWORK_PATH" = "/Users/russellbates/JunkDrawer/Temple Of Terror/.codex-derived/ui-polish/Build/Products/Debug-iphonesimulator:/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/Library/Frameworks:/Users/russellbates/JunkDrawer/Temple Of Terror/.codex-derived/ui-polish/Build/Products/Debug-iphonesimulator:/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/Library/Frameworks";
+        "DYLD_INSERT_LIBRARIES" = "/usr/lib/libRPAC.dylib:/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/usr/lib/libMainThreadChecker.dylib:/usr/lib/libRPAC.dylib:/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/usr/lib/libMainThreadChecker.dylib:/usr/lib/libRPAC.dylib";
+        "DYLD_LIBRARY_PATH" = "/Users/russellbates/JunkDrawer/Temple Of Terror/.codex-derived/ui-polish/Build/Products/Debug-iphonesimulator:/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/usr/lib:/Users/russellbates/JunkDrawer/Temple Of Terror/.codex-derived/ui-polish/Build/Products/Debug-iphonesimulator:/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/usr/lib";
+        "LLVM_PROFILE_FILE" = "/dev/null";
+        NSUnbufferedIO = YES;
+        "OS_ACTIVITY_DT_MODE" = YES;
+        "PERFC_ENABLE_EXTENDED_DIAGNOSTIC_FORMAT" = 1;
+        "PERFC_ENABLE_PROFILE_MODE" = 1;
+        "PERFC_RESET_INSERT_LIBRARIES" = 1;
+        "PERFC_SUPPRESS_SYSTEM_REPORTS" = 1;
+        "RUN_DESTINATION_DEVICE_NAME" = "iPhone 16e";
+        "RUN_DESTINATION_DEVICE_PLATFORM_IDENTIFIER" = "com.apple.platform.iphonesimulator";
+        "RUN_DESTINATION_DEVICE_UDID" = "B2D6FC63-B2C6-4562-940C-FB9333552F01";
+        "SQLITE_ENABLE_THREAD_ASSERTIONS" = 1;
+        TERM = dumb;
+        "XCODE_SCHEME_NAME" = CardGame;
+        XCTestBundleInjectPath = "/usr/lib/libRPAC.dylib:/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/usr/lib/libMainThreadChecker.dylib:/usr/lib/libRPAC.dylib:/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/usr/lib/libMainThreadChecker.dylib:/usr/lib/libRPAC.dylib";
+        XCTestBundlePath = "PlugIns/CardGameUITests.xctest";
+        XCTestConfigurationFilePath = "";
+        XCTestSessionIdentifier = "820D1B24-1610-4491-8D0D-E215ADF1D20E";
+        "__XCODE_BUILT_PRODUCTS_DIR_PATHS" = "/Users/russellbates/JunkDrawer/Temple Of Terror/.codex-derived/ui-polish/Build/Products/Debug-iphonesimulator";
+        "__XPC_DYLD_FRAMEWORK_PATH" = "/Users/russellbates/JunkDrawer/Temple Of Terror/.codex-derived/ui-polish/Build/Products/Debug-iphonesimulator:/Users/russellbates/JunkDrawer/Temple Of Terror/.codex-derived/ui-polish/Build/Products/Debug-iphonesimulator";
+        "__XPC_DYLD_LIBRARY_PATH" = "/Users/russellbates/JunkDrawer/Temple Of Terror/.codex-derived/ui-polish/Build/Products/Debug-iphonesimulator:/Users/russellbates/JunkDrawer/Temple Of Terror/.codex-derived/ui-polish/Build/Products/Debug-iphonesimulator";
+        "__XPC_LLVM_PROFILE_FILE" = "/dev/null";
+    };
+    stderr = "/dev/ttys008";
+    stdout = "/dev/ttys008";
+    "terminate_running_process" = 1;
+    "wait_for_debugger" = 1;
+}
+12:38:50.985 xcodebuild[46712:13397235] B2D6FC63-B2C6-4562-940C-FB9333552F01: Launched app with identifier: RoaringRobot.CardGameUITests.xctrunner (pid = 47925)
+12:38:51.051 xcodebuild[46712:13397235] 📱<DVTiPhoneSimulator (0x1143b2cf0), iPhone 16e, unknown class, 26.2 (23C54), B2D6FC63-B2C6-4562-940C-FB9333552F01> tracking pid 47925
+12:38:51.052 xcodebuild[46712:13397235] 📱<DVTiPhoneSimulator (0x1143b2cf0), iPhone 16e, unknown class, 26.2 (23C54), B2D6FC63-B2C6-4562-940C-FB9333552F01> checking to see if pid 47925 is valid: kill(pid, 0) = 0 (YES, it's still running)
+12:38:51.093 xcodebuild[46712:13399112] B2D6FC63-B2C6-4562-940C-FB9333552F01: Registered for sim device notification, got token 10
+12:38:51.095 xcodebuild[46712:13401059] B2D6FC63-B2C6-4562-940C-FB9333552F01: Unregistering for sim device notification with token 10
+12:38:56.363 xcodebuild[46712:13387917] Test process runnable PID is 47925.
+12:38:56.365 xcodebuild[46712:13401059] XCTHTestOperationStateMachine: Transitioning from state Initial to AcquiredPID
+2026-03-09 12:38:57.907658-0500 CardGameUITests-Runner[47925:13401049] [Default] Running tests...
+12:38:58.769 xcodebuild[46712:13401060] Handling proxy channel request from test runner
+12:38:58.754 CardGameUITests-Runner[47925:13401049] Creating future for 'requesting test configuration' with timeout 600.00
+12:38:58.755 CardGameUITests-Runner[47925:13401049] Notifying test runner ready
+12:38:58.777 xcodebuild[46712:13401060] Test runner is ready with capabilities: <XCTCapabilities: 0x118f6eaa0>: {
+    "delayed attachment transfer" = 1;
+    "fetch all test identifiers" = 1;
+    "ubiquitous test identifiers" = 1;
+}
+12:38:58.785 xcodebuild[46712:13387917] Test runner session successfully initiated.
+12:38:58.785 xcodebuild[46712:13387917] Authorizing test process ID 47925
+12:38:58.785 xcodebuild[46712:13401060] XCTHTestOperationStateMachine: Transitioning from state AcquiredPID to ReportedReady
+12:38:58.755 CardGameUITests-Runner[47925:13401049] <XCTWaiter: 0x600000c2c270> entering wait loop for 600.00s with expectations: `requesting test configuration`
+12:38:58.798 CardGameUITests-Runner[47925:13401501] -[XCTRunnerDaemonSession(XCTMessagingRole_UIApplicationStateUpdating) _XCT_applicationDidUpdateState:] RoaringRobot.CardGameUITests.xctrunner@/Users/russellbates/Library/Developer/CoreSimulator/Devices/B2D6FC63-B2C6-4562-940C-FB9333552F01/data/Containers/Bundle/Application/A16EA1C8-9B33-49B9-A82B-9E13A6E54AEF/CardGameUITests-Runner.app pid: 47925 state: running background
+12:38:58.807 xcodebuild[46712:13387917] Got authorization response from test daemon: Success
+12:38:58.810 xcodebuild[46712:13387917] Registering/updating daemon-based crash report observer for process names (
+    xctest,
+    debugserver,
+    FrontBoard,
+    assertiond,
+    runningboardd,
+    SpringBoard,
+    testmanagerd,
+    backboardd,
+    DTServiceHub,
+    CardGame,
+    "CardGameUITests-Runner",
+    CardGameUITests
+)
+12:38:58.813 xcodebuild[46712:13387917] Telling test runner to start executing tests.
+12:38:58.817 CardGameUITests-Runner[47925:13401502] Received test runner ready reply. Waiting for request to start running tests.
+12:38:58.817 CardGameUITests-Runner[47925:13401049] Returning result XCTWaiterResultCompleted for synchronous waiter <XCTWaiter: 0x600000c2c270>
+12:38:58.817 CardGameUITests-Runner[47925:13401049] Wait <XCTWaiterWait: 0x600001722f00> completed after 0.062s
+12:38:58.817 CardGameUITests-Runner[47925:13401049] cleaning up requesting test configuration
+12:38:58.818 CardGameUITests-Runner[47925:13401049] Loading test bundle at: file:///Users/russellbates/Library/Developer/CoreSimulator/Devices/B2D6FC63-B2C6-4562-940C-FB9333552F01/data/Containers/Bundle/Application/A16EA1C8-9B33-49B9-A82B-9E13A6E54AEF/CardGameUITests-Runner.app/PlugIns/CardGameUITests.xctest/
+12:38:58.820 CardGameUITests-Runner[47925:13401502] _IDE_startExecutingTestPlanWithProtocolVersion:36
+12:38:58.863 CardGameUITests-Runner[47925:13401049] Finished loading test bundle
+12:39:05.103 CardGameUITests-Runner[47925:13401049] Registering in-process symbolication service with image names: CardGameUITests, CardGameUITests-Runner, CardGame
+12:39:05.142 CardGameUITests-Runner[47925:13401049] Running tests with active test configuration: <XCTestConfiguration: 0x101d05330>
+	                  testBundleURL:file:///Users/russellbates/Library/Developer/CoreSimulator/Devices/B2D6FC63-B2C6-4562-940C-FB9333552F01/data/Containers/Bundle/Application/A16EA1C8-9B33-49B9-A82B-9E13A6E54AEF/CardGameUITests-Runner.app/PlugIns/CardGameUITests.xctest/
+	         testBundleRelativePath:PlugIns/CardGameUITests.xctest
+	              productModuleName:CardGameUITests
+	                  testSelection:<XCTTestSelection: 0x600000c228b0>
+	            identifiersToRun:<XCTTestIdentifier container, class ["testNarrowWidthPolishCapture"]>, <XCTTestIdentifier container ["testNarrowWidthPolishCapture"]>
+	            identifiersToSkip:
+	            tagsToRun:(null)
+	            tagsToSkip:<XCTTagSelection: 0x600000225fe0>
+	            mode:and
+	            tags:{(
+)}
+	  includeXCTests:NO
+
+
+	             reportResultsToIDE:YES
+	               testsDrivenByIDE:NO
+	inProcessParallelizationEnabled:NO
+	              sessionIdentifier:820D1B24-1610-4491-8D0D-E215ADF1D20E
+	      disablePerformanceMetrics:NO
+	treatMissingBaselinesAsFailures:NO
+	                baselineFileURL:(null)
+	       baselineFileRelativePath:(null)
+	          targetApplicationPath:/Users/russellbates/JunkDrawer/Temple Of Terror/.codex-derived/ui-polish/Build/Products/Debug-iphonesimulator/CardGame.app
+	      targetApplicationBundleID:RoaringRobot.CardGame
+	 testApplicationDependencies:
+{
+    "RoaringRobot.CardGame" = "/Users/russellbates/JunkDrawer/Temple Of Terror/.codex-derived/ui-polish/Build/Products/Debug-iphonesimulator/CardGame.app";
+    "RoaringRobot.CardGameUITests.xctrunner" = "/Users/russellbates/JunkDrawer/Temple Of Terror/.codex-derived/ui-polish/Build/Products/Debug-iphonesimulator/CardGameUITests-Runner.app";
+}
+	 bundleIDsForCrashReportEmphasis:
+{(
+    "RoaringRobot.CardGameTests",
+    "RoaringRobot.CardGame",
+    "RoaringRobot.CardGameUITests"
+)}
+	 testApplicationUserOverrides:(null)
+	     targetApplicationArguments:
+	   targetApplicationEnvironment:
+{
+    "APP_DISTRIBUTOR_ID_OVERRIDE" = "com.apple.AppStore";
+    "DYLD_FRAMEWORK_PATH" = "/Users/russellbates/JunkDrawer/Temple Of Terror/.codex-derived/ui-polish/Build/Products/Debug-iphonesimulator";
+    "DYLD_LIBRARY_PATH" = "/Users/russellbates/JunkDrawer/Temple Of Terror/.codex-derived/ui-polish/Build/Products/Debug-iphonesimulator";
+    "XCODE_SCHEME_NAME" = CardGame;
+    "__XCODE_BUILT_PRODUCTS_DIR_PATHS" = "/Users/russellbates/JunkDrawer/Temple Of Terror/.codex-derived/ui-polish/Build/Products/Debug-iphonesimulator";
+    "__XPC_DYLD_FRAMEWORK_PATH" = "/Users/russellbates/JunkDrawer/Temple Of Terror/.codex-derived/ui-polish/Build/Products/Debug-iphonesimulator";
+    "__XPC_DYLD_LIBRARY_PATH" = "/Users/russellbates/JunkDrawer/Temple Of Terror/.codex-derived/ui-polish/Build/Products/Debug-iphonesimulator";
+}
+	                  reportActivities:YES
+	          testsMustRunOnMainThread:YES
+	            initializeForUITesting:YES
+	            traceCollectionEnabled:(null)
+	 enablePerformanceTestsDiagnostics:(null)
+	 aggregateStatisticsBeforeCrash:
+{
+    XCSuiteRecordsKey =     {
+    };
+}
+	        automationFrameworkPath:/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Developer/Library/PrivateFrameworks/XCTAutomationSupport.framework
+	                     emitOSLogs:NO
+	       systemAttachmentLifetime:deleteOnSuccess
+	         userAttachmentLifetime:deleteOnSuccess
+	   preferredScreenCaptureFormat:screenRecording
+	   gatherLocalizableStringsData:NO
+	          testExecutionOrdering:alphabetical
+	    randomExecutionOrderingSeed:(null)
+	               repetitionPolicy:<XCTRepetitionPolicy: 0x600000239340>
+	            mode:None
+	            maximumIterations:1
+	            repeatInNewRunnerProcess:NO
+
+	       runtimeDiagnosticsPolicy:<XCTRuntimeDiagnosticsPolicy: 0x600000c00ba0>
+	            otherRuntimeIssuesDetectionPolicy:<XCTRuntimeIssueDetectionPolicy: 0x600000238120>
+	            detectionEnabled:YES
+	            severity:warning
+
+	            threadPerformanceCheckerRuntimeIssueDetectionPolicy:<XCTRuntimeIssueDetectionPolicy: 0x600000238120>
+	            detectionEnabled:YES
+	            severity:warning
+
+	            mainThreadCheckerDetectionPolicy:<XCTRuntimeIssueDetectionPolicy: 0x600000238120>
+	            detectionEnabled:YES
+	            severity:warning
+
+	            checkedAllocations:disabled
+
+	            testTimeoutsEnabled:NO
+	              leaksCheckingMode:off
+	 defaultTestExecutionTimeAllowance:600
+	 maximumTestExecutionTimeAllowance:0
+	                IDECapabilities:<XCTCapabilities: 0x600000004a40>: {
+    "XCTIssue capability" = 1;
+    "daemon container sandbox extension" = 1;
+    "delayed attachment transfer" = 1;
+    "expected failure test capability" = 1;
+    "in-process test parallelization capability" = 1;
+    "request diagnostics for specific devices" = 1;
+    "runner plan" = 1;
+    "skipped suite capability" = 1;
+    "skipped test capability" = 1;
+    "test case run configurations" = 1;
+    "test iterations" = 2;
+    "test timeout capability" = 1;
+    traits = 1;
+    "ubiquitous test identifiers" = 1;
+    "unified issue recorded" = 1;
+}
+	         applicationBundleInfos:
+{
+    "RoaringRobot.CardGame" = "<XCTApplicationBundleInfo localizations:[en] infoDictionary:[UISupportedInterfaceOrientations~ipad: (\n    UIInterfaceOrientationPortrait,\n    UIInterfaceOrientationPortraitUpsideDown,\n    UIInterfaceOrientationLandscapeLeft,\n    UIInterfaceOrientationLandscapeRight\n), UISupportedInterfaceOrientations~iphone: (\n    UIInterfaceOrientationPortrait,\n    UIInterfaceOrientationLandscapeLeft,\n    UIInterfaceOrientationLandscapeRight\n)]>";
+    "RoaringRobot.CardGameUITests.xctrunner" = "<XCTApplicationBundleInfo localizations:[en] infoDictionary:[UISupportedInterfaceOrientations~ipad: (\n    UIInterfaceOrientationPortrait,\n    UIInterfaceOrientationPortraitUpsideDown,\n    UIInterfaceOrientationLandscapeLeft,\n    UIInterfaceOrientationLandscapeRight\n), UISupportedInterfaceOrientations: (\n    UIInterfaceOrientationPortrait,\n    UIInterfaceOrientationLandscapeLeft,\n    UIInterfaceOrientationLandscapeRight\n)]>";
+}
+
+12:39:05.235 CardGameUITests-Runner[47925:13401049] <XCTWaiter: 0x600000c62c70> entering wait loop for 600.00s with expectations: `requesting ready for testing`
+12:39:05.235 CardGameUITests-Runner[47925:13401049] Returning result XCTWaiterResultCompleted for synchronous waiter <XCTWaiter: 0x600000c62c70>
+12:39:05.235 CardGameUITests-Runner[47925:13401049] Wait <XCTWaiterWait: 0x6000017013c0> completed after 0.000s
+12:39:05.240 CardGameUITests-Runner[47925:13401049] cleaning up requesting ready for testing
+12:39:05.240 CardGameUITests-Runner[47925:13401049] <XCTWaiter: 0x600000c9a460> entering wait loop for 600.00s with expectations: `IDE proxy`
+12:39:05.241 CardGameUITests-Runner[47925:13401049] Returning result XCTWaiterResultCompleted for synchronous waiter <XCTWaiter: 0x600000c9a460>
+12:39:05.241 CardGameUITests-Runner[47925:13401049] Wait <XCTWaiterWait: 0x600001722a80> completed after 0.001s
+12:39:05.241 CardGameUITests-Runner[47925:13401049] cleaning up IDE proxy
+12:39:05.253 CardGameUITests-Runner[47925:13401049] Initializing for UI testing.
+12:39:05.286 CardGameUITests-Runner[47925:13401049] Linked XCTAutomationSupport.framework from /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/Library/PrivateFrameworks/XCTAutomationSupport.framework/XCTAutomationSupport, built with Xcode 2620(17C49), modified on Friday, December 5, 2025 at 3:25:49 AM Central Standard Time, bundle version: 24507
+12:39:05.321 CardGameUITests-Runner[47925:13401049] <XCTWaiter: 0x600000c79350> entering wait loop for 60.00s with expectations: `initiating daemon session`
+12:39:05.322 CardGameUITests-Runner[47925:13401049] Returning result XCTWaiterResultCompleted for synchronous waiter <XCTWaiter: 0x600000c79350>
+12:39:05.322 CardGameUITests-Runner[47925:13401049] Wait <XCTWaiterWait: 0x60000171b6c0> completed after 0.000s
+12:39:05.322 CardGameUITests-Runner[47925:13401049] cleaning up initiating daemon session
+12:39:05.322 CardGameUITests-Runner[47925:13401049] Creating future for 'enabling automation mode' with timeout 60.00
+12:39:05.322 CardGameUITests-Runner[47925:13401049] <XCTWaiter: 0x600000ca6430> entering wait loop for 60.00s with expectations: `enabling automation mode`
+12:39:05.356 CardGameUITests-Runner[47925:13401049] Returning result XCTWaiterResultCompleted for synchronous waiter <XCTWaiter: 0x600000ca6430>
+12:39:05.366 CardGameUITests-Runner[47925:13401049] Wait <XCTWaiterWait: 0x60000171b9c0> completed after 0.044s
+12:39:05.367 CardGameUITests-Runner[47925:13401049] cleaning up enabling automation mode
+12:39:05.367 CardGameUITests-Runner[47925:13401049] Creating future for 'loading Accessibility' with timeout 70.00
+12:39:05.368 CardGameUITests-Runner[47925:13401049] <XCTWaiter: 0x600000c631e0> entering wait loop for 70.00s with expectations: `loading Accessibility`
+12:39:17.183 xcodebuild[46712:13387917] B2D6FC63-B2C6-4562-940C-FB9333552F01: Received sim device notification: {
+    notification = "availableDevices_changed";
+}
+12:39:17.213 xcodebuild[46712:13406147] /Users/russellbates/Library/Developer/CoreSimulator/Devices: Received sim device set notification: {
+    device = "iPhone 16e (B2D6FC63-B2C6-4562-940C-FB9333552F01, iOS 26.2, Shutting Down)";
+    "new_state" = 4;
+    notification = "device_state";
+    "prev_state" = 3;
+}
+12:39:17.253 xcodebuild[46712:13387917] B2D6FC63-B2C6-4562-940C-FB9333552F01: Received sim device notification: {
+    device = "iPhone 16e (B2D6FC63-B2C6-4562-940C-FB9333552F01, iOS 26.2, Shutting Down)";
+    "new_state" = 4;
+    notification = "device_state";
+    "prev_state" = 3;
+}
+12:39:17.642 xcodebuild[46712:13387917] /Users/russellbates/Library/Developer/CoreSimulator/Devices: Received sim device set notification: {
+    device = "iPhone 16e (B2D6FC63-B2C6-4562-940C-FB9333552F01, iOS 26.2, Shutting Down)";
+    "new_state" = 4;
+    notification = "device_state";
+    "prev_state" = 3;
+}
+12:39:17.642 xcodebuild[46712:13387917] /Users/russellbates/Library/Developer/CoreSimulator/Devices: Received sim device set notification: {
+    device = "iPhone 16e (B2D6FC63-B2C6-4562-940C-FB9333552F01, iOS 26.2, Shutting Down)";
+    "new_state" = 4;
+    notification = "device_state";
+    "prev_state" = 3;
+}
+12:39:17.642 xcodebuild[46712:13387917] /Users/russellbates/Library/Developer/CoreSimulator/Devices: Received sim device set notification: {
+    device = "iPhone 16e (B2D6FC63-B2C6-4562-940C-FB9333552F01, iOS 26.2, Shutting Down)";
+    "new_state" = 4;
+    notification = "device_state";
+    "prev_state" = 3;
+}
+12:39:17.642 xcodebuild[46712:13387917] /Users/russellbates/Library/Developer/CoreSimulator/Devices: Received sim device set notification: {
+    device = "iPhone 16e (B2D6FC63-B2C6-4562-940C-FB9333552F01, iOS 26.2, Shutting Down)";
+    "new_state" = 4;
+    notification = "device_state";
+    "prev_state" = 3;
+}
+12:39:17.642 xcodebuild[46712:13387917] /Users/russellbates/Library/Developer/CoreSimulator/Devices: Received sim device set notification: {
+    device = "iPhone 16e (B2D6FC63-B2C6-4562-940C-FB9333552F01, iOS 26.2, Shutting Down)";
+    "new_state" = 4;
+    notification = "device_state";
+    "prev_state" = 3;
+}
+12:39:17.642 xcodebuild[46712:13387917] /Users/russellbates/Library/Developer/CoreSimulator/Devices: Received sim device set notification: {
+    device = "iPhone 16e (B2D6FC63-B2C6-4562-940C-FB9333552F01, iOS 26.2, Shutting Down)";
+    "new_state" = 4;
+    notification = "device_state";
+    "prev_state" = 3;
+}
+12:39:17.642 xcodebuild[46712:13387917] /Users/russellbates/Library/Developer/CoreSimulator/Devices: Received sim device set notification: {
+    device = "iPhone 16e (B2D6FC63-B2C6-4562-940C-FB9333552F01, iOS 26.2, Shutting Down)";
+    "new_state" = 4;
+    notification = "device_state";
+    "prev_state" = 3;
+}
+12:39:17.642 xcodebuild[46712:13387917] /Users/russellbates/Library/Developer/CoreSimulator/Devices: Received sim device set notification: {
+    device = "iPhone 16e (B2D6FC63-B2C6-4562-940C-FB9333552F01, iOS 26.2, Shutting Down)";
+    "new_state" = 4;
+    notification = "device_state";
+    "prev_state" = 3;
+}
+12:39:17.642 xcodebuild[46712:13387917] /Users/russellbates/Library/Developer/CoreSimulator/Devices: Received sim device set notification: {
+    device = "iPhone 16e (B2D6FC63-B2C6-4562-940C-FB9333552F01, iOS 26.2, Shutting Down)";
+    "new_state" = 4;
+    notification = "device_state";
+    "prev_state" = 3;
+}
+12:39:17.642 xcodebuild[46712:13387917] /Users/russellbates/Library/Developer/CoreSimulator/Devices: Received sim device set notification: {
+    device = "iPhone 16e (B2D6FC63-B2C6-4562-940C-FB9333552F01, iOS 26.2, Shutting Down)";
+    "new_state" = 4;
+    notification = "device_state";
+    "prev_state" = 3;
+}
+12:39:17.642 xcodebuild[46712:13387917] /Users/russellbates/Library/Developer/CoreSimulator/Devices: Received sim device set notification: {
+    device = "iPhone 16e (B2D6FC63-B2C6-4562-940C-FB9333552F01, iOS 26.2, Shutting Down)";
+    "new_state" = 4;
+    notification = "device_state";
+    "prev_state" = 3;
+}
+12:39:17.670 xcodebuild[46712:13387917] 📱<DVTiPhoneSimulator (0x1143b2cf0), iPhone 16e, unknown class, 26.2 (23C54), B2D6FC63-B2C6-4562-940C-FB9333552F01> got death notice for pid 47925 (exit code: (null), signal: 15), removing from SimulatorSessionMap
+12:39:17.706 xcodebuild[46712:13387917] 📱<DVTiPhoneSimulator (0x1143b2cf0), iPhone 16e, unknown class, 26.2 (23C54), B2D6FC63-B2C6-4562-940C-FB9333552F01> claim LaunchSessionClaim_0x121b5e370 on simulator was relinquished, 1 claims remain.
+12:39:17.706 xcodebuild[46712:13387917] 📱<DVTiPhoneSimulator (0x1143b2cf0), iPhone 16e, unknown class, 26.2 (23C54), B2D6FC63-B2C6-4562-940C-FB9333552F01> claim LaunchSessionClaim_0x121b5e370 on simulator was relinquished, 1 claims remain.
+12:39:17.707 xcodebuild[46712:13387917] 📱<DVTiPhoneSimulator (0x1143b2cf0), iPhone 16e, unknown class, 26.2 (23C54), B2D6FC63-B2C6-4562-940C-FB9333552F01> claim LaunchSessionClaim_0x121b5e370 on simulator was relinquished, 1 claims remain.
+12:39:17.708 xcodebuild[46712:13387917] Launch session expired.
+12:39:17.711 xcodebuild[46712:13406147] XCTHTestOperationStateMachine: Transitioning from state ReportedReady to PendingFinalization
+12:39:17.997 xcodebuild[46712:13387917] <XCTHTestOperationCoordinator: 0x11facf230> finished receiving data from testing launch session
+12:39:17.997 xcodebuild[46712:13387917] <XCTHTestOperationCoordinator: 0x11facf230>: _considerFlushingDelegateBlockQueue - nothing to flush
+12:39:17.998 xcodebuild[46712:13387917] Nothing to delete
+12:39:20.183 xcodebuild[46712:13406157] <XCTTestRunnerSession: 0x11fadf5b0> lost its connection.
+12:39:20.184 xcodebuild[46712:13406093] Closing socket 37 to testmanagerd for Sim iPhone 16e
+12:39:20.187 xcodebuild[46712:13387917] Lost connection to test process
+12:39:20.229 xcodebuild[46712:13406147] /Users/russellbates/Library/Developer/CoreSimulator/Devices: Received sim device set notification: {
+    device = "iPhone 16e (B2D6FC63-B2C6-4562-940C-FB9333552F01, iOS 26.2, Shutdown)";
+    "new_state" = 1;
+    notification = "device_state";
+    "prev_state" = 4;
+}
+12:39:20.229 xcodebuild[46712:13387917] B2D6FC63-B2C6-4562-940C-FB9333552F01: Received sim device notification: {
+    notification = "availableDevices_changed";
+}
+12:39:20.229 xcodebuild[46712:13387917] B2D6FC63-B2C6-4562-940C-FB9333552F01: Received sim device notification: {
+    device = "iPhone 16e (B2D6FC63-B2C6-4562-940C-FB9333552F01, iOS 26.2, Shutdown)";
+    "new_state" = 1;
+    notification = "device_state";
+    "prev_state" = 4;
+}

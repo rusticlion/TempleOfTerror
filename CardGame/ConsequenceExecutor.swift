@@ -15,10 +15,16 @@ struct ConsequenceExecutor {
 
     let debugLogging: Bool
     let runtime: ScenarioRuntime
+    let content: ContentLoader
 
-    init(debugLogging: Bool, runtime: ScenarioRuntime = ScenarioRuntime()) {
+    init(
+        debugLogging: Bool,
+        runtime: ScenarioRuntime = ScenarioRuntime(),
+        content: ContentLoader? = nil
+    ) {
         self.debugLogging = debugLogging
         self.runtime = runtime
+        self.content = content ?? runtime.content
     }
 
     private enum EventResolutionStatus {
@@ -298,7 +304,7 @@ struct ConsequenceExecutor {
                         append("The '\(clockName)' clock progresses by \(amount).", to: &resolution)
                     }
                     prepend(queuedFrames, to: &resolution)
-                } else if let clockTemplate = ContentLoader.shared.clockTemplates.first(where: { $0.name == clockName }) {
+                } else if let clockTemplate = content.clockTemplates.first(where: { $0.name == clockName }) {
                     var newClock = clockTemplate
                     newClock.progress = amount
                     gameState.activeClocks.append(newClock)
@@ -391,7 +397,7 @@ struct ConsequenceExecutor {
             }
         case .gainTreasure:
             if let treasureID = consequence.treasureId {
-                if let treasure = ContentLoader.shared.treasureTemplates.first(where: { $0.id == treasureID }) {
+                if let treasure = content.treasureTemplates.first(where: { $0.id == treasureID }) {
                     if let charIndex = gameState.party.firstIndex(where: { $0.id == actingCharacter.id }) {
                         gameState.party[charIndex].treasures.append(treasure)
                         gameState.party[charIndex].modifiers.append(treasure.grantedModifier)
@@ -400,7 +406,7 @@ struct ConsequenceExecutor {
                         }
                     }
                 } else {
-                    print("Treasure with ID \(treasureID) not found in ContentLoader.shared.treasureTemplates.")
+                    print("Treasure with ID \(treasureID) not found in active scenario treasure templates.")
                 }
             }
         case .modifyDice:
@@ -554,7 +560,7 @@ struct ConsequenceExecutor {
         gameState: inout GameState
     ) -> String {
         guard let charIndex = gameState.party.firstIndex(where: { $0.id == characterID }) else { return "" }
-        guard let harmFamily = HarmLibrary.families[familyId] else { return "" }
+        guard let harmFamily = content.harmFamilyDict[familyId] else { return "" }
 
         var currentLevel = level
 
@@ -607,7 +613,7 @@ struct ConsequenceExecutor {
         gameState.party[index].harm.lesser = []
 
         for entry in originalSevere {
-            if let family = HarmLibrary.families[entry.familyId] {
+            if let family = content.harmFamilyDict[entry.familyId] {
                 gameState.party[index].harm.moderate.append((entry.familyId, family.moderate.description))
             } else {
                 gameState.party[index].harm.moderate.append(entry)
@@ -616,7 +622,7 @@ struct ConsequenceExecutor {
         }
 
         for entry in originalModerate {
-            if let family = HarmLibrary.families[entry.familyId] {
+            if let family = content.harmFamilyDict[entry.familyId] {
                 gameState.party[index].harm.lesser.append((entry.familyId, family.lesser.description))
             } else {
                 gameState.party[index].harm.lesser.append(entry)
@@ -668,7 +674,7 @@ struct ConsequenceExecutor {
     private func handleStressOverflow(for index: Int, gameState: inout GameState) -> String {
         let characterID = gameState.party[index].id
         gameState.party[index].stress = 0
-        let overflowHarmFamilyID = ContentLoader.shared.scenarioManifest?.stressOverflowHarmFamilyID ?? "mental_fraying"
+        let overflowHarmFamilyID = content.scenarioManifest?.stressOverflowHarmFamilyID ?? "mental_fraying"
         let harmDescription = applyHarm(
             familyId: overflowHarmFamilyID,
             level: .lesser,
@@ -693,7 +699,7 @@ struct ConsequenceExecutor {
         includeEventDescription: Bool,
         gameState: GameState
     ) -> EventResolution {
-        guard let event = ContentLoader.shared.eventDict[eventID] else {
+        guard let event = content.eventDict[eventID] else {
             if debugLogging {
                 print("[Consequences] Missing authored event '\(eventID)'")
             }

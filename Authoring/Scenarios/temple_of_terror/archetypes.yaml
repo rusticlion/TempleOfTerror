@@ -1,0 +1,42 @@
+- id: archaeologist
+  name: Archaeologist
+  description: Reads ruins, relics, and the ambitions of those reckless enough to disturb them.
+  defaultActions:
+    Study: 2
+    Survey: 1
+    Tinker: 1
+- id: linguist
+  name: Linguist
+  description: Deciphers dead tongues, temple iconography, and the warnings everyone else ignored.
+  defaultActions:
+    Study: 2
+    Consort: 1
+    Attune: 1
+- id: guide
+  name: Guide
+  description: Knows how to read the land, spot trouble early, and keep an expedition moving.
+  defaultActions:
+    Survey: 2
+    Prowl: 1
+    Hunt: 1
+- id: daredevil
+  name: Daredevil
+  description: Crosses gaps, springs clear of traps, and survives on timing and nerve.
+  defaultActions:
+    Finesse: 2
+    Prowl: 1
+    Skirmish: 1
+- id: bruiser
+  name: Bruiser
+  description: Breaks obstacles, statues, and bad ideas with blunt force and louder confidence.
+  defaultActions:
+    Wreck: 2
+    Skirmish: 1
+    Command: 1
+- id: mystic
+  name: Mystic
+  description: Senses curses, relic power, and the truths that old temples prefer to bury.
+  defaultActions:
+    Attune: 2
+    Study: 1
+    Consort: 1

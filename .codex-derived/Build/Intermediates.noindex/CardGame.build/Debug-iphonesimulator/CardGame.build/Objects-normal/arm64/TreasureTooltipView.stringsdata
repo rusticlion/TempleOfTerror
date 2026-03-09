@@ -1,0 +1,24 @@
+{
+  "source": "/Users/russellbates/JunkDrawer/Temple Of Terror/CardGame/TreasureTooltipView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Treasure",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 32
+        }
+      },
+      {
+        "comment": "",
+        "key": "Benefit",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 62
+        }
+      }
+    ]
+  },
+  "version": 1
+}

@@ -9,7 +9,12 @@ struct ResolvedDiceRoll {
 struct RollRulesEngine {
     private let basePushStressCost = 2
 
-    func calculateProjection(for action: ActionOption, with character: Character, interactableTags tags: [String] = []) -> RollProjectionDetails {
+    func calculateProjection(
+        for action: ActionOption,
+        with character: Character,
+        interactableTags tags: [String] = [],
+        harmFamilies: [String: HarmFamily]
+    ) -> RollProjectionDetails {
         var diceCount = character.actions[action.actionType] ?? 0
         var position = action.position
         var effect = action.effect
@@ -19,13 +24,13 @@ struct RollRulesEngine {
         var notes: [String] = []
 
         for harm in character.harm.lesser {
-            apply(harm: harm, tier: \.lesser, actionType: action.actionType, tags: tags, diceCount: &diceCount, position: &position, effect: &effect, notes: &notes)
+            apply(harm: harm, tier: \.lesser, actionType: action.actionType, tags: tags, harmFamilies: harmFamilies, diceCount: &diceCount, position: &position, effect: &effect, notes: &notes)
         }
         for harm in character.harm.moderate {
-            apply(harm: harm, tier: \.moderate, actionType: action.actionType, tags: tags, diceCount: &diceCount, position: &position, effect: &effect, notes: &notes)
+            apply(harm: harm, tier: \.moderate, actionType: action.actionType, tags: tags, harmFamilies: harmFamilies, diceCount: &diceCount, position: &position, effect: &effect, notes: &notes)
         }
         for harm in character.harm.severe {
-            apply(harm: harm, tier: \.severe, actionType: action.actionType, tags: tags, diceCount: &diceCount, position: &position, effect: &effect, notes: &notes)
+            apply(harm: harm, tier: \.severe, actionType: action.actionType, tags: tags, harmFamilies: harmFamilies, diceCount: &diceCount, position: &position, effect: &effect, notes: &notes)
         }
 
         for modifier in character.modifiers {
@@ -97,7 +102,12 @@ struct RollRulesEngine {
         )
     }
 
-    func getRollContext(for action: ActionOption, with character: Character, interactableTags tags: [String] = []) -> (baseProjection: RollProjectionDetails, optionalModifiers: [SelectableModifierInfo]) {
+    func getRollContext(
+        for action: ActionOption,
+        with character: Character,
+        interactableTags tags: [String] = [],
+        harmFamilies: [String: HarmFamily]
+    ) -> (baseProjection: RollProjectionDetails, optionalModifiers: [SelectableModifierInfo]) {
         var diceCount = character.actions[action.actionType] ?? 0
         var position = action.position
         var effect = action.effect
@@ -107,13 +117,13 @@ struct RollRulesEngine {
         var notes: [String] = []
 
         for harm in character.harm.lesser {
-            apply(harm: harm, tier: \.lesser, actionType: action.actionType, tags: tags, diceCount: &diceCount, position: &position, effect: &effect, notes: &notes)
+            apply(harm: harm, tier: \.lesser, actionType: action.actionType, tags: tags, harmFamilies: harmFamilies, diceCount: &diceCount, position: &position, effect: &effect, notes: &notes)
         }
         for harm in character.harm.moderate {
-            apply(harm: harm, tier: \.moderate, actionType: action.actionType, tags: tags, diceCount: &diceCount, position: &position, effect: &effect, notes: &notes)
+            apply(harm: harm, tier: \.moderate, actionType: action.actionType, tags: tags, harmFamilies: harmFamilies, diceCount: &diceCount, position: &position, effect: &effect, notes: &notes)
         }
         for harm in character.harm.severe {
-            apply(harm: harm, tier: \.severe, actionType: action.actionType, tags: tags, diceCount: &diceCount, position: &position, effect: &effect, notes: &notes)
+            apply(harm: harm, tier: \.severe, actionType: action.actionType, tags: tags, harmFamilies: harmFamilies, diceCount: &diceCount, position: &position, effect: &effect, notes: &notes)
         }
 
         let treasureModifiers = character.treasures.map(\.grantedModifier)
@@ -187,7 +197,7 @@ struct RollRulesEngine {
             )
         }
 
-        let pushCost = pushStressCost(for: character, interactableTags: tags)
+        let pushCost = pushStressCost(for: character, interactableTags: tags, harmFamilies: harmFamilies)
         if character.stress + pushCost <= 9 {
             let pushModifier = Modifier(bonusDice: 1, uses: 1, isOptionalToApply: true, description: "Push Yourself")
             optionalInfos.append(
@@ -230,11 +240,15 @@ struct RollRulesEngine {
         return result
     }
 
-    func pushStressCost(for character: Character, interactableTags tags: [String]) -> Int {
+    func pushStressCost(
+        for character: Character,
+        interactableTags tags: [String],
+        harmFamilies: [String: HarmFamily]
+    ) -> Int {
         var additionalCost = 0
-        additionalCost += additionalStressCost(from: character.harm.lesser, tier: \.lesser, interactableTags: tags)
-        additionalCost += additionalStressCost(from: character.harm.moderate, tier: \.moderate, interactableTags: tags)
-        additionalCost += additionalStressCost(from: character.harm.severe, tier: \.severe, interactableTags: tags)
+        additionalCost += additionalStressCost(from: character.harm.lesser, tier: \.lesser, interactableTags: tags, harmFamilies: harmFamilies)
+        additionalCost += additionalStressCost(from: character.harm.moderate, tier: \.moderate, interactableTags: tags, harmFamilies: harmFamilies)
+        additionalCost += additionalStressCost(from: character.harm.severe, tier: \.severe, interactableTags: tags, harmFamilies: harmFamilies)
         return max(0, basePushStressCost + additionalCost)
     }
 
@@ -290,12 +304,13 @@ struct RollRulesEngine {
     private func additionalStressCost(
         from harms: [(familyId: String, description: String)],
         tier: KeyPath<HarmFamily, HarmTier>,
-        interactableTags tags: [String]
+        interactableTags tags: [String],
+        harmFamilies: [String: HarmFamily]
     ) -> Int {
         var total = 0
 
         for harm in harms {
-            guard let family = HarmLibrary.families[harm.familyId] else { continue }
+            guard let family = harmFamilies[harm.familyId] else { continue }
             guard let penalty = family[keyPath: tier].penalty else { continue }
             guard case .increaseStressCost(let amount, let requiredTag) = penalty else { continue }
             if let requiredTag, !tags.contains(requiredTag) {
@@ -312,15 +327,16 @@ struct RollRulesEngine {
         tier: KeyPath<HarmFamily, HarmTier>,
         actionType: String,
         tags: [String],
+        harmFamilies: [String: HarmFamily],
         diceCount: inout Int,
         position: inout RollPosition,
         effect: inout RollEffect,
         notes: inout [String]
     ) {
-        if let penalty = HarmLibrary.families[harm.familyId]?[keyPath: tier].penalty {
+        if let penalty = harmFamilies[harm.familyId]?[keyPath: tier].penalty {
             apply(penalty: penalty, description: harm.description, to: actionType, tags: tags, diceCount: &diceCount, position: &position, effect: &effect, notes: &notes)
         }
-        if let boon = HarmLibrary.families[harm.familyId]?[keyPath: tier].boon {
+        if let boon = harmFamilies[harm.familyId]?[keyPath: tier].boon {
             apply(boon: boon, description: harm.description, to: actionType, tags: tags, diceCount: &diceCount, position: &position, effect: &effect, notes: &notes)
         }
     }

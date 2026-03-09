@@ -1,0 +1,424 @@
+{
+  "source": "/Users/russellbates/JunkDrawer/Temple Of Terror/CardGame/ContentView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Loading dungeon...",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 159
+        }
+      },
+      {
+        "comment": "",
+        "key": "Threat in play. You can't leave this node until the danger here is dealt with.",
+        "location": {
+          "startingColumn": 42,
+          "startingLine": 136
+        }
+      },
+      {
+        "comment": "",
+        "key": "No action selected",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 272
+        }
+      },
+      {
+        "comment": "",
+        "key": "Try Again",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 292
+        }
+      },
+      {
+        "comment": "",
+        "key": "Decision",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 408
+        }
+      },
+      {
+        "comment": "",
+        "key": "Rolled a %lld",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 404
+        }
+      },
+      {
+        "comment": "",
+        "key": "Done",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 425
+        }
+      },
+      {
+        "comment": "",
+        "key": "Author Tools",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 885
+        }
+      },
+      {
+        "comment": "",
+        "key": "Dice Override",
+        "location": {
+          "startingColumn": 25,
+          "startingLine": 653
+        }
+      },
+      {
+        "comment": "",
+        "key": "Node Jump",
+        "location": {
+          "startingColumn": 25,
+          "startingLine": 670
+        }
+      },
+      {
+        "comment": "",
+        "key": "Scenario State",
+        "location": {
+          "startingColumn": 25,
+          "startingLine": 705
+        }
+      },
+      {
+        "comment": "",
+        "key": "Flags and Counters",
+        "location": {
+          "startingColumn": 25,
+          "startingLine": 724
+        }
+      },
+      {
+        "comment": "",
+        "key": "Treasure and Modifier Grants",
+        "location": {
+          "startingColumn": 25,
+          "startingLine": 784
+        }
+      },
+      {
+        "comment": "",
+        "key": "Last Action",
+        "location": {
+          "startingColumn": 29,
+          "startingLine": 879
+        }
+      },
+      {
+        "comment": "",
+        "key": "Current: [%@]",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 665
+        }
+      },
+      {
+        "comment": "",
+        "key": "Enable Fixed Dice Pattern",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 654
+        }
+      },
+      {
+        "comment": "",
+        "key": "e.g. 6,5,3",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 655
+        }
+      },
+      {
+        "comment": "",
+        "key": "Apply Pattern",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 658
+        }
+      },
+      {
+        "comment": "",
+        "key": "No fixed-map nodes are loaded in this run.",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 672
+        }
+      },
+      {
+        "comment": "",
+        "key": "Target Node",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 676
+        }
+      },
+      {
+        "comment": "",
+        "key": "Move Entire Party",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 682
+        }
+      },
+      {
+        "comment": "",
+        "key": "Jump",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 684
+        }
+      },
+      {
+        "comment": "",
+        "key": "No active clocks.",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 713
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@: %@",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 708
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@: %lld/%lld",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 718
+        }
+      },
+      {
+        "comment": "",
+        "key": "Flags: none",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 760
+        }
+      },
+      {
+        "comment": "",
+        "key": "Counters: none",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 772
+        }
+      },
+      {
+        "comment": "",
+        "key": "Flag ID",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 725
+        }
+      },
+      {
+        "comment": "",
+        "key": "Counter ID",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 739
+        }
+      },
+      {
+        "comment": "",
+        "key": "Counter Value",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 742
+        }
+      },
+      {
+        "comment": "",
+        "key": "Set Flag",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 729
+        }
+      },
+      {
+        "comment": "",
+        "key": "Clear Flag",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 733
+        }
+      },
+      {
+        "comment": "",
+        "key": "Set Counter",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 745
+        }
+      },
+      {
+        "comment": "",
+        "key": "+1",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 749
+        }
+      },
+      {
+        "comment": "",
+        "key": "-1",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 753
+        }
+      },
+      {
+        "comment": "",
+        "key": "Flag %@ = %@",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 766
+        }
+      },
+      {
+        "comment": "",
+        "key": "Counter %@ = %lld",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 778
+        }
+      },
+      {
+        "comment": "",
+        "key": "No active party members available.",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 786
+        }
+      },
+      {
+        "comment": "",
+        "key": "No treasure templates are available for this scenario.",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 798
+        }
+      },
+      {
+        "comment": "",
+        "key": "Character",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 790
+        }
+      },
+      {
+        "comment": "",
+        "key": "Treasure",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 802
+        }
+      },
+      {
+        "comment": "",
+        "key": "Grant Treasure",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 807
+        }
+      },
+      {
+        "comment": "",
+        "key": "Modifier Description",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 854
+        }
+      },
+      {
+        "comment": "",
+        "key": "Bonus Dice",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 855
+        }
+      },
+      {
+        "comment": "",
+        "key": "Uses (0 = unlimited)",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 857
+        }
+      },
+      {
+        "comment": "",
+        "key": "Improve Position",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 859
+        }
+      },
+      {
+        "comment": "",
+        "key": "Improve Effect",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 860
+        }
+      },
+      {
+        "comment": "",
+        "key": "Grant Custom Modifier",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 861
+        }
+      },
+      {
+        "comment": "",
+        "key": "+1d",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 822
+        }
+      },
+      {
+        "comment": "",
+        "key": "Pos+",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 832
+        }
+      },
+      {
+        "comment": "",
+        "key": "Eff+",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 842
+        }
+      },
+      {
+        "comment": "",
+        "key": "Close",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 888
+        }
+      }
+    ]
+  },
+  "version": 1
+}

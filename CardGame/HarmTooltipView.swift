@@ -3,9 +3,10 @@ import SwiftUI
 struct HarmTooltipView: View {
     let familyId: String
     let level: HarmLevel
+    let harmFamilies: [String: HarmFamily]
 
     private var tier: HarmTier? {
-        guard let family = HarmLibrary.families[familyId] else { return nil }
+        guard let family = harmFamilies[familyId] else { return nil }
         switch level {
         case .lesser: return family.lesser
         case .moderate: return family.moderate

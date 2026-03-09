@@ -1,0 +1,1354 @@
+{
+  "startingNodeID": "00000000-0000-0000-0000-000000000001",
+  "nodes": {
+    "00000000-0000-0000-0000-000000000001": {
+      "id": "00000000-0000-0000-0000-000000000001",
+      "name": "Docking Bay",
+      "soundProfile": "metal_echoes_large",
+      "isDiscovered": true,
+      "interactables": [
+        {
+          "id": "cb_ferryman_shuttle_ready",
+          "title": "Your Shuttle, the _Ferryman_",
+          "description": "It's cramped and smells faintly of ozone, but it's your ticket out of here. The pre-flight checks are still green.",
+          "availableActions": [
+            {
+              "name": "Leave Now",
+              "actionType": "Finesse",
+              "position": "controlled",
+              "effect": "great",
+              "requiresTest": false,
+              "isGroupAction": true,
+              "outcomes": {
+                "success": [
+                  {
+                    "type": "triggerEvent",
+                    "eventId": "game_over_coward_ending",
+                    "description": "You decide the flashing emergency lights and ominous silence are trouble you don't need. You lift off and head for home. You're safe, but the fate of the Styx Transporter remains a mystery you chose not to solve."
+                  }
+                ]
+              }
+            }
+          ],
+          "tags": [
+            "Astronautics",
+            "Exit"
+          ]
+        },
+        {
+          "id": "cb_docking_beacon",
+          "title": "Damaged Emergency Beacon",
+          "description": "Sparks fly from the panel. Last message fragment: '...medical emergency...Dr. Thorne requests immediate...aid...'",
+          "availableActions": [
+            {
+              "name": "Inspect Damage",
+              "actionType": "Survey",
+              "position": "controlled",
+              "effect": "standard",
+              "outcomes": {
+                "success": [
+                  {
+                    "type": "triggerConsequences",
+                    "description": "Your inspection reveals the damage is intentional. An auxiliary data port is accessible.",
+                    "consequences": [
+                      {
+                        "type": "addInteractableHere",
+                        "interactable": {
+                          "id": "cb_beacon_log_fragment",
+                          "title": "Auxiliary Data Port",
+                          "description": "The beacon's log contains a corrupted entry: 'Signal altered. True status: [STATIC]. Warning: VFE active. Empress protocol...'",
+                          "availableActions": [
+                            {
+                              "name": "Study Log",
+                              "actionType": "Study",
+                              "position": "risky",
+                              "effect": "standard",
+                              "outcomes": {
+                                "success": [
+                                  {
+                                    "type": "gainTreasure",
+                                    "treasureId": "cb_dr_thornes_partial_code",
+                                    "description": "You decode a fragment of Dr. Thorne's access code. The numbers seem to shift before your eyes, but you memorize them before they can escape."
+                                  },
+                                  {
+                                    "type": "removeSelfInteractable"
+                                  }
+                                ],
+                                "partial": [
+                                  {
+                                    "type": "gainTreasure",
+                                    "treasureId": "cb_dr_thornes_partial_code"
+                                  },
+                                  {
+                                    "type": "gainStress",
+                                    "amount": 1,
+                                    "description": "The corrupted data makes your head swim as you extract the code fragment."
+                                  },
+                                  {
+                                    "type": "removeSelfInteractable"
+                                  }
+                                ],
+                                "failure": [
+                                  {
+                                    "type": "tickClock",
+                                    "clockName": "Ship Security Lockdown",
+                                    "description": "You trigger a security protocol.",
+                                    "amount": 1
+                                  },
+                                  {
+                                    "type": "sufferHarm",
+                                    "level": "lesser",
+                                    "familyId": "vfe_cerebral_euphoria",
+                                    "description": "The log floods your mind with incomprehensible data. The knowledge burns."
+                                  }
+                                ]
+                              }
+                            }
+                          ]
+                        }
+                      },
+                      {
+                        "type": "removeAction",
+                        "id": "self",
+                        "actionName": "Inspect Damage"
+                      }
+                    ]
+                  }
+                ],
+                "partial": [
+                  {
+                    "type": "triggerConsequences",
+                    "description": "You find a working auxiliary data port, but the bloody handprints on the damaged console are deeply unsettling.",
+                    "consequences": [
+                      {
+                        "type": "addInteractableHere",
+                        "interactable": {
+                          "id": "cb_beacon_log_fragment",
+                          "title": "Auxiliary Data Port",
+                          "description": "The beacon's log contains a corrupted entry: 'Signal altered. True status: [STATIC]. Warning: VFE active. Empress protocol...'",
+                          "availableActions": [
+                            {
+                              "name": "Study Log",
+                              "actionType": "Study",
+                              "position": "risky",
+                              "effect": "standard",
+                              "outcomes": {
+                                "success": [
+                                  {
+                                    "type": "gainTreasure",
+                                    "treasureId": "cb_dr_thornes_partial_code",
+                                    "description": "You decode a fragment of Dr. Thorne's access code. The numbers seem to shift before your eyes, but you memorize them before they can escape."
+                                  },
+                                  {
+                                    "type": "removeInteractable",
+                                    "id": "self"
+                                  }
+                                ],
+                                "partial": [
+                                  {
+                                    "type": "gainTreasure",
+                                    "treasureId": "cb_dr_thornes_partial_code"
+                                  },
+                                  {
+                                    "type": "gainStress",
+                                    "amount": 1,
+                                    "description": "The corrupted data makes your head swim as you extract the code fragment."
+                                  },
+                                  {
+                                    "type": "removeInteractable",
+                                    "id": "self"
+                                  }
+                                ],
+                                "failure": [
+                                  {
+                                    "type": "tickClock",
+                                    "clockName": "Ship Security Lockdown",
+                                    "amount": 1
+                                  },
+                                  {
+                                    "type": "sufferHarm",
+                                    "level": "lesser",
+                                    "familyId": "vfe_cerebral_euphoria",
+                                    "description": "The log floods your mind with incomprehensible data. The knowledge burns."
+                                  }
+                                ]
+                              }
+                            }
+                          ]
+                        }
+                      },
+                      {
+                        "type": "removeAction",
+                        "id": "self",
+                        "actionName": "Inspect Damage"
+                      },
+                      {
+                        "type": "gainStress",
+                        "amount": 1
+                      }
+                    ]
+                  }
+                ],
+                "failure": [
+                  {
+                    "type": "gainStress",
+                    "amount": 1,
+                    "description": "You find nothing but fried circuits. The effort is frustratingly fruitless."
+                  }
+                ]
+              }
+            },
+            {
+              "name": "Repair Console",
+              "actionType": "Tinker",
+              "position": "risky",
+              "effect": "standard",
+              "outcomes": {
+                "success": [
+                  {
+                    "type": "triggerEvent",
+                    "eventId": "cb_beacon_partially_active",
+                    "description": "You stabilize the beacon's power supply. It now broadcasts a steady, repeating 'All Clear' signal... which you know is a lie."
+                  },
+                  {
+                    "type": "removeAction",
+                    "id": "self",
+                    "actionName": "Repair Console"
+                  }
+                ],
+                "partial": [
+                  {
+                    "type": "triggerEvent",
+                    "eventId": "cb_beacon_partially_active",
+                    "description": "You get the beacon working, but your hasty repair draws a significant power spike. The lights flicker."
+                  },
+                  {
+                    "type": "tickClock",
+                    "clockName": "Reactor Overload",
+                    "amount": 1
+                  },
+                  {
+                    "type": "removeAction",
+                    "id": "self",
+                    "actionName": "Repair Console"
+                  }
+                ],
+                "failure": [
+                  {
+                    "type": "sufferHarm",
+                    "level": "lesser",
+                    "familyId": "electric_shock"
+                  },
+                  {
+                    "type": "tickClock",
+                    "clockName": "Ship Security Lockdown",
+                    "amount": 2,
+                    "description": "Your clumsy bypass attempt sends a major alert to the ship's security AI. QUARANTINE PROTOCOL PRIMED."
+                  },
+                  {
+                    "type": "removeAction",
+                    "id": "self",
+                    "actionName": "Repair Console"
+                  }
+                ]
+              }
+            }
+          ],
+          "tags": [
+            "Electronic",
+            "Damaged"
+          ]
+        },
+        {
+          "id": "cb_cargo_loader",
+          "title": "Slumped Cargo Loader",
+          "description": "The heavy cargo loader is inactive, its hydraulic lines slack.",
+          "availableActions": [
+            {
+              "name": "Hotwire Loader",
+              "actionType": "Tinker",
+              "position": "desperate",
+              "effect": "standard",
+              "outcomes": {
+                "success": [
+                  {
+                    "type": "triggerEvent",
+                    "eventId": "cb_cargo_loader_activated",
+                    "description": "With a shower of sparks, the loader whirs to life."
+                  },
+                  {
+                    "type": "removeSelfInteractable"
+                  }
+                ],
+                "partial": [
+                  {
+                    "type": "triggerEvent",
+                    "eventId": "cb_cargo_loader_activated",
+                    "description": "The loader lurches to life, but the power surge strains the ship's unstable systems and your nerves."
+                  },
+                  {
+                    "type": "gainStress",
+                    "amount": 1
+                  },
+                  {
+                    "type": "tickClock",
+                    "clockName": "Reactor Overload",
+                    "amount": 1
+                  },
+                  {
+                    "type": "removeSelfInteractable"
+                  }
+                ],
+                "failure": [
+                  {
+                    "type": "sufferHarm",
+                    "level": "lesser",
+                    "familyId": "electric_shock"
+                  },
+                  {
+                    "type": "addInteractableHere",
+                    "interactable": {
+                      "id": "cb_loader_fire",
+                      "title": "Loader Electrical Fire",
+                      "description": "The cargo loader bursts into acrid smoke and electrical fire!",
+                      "isThreat": true,
+                      "availableActions": [
+                        {
+                          "name": "Extinguish Fire",
+                          "actionType": "Wreck",
+                          "position": "risky",
+                          "effect": "standard",
+                          "outcomes": {
+                            "success": [
+                              {
+                                "type": "removeSelfInteractable"
+                              }
+                            ],
+                            "partial": [
+                              {
+                                "type": "removeSelfInteractable"
+                              },
+                              {
+                                "type": "gainStress",
+                                "amount": 1
+                              }
+                            ],
+                            "failure": [
+                              {
+                                "type": "sufferHarm",
+                                "level": "moderate",
+                                "familyId": "vfe_physical_aberration"
+                              }
+                            ]
+                          }
+                        }
+                      ],
+                      "tags": [
+                        "Hazard",
+                        "Fire"
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "name": "Scavenge Parts",
+              "actionType": "Wreck",
+              "position": "controlled",
+              "effect": "limited",
+              "outcomes": {
+                "success": [
+                  {
+                    "type": "gainTreasure",
+                    "treasureId": "cb_scrap_components"
+                  },
+                  {
+                    "type": "removeInteractable",
+                    "id": "self"
+                  }
+                ],
+                "partial": [
+                  {
+                    "type": "gainTreasure",
+                    "treasureId": "cb_scrap_components"
+                  },
+                  {
+                    "type": "gainStress",
+                    "amount": 1,
+                    "description": "You manage to pry some components loose, but the screech of metal puts you on edge."
+                  },
+                  {
+                    "type": "removeInteractable",
+                    "id": "self"
+                  }
+                ],
+                "failure": [
+                  {
+                    "type": "gainStress",
+                    "amount": 1,
+                    "description": "The loader's casing is too tough or stripped clean. You find nothing useful."
+                  },
+                  {
+                    "type": "removeInteractable",
+                    "id": "self",
+                    "conditions": [
+                      {
+                        "type": "requiresMinPositionLevel",
+                        "positionParam": "risky"
+                      }
+                    ],
+                    "description": "You think you broke something..."
+                  }
+                ]
+              }
+            }
+          ],
+          "tags": [
+            "Mechanical",
+            "Inactive"
+          ]
+        }
+      ],
+      "connections": [
+        {
+          "toNodeID": "00000000-0000-0000-0000-000000000002",
+          "description": "Enter Main Corridor",
+          "isUnlocked": true
+        }
+      ]
+    },
+    "00000000-0000-0000-0000-000000000002": {
+      "id": "00000000-0000-0000-0000-000000000002",
+      "name": "Main Corridor",
+      "soundProfile": "ship_hum_low",
+      "interactables": [
+        {
+          "id": "cb_amalgamated_rats",
+          "title": "Amalgamated Rats",
+          "isThreat": true,
+          "description": "A horde of rats, some with strange mutations, scurry through the corridor. They seem to be avoiding you but they're blocking your path.",
+          "availableActions": [
+            {
+              "name": "Scare Rats",
+              "actionType": "Skirmish",
+              "position": "risky",
+              "effect": "standard",
+              "outcomes": {
+                "success": [
+                  {
+                    "type": "removeInteractable",
+                    "id": "self",
+                    "description": "You scare the rats away. They vanish into the shadows in the dim emergency lighting."
+                  }
+                ],
+                "partial": [
+                  {
+                    "type": "removeInteractable",
+                    "id": "self",
+                    "description": "You scare the rats away. They vanish into the shadows in the dim emergency lighting, but you still hear them squeaking and clattering in the walls."
+                  },
+                  {
+                    "type": "gainStress",
+                    "amount": 1
+                  }
+                ],
+                "failure": [
+                  {
+                    "type": "gainStress",
+                    "amount": 1,
+                    "description": "They don't seem to be bothered by you. Their chittering is strangely synchronized."
+                  },
+                  {
+                    "type": "sufferHarm",
+                    "level": "lesser",
+                    "familyId": "cb_rat_bites",
+                    "conditions": [
+                      {
+                        "type": "requiresMinPositionLevel",
+                        "positionParam": "risky"
+                      }
+                    ],
+                    "description": "The rats bite you as you try to scare them away. You feel a sharp pain in your leg."
+                  }
+                ]
+              }
+            },
+            {
+              "name": "Stomp Rats",
+              "actionType": "Wreck",
+              "position": "desperate",
+              "effect": "standard",
+              "outcomes": {
+                "success": [
+                  {
+                    "type": "removeInteractable",
+                    "id": "self",
+                    "description": "You stomp on the rats. They squeak and scatter."
+                  }
+                ],
+                "partial": [
+                  {
+                    "type": "sufferHarm",
+                    "level": "lesser",
+                    "familyId": "cb_rat_bites",
+                    "conditions": [
+                      {
+                        "type": "requiresMinPositionLevel",
+                        "positionParam": "risky"
+                      }
+                    ],
+                    "description": "A rat sinks sharp teeth into your foot and you punt it against a wall. It bursts into a smear of guts, still twitching. The rest of the horde scurry away."
+                  },
+                  {
+                    "type": "removeInteractable",
+                    "id": "self"
+                  }
+                ],
+                "failure": [
+                  {
+                    "type": "sufferHarm",
+                    "level": "lesser",
+                    "familyId": "cb_rat_bites",
+                    "conditions": [
+                      {
+                        "type": "requiresExactPositionLevel",
+                        "positionParam": "risky"
+                      }
+                    ],
+                    "description": "A rat sinks sharp teeth into your foot. You kick it away and the horde's chittering intensifies."
+                  },
+                  {
+                    "type": "sufferHarm",
+                    "level": "moderate",
+                    "familyId": "cb_rat_bites",
+                    "conditions": [
+                      {
+                        "type": "requiresExactPositionLevel",
+                        "positionParam": "desperate"
+                      }
+                    ],
+                    "description": "The wound immediately begins oozing yellow pus. You feel a dull ache in your leg."
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "cb_main_corridor_graffiti",
+          "title": "Scrawled Graffiti",
+          "description": "Messages cover the walls: \"HE'S STILL IN THERE - A.T.\",\"REMAIN CALM, TRUST US\", \"GET OUT WHILE YOU CAN - ESCAPE PODS ARE READY\", \"DON'T LET HER NEAR THE REACTOR\". Some appear frantically rewritten.",
+          "availableActions": [
+            {
+              "name": "Study Messages",
+              "actionType": "Study",
+              "position": "controlled",
+              "effect": "standard",
+              "outcomes": {
+                "success": [
+                  {
+                    "type": "gainTreasure",
+                    "treasureId": "cb_conflicting_advice",
+                    "description": "You can pick out at least two different sets of handwriting. One is neat and precise, the other is messy and hurried. Seems there's been a disagreement."
+                  },
+                  {
+                    "type": "removeAction",
+                    "id": "self",
+                    "actionName": "Study Messages"
+                  }
+                ],
+                "partial": [
+                  {
+                    "type": "gainTreasure",
+                    "treasureId": "cb_conflicting_advice",
+                    "description": "You can pick out at least two different sets of handwriting. One is neat and precise, the other is messy and hurried. Seems there's been a disagreement."
+                  },
+                  {
+                    "type": "gainStress",
+                    "amount": 1,
+                    "description": "You look around nervously. You can still hear the rats. You're not sure about \"remaining calm\"."
+                  },
+                  {
+                    "type": "removeAction",
+                    "id": "self",
+                    "actionName": "Study Messages"
+                  }
+                ],
+                "failure": [
+                  {
+                    "type": "gainStress",
+                    "amount": 1,
+                    "description": "You can't make heads or tails of the jumble of messages, but something has clearly gone very wrong here."
+                  }
+                ]
+              }
+            },
+            {
+              "name": "Search for Hidden Details",
+              "actionType": "Survey",
+              "position": "controlled",
+              "effect": "limited",
+              "outcomes": {
+                "success": [
+                  {
+                    "type": "gainStress",
+                    "amount": -1,
+                    "description": "You notice that the advice urging to \"stay calm\" is written in a shaky hand, while the advice to \"get out\" is stenciled cleanly. Maybe most of the crew has already left."
+                  },
+                  {
+                    "type": "removeAction",
+                    "id": "self",
+                    "actionName": "Search for Hidden Details"
+                  },
+                  {
+                    "type": "gainTreasure",
+                    "treasureId": "cb_crew_conflict_intuition"
+                  }
+                ],
+                "partial": [
+                  {
+                    "type": "gainStress",
+                    "amount": 1,
+                    "description": "You notice that the advice urging to \"stay calm\" is written in a shaky hand, while the advice to \"get out\" is stenciled cleanly. You're not happy about being here."
+                  },
+                  {
+                    "type": "removeAction",
+                    "id": "self",
+                    "actionName": "Search for Hidden Details"
+                  },
+                  {
+                    "type": "gainTreasure",
+                    "treasureId": "cb_crew_conflict_intuition"
+                  }
+                ],
+                "failure": [
+                  {
+                    "type": "gainStress",
+                    "amount": 1,
+                    "description": "Something has clearly gone very wrong here. You worry that you're too late."
+                  },
+                  {
+                    "type": "sufferHarm",
+                    "level": "lesser",
+                    "familyId": "vfe_cerebral_euphoria",
+                    "conditions": [
+                      {
+                        "type": "requiresMinPositionLevel",
+                        "positionParam": "risky"
+                      }
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "name": "What happened here?",
+              "actionType": "Attune",
+              "position": "controlled",
+              "effect": "standard",
+              "outcomes": {
+                "success": [
+                  {
+                    "type": "gainStress",
+                    "amount": -2,
+                    "description": "Clearly, this vessel's misson has gone off the rails. It looks like some sort of authority figure was trying to reassure the crew that everything was under control as it became clear that the mission was doomed. You'll have to be careful who to trust, but at least someone else here seems to have held onto their sanity."
+                  },
+                  {
+                    "type": "removeAction",
+                    "id": "self",
+                    "actionName": "What happened here?"
+                  }
+                ],
+                "partial": [
+                  {
+                    "type": "gainStress",
+                    "amount": -1,
+                    "description": "Clearly, this vessel's misson has gone off the rails. It looks like someone was trying to reassure the crew that everything was under control as it became clear that the mission was doomed. At least someone here seems to have held onto their sanity."
+                  },
+                  {
+                    "type": "removeAction",
+                    "id": "self",
+                    "actionName": "What happened here?"
+                  }
+                ],
+                "failure": [
+                  {
+                    "type": "gainStress",
+                    "amount": 1,
+                    "description": "Something has clearly gone very wrong here. You worry that you're too late."
+                  },
+                  {
+                    "type": "removeAction",
+                    "id": "self",
+                    "actionName": "What happened here?"
+                  }
+                ]
+              }
+            }
+          ],
+          "tags": [
+            "Clue",
+            "History"
+          ]
+        }
+      ],
+      "connections": [
+        {
+          "toNodeID": "00000000-0000-0000-0000-000000000001",
+          "description": "Return to Docking Bay",
+          "isUnlocked": true
+        },
+        {
+          "toNodeID": "00000000-0000-0000-0000-000000000003",
+          "description": "Enter Crew Quarters",
+          "isUnlocked": true
+        },
+        {
+          "toNodeID": "00000000-0000-0000-0000-000000000004",
+          "description": "Access Medical Wing",
+          "isUnlocked": true
+        },
+        {
+          "toNodeID": "00000000-0000-0000-0000-000000000009",
+          "description": "Head towards Engineering/Maintenance",
+          "isUnlocked": true
+        }
+      ],
+      "theme": "ship_corridor",
+      "isDiscovered": false
+    },
+    "00000000-0000-0000-0000-000000000003": {
+      "id": "00000000-0000-0000-0000-000000000003",
+      "name": "Crew Quarters",
+      "soundProfile": "quiet_murmurs",
+      "interactables": [
+        {
+          "id": "cb_crew_quarters_terminal",
+          "title": "Crew Quarters Terminal",
+          "description": "A terminal with a list of crew members and their assigned quarters.",
+          "availableActions": [],
+          "isDisplayOnly": true
+        }
+      ],
+      "connections": [
+        {
+          "toNodeID": "00000000-0000-0000-0000-000000000002",
+          "description": "Back to Main Corridor",
+          "isUnlocked": true
+        },
+        {
+          "toNodeID": "00000000-0000-0000-0000-000000000006",
+          "description": "Descend to Cargo Bay",
+          "isUnlocked": true
+        }
+      ],
+      "theme": "living_quarters_derelict",
+      "isDiscovered": false
+    },
+    "00000000-0000-0000-0000-000000000004": {
+      "id": "00000000-0000-0000-0000-000000000004",
+      "name": "Medical Wing",
+      "soundProfile": "medical_bay_alarms_faint",
+      "interactables": [
+        {
+          "id": "cb_medwing_autodoc",
+          "title": "Bloodstained Autodoc Pod",
+          "description": "The Autodoc is smeared with blood. A terminal shows it was being modified to interface with an 'External Regenerative Field'.",
+          "availableActions": [
+            {
+              "name": "Activate Self-Repair",
+              "actionType": "Tinker",
+              "position": "desperate",
+              "effect": "standard",
+              "outcomes": {
+                "success": [
+                  {
+                    "type": "sufferHarm",
+                    "level": "moderate",
+                    "familyId": "vfe_physical_aberration",
+                    "conditions": [
+                      {
+                        "type": "requiresMinEffectLevel",
+                        "effectParam": "standard"
+                      }
+                    ],
+                    "description": "The autodoc's needles pierce your flesh as alien energies surge through modified protocols. Your wounds seal with unnatural speed, but the new flesh is wrong - too thick, ridged with strange patterns."
+                  },
+                  {
+                    "type": "sufferHarm",
+                    "level": "severe",
+                    "familyId": "vfe_physical_aberration",
+                    "conditions": [
+                      {
+                        "type": "requiresMinEffectLevel",
+                        "effectParam": "great"
+                      }
+                    ],
+                    "description": "The VFE field overwhelms the autodoc's safety limits. Your body convulses as it rebuilds itself according to alien blueprints. When it's done, you're whole... but no longer entirely human."
+                  }
+                ],
+                "partial": [
+                  {
+                    "type": "sufferHarm",
+                    "level": "lesser",
+                    "familyId": "vfe_physical_aberration",
+                    "description": "The autodoc hums with unnatural harmonics. Minor wounds close, but the healed flesh feels different - denser, stranger. You try not to think about what's happening beneath your skin."
+                  },
+                  {
+                    "type": "gainStress",
+                    "amount": 2
+                  }
+                ],
+                "failure": [
+                  {
+                    "type": "tickClock",
+                    "clockName": "VFE Instability",
+                    "amount": 2,
+                    "description": "The autodoc's systems cascade into failure. Emergency alarms shriek as the VFE field pulses out of control. Throughout the ship, dormant systems awaken to the surge."
+                  },
+                  {
+                    "type": "sufferHarm",
+                    "level": "severe",
+                    "familyId": "vfe_physical_aberration",
+                    "description": "The machine turns predator. Restraints snap tight as it begins 'improving' you with nightmarish efficiency. By the time you break free, the damage is extensive and irreversible."
+                  }
+                ]
+              }
+            },
+            {
+              "name": "Study Modifications",
+              "actionType": "Study",
+              "position": "risky",
+              "effect": "standard",
+              "outcomes": {
+                "success": [
+                  {
+                    "type": "gainTreasure",
+                    "treasureId": "cb_vfe_interface_schematic"
+                  }
+                ],
+                "partial": [
+                  {
+                    "type": "gainStress",
+                    "amount": 1
+                  }
+                ],
+                "failure": [
+                  {
+                    "type": "sufferHarm",
+                    "level": "moderate",
+                    "familyId": "vfe_cerebral_euphoria"
+                  }
+                ]
+              }
+            }
+          ],
+          "tags": [
+            "Medical",
+            "VFE-touched",
+            "Dangerous"
+          ]
+        },
+        {
+          "id": "cb_medwing_research_terminal_ng",
+          "title": "Dr. Ng's Research Terminal",
+          "description": "This terminal contains Dr. Ng's logs and early VFE data before Thorne locked her out. It details theories on the VFE's energy draw and escalating mutations.",
+          "availableActions": [
+            {
+              "name": "Access Logs",
+              "actionType": "Study",
+              "position": "controlled",
+              "effect": "standard",
+              "outcomes": {
+                "success": [
+                  {
+                    "type": "gainTreasure",
+                    "treasureId": "cb_dr_ng_research_logs"
+                  },
+                  {
+                    "type": "triggerEvent",
+                    "eventId": "cb_ng_reveals_lab_location"
+                  }
+                ],
+                "partial": [
+                  {
+                    "type": "gainStress",
+                    "amount": 1
+                  },
+                  {
+                    "type": "triggerEvent",
+                    "eventId": "cb_ng_partial_lab_info"
+                  }
+                ],
+                "failure": [
+                  {
+                    "type": "tickClock",
+                    "clockName": "Ship Security Lockdown",
+                    "amount": 1
+                  }
+                ]
+              }
+            },
+            {
+              "name": "Bypass Security for Thorne's Files",
+              "actionType": "Tinker",
+              "position": "risky",
+              "effect": "limited",
+              "outcomes": {
+                "success": [
+                  {
+                    "type": "gainTreasure",
+                    "treasureId": "cb_dr_thornes_early_vfe_notes"
+                  }
+                ],
+                "failure": [
+                  {
+                    "type": "sufferHarm",
+                    "level": "lesser",
+                    "familyId": "electric_shock"
+                  },
+                  {
+                    "type": "tickClock",
+                    "clockName": "Ship Security Lockdown",
+                    "amount": 2
+                  }
+                ]
+              }
+            }
+          ],
+          "tags": [
+            "Computer",
+            "Clue",
+            "Log"
+          ]
+        },
+        {
+            "id": "cb_npc_dr_lauren_ng",
+            "title": "Dr. Lauren Ng",
+            "description": "A terrified research assistant hiding behind an overturned gurney. She's pale and trembling, her eyes wide with fear.",
+            "availableActions": [
+                {
+                    "name": "Talk to Dr. Ng",
+                    "actionType": "Consort",
+                    "position": "risky",
+                    "effect": "standard",
+                    "outcomes": {
+                        "success": [
+                            {
+                                "type": "triggerConsequences",
+                                "description": "'You have to stop her,' she whispers, her voice shaking. 'She sealed off her main lab... but there's a service tunnel. In the Hydroponics Bay. It leads right to it. Take this... it's her old access code. Maybe it still works.'",
+                                "consequences": [
+                                    {
+                                        "type": "unlockConnection",
+                                        "fromNodeID": "00000000-0000-0000-0000-000000000005",
+                                        "toNodeID": "00000000-0000-0000-0000-000000000007"
+                                    },
+                                    {
+                                        "type": "gainTreasure",
+                                        "treasureId": "cb_dr_thornes_access_code"
+                                    },
+                                    {
+                                        "type": "removeAction",
+                                        "id": "self",
+                                        "actionName": "Talk to Dr. Ng"
+                                    },
+                                    {
+                                        "type": "addAction",
+                                        "id": "self",
+                                        "action": {
+                                            "name": "Ask about the Hydra",
+                                            "actionType": "Study",
+                                            "position": "controlled",
+                                            "effect": "standard",
+                                            "outcomes": {
+                                                "success": [
+                                                    {
+                                                        "type": "gainTreasure",
+                                                        "treasureId": "cb_hydra_intel",
+                                                        "description": "'That thing... it was her husband, Alex. The VFE was supposed to save him, but it just... kept going. It regenerates. As long as the VFE has power, you can't kill it.'"
+                                                    },
+                                                    {
+                                                        "type": "removeAction",
+                                                        "id": "self",
+                                                        "actionName": "Ask about the Hydra"
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    }
+                                ]
+                            }
+                        ],
+                        "partial": [
+                            {
+                                "type": "unlockConnection",
+                                "fromNodeID": "00000000-0000-0000-0000-000000000005",
+                                "toNodeID": "00000000-0000-0000-0000-000000000007",
+                                "description": "'The lab... there's a service tunnel in Hydroponics,' she stammers, but then she shrinks back. 'I can't... she'll know. Please, just go!'"
+                            },
+                            {
+                                "type": "gainStress",
+                                "amount": 1
+                            }
+                        ],
+                        "failure": [
+                            {
+                                "type": "tickClock",
+                                "clockName": "VFE Instability",
+                                "amount": 1,
+                                "description": "'No! Stay away from me!' she screams. Her shout echoes down the corridor, and you hear something heavy shift in a nearby room."
+                            }
+                        ]
+                    }
+                }
+            ],
+            "tags": ["NPC", "Survivor", "Clue"]
+        }
+      ],
+      "connections": [
+        {
+          "toNodeID": "00000000-0000-0000-0000-000000000002",
+          "description": "Return to Main Corridor",
+          "isUnlocked": true
+        },
+        {
+          "toNodeID": "00000000-0000-0000-0000-000000000005",
+          "description": "Enter Hydroponics Bay",
+          "isUnlocked": true
+        }
+      ],
+      "theme": "medical_lab_disturbed",
+      "isDiscovered": false
+    },
+    "00000000-0000-0000-0000-000000000005": {
+      "id": "00000000-0000-0000-0000-000000000005",
+      "name": "Hydroponics Bay",
+      "soundProfile": "hydroponics_overgrown_rustling",
+      "interactables": [],
+      "connections": [
+        {
+          "toNodeID": "00000000-0000-0000-0000-000000000004",
+          "description": "Back to Medical Wing",
+          "isUnlocked": true
+        },
+        {
+          "toNodeID": "00000000-0000-0000-0000-000000000007",
+          "description": "Path to VFE Lab (Hidden/Service Tunnel)",
+          "isUnlocked": false
+        }
+      ],
+      "theme": "hydroponics_mutated",
+      "isDiscovered": false
+    },
+    "00000000-0000-0000-0000-000000000006": {
+      "id": "00000000-0000-0000-0000-000000000006",
+      "name": "Cargo Bay",
+      "soundProfile": "cargo_bay_creaks",
+      "interactables": [
+        {
+          "id": "cb_corrupted_maintenance_droid",
+          "title": "Corrupted Maintenance Droid",
+          "description": "Its optical sensors are overgrown with twitching organic matter. It moves erratically.",
+          "isThreat": true,
+          "availableActions": [
+            {
+              "name": "Disable Droid",
+              "actionType": "Wreck",
+              "position": "risky",
+              "effect": "standard",
+              "outcomes": {
+                "success": [
+                  {
+                    "type": "removeSelfInteractable"
+                  }
+                ],
+                "partial": [
+                  {
+                    "type": "sufferHarm",
+                    "level": "lesser",
+                    "familyId": "vfe_physical_aberration"
+                  },
+                  {
+                    "type": "gainStress",
+                    "amount": 1
+                  }
+                ],
+                "failure": [
+                  {
+                    "type": "sufferHarm",
+                    "level": "moderate",
+                    "familyId": "vfe_physical_aberration"
+                  }
+                ]
+              }
+            },
+            {
+              "name": "Evade Droid",
+              "actionType": "Finesse",
+              "position": "desperate",
+              "effect": "limited",
+              "outcomes": {
+                "success": [
+                  {
+                    "type": "triggerEvent",
+                    "eventId": "cb_droid_evaded_moves_node"
+                  }
+                ],
+                "failure": [
+                  {
+                    "type": "tickClock",
+                    "clockName": "Droid Pursuit",
+                    "amount": 1
+                  }
+                ]
+              }
+            }
+          ],
+          "tags": [
+            "Mechanical",
+            "VFE-corrupted",
+            "Hostile"
+          ]
+        }
+      ],
+      "connections": [
+        {
+          "toNodeID": "00000000-0000-0000-0000-000000000003",
+          "description": "Ascend to Crew Quarters",
+          "isUnlocked": true
+        },
+        {
+          "toNodeID": "00000000-0000-0000-0000-000000000007",
+          "description": "Access to VFE Lab (Hidden Panel)",
+          "isUnlocked": false
+        },
+        {
+          "toNodeID": "00000000-0000-0000-0000-000000000010",
+          "description": "Path to Escape Pods",
+          "isUnlocked": true
+        }
+      ],
+      "theme": "cargo_bay_cluttered",
+      "isDiscovered": false
+    },
+    "00000000-0000-0000-0000-000000000007": {
+      "id": "00000000-0000-0000-0000-000000000007",
+      "name": "VFE Lab (Hidden)",
+      "soundProfile": "alien_artifact_hum",
+      "interactables": [
+        {
+            "id": "cb_npc_dr_aris_thorne",
+            "title": "Dr. Aris Thorne",
+            "description": "A woman in a blood-stained lab coat, her eyes burning with obsessive focus as she adjusts controls on a humming, alien console. She ignores you.",
+            "availableActions": [
+                {
+                    "name": "Confront Dr. Thorne",
+                    "actionType": "Command",
+                    "position": "desperate",
+                    "effect": "standard",
+                    "outcomes": {
+                        "success": [
+                            {
+                                "type": "tickClock",
+                                "clockName": "Reason with Thorne",
+                                "amount": 2,
+                                "description": "'You don't understand,' she says, her voice dangerously calm. 'I'm on the verge of a breakthrough. Alex is still in there. The VFE just needs more time... more power.' She turns a dial on the console."
+                            },
+                            {
+                                "type": "tickClock",
+                                "clockName": "Reactor Overload",
+                                "amount": 1
+                            }
+                        ],
+                        "partial": [
+                            {
+                                "type": "tickClock",
+                                "clockName": "Reason with Thorne",
+                                "amount": 1,
+                                "description": "She glances at you, a flicker of annoyance crossing her face. 'Don't interfere. This is delicate work.'"
+                            }
+                        ],
+                        "failure": [
+                            {
+                                "type": "tickClock",
+                                "clockName": "Thorne's Last Resort",
+                                "amount": 1,
+                                "description": "'Get out!' she shrieks, grabbing a heavy wrench. 'You won't take him from me!'"
+                            }
+                        ]
+                    }
+                }
+            ],
+            "tags": ["NPC", "Hostile", "Thorne"]
+        },
+        {
+            "id": "cb_vfe_console",
+            "title": "VFE Control Terminal",
+            "description": "The alien console hums with a disquieting energy. The controls are unlike anything you've ever seen. A prominent display shows chaotic biological feedback from the Test Chamber.",
+            "availableActions": [
+                {
+                    "name": "Attempt to Deactivate VFE",
+                    "actionType": "Tinker",
+                    "position": "desperate",
+                    "effect": "great",
+                    "outcomes": {
+                        "success": [
+                            {
+                                "type": "triggerEvent",
+                                "eventId": "cb_vfe_deactivated",
+                                "description": "You slam your hand on a large, ominous-looking panel. The humming ceases. The lights on the console die. In the next room, you hear a final, agonized shriek, and then... silence."
+                            },
+                            {
+                                "type": "removeInteractable",
+                                "id": "cb_hydra_unstable"
+                            },
+                            {
+                                "type": "addInteractable",
+                                "inNodeID": "00000000-0000-0000-0000-000000000008",
+                                "interactable": {
+                                    "id": "cb_hydra_dying",
+                                    "title": "The Dying Hydra",
+                                    "description": "The creature that was once Alex Thorne collapses, its flesh rapidly decaying into dust. It is finally, truly dead.",
+                                    "availableActions": [],
+                                    "isDisplayOnly": true
+                                }
+                            }
+                        ],
+                        "partial": [
+                            {
+                                "type": "tickClock",
+                                "clockName": "Reactor Meltdown",
+                                "amount": 1,
+                                "description": "You manage to disrupt the VFE's power flow, but the feedback loop sends a catastrophic surge toward the reactor."
+                            }
+                        ],
+                        "failure": [
+                            {
+                                "type": "sufferHarm",
+                                "level": "severe",
+                                "familyId": "vfe_cerebral_euphoria",
+                                "description": "You touch the wrong control. Your mind is flooded with a billion alien thoughts, a symphony of cosmic madness. You collapse, drooling."
+                            }
+                        ]
+                    }
+                }
+            ],
+            "tags": ["VFE-touched", "Alien", "Dangerous", "Thorne"]
+        }
+      ],
+      "connections": [
+        {
+          "toNodeID": "00000000-0000-0000-0000-000000000005",
+          "description": "Return to Hydroponics Bay (Service Tunnel)",
+          "isUnlocked": true
+        },
+        {
+          "toNodeID": "00000000-0000-0000-0000-000000000006",
+          "description": "Return to Cargo Bay (Hidden Panel)",
+          "isUnlocked": true
+        },
+        {
+          "toNodeID": "00000000-0000-0000-0000-000000000008",
+          "description": "Enter Test Chamber",
+          "isUnlocked": true
+        },
+        {
+          "toNodeID": "00000000-0000-0000-0000-000000000009",
+          "description": "Maintenance Access to Engineering",
+          "isUnlocked": true
+        }
+      ],
+      "theme": "secret_lab_humming",
+      "isDiscovered": false
+    },
+    "00000000-0000-0000-0000-000000000008": {
+      "id": "00000000-0000-0000-0000-000000000008",
+      "name": "Test Chamber (Hidden)",
+      "soundProfile": "organic_pulsating_horror",
+      "interactables": [
+        {
+            "id": "cb_hydra_unstable",
+            "title": "The Hydra",
+            "description": "A grotesque, multi-appendaged horror of flesh and bone, constantly regenerating and adapting. It is bound to a modified operating table by frayed restraints, but it strains against them, its many eyes fixing on you.",
+            "isThreat": true,
+            "availableActions": [
+                {
+                    "name": "Attack the Hydra",
+                    "actionType": "Skirmish",
+                    "position": "desperate",
+                    "effect": "limited",
+                    "outcomes": {
+                        "success": [
+                            { "type": "gainStress", "amount": 1, "description": "You blast a chunk of flesh from the creature, but it regrows in seconds, the new tissue pulsing with VFE energy. It seems your attack only made it stronger." },
+                            { "type": "tickClock", "clockName": "VFE Instability", "amount": 1 }
+                        ],
+                        "partial": [
+                            { "type": "sufferHarm", "level": "moderate", "familyId": "vfe_physical_aberration", "description": "You get too close. A fleshy tendril whips out, slamming you against the wall." }
+                        ],
+                        "failure": [
+                            { "type": "sufferHarm", "level": "severe", "familyId": "vfe_physical_aberration", "description": "The Hydra breaks one of its restraints and grabs you, pulling you into its writhing mass. You are consumed." }
+                        ]
+                    }
+                }
+            ],
+            "tags": ["Hydra", "VFE-corrupted", "Hostile", "Dangerous"]
+        }
+      ],
+      "connections": [
+        {
+          "toNodeID": "00000000-0000-0000-0000-000000000007",
+          "description": "Back to VFE Lab",
+          "isUnlocked": true
+        },
+        {
+          "toNodeID": "00000000-0000-0000-0000-000000000010",
+          "description": "Emergency Access to Escape Pods",
+          "isUnlocked": false
+        }
+      ],
+      "theme": "bio_horror_containment",
+      "isDiscovered": false
+    },
+    "00000000-0000-0000-0000-000000000009": {
+      "id": "00000000-0000-0000-0000-000000000009",
+      "name": "Engineering/Maintenance",
+      "soundProfile": "reactor_failing_sparks",
+      "interactables": [],
+      "connections": [
+        {
+          "toNodeID": "00000000-0000-0000-0000-000000000002",
+          "description": "Return to Main Corridor",
+          "isUnlocked": true
+        },
+        {
+          "toNodeID": "00000000-0000-0000-0000-000000000007",
+          "description": "Maintenance Access to VFE Lab",
+          "isUnlocked": false
+        }
+      ],
+      "theme": "engineering_damaged",
+      "isDiscovered": false
+    },
+    "00000000-0000-0000-0000-000000000010": {
+      "id": "00000000-0000-0000-0000-000000000010",
+      "name": "Escape Pods",
+      "soundProfile": "emergency_alarms_distant",
+      "interactables": [],
+      "connections": [
+        {
+          "toNodeID": "00000000-0000-0000-0000-000000000006",
+          "description": "Return to Cargo Bay",
+          "isUnlocked": true
+        },
+        {
+          "toNodeID": "00000000-0000-0000-0000-000000000008",
+          "description": "Emergency Access from Test Chamber",
+          "isUnlocked": false
+        }
+      ],
+      "theme": "escape_pods_damaged",
+      "isDiscovered": false
+    }
+  }
+}
