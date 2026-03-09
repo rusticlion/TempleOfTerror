@@ -223,8 +223,10 @@ struct ScenarioRuntime {
     }
 
     func threats(for characterID: UUID?, in gameState: GameState) -> [Interactable] {
-        guard let node = node(for: characterID, in: gameState) else { return [] }
-        return node.interactables.filter(\.isThreat)
+        guard let characterID,
+              let character = gameState.party.first(where: { $0.id == characterID }),
+              let node = node(for: characterID, in: gameState) else { return [] }
+        return visibleInteractables(in: node, for: character, gameState: gameState).filter(\.isThreat)
     }
 
     func isCharacterEngaged(_ characterID: UUID?, in gameState: GameState) -> Bool {
@@ -232,14 +234,17 @@ struct ScenarioRuntime {
     }
 
     func visibleInteractables(for characterID: UUID?, in gameState: GameState) -> [Interactable] {
-        guard let node = node(for: characterID, in: gameState) else { return [] }
+        guard let characterID,
+              let character = gameState.party.first(where: { $0.id == characterID }),
+              let node = node(for: characterID, in: gameState) else { return [] }
 
-        let threats = node.interactables.filter(\.isThreat)
+        let visible = visibleInteractables(in: node, for: character, gameState: gameState)
+        let threats = visible.filter(\.isThreat)
         guard !threats.isEmpty else {
-            return node.interactables
+            return visible
         }
 
-        let pressureOptions = node.interactables.filter { !$0.isThreat && $0.usableUnderThreat }
+        let pressureOptions = visible.filter { !$0.isThreat && $0.usableUnderThreat }
         return threats + pressureOptions
     }
 
@@ -352,5 +357,45 @@ struct ScenarioRuntime {
 
     func currentNodeID(for characterID: UUID, in gameState: GameState) -> UUID? {
         gameState.characterLocations[characterID.uuidString]
+    }
+
+    func resolveInteractableTemplate(id templateID: String) -> Interactable? {
+        activeContentLoader.interactableTemplateDict[templateID]
+    }
+
+    private func visibleInteractables(
+        in node: MapNode,
+        for character: Character,
+        gameState: GameState
+    ) -> [Interactable] {
+        node.interactables.filter { interactable in
+            areConditionsMet(
+                interactable.conditions,
+                for: character,
+                finalEffect: .standard,
+                finalPosition: .risky,
+                gameState: gameState
+            )
+        }
+    }
+
+    private func areConditionsMet(
+        _ conditions: [GameCondition]?,
+        for character: Character,
+        finalEffect: RollEffect,
+        finalPosition: RollPosition,
+        gameState: GameState
+    ) -> Bool {
+        ConsequenceExecutor(
+            debugLogging: false,
+            runtime: self,
+            content: activeContentLoader
+        ).areConditionsMet(
+            conditions: conditions,
+            forCharacter: character,
+            finalEffect: finalEffect,
+            finalPosition: finalPosition,
+            gameState: gameState
+        )
     }
 }

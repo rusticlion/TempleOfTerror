@@ -49,52 +49,47 @@
     "segments": 6,
     "progress": 0,
     "onCompleteConsequences": [
-      { "type": "addInteractable", "inNodeID": "00000000-0000-0000-0000-000000000002", "interactable": {
-          "id": "threat_crawling_biomass",
-          "title": "Crawling Biomass",
-          "description": "A mass of corrupted tissue creeps across the floor, hungrily reaching for you.",
-          "isThreat": true,
-          "availableActions": [
-            {
-              "name": "Incinerate",
-              "actionType": "Wreck",
-              "position": "risky",
-              "effect": "standard",
-              "outcomes": {
-                "success": [ { "type": "removeSelfInteractable" } ],
-                "failure": [ { "type": "sufferHarm", "level": "moderate", "familyId": "vfe_physical_aberration" } ]
-              }
-            },
-            {
-              "name": "Retreat",
-              "actionType": "Finesse",
-              "position": "desperate",
-              "effect": "limited",
-              "outcomes": {
-                "success": [ { "type": "removeSelfInteractable" } ],
-                "failure": [ { "type": "gainStress", "amount": 1 } ]
-              }
-            }
-          ]
-        } }
+      {
+        "type": "addInteractable",
+        "inNodeID": "00000000-0000-0000-0000-000000000002",
+        "interactableTemplateID": "cb_crawling_biomass"
+      }
     ]
   },
   {
     "name": "Reason with Thorne",
     "segments": 6,
     "progress": 0,
-    "onCompleteConsequences": []
+    "onCompleteConsequences": [
+      {
+        "type": "adjustStress",
+        "amount": -1,
+        "description": "For a moment, Thorne's certainty falters. Alex's name still reaches whatever humanity remains in her, and the opening steadies your nerves."
+      }
+    ]
   },
   {
     "name": "Thorne's Last Resort",
     "segments": 4,
     "progress": 0,
-    "onCompleteConsequences": []
+    "onCompleteConsequences": [
+      {
+        "type": "gainStress",
+        "amount": 2,
+        "description": "Thorne snaps completely, lashing out in a frantic blur of grief and violence."
+      }
+    ]
   },
   {
     "name": "Droid Pursuit",
     "segments": 4,
     "progress": 0,
-    "onCompleteConsequences": []
+    "onCompleteConsequences": [
+      {
+        "type": "gainStress",
+        "amount": 1,
+        "description": "The droid keeps pace no matter where you run, its scraping limbs forcing you into a panicked retreat."
+      }
+    ]
   }
 ]

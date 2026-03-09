@@ -67,6 +67,10 @@ struct ContentView: View {
         viewModel.partyMovementMode == .grouped ? "Split Up" : "Regroup"
     }
 
+    private var visibleClocks: [GameClock] {
+        viewModel.gameState.activeClocks.filter { $0.progress > 0 }
+    }
+
     private var showingPendingResolution: Binding<Bool> {
         Binding(
             get: { pendingRoll == nil && viewModel.gameState.pendingResolution != nil },
@@ -110,6 +114,12 @@ struct ContentView: View {
 
                 ScrollView {
                     VStack(alignment: .leading, spacing: 16) {
+                        ClocksView(
+                            clocks: visibleClocks,
+                            title: "Active Clocks",
+                            prominent: true
+                        )
+
                         if let node = viewModel.node(for: selectedCharacterID) {
                             VStack(alignment: .leading, spacing: 16) {
                                 let items = viewModel.visibleInteractables(for: selectedCharacterID)

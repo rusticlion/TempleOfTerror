@@ -235,9 +235,12 @@ struct Modifier: Codable {
     var uses: Int = 1
     var isOptionalToApply: Bool = true
     var description: String
+    var usedLegacyActionTypeAlias: Bool = false
 
     enum CodingKeys: String, CodingKey {
-        case id, bonusDice, improvePosition, improveEffect, applicableToAction, applicableActions, requiredTag, uses, isOptionalToApply, description
+        case id, bonusDice, improvePosition, improveEffect
+        case applicableToAction, applicableActions, actionType
+        case requiredTag, uses, isOptionalToApply, description
     }
 
     init(id: UUID = UUID(),
@@ -260,6 +263,7 @@ struct Modifier: Codable {
         self.uses = uses
         self.isOptionalToApply = isOptionalToApply
         self.description = description
+        self.usedLegacyActionTypeAlias = false
     }
 
     init(from decoder: Decoder) throws {
@@ -268,7 +272,8 @@ struct Modifier: Codable {
         bonusDice = try container.decodeIfPresent(Int.self, forKey: .bonusDice) ?? 0
         improvePosition = try container.decodeIfPresent(Bool.self, forKey: .improvePosition) ?? false
         improveEffect = try container.decodeIfPresent(Bool.self, forKey: .improveEffect) ?? false
-        applicableToAction = try container.decodeIfPresent(String.self, forKey: .applicableToAction)
+        let legacyActionType = try container.decodeIfPresent(String.self, forKey: .actionType)
+        applicableToAction = try container.decodeIfPresent(String.self, forKey: .applicableToAction) ?? legacyActionType
         applicableActions = try container.decodeIfPresent([String].self, forKey: .applicableActions)
         requiredTag = try container.decodeIfPresent(String.self, forKey: .requiredTag)
         if applicableActions == nil, let single = applicableToAction {
@@ -277,6 +282,7 @@ struct Modifier: Codable {
         uses = try container.decodeIfPresent(Int.self, forKey: .uses) ?? 1
         isOptionalToApply = try container.decodeIfPresent(Bool.self, forKey: .isOptionalToApply) ?? true
         description = try container.decode(String.self, forKey: .description)
+        usedLegacyActionTypeAlias = legacyActionType != nil
     }
 
     func encode(to encoder: Encoder) throws {
@@ -291,8 +297,9 @@ struct Modifier: Codable {
             } else {
                 try container.encode(actions, forKey: .applicableActions)
             }
+        } else if let applicableToAction {
+            try container.encode(applicableToAction, forKey: .applicableToAction)
         }
-        try container.encodeIfPresent(applicableToAction, forKey: .applicableToAction)
         try container.encodeIfPresent(requiredTag, forKey: .requiredTag)
         try container.encode(uses, forKey: .uses)
         try container.encode(isOptionalToApply, forKey: .isOptionalToApply)
@@ -705,19 +712,22 @@ struct Interactable: Codable, Identifiable {
     var title: String
     var description: String
     var availableActions: [ActionOption]
+    var conditions: [GameCondition]? = nil
     var isThreat: Bool = false
     var usableUnderThreat: Bool = false
     var isDisplayOnly: Bool = false
     var tags: [String] = []
 
     enum CodingKeys: String, CodingKey {
-        case id, title, description, availableActions, isThreat, usableUnderThreat, isDisplayOnly, tags
+        case id, title, description, availableActions, conditions
+        case isThreat, usableUnderThreat, isDisplayOnly, tags
     }
 
     init(id: String,
          title: String,
          description: String,
          availableActions: [ActionOption],
+         conditions: [GameCondition]? = nil,
          isThreat: Bool = false,
          usableUnderThreat: Bool = false,
          isDisplayOnly: Bool = false,
@@ -726,6 +736,7 @@ struct Interactable: Codable, Identifiable {
         self.title = title
         self.description = description
         self.availableActions = availableActions
+        self.conditions = conditions
         self.isThreat = isThreat
         self.usableUnderThreat = usableUnderThreat
         self.isDisplayOnly = isDisplayOnly
@@ -738,6 +749,7 @@ struct Interactable: Codable, Identifiable {
         title = try container.decode(String.self, forKey: .title)
         description = try container.decode(String.self, forKey: .description)
         availableActions = try container.decode([ActionOption].self, forKey: .availableActions)
+        conditions = try container.decodeIfPresent([GameCondition].self, forKey: .conditions)
         isThreat = try container.decodeIfPresent(Bool.self, forKey: .isThreat) ?? false
         usableUnderThreat = try container.decodeIfPresent(Bool.self, forKey: .usableUnderThreat) ?? false
         isDisplayOnly = try container.decodeIfPresent(Bool.self, forKey: .isDisplayOnly) ?? false
@@ -750,6 +762,7 @@ struct Interactable: Codable, Identifiable {
         try container.encode(title, forKey: .title)
         try container.encode(description, forKey: .description)
         try container.encode(availableActions, forKey: .availableActions)
+        try container.encodeIfPresent(conditions, forKey: .conditions)
         if isThreat {
             try container.encode(isThreat, forKey: .isThreat)
         }
@@ -775,10 +788,12 @@ struct ActionOption: Codable {
     var requiresTest: Bool = true
     var isGroupAction: Bool = false
     var requiredTag: String? = nil
+    var conditions: [GameCondition]? = nil
     var outcomes: [RollOutcome: [Consequence]] = [:]
 
     enum CodingKeys: String, CodingKey {
-        case name, actionType, position, effect, requiresTest, isGroupAction, requiredTag, outcomes
+        case name, actionType, position, effect, requiresTest
+        case isGroupAction, requiredTag, conditions, outcomes
     }
 
     init(name: String,
@@ -788,6 +803,7 @@ struct ActionOption: Codable {
          isGroupAction: Bool = false,
          requiresTest: Bool = true,
          requiredTag: String? = nil,
+         conditions: [GameCondition]? = nil,
          outcomes: [RollOutcome: [Consequence]] = [:]) {
         self.name = name
         self.actionType = actionType
@@ -796,6 +812,7 @@ struct ActionOption: Codable {
         self.requiresTest = requiresTest
         self.isGroupAction = isGroupAction
         self.requiredTag = requiredTag
+        self.conditions = conditions
         self.outcomes = outcomes
     }
 
@@ -808,6 +825,7 @@ struct ActionOption: Codable {
         isGroupAction = try container.decodeIfPresent(Bool.self, forKey: .isGroupAction) ?? false
         requiresTest = try container.decodeIfPresent(Bool.self, forKey: .requiresTest) ?? true
         requiredTag = try container.decodeIfPresent(String.self, forKey: .requiredTag)
+        conditions = try container.decodeIfPresent([GameCondition].self, forKey: .conditions)
         let rawOutcomes = try container.decodeIfPresent([String: [Consequence]].self, forKey: .outcomes) ?? [:]
         var mapped: [RollOutcome: [Consequence]] = [:]
         for (key, value) in rawOutcomes {
@@ -831,6 +849,7 @@ struct ActionOption: Codable {
             try container.encode(isGroupAction, forKey: .isGroupAction)
         }
         try container.encodeIfPresent(requiredTag, forKey: .requiredTag)
+        try container.encodeIfPresent(conditions, forKey: .conditions)
         var raw: [String: [Consequence]] = [:]
         for (key, value) in outcomes { raw[key.rawValue] = value }
         try container.encode(raw, forKey: .outcomes)
@@ -900,6 +919,7 @@ struct ChoiceOption: Codable {
 struct Consequence: Codable {
     enum ConsequenceKind: String, Codable {
         case gainStress
+        case adjustStress
         case sufferHarm
         case tickClock
         case unlockConnection
@@ -936,6 +956,7 @@ struct Consequence: Codable {
     var newAction: ActionOption?
     var inNodeID: UUID?
     var newInteractable: Interactable?
+    var interactableTemplateID: String?
     var treasureId: String?
     var duration: String?
     var choiceOptions: [ChoiceOption]?
@@ -956,7 +977,7 @@ struct Consequence: Codable {
     private enum CodingKeys: String, CodingKey {
         case type, amount, level, familyId, clockName
         case fromNodeID, toNodeID, id, inNodeID
-        case interactable, treasure, treasureId
+        case interactable, interactableTemplateID, treasure, treasureId
         case duration, options, eventId, consequences
         case actionName, action, conditions, description
         case flagId, counterId, runOutcome, runOutcomeText, resistance
@@ -981,6 +1002,7 @@ struct Consequence: Codable {
         newAction = nil
         inNodeID = nil
         newInteractable = nil
+        interactableTemplateID = nil
         treasureId = nil
         duration = try container.decodeIfPresent(String.self, forKey: .duration)
         choiceOptions = try container.decodeIfPresent([ChoiceOption].self, forKey: .options)
@@ -1008,13 +1030,16 @@ struct Consequence: Codable {
         } else if resolvedKind == .addInteractable {
             if let nodeString = try? container.decode(String.self, forKey: .inNodeID), nodeString == "current" {
                 newInteractable = try container.decodeIfPresent(Interactable.self, forKey: .interactable)
+                interactableTemplateID = try container.decodeIfPresent(String.self, forKey: .interactableTemplateID)
                 resolvedKind = .addInteractableHere
             } else {
                 inNodeID = try container.decodeIfPresent(UUID.self, forKey: .inNodeID)
                 newInteractable = try container.decodeIfPresent(Interactable.self, forKey: .interactable)
+                interactableTemplateID = try container.decodeIfPresent(String.self, forKey: .interactableTemplateID)
             }
         } else if resolvedKind == .addInteractableHere {
             newInteractable = try container.decodeIfPresent(Interactable.self, forKey: .interactable)
+            interactableTemplateID = try container.decodeIfPresent(String.self, forKey: .interactableTemplateID)
         }
 
         if resolvedKind == .gainTreasure {
@@ -1036,6 +1061,9 @@ struct Consequence: Codable {
         switch kind {
         case .gainStress:
             try container.encode(ConsequenceKind.gainStress, forKey: .type)
+            try container.encodeIfPresent(amount, forKey: .amount)
+        case .adjustStress:
+            try container.encode(ConsequenceKind.adjustStress, forKey: .type)
             try container.encodeIfPresent(amount, forKey: .amount)
         case .sufferHarm:
             try container.encode(ConsequenceKind.sufferHarm, forKey: .type)
@@ -1077,10 +1105,12 @@ struct Consequence: Codable {
             try container.encode(ConsequenceKind.addInteractable, forKey: .type)
             try container.encodeIfPresent(inNodeID, forKey: .inNodeID)
             try container.encodeIfPresent(newInteractable, forKey: .interactable)
+            try container.encodeIfPresent(interactableTemplateID, forKey: .interactableTemplateID)
         case .addInteractableHere:
             try container.encode(ConsequenceKind.addInteractable, forKey: .type)
             try container.encode("current", forKey: .inNodeID)
             try container.encodeIfPresent(newInteractable, forKey: .interactable)
+            try container.encodeIfPresent(interactableTemplateID, forKey: .interactableTemplateID)
         case .gainTreasure:
             try container.encode(ConsequenceKind.gainTreasure, forKey: .type)
             try container.encodeIfPresent(treasureId, forKey: .treasureId)
@@ -1134,7 +1164,7 @@ extension Consequence {
         switch kind {
         case .sufferHarm:
             return ResistanceRule(attribute: .prowess, amount: 1)
-        case .gainStress:
+        case .gainStress, .adjustStress:
             return ResistanceRule(attribute: .resolve, amount: 2)
         case .tickClock:
             return ResistanceRule(attribute: .insight, amount: 2)
@@ -1162,6 +1192,13 @@ extension Consequence {
     /// Apply stress to the acting character.
     static func gainStress(_ amount: Int) -> Consequence {
         var c = Consequence(kind: .gainStress)
+        c.amount = amount
+        return c
+    }
+
+    /// Adjust stress by a signed amount. Negative values recover stress.
+    static func adjustStress(_ amount: Int) -> Consequence {
+        var c = Consequence(kind: .adjustStress)
         c.amount = amount
         return c
     }
@@ -1213,10 +1250,25 @@ extension Consequence {
         return c
     }
 
+    /// Add an interactable template to the given node.
+    static func addInteractable(templateID: String, inNodeID: UUID) -> Consequence {
+        var c = Consequence(kind: .addInteractable)
+        c.interactableTemplateID = templateID
+        c.inNodeID = inNodeID
+        return c
+    }
+
     /// Add an interactable in the acting character's current location.
     static func addInteractableHere(_ interactable: Interactable) -> Consequence {
         var c = Consequence(kind: .addInteractableHere)
         c.newInteractable = interactable
+        return c
+    }
+
+    /// Add an interactable template in the acting character's current location.
+    static func addInteractableHere(templateID: String) -> Consequence {
+        var c = Consequence(kind: .addInteractableHere)
+        c.interactableTemplateID = templateID
         return c
     }
 

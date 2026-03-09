@@ -263,12 +263,16 @@ struct ConsequenceExecutor {
         switch consequence.kind {
         case .gainStress:
             if let amount = consequence.amount,
-               amount > 0,
                let charIndex = gameState.party.firstIndex(where: { $0.id == actingCharacter.id }) {
-                gameState.party[charIndex].stress += amount
-                append("Gained \(amount) Stress.", to: &resolution)
-                if let overflow = checkStressOverflow(for: charIndex, gameState: &gameState) {
-                    append(overflow, to: &resolution)
+                if let stressText = applyStressDelta(amount, toCharacterAt: charIndex, gameState: &gameState) {
+                    append(stressText, to: &resolution)
+                }
+            }
+        case .adjustStress:
+            if let amount = consequence.amount,
+               let charIndex = gameState.party.firstIndex(where: { $0.id == actingCharacter.id }) {
+                if let stressText = applyStressDelta(amount, toCharacterAt: charIndex, gameState: &gameState) {
+                    append(stressText, to: &resolution)
                 }
             }
         case .sufferHarm:
@@ -382,14 +386,14 @@ struct ConsequenceExecutor {
             }
         case .addInteractable:
             if let nodeID = consequence.inNodeID,
-               let interactable = consequence.newInteractable,
+               let interactable = resolveSpawnInteractable(from: consequence),
                runtime.addInteractable(interactable, inNodeID: nodeID, in: &gameState) {
                 if !narrativeUsed {
                     append("Something new appears.", to: &resolution)
                 }
             }
         case .addInteractableHere:
-            if let interactable = consequence.newInteractable,
+            if let interactable = resolveSpawnInteractable(from: consequence),
                runtime.addInteractableHere(interactable, forCharacterID: partyMemberID, in: &gameState) {
                 if !narrativeUsed {
                     append("Something new appears.", to: &resolution)
@@ -693,6 +697,50 @@ struct ConsequenceExecutor {
         return false
     }
 
+    private func applyStressDelta(
+        _ delta: Int,
+        toCharacterAt index: Int,
+        gameState: inout GameState
+    ) -> String? {
+        guard gameState.party.indices.contains(index), delta != 0 else { return nil }
+
+        let previousStress = gameState.party[index].stress
+        let updatedStress = max(0, previousStress + delta)
+        let appliedDelta = updatedStress - previousStress
+        gameState.party[index].stress = updatedStress
+
+        var messages: [String] = []
+        if appliedDelta > 0 {
+            messages.append("Gained \(appliedDelta) Stress.")
+        } else if appliedDelta < 0 {
+            messages.append("Recovered \(abs(appliedDelta)) Stress.")
+        }
+
+        if delta > 0,
+            gameState.party[index].stress > 9,
+            gameState.party[index].stress > previousStress,
+           let overflow = checkStressOverflow(for: index, gameState: &gameState) {
+            messages.append(overflow)
+        }
+
+        return messages.joined(separator: "\n")
+    }
+
+    private func resolveSpawnInteractable(from consequence: Consequence) -> Interactable? {
+        if let interactable = consequence.newInteractable {
+            return interactable
+        }
+
+        if let templateID = consequence.interactableTemplateID {
+            if let template = runtime.resolveInteractableTemplate(id: templateID) {
+                return template
+            }
+            print("WARNING: Attempted to spawn missing interactable template '\(templateID)'.")
+        }
+
+        return nil
+    }
+
     private func resolveTriggeredEvent(
         _ eventID: String,
         context: ConsequenceContext,
@@ -790,7 +838,7 @@ struct ConsequenceExecutor {
         switch consequence.kind {
         case .sufferHarm:
             return (consequence.level != nil && consequence.familyId != nil) ? rule : nil
-        case .gainStress, .tickClock:
+        case .gainStress, .adjustStress, .tickClock:
             let amount = consequence.amount ?? 0
             return amount > 0 ? rule : nil
         default:
@@ -815,7 +863,7 @@ struct ConsequenceExecutor {
             adjusted.level = reducedLevel
             adjusted.resistance = nil
             return adjusted
-        case .gainStress:
+        case .gainStress, .adjustStress:
             let reduction = max(rule?.amount ?? 2, 0)
             let newAmount = max(0, (consequence.amount ?? 0) - reduction)
             guard newAmount > 0 else { return nil }

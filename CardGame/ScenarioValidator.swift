@@ -176,6 +176,12 @@ struct ScenarioValidator {
         }
 
         validateUniqueStrings(
+            interactables.map(\.id),
+            label: "interactable id",
+            file: "interactables.json",
+            state: &state
+        )
+        validateUniqueStrings(
             globalHarmFamilies.map(\.id),
             label: "harm family id",
             file: "harm_families.json",
@@ -215,6 +221,8 @@ struct ScenarioValidator {
         let catalog = ValidationCatalog(
             hasFixedMap: map != nil,
             nodeIDs: Set(map?.nodes.values.map(\.id) ?? []),
+            interactableTemplateIDs: Set(interactables.map(\.id)),
+            interactableTemplatesByID: Dictionary(uniqueKeysWithValues: interactables.map { ($0.id, $0) }),
             clockNames: Set(clocks.map(\.name)),
             treasureIDs: Set(treasures.map(\.id)),
             eventIDs: Set(events.map(\.id)),
@@ -324,6 +332,22 @@ struct ScenarioValidator {
             )
         }
 
+        for treasure in treasures {
+            validateTreasure(
+                treasure,
+                catalog: catalog,
+                state: &state
+            )
+        }
+
+        for harmFamily in harmFamilies {
+            validateHarmFamily(
+                harmFamily,
+                catalog: catalog,
+                state: &state
+            )
+        }
+
         for clock in clocks {
             validateClock(clock, catalog: catalog, state: &state)
         }
@@ -349,6 +373,38 @@ struct ScenarioValidator {
                 file: "events.json",
                 path: "scenarioCounter[\(counterID)]",
                 message: "Counter is read by content but never written anywhere in this scenario."
+            )
+        }
+
+        let writeOnlyFlags = state.writtenFlagIDs.subtracting(state.readFlagIDs)
+        for flagID in writeOnlyFlags.sorted() {
+            state.report.add(
+                severity: .warning,
+                file: "events.json",
+                path: "scenarioFlagSet[\(flagID)]",
+                message: "Flag is written by content but never read by any authored conditions."
+            )
+        }
+
+        let writeOnlyCounters = state.writtenCounterIDs.subtracting(state.readCounterIDs)
+        for counterID in writeOnlyCounters.sorted() {
+            state.report.add(
+                severity: .warning,
+                file: "events.json",
+                path: "scenarioCounter[\(counterID)]",
+                message: "Counter is written by content but never read by any authored conditions."
+            )
+        }
+
+        let sinkClocks = state.writtenClockNames
+            .subtracting(state.readClockNames)
+            .subtracting(state.intrinsicallyReferencedClockNames)
+        for clockName in sinkClocks.sorted() {
+            state.report.add(
+                severity: .warning,
+                file: "clocks.json",
+                path: "clock[\(clockName)]",
+                message: "Clock is ticked by content but has no intrinsic behavior and is never read by authored conditions."
             )
         }
 
@@ -443,7 +499,7 @@ struct ScenarioValidator {
                     path: "node[\(node.id.uuidString)]",
                     message: "Node is unreachable from the scenario entry node."
                 )
-            } else if isLikelySoftLockNode(node) {
+            } else if isLikelySoftLockNode(node, catalog: catalog) {
                 state.report.add(
                     severity: .warning,
                     file: mapFile,
@@ -540,6 +596,14 @@ struct ScenarioValidator {
         catalog: ValidationCatalog,
         state: inout ValidationState
     ) {
+        validateConditions(
+            interactable.conditions,
+            file: file,
+            path: "\(path).conditions",
+            catalog: catalog,
+            state: &state
+        )
+
         if interactable.availableActions.isEmpty && !interactable.isDisplayOnly {
             state.report.add(
                 severity: .warning,
@@ -596,14 +660,14 @@ struct ScenarioValidator {
         return visited
     }
 
-    private func isLikelySoftLockNode(_ node: MapNode) -> Bool {
+    private func isLikelySoftLockNode(_ node: MapNode, catalog: ValidationCatalog) -> Bool {
         if node.connections.contains(where: { $0.isUnlocked }) {
             return false
         }
 
         for interactable in node.interactables {
             for action in interactable.availableActions {
-                if actionHasProgressionPath(action) {
+                if actionHasProgressionPath(action, catalog: catalog) {
                     return false
                 }
             }
@@ -612,11 +676,14 @@ struct ScenarioValidator {
         return true
     }
 
-    private func actionHasProgressionPath(_ action: ActionOption) -> Bool {
-        action.outcomes.values.contains { consequencesContainProgressionPath($0) }
+    private func actionHasProgressionPath(_ action: ActionOption, catalog: ValidationCatalog) -> Bool {
+        action.outcomes.values.contains { consequencesContainProgressionPath($0, catalog: catalog) }
     }
 
-    private func consequencesContainProgressionPath(_ consequences: [Consequence]) -> Bool {
+    private func consequencesContainProgressionPath(
+        _ consequences: [Consequence],
+        catalog: ValidationCatalog
+    ) -> Bool {
         for consequence in consequences {
             switch consequence.kind {
             case .unlockConnection, .triggerEvent, .endRun:
@@ -624,25 +691,26 @@ struct ScenarioValidator {
 
             case .createChoice:
                 if let options = consequence.choiceOptions,
-                   options.contains(where: { consequencesContainProgressionPath($0.consequences) }) {
+                   options.contains(where: { consequencesContainProgressionPath($0.consequences, catalog: catalog) }) {
                     return true
                 }
 
             case .triggerConsequences:
                 if let nested = consequence.triggered,
-                   consequencesContainProgressionPath(nested) {
+                   consequencesContainProgressionPath(nested, catalog: catalog) {
                     return true
                 }
 
             case .addAction:
                 if let action = consequence.newAction,
-                   actionHasProgressionPath(action) {
+                   actionHasProgressionPath(action, catalog: catalog) {
                     return true
                 }
 
             case .addInteractable, .addInteractableHere:
-                if let interactable = consequence.newInteractable,
-                   interactable.availableActions.contains(where: actionHasProgressionPath(_:)) {
+                if let interactable = consequence.newInteractable ??
+                    consequence.interactableTemplateID.flatMap({ catalog.interactableTemplatesByID[$0] }),
+                   interactable.availableActions.contains(where: { actionHasProgressionPath($0, catalog: catalog) }) {
                     return true
                 }
 
@@ -661,6 +729,14 @@ struct ScenarioValidator {
         catalog: ValidationCatalog,
         state: inout ValidationState
     ) {
+        validateConditions(
+            action.conditions,
+            file: file,
+            path: "\(path).conditions",
+            catalog: catalog,
+            state: &state
+        )
+
         if !catalog.supportedActionTypes.contains(action.actionType) {
             let supported = catalog.supportedActionTypes.sorted().joined(separator: ", ")
             state.report.add(
@@ -680,6 +756,117 @@ struct ScenarioValidator {
                 path: "\(path).\(outcome.rawValue)",
                 catalog: catalog,
                 state: &state
+            )
+        }
+    }
+
+    private func validateTreasure(
+        _ treasure: Treasure,
+        catalog: ValidationCatalog,
+        state: inout ValidationState
+    ) {
+        validateModifier(
+            treasure.grantedModifier,
+            file: "treasures.json",
+            path: "treasure[\(treasure.id)].grantedModifier",
+            catalog: catalog,
+            state: &state
+        )
+    }
+
+    private func validateHarmFamily(
+        _ family: HarmFamily,
+        catalog: ValidationCatalog,
+        state: inout ValidationState
+    ) {
+        validateHarmTier(family.lesser, tierName: "lesser", familyID: family.id, catalog: catalog, state: &state)
+        validateHarmTier(family.moderate, tierName: "moderate", familyID: family.id, catalog: catalog, state: &state)
+        validateHarmTier(family.severe, tierName: "severe", familyID: family.id, catalog: catalog, state: &state)
+        validateHarmTier(family.fatal, tierName: "fatal", familyID: family.id, catalog: catalog, state: &state)
+    }
+
+    private func validateHarmTier(
+        _ tier: HarmTier,
+        tierName: String,
+        familyID: String,
+        catalog: ValidationCatalog,
+        state: inout ValidationState
+    ) {
+        let basePath = "harmFamily[\(familyID)].\(tierName)"
+        if let penalty = tier.penalty {
+            validatePenalty(
+                penalty,
+                file: "harm_families.json",
+                path: "\(basePath).penalty",
+                catalog: catalog,
+                state: &state
+            )
+        }
+        if let boon = tier.boon {
+            validateModifier(
+                boon,
+                file: "harm_families.json",
+                path: "\(basePath).boon",
+                catalog: catalog,
+                state: &state
+            )
+        }
+    }
+
+    private func validatePenalty(
+        _ penalty: Penalty,
+        file: String,
+        path: String,
+        catalog: ValidationCatalog,
+        state: inout ValidationState
+    ) {
+        let actionName: String?
+        switch penalty {
+        case .actionPenalty(let actionType, _),
+             .banAction(let actionType, _),
+             .actionPositionPenalty(let actionType, _),
+             .actionEffectPenalty(let actionType, _):
+            actionName = actionType
+        default:
+            actionName = nil
+        }
+
+        if let actionName,
+           !catalog.supportedActionTypes.contains(actionName) {
+            let supported = catalog.supportedActionTypes.sorted().joined(separator: ", ")
+            state.report.add(
+                severity: .error,
+                file: file,
+                path: path,
+                message: "Unsupported actionType '\(actionName)' in penalty scope. Supported values: \(supported)."
+            )
+        }
+    }
+
+    private func validateModifier(
+        _ modifier: Modifier,
+        file: String,
+        path: String,
+        catalog: ValidationCatalog,
+        state: inout ValidationState
+    ) {
+        if modifier.usedLegacyActionTypeAlias {
+            state.report.add(
+                severity: .warning,
+                file: file,
+                path: path,
+                message: "Modifier uses legacy 'actionType'; prefer 'applicableToAction' or 'applicableActions'."
+            )
+        }
+
+        let scopedActions = modifier.applicableActions ?? modifier.applicableToAction.map { [$0] } ?? []
+        for actionName in scopedActions where !catalog.supportedActionTypes.contains(actionName) {
+            let supported = catalog.supportedActionTypes.sorted().joined(separator: ", ")
+            state.report.add(
+                severity: .error,
+                file: file,
+                path: path,
+                message: "Unsupported action scope '\(actionName)' in modifier. Supported values: \(supported)."
             )
         }
     }
@@ -708,6 +895,23 @@ struct ScenarioValidator {
                     file: file,
                     path: consequencePath,
                     message: "gainStress requires amount.",
+                    state: &state
+                )
+                if let amount = consequence.amount, amount < 0 {
+                    state.report.add(
+                        severity: .warning,
+                        file: file,
+                        path: consequencePath,
+                        message: "Negative gainStress is legacy content; use adjustStress for stress recovery."
+                    )
+                }
+
+            case .adjustStress:
+                require(
+                    consequence.amount != nil,
+                    file: file,
+                    path: consequencePath,
+                    message: "adjustStress requires amount.",
                     state: &state
                 )
 
@@ -747,6 +951,7 @@ struct ScenarioValidator {
                 )
                 if let clockName = consequence.clockName {
                     state.referencedClockNames.insert(clockName)
+                    state.writtenClockNames.insert(clockName)
                     if !catalog.clockNames.contains(clockName) {
                         state.report.add(
                             severity: .error,
@@ -859,40 +1064,24 @@ struct ScenarioValidator {
                     )
                 }
 
-                if let interactable = consequence.newInteractable {
-                    validateInteractable(
-                        interactable,
-                        file: file,
-                        path: "\(consequencePath).interactable[\(interactable.id)]",
-                        catalog: catalog,
-                        state: &state
-                    )
-                } else {
-                    state.report.add(
-                        severity: .error,
-                        file: file,
-                        path: consequencePath,
-                        message: "addInteractable requires an interactable payload."
-                    )
-                }
+                validateSpawnInteractable(
+                    consequence,
+                    kindLabel: "addInteractable",
+                    file: file,
+                    path: consequencePath,
+                    catalog: catalog,
+                    state: &state
+                )
 
             case .addInteractableHere:
-                if let interactable = consequence.newInteractable {
-                    validateInteractable(
-                        interactable,
-                        file: file,
-                        path: "\(consequencePath).interactable[\(interactable.id)]",
-                        catalog: catalog,
-                        state: &state
-                    )
-                } else {
-                    state.report.add(
-                        severity: .error,
-                        file: file,
-                        path: consequencePath,
-                        message: "addInteractableHere requires an interactable payload."
-                    )
-                }
+                validateSpawnInteractable(
+                    consequence,
+                    kindLabel: "addInteractableHere",
+                    file: file,
+                    path: consequencePath,
+                    catalog: catalog,
+                    state: &state
+                )
 
             case .gainTreasure:
                 if let treasureID = consequence.treasureId {
@@ -1042,7 +1231,7 @@ struct ScenarioValidator {
                     )
                 }
             }
-
+            
             if let resistance = consequence.resistance,
                let amount = resistance.amount,
                amount < 0 {
@@ -1053,6 +1242,49 @@ struct ScenarioValidator {
                     message: "resistance.amount must be zero or greater."
                 )
             }
+        }
+    }
+
+    private func validateSpawnInteractable(
+        _ consequence: Consequence,
+        kindLabel: String,
+        file: String,
+        path: String,
+        catalog: ValidationCatalog,
+        state: inout ValidationState
+    ) {
+        let hasInlineInteractable = consequence.newInteractable != nil
+        let hasTemplateID = consequence.interactableTemplateID != nil
+
+        if hasInlineInteractable == hasTemplateID {
+            state.report.add(
+                severity: .error,
+                file: file,
+                path: path,
+                message: "\(kindLabel) requires exactly one spawn form: either interactable or interactableTemplateID."
+            )
+            return
+        }
+
+        if let interactable = consequence.newInteractable {
+            validateInteractable(
+                interactable,
+                file: file,
+                path: "\(path).interactable[\(interactable.id)]",
+                catalog: catalog,
+                state: &state
+            )
+            return
+        }
+
+        if let templateID = consequence.interactableTemplateID,
+           !catalog.interactableTemplateIDs.contains(templateID) {
+            state.report.add(
+                severity: .error,
+                file: file,
+                path: path,
+                message: "\(kindLabel) references unknown interactable template '\(templateID)'."
+            )
         }
     }
 
@@ -1126,6 +1358,7 @@ struct ScenarioValidator {
 
                 if let clockName = condition.stringParam {
                     state.referencedClockNames.insert(clockName)
+                    state.readClockNames.insert(clockName)
                     if !catalog.clockNames.contains(clockName) {
                         state.report.add(
                             severity: .error,
@@ -1279,6 +1512,8 @@ struct ScenarioValidator {
     private struct ValidationCatalog {
         let hasFixedMap: Bool
         let nodeIDs: Set<UUID>
+        let interactableTemplateIDs: Set<String>
+        let interactableTemplatesByID: [String: Interactable]
         let clockNames: Set<String>
         let treasureIDs: Set<String>
         let eventIDs: Set<String>
@@ -1292,6 +1527,8 @@ struct ScenarioValidator {
         var referencedEventIDs: Set<String> = []
         var referencedTreasureIDs: Set<String> = []
         var referencedClockNames: Set<String> = []
+        var writtenClockNames: Set<String> = []
+        var readClockNames: Set<String> = []
         var intrinsicallyReferencedClockNames: Set<String> = []
         var writtenFlagIDs: Set<String> = []
         var readFlagIDs: Set<String> = []

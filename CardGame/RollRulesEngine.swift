@@ -22,58 +22,61 @@ struct RollRulesEngine {
         let basePosition = position
         let baseEffect = effect
         var notes: [String] = []
+        var isActionBanned = false
 
         for harm in character.harm.lesser {
-            apply(harm: harm, tier: \.lesser, actionType: action.actionType, tags: tags, harmFamilies: harmFamilies, diceCount: &diceCount, position: &position, effect: &effect, notes: &notes)
+            apply(harm: harm, tier: \.lesser, actionType: action.actionType, tags: tags, harmFamilies: harmFamilies, diceCount: &diceCount, position: &position, effect: &effect, notes: &notes, isActionBanned: &isActionBanned)
         }
         for harm in character.harm.moderate {
-            apply(harm: harm, tier: \.moderate, actionType: action.actionType, tags: tags, harmFamilies: harmFamilies, diceCount: &diceCount, position: &position, effect: &effect, notes: &notes)
+            apply(harm: harm, tier: \.moderate, actionType: action.actionType, tags: tags, harmFamilies: harmFamilies, diceCount: &diceCount, position: &position, effect: &effect, notes: &notes, isActionBanned: &isActionBanned)
         }
         for harm in character.harm.severe {
-            apply(harm: harm, tier: \.severe, actionType: action.actionType, tags: tags, harmFamilies: harmFamilies, diceCount: &diceCount, position: &position, effect: &effect, notes: &notes)
+            apply(harm: harm, tier: \.severe, actionType: action.actionType, tags: tags, harmFamilies: harmFamilies, diceCount: &diceCount, position: &position, effect: &effect, notes: &notes, isActionBanned: &isActionBanned)
         }
 
-        for modifier in character.modifiers {
-            guard modifier.uses != 0 else { continue }
-            guard applies(modifier: modifier, to: action.actionType, tags: tags) else { continue }
+        if !isActionBanned {
+            for modifier in character.modifiers {
+                guard modifier.uses != 0 else { continue }
+                guard applies(modifier: modifier, to: action.actionType, tags: tags) else { continue }
 
-            if modifier.bonusDice != 0 {
-                diceCount += modifier.bonusDice
-                var note = "(+\(modifier.bonusDice)d \(modifier.description)"
-                if modifier.uses > 0 {
-                    note += " (\(modifier.uses) use\(modifier.uses == 1 ? "" : "s") left)"
+                if modifier.bonusDice != 0 {
+                    diceCount += modifier.bonusDice
+                    var note = "(+\(modifier.bonusDice)d \(modifier.description)"
+                    if modifier.uses > 0 {
+                        note += " (\(modifier.uses) use\(modifier.uses == 1 ? "" : "s") left)"
+                    }
+                    if modifier.uses == 1 {
+                        note += " - will be consumed"
+                    }
+                    note += ")"
+                    notes.append(note)
                 }
-                if modifier.uses == 1 {
-                    note += " - will be consumed"
-                }
-                note += ")"
-                notes.append(note)
-            }
 
-            if modifier.improvePosition {
-                position = position.improved()
-                var note = "(Improved Position from \(modifier.description)"
-                if modifier.uses > 0 {
-                    note += " (\(modifier.uses) use\(modifier.uses == 1 ? "" : "s") left)"
+                if modifier.improvePosition {
+                    position = position.improved()
+                    var note = "(Improved Position from \(modifier.description)"
+                    if modifier.uses > 0 {
+                        note += " (\(modifier.uses) use\(modifier.uses == 1 ? "" : "s") left)"
+                    }
+                    if modifier.uses == 1 {
+                        note += " - will be consumed"
+                    }
+                    note += ")"
+                    notes.append(note)
                 }
-                if modifier.uses == 1 {
-                    note += " - will be consumed"
-                }
-                note += ")"
-                notes.append(note)
-            }
 
-            if modifier.improveEffect {
-                effect = effect.increased()
-                var note = "(+1 Effect from \(modifier.description)"
-                if modifier.uses > 0 {
-                    note += " (\(modifier.uses) use\(modifier.uses == 1 ? "" : "s") left)"
+                if modifier.improveEffect {
+                    effect = effect.increased()
+                    var note = "(+1 Effect from \(modifier.description)"
+                    if modifier.uses > 0 {
+                        note += " (\(modifier.uses) use\(modifier.uses == 1 ? "" : "s") left)"
+                    }
+                    if modifier.uses == 1 {
+                        note += " - will be consumed"
+                    }
+                    note += ")"
+                    notes.append(note)
                 }
-                if modifier.uses == 1 {
-                    note += " - will be consumed"
-                }
-                note += ")"
-                notes.append(note)
             }
         }
 
@@ -81,14 +84,14 @@ struct RollRulesEngine {
             notes.append("Group Action: party rolls together; best result counts. Leader takes 1 Stress per failed ally.")
         }
 
-        let rawDicePool = diceCount
-        diceCount = max(diceCount, 0)
+        let rawDicePool = isActionBanned ? 0 : diceCount
+        diceCount = isActionBanned ? 0 : max(diceCount, 0)
 
-        if baseDice == 0 {
+        if baseDice == 0 && !isActionBanned {
             notes.append("\(character.name) has 0 rating in \(action.actionType): Rolling 2d6, taking lowest.")
         }
 
-        let displayDice = (baseDice == 0) ? 2 : diceCount
+        let displayDice = isActionBanned ? 0 : ((baseDice == 0) ? 2 : diceCount)
 
         return RollProjectionDetails(
             baseDiceCount: baseDice,
@@ -98,7 +101,8 @@ struct RollRulesEngine {
             finalPosition: position,
             baseEffect: baseEffect,
             finalEffect: effect,
-            notes: notes
+            notes: notes,
+            isActionBanned: isActionBanned
         )
     }
 
@@ -115,15 +119,16 @@ struct RollRulesEngine {
         let basePosition = position
         let baseEffect = effect
         var notes: [String] = []
+        var isActionBanned = false
 
         for harm in character.harm.lesser {
-            apply(harm: harm, tier: \.lesser, actionType: action.actionType, tags: tags, harmFamilies: harmFamilies, diceCount: &diceCount, position: &position, effect: &effect, notes: &notes)
+            apply(harm: harm, tier: \.lesser, actionType: action.actionType, tags: tags, harmFamilies: harmFamilies, diceCount: &diceCount, position: &position, effect: &effect, notes: &notes, isActionBanned: &isActionBanned)
         }
         for harm in character.harm.moderate {
-            apply(harm: harm, tier: \.moderate, actionType: action.actionType, tags: tags, harmFamilies: harmFamilies, diceCount: &diceCount, position: &position, effect: &effect, notes: &notes)
+            apply(harm: harm, tier: \.moderate, actionType: action.actionType, tags: tags, harmFamilies: harmFamilies, diceCount: &diceCount, position: &position, effect: &effect, notes: &notes, isActionBanned: &isActionBanned)
         }
         for harm in character.harm.severe {
-            apply(harm: harm, tier: \.severe, actionType: action.actionType, tags: tags, harmFamilies: harmFamilies, diceCount: &diceCount, position: &position, effect: &effect, notes: &notes)
+            apply(harm: harm, tier: \.severe, actionType: action.actionType, tags: tags, harmFamilies: harmFamilies, diceCount: &diceCount, position: &position, effect: &effect, notes: &notes, isActionBanned: &isActionBanned)
         }
 
         let treasureModifiers = character.treasures.map(\.grantedModifier)
@@ -132,32 +137,34 @@ struct RollRulesEngine {
             modifiersByID[modifier.id] = modifier
         }
 
-        for modifier in modifiersByID.values {
-            guard modifier.uses != 0 else { continue }
-            guard !modifier.isOptionalToApply else { continue }
-            guard applies(modifier: modifier, to: action.actionType, tags: tags) else { continue }
+        if !isActionBanned {
+            for modifier in modifiersByID.values {
+                guard modifier.uses != 0 else { continue }
+                guard !modifier.isOptionalToApply else { continue }
+                guard applies(modifier: modifier, to: action.actionType, tags: tags) else { continue }
 
-            if modifier.bonusDice != 0 {
-                diceCount += modifier.bonusDice
-                notes.append("(+\(modifier.bonusDice)d \(modifier.description))")
-            }
-            if modifier.improvePosition {
-                position = position.improved()
-                notes.append("(Improved Position from \(modifier.description))")
-            }
-            if modifier.improveEffect {
-                effect = effect.increased()
-                notes.append("(+1 Effect from \(modifier.description))")
+                if modifier.bonusDice != 0 {
+                    diceCount += modifier.bonusDice
+                    notes.append("(+\(modifier.bonusDice)d \(modifier.description))")
+                }
+                if modifier.improvePosition {
+                    position = position.improved()
+                    notes.append("(Improved Position from \(modifier.description))")
+                }
+                if modifier.improveEffect {
+                    effect = effect.increased()
+                    notes.append("(+1 Effect from \(modifier.description))")
+                }
             }
         }
 
-        let rawDicePool = diceCount
-        diceCount = max(diceCount, 0)
-        if baseDice == 0 {
+        let rawDicePool = isActionBanned ? 0 : diceCount
+        diceCount = isActionBanned ? 0 : max(diceCount, 0)
+        if baseDice == 0 && !isActionBanned {
             notes.append("\(character.name) has 0 rating in \(action.actionType): Rolling 2d6, taking lowest.")
         }
 
-        let displayDice = (baseDice == 0) ? 2 : diceCount
+        let displayDice = isActionBanned ? 0 : ((baseDice == 0) ? 2 : diceCount)
         let projection = RollProjectionDetails(
             baseDiceCount: baseDice,
             finalDiceCount: displayDice,
@@ -166,49 +173,52 @@ struct RollRulesEngine {
             finalPosition: position,
             baseEffect: baseEffect,
             finalEffect: effect,
-            notes: notes
+            notes: notes,
+            isActionBanned: isActionBanned
         )
 
         var optionalInfos: [SelectableModifierInfo] = []
-        for modifier in modifiersByID.values {
-            guard modifier.isOptionalToApply else { continue }
-            guard modifier.uses != 0 else { continue }
-            guard applies(modifier: modifier, to: action.actionType, tags: tags) else { continue }
+        if !isActionBanned {
+            for modifier in modifiersByID.values {
+                guard modifier.isOptionalToApply else { continue }
+                guard modifier.uses != 0 else { continue }
+                guard applies(modifier: modifier, to: action.actionType, tags: tags) else { continue }
 
-            var effects: [String] = []
-            if modifier.bonusDice != 0 {
-                effects.append("+\(modifier.bonusDice)d")
-            }
-            if modifier.improvePosition {
-                effects.append("Improves Position")
-            }
-            if modifier.improveEffect {
-                effects.append("+1 Effect")
-            }
+                var effects: [String] = []
+                if modifier.bonusDice != 0 {
+                    effects.append("+\(modifier.bonusDice)d")
+                }
+                if modifier.improvePosition {
+                    effects.append("Improves Position")
+                }
+                if modifier.improveEffect {
+                    effects.append("+1 Effect")
+                }
 
-            optionalInfos.append(
-                SelectableModifierInfo(
-                    id: modifier.id,
-                    description: modifier.description,
-                    detailedEffect: effects.joined(separator: ", "),
-                    remainingUses: modifier.uses > 0 ? "\(modifier.uses)" : "∞",
-                    modifierData: modifier
+                optionalInfos.append(
+                    SelectableModifierInfo(
+                        id: modifier.id,
+                        description: modifier.description,
+                        detailedEffect: effects.joined(separator: ", "),
+                        remainingUses: modifier.uses > 0 ? "\(modifier.uses)" : "∞",
+                        modifierData: modifier
+                    )
                 )
-            )
-        }
+            }
 
-        let pushCost = pushStressCost(for: character, interactableTags: tags, harmFamilies: harmFamilies)
-        if character.stress + pushCost <= 9 {
-            let pushModifier = Modifier(bonusDice: 1, uses: 1, isOptionalToApply: true, description: "Push Yourself")
-            optionalInfos.append(
-                SelectableModifierInfo(
-                    id: pushModifier.id,
-                    description: "Push Yourself",
-                    detailedEffect: "+1d",
-                    remainingUses: "Costs \(pushCost) Stress",
-                    modifierData: pushModifier
+            let pushCost = pushStressCost(for: character, interactableTags: tags, harmFamilies: harmFamilies)
+            if character.stress + pushCost <= 9 {
+                let pushModifier = Modifier(bonusDice: 1, uses: 1, isOptionalToApply: true, description: "Push Yourself")
+                optionalInfos.append(
+                    SelectableModifierInfo(
+                        id: pushModifier.id,
+                        description: "Push Yourself",
+                        detailedEffect: "+1d",
+                        remainingUses: "Costs \(pushCost) Stress",
+                        modifierData: pushModifier
+                    )
                 )
-            )
+            }
         }
 
         return (projection, optionalInfos)
@@ -216,6 +226,11 @@ struct RollRulesEngine {
 
     func calculateEffectiveProjection(baseProjection: RollProjectionDetails, applying chosenModifierStructs: [Modifier]) -> RollProjectionDetails {
         var result = baseProjection
+        if result.isActionBanned {
+            result.rawDicePool = 0
+            result.finalDiceCount = 0
+            return result
+        }
         for modifier in chosenModifierStructs {
             if modifier.bonusDice != 0 {
                 result.rawDicePool += modifier.bonusDice
@@ -331,12 +346,13 @@ struct RollRulesEngine {
         diceCount: inout Int,
         position: inout RollPosition,
         effect: inout RollEffect,
-        notes: inout [String]
+        notes: inout [String],
+        isActionBanned: inout Bool
     ) {
         if let penalty = harmFamilies[harm.familyId]?[keyPath: tier].penalty {
-            apply(penalty: penalty, description: harm.description, to: actionType, tags: tags, diceCount: &diceCount, position: &position, effect: &effect, notes: &notes)
+            apply(penalty: penalty, description: harm.description, to: actionType, tags: tags, diceCount: &diceCount, position: &position, effect: &effect, notes: &notes, isActionBanned: &isActionBanned)
         }
-        if let boon = harmFamilies[harm.familyId]?[keyPath: tier].boon {
+        if !isActionBanned, let boon = harmFamilies[harm.familyId]?[keyPath: tier].boon {
             apply(boon: boon, description: harm.description, to: actionType, tags: tags, diceCount: &diceCount, position: &position, effect: &effect, notes: &notes)
         }
     }
@@ -363,7 +379,8 @@ struct RollRulesEngine {
         diceCount: inout Int,
         position: inout RollPosition,
         effect: inout RollEffect,
-        notes: inout [String]
+        notes: inout [String],
+        isActionBanned: inout Bool
     ) {
         switch penalty {
         case .reduceEffect(let requiredTag):
@@ -382,8 +399,9 @@ struct RollRulesEngine {
             if let requiredTag, !tags.contains(requiredTag) {
                 break
             }
+            isActionBanned = true
             diceCount = 0
-            notes.append("(Cannot perform due to \(description))")
+            notes.append("(Action banned by \(description))")
         case .actionPositionPenalty(let penalizedAction, let requiredTag) where penalizedAction == actionType:
             if let requiredTag, !tags.contains(requiredTag) {
                 break

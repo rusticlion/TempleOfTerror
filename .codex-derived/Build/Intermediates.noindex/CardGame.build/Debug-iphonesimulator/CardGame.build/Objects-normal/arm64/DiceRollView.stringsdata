@@ -71,7 +71,7 @@
         "key": "is attempting to...",
         "location": {
           "startingColumn": 26,
-          "startingLine": 324
+          "startingLine": 328
         }
       },
       {
@@ -79,7 +79,7 @@
         "key": "%@: %lld",
         "location": {
           "startingColumn": 26,
-          "startingLine": 332
+          "startingLine": 336
         }
       },
       {
@@ -87,15 +87,7 @@
         "key": "Debug fixed roll: %@",
         "location": {
           "startingColumn": 30,
-          "startingLine": 495
-        }
-      },
-      {
-        "comment": "",
-        "key": "Roll the Dice",
-        "location": {
-          "startingColumn": 28,
-          "startingLine": 501
+          "startingLine": 508
         }
       },
       {
@@ -103,7 +95,7 @@
         "key": "Done",
         "location": {
           "startingColumn": 28,
-          "startingLine": 523
+          "startingLine": 550
         }
       },
       {
@@ -111,7 +103,7 @@
         "key": "✦ CRITICAL ✦",
         "location": {
           "startingColumn": 34,
-          "startingLine": 307
+          "startingLine": 311
         }
       },
       {
@@ -119,7 +111,7 @@
         "key": "Rolled a %lld",
         "location": {
           "startingColumn": 30,
-          "startingLine": 313
+          "startingLine": 317
         }
       },
       {
@@ -127,15 +119,23 @@
         "key": "Effect: %@",
         "location": {
           "startingColumn": 34,
-          "startingLine": 318
+          "startingLine": 322
+        }
+      },
+      {
+        "comment": "",
+        "key": "BANNED",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 354
         }
       },
       {
         "comment": "",
         "key": "%lldd6",
         "location": {
-          "startingColumn": 30,
-          "startingLine": 349
+          "startingColumn": 34,
+          "startingLine": 358
         }
       },
       {
@@ -143,7 +143,7 @@
         "key": "POSITION",
         "location": {
           "startingColumn": 38,
-          "startingLine": 355
+          "startingLine": 365
         }
       },
       {
@@ -151,7 +151,23 @@
         "key": "EFFECT",
         "location": {
           "startingColumn": 38,
-          "startingLine": 369
+          "startingLine": 379
+        }
+      },
+      {
+        "comment": "",
+        "key": "Action Banned",
+        "location": {
+          "startingColumn": 60,
+          "startingLine": 525
+        }
+      },
+      {
+        "comment": "",
+        "key": "Roll the Dice",
+        "location": {
+          "startingColumn": 78,
+          "startingLine": 525
         }
       }
     ]

@@ -9,6 +9,7 @@ struct RollProjectionDetails {
     var baseEffect: RollEffect
     var finalEffect: RollEffect
     var notes: [String]
+    var isActionBanned: Bool = false
 }
 
 /// Lightweight info about a selectable modifier for the DiceRollView.
@@ -72,6 +73,78 @@ class GameViewModel: ObservableObject {
     // Retrieve the node a specific character is currently in
     func node(for characterID: UUID?) -> MapNode? {
         runtime.node(for: characterID, in: gameState)
+    }
+
+    private func currentCharacter(for characterID: UUID) -> Character? {
+        gameState.party.first(where: { $0.id == characterID })
+    }
+
+    private func currentInteractable(id interactableID: String, for characterID: UUID) -> Interactable? {
+        guard let nodeID = gameState.characterLocations[characterID.uuidString] else { return nil }
+        return gameState.dungeon?.nodes[nodeID.uuidString]?.interactables.first(where: { $0.id == interactableID })
+    }
+
+    private func isInteractableVisible(
+        _ interactable: Interactable,
+        for character: Character
+    ) -> Bool {
+        areConditionsMet(
+            conditions: interactable.conditions,
+            forCharacter: character,
+            finalEffect: .standard,
+            finalPosition: .risky
+        )
+    }
+
+    private func isActionAvailable(
+        _ action: ActionOption,
+        on interactable: Interactable?,
+        for character: Character
+    ) -> Bool {
+        let tags = interactable?.tags ?? []
+        let projection = calculateProjection(for: action, with: character, interactableTags: tags)
+        return areConditionsMet(
+            conditions: action.conditions,
+            forCharacter: character,
+            finalEffect: projection.finalEffect,
+            finalPosition: projection.finalPosition
+        )
+    }
+
+    private func filteredInteractable(
+        _ interactable: Interactable,
+        for character: Character
+    ) -> Interactable? {
+        guard isInteractableVisible(interactable, for: character) else { return nil }
+        var filtered = interactable
+        filtered.availableActions = interactable.availableActions.filter { action in
+            isActionAvailable(action, on: interactable, for: character)
+        }
+        return filtered
+    }
+
+    private func unavailableActionMessage(
+        for action: ActionOption,
+        interactableID: String?,
+        characterID: UUID
+    ) -> String? {
+        guard let character = currentCharacter(for: characterID) else {
+            return "Character not found."
+        }
+
+        if let interactableID {
+            guard let interactable = currentInteractable(id: interactableID, for: characterID),
+                  let filteredInteractable = filteredInteractable(interactable, for: character),
+                  filteredInteractable.availableActions.contains(where: { $0.name == action.name }) else {
+                return "That action is no longer available."
+            }
+            return nil
+        }
+
+        guard isActionAvailable(action, on: nil, for: character) else {
+            return "That action is no longer available."
+        }
+        return nil
     }
 
 
@@ -212,13 +285,32 @@ class GameViewModel: ObservableObject {
     /// Executes a free action that does not require a roll, applying its success
     /// consequences immediately.
     func performFreeAction(for action: ActionOption, with character: Character, interactableID: String?) -> String {
+        if let unavailableMessage = unavailableActionMessage(
+            for: action,
+            interactableID: interactableID,
+            characterID: character.id
+        ) {
+            return unavailableMessage
+        }
+        guard let currentCharacter = currentCharacter(for: character.id) else {
+            return "Character not found."
+        }
+        let tags = interactableID.flatMap { id in
+            currentInteractable(id: id, for: currentCharacter.id)?.tags
+        } ?? []
+        let projection = calculateProjection(for: action, with: currentCharacter, interactableTags: tags)
         let consequences = action.outcomes[.success] ?? []
-        let context = ConsequenceContext(characterID: character.id,
+        let context = ConsequenceContext(characterID: currentCharacter.id,
                                          interactableID: interactableID,
-                                         finalEffect: action.effect,
-                                         finalPosition: action.position,
+                                         finalEffect: projection.finalEffect,
+                                         finalPosition: projection.finalPosition,
                                          isCritical: false)
-        let description = processConsequences(consequences, context: context, source: .freeAction, rollPresentation: nil)
+        let description = processConsequences(
+            consequences,
+            context: context,
+            source: .freeAction,
+            rollPresentation: nil
+        )
         saveGame()
         return description
     }
@@ -229,6 +321,21 @@ class GameViewModel: ObservableObject {
                        interactableID: String?,
                        usingDice diceResults: [Int]? = nil,
                        chosenOptionalModifierIDs: [UUID] = []) -> DiceRollResult {
+        if let unavailableMessage = unavailableActionMessage(
+            for: action,
+            interactableID: interactableID,
+            characterID: character.id
+        ) {
+            return DiceRollResult(
+                highestRoll: 0,
+                outcome: "Cannot",
+                consequences: unavailableMessage,
+                actualDiceRolled: nil,
+                isCritical: nil,
+                finalEffect: nil,
+                isAwaitingDecision: false
+            )
+        }
         if action.isGroupAction {
             return performGroupAction(for: action, leader: character, interactableID: interactableID)
         }
@@ -241,16 +348,29 @@ class GameViewModel: ObservableObject {
                                   finalEffect: nil,
                                   isAwaitingDecision: false)
         }
+        let currentCharacter = gameState.party[charIndex]
 
         var tags: [String] = []
         if let id = interactableID,
-           let nodeID = gameState.characterLocations[character.id.uuidString],
+           let nodeID = gameState.characterLocations[currentCharacter.id.uuidString],
            let interactable = gameState.dungeon?.nodes[nodeID.uuidString]?.interactables.first(where: { $0.id == id }) {
             tags = interactable.tags
         }
 
-        let context = getRollContext(for: action, with: character, interactableTags: tags)
+        let context = getRollContext(for: action, with: currentCharacter, interactableTags: tags)
         var workingProjection = context.baseProjection
+
+        if workingProjection.isActionBanned {
+            return DiceRollResult(
+                highestRoll: 0,
+                outcome: "Cannot",
+                consequences: workingProjection.notes.joined(separator: "\n"),
+                actualDiceRolled: nil,
+                isCritical: nil,
+                finalEffect: nil,
+                isAwaitingDecision: false
+            )
+        }
 
         var appliedOptionalMods: [Modifier] = []
         var consumedMessages: [String] = []
@@ -325,17 +445,17 @@ class GameViewModel: ObservableObject {
 
         let eligible = consequencesToApply.filter { cons in
             areConditionsMet(conditions: cons.conditions,
-                             forCharacter: character,
+                             forCharacter: currentCharacter,
                              finalEffect: finalEffect,
                              finalPosition: finalPosition)
         }
-        let consequenceProcessingContext = ConsequenceContext(characterID: character.id,
+        let consequenceProcessingContext = ConsequenceContext(characterID: currentCharacter.id,
                                          interactableID: interactableID,
                                          finalEffect: finalEffect,
                                          finalPosition: finalPosition,
                                          isCritical: isCritical)
         let rollPresentation = PendingRollPresentation(
-            characterID: character.id,
+            characterID: currentCharacter.id,
             actionName: action.name,
             highestRoll: highestRoll,
             outcome: outcome.label,
@@ -547,7 +667,13 @@ class GameViewModel: ObservableObject {
     }
 
     func visibleInteractables(for characterID: UUID?) -> [Interactable] {
-        runtime.visibleInteractables(for: characterID, in: gameState)
+        guard let characterID,
+              let character = currentCharacter(for: characterID) else {
+            return []
+        }
+        return runtime.visibleInteractables(for: characterID, in: gameState).compactMap { interactable in
+            filteredInteractable(interactable, for: character)
+        }
     }
 
     func activeThreats(for characterID: UUID?) -> [Interactable] {

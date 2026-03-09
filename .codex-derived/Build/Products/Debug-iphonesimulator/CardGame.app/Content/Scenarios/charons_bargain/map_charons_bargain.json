@@ -408,6 +408,40 @@
             "Mechanical",
             "Inactive"
           ]
+        },
+        {
+          "id": "cb_beacon_status_readout",
+          "title": "Beacon Status Readout",
+          "description": "A side panel now blinks a steady, false 'ALL CLEAR' transmission. Someone coming in blind would trust it.",
+          "availableActions": [],
+          "conditions": [
+            {
+              "type": "scenarioFlagSet",
+              "stringParam": "cb_beacon_partially_active"
+            }
+          ],
+          "isDisplayOnly": true,
+          "tags": [
+            "Electronic",
+            "Status"
+          ]
+        },
+        {
+          "id": "cb_cargo_loader_active",
+          "title": "Activated Cargo Loader",
+          "description": "The loader idles with a rough hydraulic shudder, ready to shift heavy debris if you need it later.",
+          "availableActions": [],
+          "conditions": [
+            {
+              "type": "scenarioFlagSet",
+              "stringParam": "cb_cargo_loader_activated"
+            }
+          ],
+          "isDisplayOnly": true,
+          "tags": [
+            "Mechanical",
+            "Powered"
+          ]
         }
       ],
       "connections": [
@@ -592,7 +626,7 @@
               "outcomes": {
                 "success": [
                   {
-                    "type": "gainStress",
+                    "type": "adjustStress",
                     "amount": -1,
                     "description": "You notice that the advice urging to \"stay calm\" is written in a shaky hand, while the advice to \"get out\" is stenciled cleanly. Maybe most of the crew has already left."
                   },
@@ -650,7 +684,7 @@
               "outcomes": {
                 "success": [
                   {
-                    "type": "gainStress",
+                    "type": "adjustStress",
                     "amount": -2,
                     "description": "Clearly, this vessel's misson has gone off the rails. It looks like some sort of authority figure was trying to reassure the crew that everything was under control as it became clear that the mission was doomed. You'll have to be careful who to trust, but at least someone else here seems to have held onto their sanity."
                   },
@@ -662,7 +696,7 @@
                 ],
                 "partial": [
                   {
-                    "type": "gainStress",
+                    "type": "adjustStress",
                     "amount": -1,
                     "description": "Clearly, this vessel's misson has gone off the rails. It looks like someone was trying to reassure the crew that everything was under control as it became clear that the mission was doomed. At least someone here seems to have held onto their sanity."
                   },
@@ -878,7 +912,7 @@
                   },
                   {
                     "type": "triggerEvent",
-                    "eventId": "cb_ng_partial_lab_info"
+                    "eventId": "cb_ng_reveals_lab_location"
                   }
                 ],
                 "failure": [
@@ -949,33 +983,13 @@
                                         "treasureId": "cb_dr_thornes_access_code"
                                     },
                                     {
+                                        "type": "setScenarioFlag",
+                                        "flagId": "cb_ng_briefed"
+                                    },
+                                    {
                                         "type": "removeAction",
                                         "id": "self",
                                         "actionName": "Talk to Dr. Ng"
-                                    },
-                                    {
-                                        "type": "addAction",
-                                        "id": "self",
-                                        "action": {
-                                            "name": "Ask about the Hydra",
-                                            "actionType": "Study",
-                                            "position": "controlled",
-                                            "effect": "standard",
-                                            "outcomes": {
-                                                "success": [
-                                                    {
-                                                        "type": "gainTreasure",
-                                                        "treasureId": "cb_hydra_intel",
-                                                        "description": "'That thing... it was her husband, Alex. The VFE was supposed to save him, but it just... kept going. It regenerates. As long as the VFE has power, you can't kill it.'"
-                                                    },
-                                                    {
-                                                        "type": "removeAction",
-                                                        "id": "self",
-                                                        "actionName": "Ask about the Hydra"
-                                                    }
-                                                ]
-                                            }
-                                        }
                                     }
                                 ]
                             }
@@ -998,6 +1012,32 @@
                                 "clockName": "VFE Instability",
                                 "amount": 1,
                                 "description": "'No! Stay away from me!' she screams. Her shout echoes down the corridor, and you hear something heavy shift in a nearby room."
+                            }
+                        ]
+                    }
+                },
+                {
+                    "name": "Ask about the Hydra",
+                    "actionType": "Study",
+                    "position": "controlled",
+                    "effect": "standard",
+                    "conditions": [
+                        {
+                            "type": "scenarioFlagSet",
+                            "stringParam": "cb_ng_briefed"
+                        }
+                    ],
+                    "outcomes": {
+                        "success": [
+                            {
+                                "type": "gainTreasure",
+                                "treasureId": "cb_hydra_intel",
+                                "description": "'That thing... it was her husband, Alex. The VFE was supposed to save him, but it just... kept going. It regenerates. As long as the VFE has power, you can't kill it.'"
+                            },
+                            {
+                                "type": "removeAction",
+                                "id": "self",
+                                "actionName": "Ask about the Hydra"
                             }
                         ]
                     }
@@ -1025,7 +1065,25 @@
       "id": "00000000-0000-0000-0000-000000000005",
       "name": "Hydroponics Bay",
       "soundProfile": "hydroponics_overgrown_rustling",
-      "interactables": [],
+      "interactables": [
+        {
+          "id": "cb_hydroponics_service_panel_hint",
+          "title": "Scuffed Service Panel",
+          "description": "Ng's notes match the scrape marks here. A maintenance seam disappears behind the overgrowth, exactly where she said the tunnel would be.",
+          "availableActions": [],
+          "conditions": [
+            {
+              "type": "scenarioFlagSet",
+              "stringParam": "cb_lab_location_known"
+            }
+          ],
+          "isDisplayOnly": true,
+          "tags": [
+            "Clue",
+            "Hidden Route"
+          ]
+        }
+      ],
       "connections": [
         {
           "toNodeID": "00000000-0000-0000-0000-000000000004",

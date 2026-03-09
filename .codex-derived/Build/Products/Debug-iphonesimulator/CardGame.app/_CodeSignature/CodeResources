@@ -130,7 +130,7 @@
 		</data>
 		<key>CardGame.debug.dylib</key>
 		<data>
-		MBp/34vWDALPueClgFhYJ0hZ8uE=
+		mKg2ZARNyojkffSoUJGWSiNxSw0=
 		</data>
 		<key>Content/Scenarios/charons_bargain/archetypes.json</key>
 		<data>
@@ -138,19 +138,23 @@
 		</data>
 		<key>Content/Scenarios/charons_bargain/clocks.json</key>
 		<data>
-		8fYJdBHUG6FxOE6NFjXQBCwBzTI=
+		DSNo8+w39ZjCZvjGtACV20WRQcM=
 		</data>
 		<key>Content/Scenarios/charons_bargain/events.json</key>
 		<data>
-		YUNGd7+GYZ76xvjF8J88oFpidEc=
+		Kdohdcmi8BEIxPyoSnSGJSe/Oq4=
 		</data>
 		<key>Content/Scenarios/charons_bargain/harm_families.json</key>
 		<data>
-		8/6x7t454wlmV2pxzIDDAy29Fak=
+		VL3A2aUgZYe4TlIynqiuUk2yKEY=
+		</data>
+		<key>Content/Scenarios/charons_bargain/interactables.json</key>
+		<data>
+		jelxL1XAvTdz+bIcCutGhe6EwRk=
 		</data>
 		<key>Content/Scenarios/charons_bargain/map_charons_bargain.json</key>
 		<data>
-		G57IFyV++NPISxJROEDX44urtj8=
+		OGzofvbOW1KJssln1ubz3FKGFMw=
 		</data>
 		<key>Content/Scenarios/charons_bargain/scenario.json</key>
 		<data>
@@ -458,7 +462,7 @@
 		</data>
 		<key>PlugIns/CardGameTests.xctest/CardGameTests</key>
 		<data>
-		eZERlnbWULqDZhX7niNy4FW5S3w=
+		rs5R7i6IM2VwY4ilVF/vLns5JU0=
 		</data>
 		<key>PlugIns/CardGameTests.xctest/Info.plist</key>
 		<data>
@@ -700,7 +704,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			909uz0QgHQwbARCigtMeVc2lolry9y3QFyqVRBWKfX0=
+			9vJth/Rf/NWjNNumeewF+xAOeOAFwk4Q33ly9I3jzVA=
 			</data>
 		</dict>
 		<key>Content/Scenarios/charons_bargain/archetypes.json</key>
@@ -714,28 +718,35 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			4oMlWrO6946Y+sY93A5b2E1Zbc443CtMIr8dxQQ3XbY=
+			Zg6rW9GjqS3Ws97h28u7i9kpVHvXNCGDA/VxaH3KRN4=
 			</data>
 		</dict>
 		<key>Content/Scenarios/charons_bargain/events.json</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			JAI/Jt4ES3fu49jDWG40tjgaUn08URyCA41aQVh/Eyc=
+			QWH4b/IDj8UgQUvvjt/4e6MzSQE7e44KJ4DTPKhiyS8=
 			</data>
 		</dict>
 		<key>Content/Scenarios/charons_bargain/harm_families.json</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			hctmlyKzU4w6mmJzwzflc17OPEFl4PE84e0dSMBykBE=
+			orYBnEbdtpd8dt+lwSfslIO/lf8FiRDFUxuwzt2TD1o=
+			</data>
+		</dict>
+		<key>Content/Scenarios/charons_bargain/interactables.json</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			5FoPYbCmHSBKEF/8SjZNnmrc+Dyudsd/CUxMMpmE+6s=
 			</data>
 		</dict>
 		<key>Content/Scenarios/charons_bargain/map_charons_bargain.json</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			fy9IR/0++AhtY+j5Kca/2H3PgULMO5f/BLC/FsDshZc=
+			mnplpyytzXoPzoyTVIt7cDfPKzaknFvAE0pQ0K/eCuQ=
 			</data>
 		</dict>
 		<key>Content/Scenarios/charons_bargain/scenario.json</key>
@@ -1260,7 +1271,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			blKHfWTJqIx5hB/SEJ+glT/8F3JKsHAa16gN9VR5Aqk=
+			cky+mUn2UKe5NZBvnqRljQvVYWAZ+tz8qiQsjfrOLMA=
 			</data>
 		</dict>
 		<key>PlugIns/CardGameTests.xctest/Info.plist</key>

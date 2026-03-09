@@ -123,6 +123,65 @@ final class ModifierSystemTests: XCTestCase {
         XCTAssertEqual(proj.finalEffect, .limited)
     }
 
+    func testBanActionMarksProjectionAndSuppressesOptionalModifiers() throws {
+        let vm = makeViewModel(scenario: "temple_of_terror")
+        var character = makeTestCharacter()
+        character.actions["Tinker"] = 2
+        character.harm.moderate = [(familyId: "gear_damage", description: "Broken Tools")]
+        character.modifiers = [
+            Modifier(bonusDice: 1, uses: 1, isOptionalToApply: true, description: "Lucky Charm")
+        ]
+
+        let action = ActionOption(name: "Repair", actionType: "Tinker", position: .risky, effect: .standard)
+        let context = vm.getRollContext(for: action, with: character)
+
+        XCTAssertTrue(context.baseProjection.isActionBanned)
+        XCTAssertEqual(context.baseProjection.rawDicePool, 0)
+        XCTAssertEqual(context.baseProjection.finalDiceCount, 0)
+        XCTAssertTrue(context.baseProjection.notes.contains { $0.contains("Broken Tools") })
+        XCTAssertTrue(context.optionalModifiers.isEmpty)
+    }
+
+    func testCalculateEffectiveProjectionCannotOverrideActionBan() throws {
+        let vm = GameViewModel()
+        let base = RollProjectionDetails(baseDiceCount: 2,
+                                         finalDiceCount: 0,
+                                         rawDicePool: 0,
+                                         basePosition: .risky,
+                                         finalPosition: .risky,
+                                         baseEffect: .standard,
+                                         finalEffect: .standard,
+                                         notes: ["(Action banned by Broken Tools)"],
+                                         isActionBanned: true)
+        let mod = Modifier(bonusDice: 2, uses: 1, isOptionalToApply: true, description: "Elixir")
+        let result = vm.calculateEffectiveProjection(baseProjection: base, applying: [mod])
+
+        XCTAssertTrue(result.isActionBanned)
+        XCTAssertEqual(result.rawDicePool, 0)
+        XCTAssertEqual(result.finalDiceCount, 0)
+    }
+
+    func testPerformActionReturnsCannotForBannedAction() throws {
+        let vm = makeViewModel(scenario: "temple_of_terror")
+        var character = makeTestCharacter()
+        character.actions["Tinker"] = 2
+        character.harm.moderate = [(familyId: "gear_damage", description: "Broken Tools")]
+
+        vm.gameState.party = [character]
+        vm.gameState.characterLocations[character.id.uuidString] = UUID()
+
+        let action = ActionOption(name: "Repair", actionType: "Tinker", position: .risky, effect: .standard)
+        let result = vm.performAction(for: action,
+                                      with: character,
+                                      interactableID: nil,
+                                      usingDice: [6, 6])
+
+        XCTAssertEqual(result.outcome, "Cannot")
+        XCTAssertEqual(result.highestRoll, 0)
+        XCTAssertTrue(result.consequences.contains("Broken Tools"))
+        XCTAssertNil(result.actualDiceRolled)
+    }
+
     func testTagConditionalModifier() throws {
         let vm = GameViewModel()
         var character = makeTestCharacter()

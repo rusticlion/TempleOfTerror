@@ -195,7 +195,7 @@ struct DiceRollView: View {
             let proj = viewModel.calculateEffectiveProjection(baseProjection: base,
                                                               applying: selectedMods)
             displayedProjection = proj
-            let diceCount = max(proj.finalDiceCount, 1)
+            let diceCount = proj.isActionBanned ? 0 : max(proj.finalDiceCount, 1)
             diceValues = Array(repeating: 1, count: diceCount)
         }
     }
@@ -285,6 +285,10 @@ struct DiceRollView: View {
         viewModel.gameState.pendingResolution?.isAwaitingDecision != true
     }
 
+    private var isDisplayedActionBanned: Bool {
+        displayedProjection?.isActionBanned == true
+    }
+
     var body: some View {
         ZStack {
             Theme.dramaticBackground.ignoresSafeArea()
@@ -346,9 +350,15 @@ struct DiceRollView: View {
                     }
                 } else if let proj = displayedProjection {
                     VStack(spacing: 12) {
-                        Text("\(proj.finalDiceCount)d6")
-                            .font(Theme.displayFont(size: 48))
-                            .foregroundColor(Theme.parchment)
+                        if proj.isActionBanned {
+                            Text("BANNED")
+                                .font(Theme.displayFont(size: 40))
+                                .foregroundColor(Theme.dangerLight)
+                        } else {
+                            Text("\(proj.finalDiceCount)d6")
+                                .font(Theme.displayFont(size: 48))
+                                .foregroundColor(Theme.parchment)
+                        }
 
                         HStack(spacing: 20) {
                             VStack(spacing: 2) {
@@ -380,7 +390,9 @@ struct DiceRollView: View {
                             Text(note)
                                 .font(Theme.systemFont(size: 11))
                                 .foregroundColor(
-                                    note.contains("-") || note.contains("Cannot")
+                                    note.localizedCaseInsensitiveContains("cannot")
+                                    || note.localizedCaseInsensitiveContains("banned")
+                                    || note.contains("-")
                                     ? Theme.dangerLight
                                     : Theme.goldDim
                                 )
@@ -389,7 +401,7 @@ struct DiceRollView: View {
                     }
                 }
 
-                if result == nil && !availableOptionalModifiers.isEmpty {
+                if result == nil && !availableOptionalModifiers.isEmpty && !isDisplayedActionBanned {
                     VStack(alignment: .leading, spacing: 8) {
                         ForEach(availableOptionalModifiers) { info in
                             Button {
@@ -491,32 +503,47 @@ struct DiceRollView: View {
 
                 if result == nil {
                     if let projection = displayedProjection,
+                       !projection.isActionBanned,
                        let debugDice = viewModel.debugActionDiceOverride(rawPool: projection.rawDicePool) {
                         Text("Debug fixed roll: \(debugDice.map(String.init).joined(separator: ", "))")
                             .font(Theme.systemFont(size: 11))
                             .foregroundColor(Theme.goldDim)
                     }
 
-                    let canRoll = !isRolling && diceController.isViewportReady && !diceValues.isEmpty
-                    Button("Roll the Dice") {
+                    let canRoll = !isDisplayedActionBanned && !isRolling && diceController.isViewportReady && !diceValues.isEmpty
+                    Button {
                         guard canRoll else { return }
                         isRolling = true
                         startShaking()
                         diceController.rollDice()
                     }
-                    .font(Theme.displayFont(size: 18))
-                    .foregroundColor(Theme.ink)
-                    .padding(.horizontal, 48)
-                    .padding(.vertical, 14)
-                    .background(
-                        LinearGradient(
-                            colors: [Theme.gold, Theme.goldDim],
-                            startPoint: .top,
-                            endPoint: .bottom
+                    label: {
+                        HStack(spacing: 8) {
+                            if isDisplayedActionBanned {
+                                Image(systemName: "lock.fill")
+                            }
+                            Text(isDisplayedActionBanned ? "Action Banned" : "Roll the Dice")
+                        }
+                        .font(Theme.displayFont(size: 18))
+                        .foregroundColor(isDisplayedActionBanned ? Theme.parchmentDark : Theme.ink)
+                        .padding(.horizontal, 40)
+                        .padding(.vertical, 14)
+                        .background(
+                            LinearGradient(
+                                colors: isDisplayedActionBanned
+                                    ? [Theme.inkFaded.opacity(0.55), Theme.inkFaded.opacity(0.35)]
+                                    : [Theme.gold, Theme.goldDim],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
                         )
-                    )
-                    .clipShape(RoundedRectangle(cornerRadius: 8))
-                    .shadow(color: Theme.gold.opacity(0.3), radius: 12, y: 4)
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                        .shadow(
+                            color: isDisplayedActionBanned ? .clear : Theme.gold.opacity(0.3),
+                            radius: 12,
+                            y: 4
+                        )
+                    }
                     .disabled(!canRoll)
                     .opacity(canRoll ? 1 : 0.55)
                 } else {
@@ -551,7 +578,7 @@ struct DiceRollView: View {
             self.baseProjection = context.baseProjection
             self.displayedProjection = context.baseProjection
             self.availableOptionalModifiers = context.optionalModifiers
-            let diceCount = max(context.baseProjection.finalDiceCount, 1)
+            let diceCount = context.baseProjection.isActionBanned ? 0 : max(context.baseProjection.finalDiceCount, 1)
             self.diceValues = Array(repeating: 1, count: diceCount)
             diceController.onDiceSettled = { results in
                 self.stopShaking(results: results)

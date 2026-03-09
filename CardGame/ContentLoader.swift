@@ -160,6 +160,7 @@ class ContentLoader {
     let scenarioName: String
     let scenarioManifest: ScenarioManifest?
     let interactableTemplates: [Interactable]
+    let interactableTemplateDict: [String: Interactable]
     let harmFamilies: [HarmFamily]
     let harmFamilyDict: [String: HarmFamily]
     let treasureTemplates: [Treasure]
@@ -174,6 +175,7 @@ class ContentLoader {
         self.scenarioName = scenario
         self.scenarioManifest = Self.loadManifest(for: scenario)
         self.interactableTemplates = Self.load("interactables.json", for: scenario)
+        self.interactableTemplateDict = Dictionary(uniqueKeysWithValues: interactableTemplates.map { ($0.id, $0) })
         self.harmFamilies = Self.loadMergedByID("harm_families.json", for: scenario)
         self.harmFamilyDict = Dictionary(uniqueKeysWithValues: harmFamilies.map { ($0.id, $0) })
         self.treasureTemplates = Self.load("treasures.json", for: scenario)

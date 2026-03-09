@@ -14,7 +14,7 @@
       },
       "severe": {
         "description": "Grotesque Form",
-        "penalty": { "type": "banAction", "actionType": "Charm" },
+        "penalty": { "type": "banAction", "actionType": "Sway" },
         "boon": { "bonusDice": 2, "description": "Feral Fury", "isOptionalToApply": false }
       },
       "fatal": { "description": "Runaway Mutation" }
@@ -24,11 +24,11 @@
       "lesser": {
         "description": "Strange Euphoria",
         "penalty": { "type": "actionEffectPenalty", "actionType": "Command" },
-        "boon": { "bonusDice": 1, "description": "Irrational Insight", "isOptionalToApply": false, "actionType": "Attune" }
+        "boon": { "bonusDice": 1, "description": "Irrational Insight", "isOptionalToApply": false, "applicableToAction": "Attune" }
       },
       "moderate": {
         "description": "Mental Expansion",
-        "penalty": { "type": "actionPenalty", "actionType": "Hack" },
+        "penalty": { "type": "actionPenalty", "actionType": "Tinker" },
         "boon": { "improvePosition": true, "description": "Mental Clarity", "isOptionalToApply": false }
       },
       "severe": {
@@ -51,7 +51,7 @@
       "severe": {
         "description": "Unnatural Fever",
         "penalty": { "type": "banAction", "actionType": "Finesse" },
-        "boon": { "bonusDice": 1, "description": "Fever Visions", "actionType": "Attune", "isOptionalToApply": false }
+        "boon": { "bonusDice": 1, "description": "Fever Visions", "applicableToAction": "Attune", "isOptionalToApply": false }
       },
       "fatal": {
         "description": "Eaten By Rats",

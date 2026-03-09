@@ -4,18 +4,10 @@
     "Localizable": [
       {
         "comment": "",
-        "key": "Active Clocks",
-        "location": {
-          "startingColumn": 18,
-          "startingLine": 8
-        }
-      },
-      {
-        "comment": "",
         "key": "%lld/%lld",
         "location": {
           "startingColumn": 22,
-          "startingLine": 73
+          "startingLine": 140
         }
       }
     ]

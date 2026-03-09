@@ -95,7 +95,8 @@ final class CardGameTests: XCTestCase {
                                        position: .risky,
                                        effect: .standard,
                                        requiresTest: false,
-                                       outcomes: [.success: [removeCon]])
+                                       outcomes: [.success: [removeCon, .removeAction(name: "Trigger", fromInteractable: "self")]])
+        vm.gameState.dungeon?.nodes[nodeID.uuidString]?.interactables[0].availableActions.append(dummyAction)
 
         _ = vm.performFreeAction(for: dummyAction, with: character, interactableID: "test")
 
@@ -143,7 +144,8 @@ final class CardGameTests: XCTestCase {
                                  position: .risky,
                                  effect: .standard,
                                  requiresTest: false,
-                                 outcomes: [.success: [addCon]])
+                                 outcomes: [.success: [addCon, .removeAction(name: "Trigger", fromInteractable: "self")]])
+        vm.gameState.dungeon?.nodes[nodeID.uuidString]?.interactables[0].availableActions.append(dummy)
 
         _ = vm.performFreeAction(for: dummy, with: character, interactableID: "test")
 
@@ -234,6 +236,33 @@ final class CardGameTests: XCTestCase {
         XCTAssertEqual(updated.lesser[0].description, "Twisted Ankle")
     }
 
+    func testAdjustStressRecoversStressAndClampsAtZero() throws {
+        let vm = GameViewModel()
+        let character = Character(
+            id: UUID(),
+            name: "Steady",
+            characterClass: "Scholar",
+            stress: 1,
+            harm: HarmState(),
+            actions: ["Study": 1]
+        )
+        vm.gameState.party = [character]
+
+        let action = ActionOption(
+            name: "Catch Your Breath",
+            actionType: "Study",
+            position: .controlled,
+            effect: .standard,
+            requiresTest: false,
+            outcomes: [.success: [.adjustStress(-3)]]
+        )
+
+        let description = vm.performFreeAction(for: action, with: character, interactableID: nil)
+
+        XCTAssertEqual(vm.gameState.party[0].stress, 0)
+        XCTAssertTrue(description.contains("Recovered 1 Stress."))
+    }
+
     func testRestartCurrentScenarioKeepsScenarioSelection() throws {
         let vm = GameViewModel()
         vm.startNewRun(scenario: "charons_bargain")
@@ -310,12 +339,12 @@ final class CardGameTests: XCTestCase {
         vm.gameState.party = [character]
         vm.gameState.characterLocations[character.id.uuidString] = nodeID
 
-        let partialInfo = ActionOption(name: "Trigger Partial Info",
+        let beaconInfo = ActionOption(name: "Trigger Beacon Status",
                                        actionType: "Study",
                                        position: .controlled,
                                        effect: .standard,
                                        requiresTest: false,
-                                       outcomes: [.success: [.triggerEvent(id: "cb_ng_partial_lab_info")]])
+                                       outcomes: [.success: [.triggerEvent(id: "cb_beacon_partially_active")]])
         let fullInfo = ActionOption(name: "Trigger Full Info",
                                     actionType: "Study",
                                     position: .controlled,
@@ -323,10 +352,10 @@ final class CardGameTests: XCTestCase {
                                     requiresTest: false,
                                     outcomes: [.success: [.triggerEvent(id: "cb_ng_reveals_lab_location")]])
 
-        _ = vm.performFreeAction(for: partialInfo, with: character, interactableID: nil)
+        _ = vm.performFreeAction(for: beaconInfo, with: character, interactableID: nil)
         _ = vm.performFreeAction(for: fullInfo, with: character, interactableID: nil)
 
-        XCTAssertEqual(vm.gameState.scenarioCounters["cb_ng_partial_lab_clues"], 1)
+        XCTAssertEqual(vm.gameState.scenarioFlags["cb_beacon_partially_active"], true)
         XCTAssertEqual(vm.gameState.scenarioFlags["cb_lab_location_known"], true)
     }
 
@@ -362,10 +391,16 @@ final class CardGameTests: XCTestCase {
         let quartersID = UUID(uuidString: "00000000-0000-0000-0000-000000000003")!
         let podsID = UUID(uuidString: "00000000-0000-0000-0000-000000000010")!
 
+        let evade = ActionOption(name: "Evade Droid",
+                                 actionType: "Finesse",
+                                 position: .controlled,
+                                 effect: .standard,
+                                 requiresTest: false,
+                                 outcomes: [.success: [.triggerEvent(id: "cb_droid_evaded_moves_node")]])
         let placeholderDroid = Interactable(id: "cb_corrupted_maintenance_droid",
                                             title: "Corrupted Maintenance Droid",
                                             description: "",
-                                            availableActions: [])
+                                            availableActions: [evade])
         let engineering = MapNode(id: engineeringID,
                                   name: "Engineering",
                                   soundProfile: "",
@@ -408,13 +443,6 @@ final class CardGameTests: XCTestCase {
         vm.gameState.party = [character]
         vm.gameState.characterLocations[character.id.uuidString] = engineeringID
 
-        let evade = ActionOption(name: "Evade",
-                                 actionType: "Finesse",
-                                 position: .controlled,
-                                 effect: .standard,
-                                 requiresTest: false,
-                                 outcomes: [.success: [.triggerEvent(id: "cb_droid_evaded_moves_node")]])
-
         _ = vm.performFreeAction(for: evade, with: character, interactableID: "cb_corrupted_maintenance_droid")
 
         XCTAssertFalse(vm.gameState.dungeon?.nodes[engineeringID.uuidString]?.interactables.contains(where: { $0.id == "cb_corrupted_maintenance_droid" }) ?? true)
@@ -427,6 +455,173 @@ final class CardGameTests: XCTestCase {
         XCTAssertFalse(vm.gameState.dungeon?.nodes[corridorID.uuidString]?.interactables.contains(where: { $0.id == "cb_corrupted_maintenance_droid" }) ?? true)
         XCTAssertTrue(vm.gameState.dungeon?.nodes[quartersID.uuidString]?.interactables.contains(where: { $0.id == "cb_corrupted_maintenance_droid" }) ?? false)
         XCTAssertEqual(vm.gameState.scenarioCounters["cb_droid_relocations"], 2)
+    }
+
+    func testVisibleInteractablesHideConditionGatedActions() throws {
+        let vm = GameViewModel()
+        let nodeID = UUID()
+        let hiddenAction = ActionOption(
+            name: "Open Maintenance Hatch",
+            actionType: "Tinker",
+            position: .controlled,
+            effect: .standard,
+            requiresTest: false,
+            conditions: [GameCondition(type: .scenarioFlagSet, stringParam: "hatch_open")],
+            outcomes: [.success: []]
+        )
+        let inspectAction = ActionOption(
+            name: "Inspect Console",
+            actionType: "Study",
+            position: .controlled,
+            effect: .standard,
+            requiresTest: false,
+            outcomes: [.success: []]
+        )
+        let console = Interactable(
+            id: "maintenance_console",
+            title: "Maintenance Console",
+            description: "",
+            availableActions: [inspectAction, hiddenAction]
+        )
+        let node = MapNode(
+            id: nodeID,
+            name: "Maintenance",
+            soundProfile: "",
+            interactables: [console],
+            connections: []
+        )
+        let character = Character(
+            id: UUID(),
+            name: "Engineer",
+            characterClass: "Engineer",
+            stress: 0,
+            harm: HarmState(),
+            actions: ["Study": 1, "Tinker": 1]
+        )
+        vm.gameState.dungeon = DungeonMap(nodes: [nodeID.uuidString: node], startingNodeID: nodeID)
+        vm.gameState.party = [character]
+        vm.gameState.characterLocations[character.id.uuidString] = nodeID
+
+        XCTAssertEqual(
+            vm.visibleInteractables(for: character.id).first?.availableActions.map(\.name),
+            ["Inspect Console"]
+        )
+
+        vm.gameState.scenarioFlags["hatch_open"] = true
+
+        XCTAssertEqual(
+            Set(vm.visibleInteractables(for: character.id).first?.availableActions.map(\.name) ?? []),
+            Set(["Inspect Console", "Open Maintenance Hatch"])
+        )
+    }
+
+    func testConditionHiddenThreatDoesNotEngageOrBlockMovement() throws {
+        let startID = UUID()
+        let nextID = UUID()
+        let connection = NodeConnection(toNodeID: nextID, description: "Advance")
+        let runtime = ScenarioRuntime()
+        let hiddenThreat = Interactable(
+            id: "lurker",
+            title: "Lurker",
+            description: "",
+            availableActions: [],
+            conditions: [GameCondition(type: .scenarioFlagSet, stringParam: "lurker_awake")],
+            isThreat: true
+        )
+        let character = Character(
+            id: UUID(),
+            name: "Scout",
+            characterClass: "Scout",
+            stress: 0,
+            harm: HarmState(),
+            actions: ["Prowl": 1]
+        )
+        var gameState = GameState(
+            party: [character],
+            dungeon: DungeonMap(
+                nodes: [
+                    startID.uuidString: MapNode(
+                        id: startID,
+                        name: "Passage",
+                        soundProfile: "",
+                        interactables: [hiddenThreat],
+                        connections: [connection]
+                    ),
+                    nextID.uuidString: MapNode(
+                        id: nextID,
+                        name: "Exit",
+                        soundProfile: "",
+                        interactables: [],
+                        connections: []
+                    )
+                ],
+                startingNodeID: startID
+            ),
+            characterLocations: [character.id.uuidString: startID]
+        )
+
+        XCTAssertFalse(runtime.isCharacterEngaged(character.id, in: gameState))
+
+        let outcome = runtime.move(
+            characterID: character.id,
+            to: connection,
+            movingGroupedParty: false,
+            in: &gameState
+        )
+
+        XCTAssertTrue(outcome.didMove)
+        XCTAssertEqual(gameState.characterLocations[character.id.uuidString], nextID)
+    }
+
+    func testPerformFreeActionRejectsStaleConditionGatedAction() throws {
+        let vm = GameViewModel()
+        let nodeID = UUID()
+        let gatedAction = ActionOption(
+            name: "Override Lock",
+            actionType: "Tinker",
+            position: .controlled,
+            effect: .standard,
+            requiresTest: false,
+            conditions: [GameCondition(type: .scenarioFlagSet, stringParam: "override_available")],
+            outcomes: [.success: [.setScenarioFlag("override_fired")]]
+        )
+        let terminal = Interactable(
+            id: "sealed_terminal",
+            title: "Sealed Terminal",
+            description: "",
+            availableActions: [gatedAction]
+        )
+        let node = MapNode(
+            id: nodeID,
+            name: "Security",
+            soundProfile: "",
+            interactables: [terminal],
+            connections: []
+        )
+        let character = Character(
+            id: UUID(),
+            name: "Breaker",
+            characterClass: "Engineer",
+            stress: 0,
+            harm: HarmState(),
+            actions: ["Tinker": 1]
+        )
+        vm.gameState.dungeon = DungeonMap(nodes: [nodeID.uuidString: node], startingNodeID: nodeID)
+        vm.gameState.party = [character]
+        vm.gameState.characterLocations[character.id.uuidString] = nodeID
+        vm.gameState.scenarioFlags["override_available"] = true
+
+        let staleAction = try XCTUnwrap(vm.visibleInteractables(for: character.id).first?.availableActions.first)
+        vm.gameState.scenarioFlags.removeValue(forKey: "override_available")
+
+        let description = vm.performFreeAction(
+            for: staleAction,
+            with: character,
+            interactableID: "sealed_terminal"
+        )
+
+        XCTAssertEqual(description, "That action is no longer available.")
+        XCTAssertNil(vm.gameState.scenarioFlags["override_fired"])
     }
 
     func testPackagedScenariosHaveNoValidationErrors() throws {
@@ -611,6 +806,96 @@ final class CardGameTests: XCTestCase {
         let report = ScenarioValidator().validateScenario(at: fixture.scenarioURL)
         XCTAssertTrue(
             report.warnings.contains(where: { $0.message.contains("possible soft-lock") }),
+            report.formattedDescription
+        )
+    }
+
+    func testScenarioValidatorWarnsOnNegativeLegacyGainStress() throws {
+        let scenarioID = "validator_negative_gain_stress"
+        let fixture = try makeValidatorFixtureRoot(scenarioID: scenarioID)
+        defer { try? FileManager.default.removeItem(at: fixture.rootURL) }
+
+        let action = ActionOption(
+            name: "Steady Yourself",
+            actionType: "Study",
+            position: .controlled,
+            effect: .standard,
+            outcomes: [.success: [.gainStress(-1)]]
+        )
+        let interactable = Interactable(
+            id: "legacy_stress_recovery",
+            title: "Legacy Stress Recovery",
+            description: "",
+            availableActions: [action]
+        )
+        try writeJSON([interactable], to: fixture.scenarioURL.appendingPathComponent("interactables.json"))
+
+        let report = ScenarioValidator().validateScenario(at: fixture.scenarioURL)
+        XCTAssertTrue(
+            report.warnings.contains(where: { $0.message.contains("Negative gainStress is legacy content") }),
+            report.formattedDescription
+        )
+    }
+
+    func testScenarioValidatorRejectsAmbiguousInteractableSpawnForms() throws {
+        let scenarioID = "validator_bad_spawn_forms"
+        let fixture = try makeValidatorFixtureRoot(scenarioID: scenarioID, mapFile: "map.json")
+        defer { try? FileManager.default.removeItem(at: fixture.rootURL) }
+
+        let nodeID = UUID(uuidString: "00000000-0000-0000-0000-000000000301")!
+        var spawnConsequence = Consequence(kind: .addInteractable)
+        spawnConsequence.inNodeID = nodeID
+        spawnConsequence.interactableTemplateID = "spawn_template"
+        spawnConsequence.newInteractable = Interactable(
+            id: "inline_spawn",
+            title: "Inline Spawn",
+            description: "",
+            availableActions: []
+        )
+
+        let action = ActionOption(
+            name: "Trigger Spawn",
+            actionType: "Study",
+            position: .controlled,
+            effect: .standard,
+            outcomes: [.success: [spawnConsequence]]
+        )
+        let map = DungeonMap(
+            nodes: [
+                nodeID.uuidString: MapNode(
+                    id: nodeID,
+                    name: "Entry",
+                    soundProfile: "",
+                    interactables: [
+                        Interactable(
+                            id: "spawn_console",
+                            title: "Spawn Console",
+                            description: "",
+                            availableActions: [action]
+                        )
+                    ],
+                    connections: []
+                )
+            ],
+            startingNodeID: nodeID
+        )
+
+        try writeJSON(map, to: fixture.scenarioURL.appendingPathComponent("map.json"))
+        try writeJSON(
+            [
+                Interactable(
+                    id: "spawn_template",
+                    title: "Spawn Template",
+                    description: "",
+                    availableActions: []
+                )
+            ],
+            to: fixture.scenarioURL.appendingPathComponent("interactables.json")
+        )
+
+        let report = ScenarioValidator().validateScenario(at: fixture.scenarioURL)
+        XCTAssertTrue(
+            report.errors.contains(where: { $0.message.contains("requires exactly one spawn form") }),
             report.formattedDescription
         )
     }
