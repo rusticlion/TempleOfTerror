@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "Authoring/Schemas/harm_families.schema.json",
+  "title": "Scenario Harm Families",
+  "oneOf": [
+    {
+      "type": "array",
+      "items": {
+        "$ref": "./common.schema.json#/$defs/harmFamily"
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "families": {
+          "type": "array",
+          "items": {
+            "$ref": "./common.schema.json#/$defs/harmFamily"
+          }
+        }
+      },
+      "required": [
+        "families"
+      ]
+    }
+  ]
+}

@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=../../Schemas/interactables.schema.json
 hazards:
   - id: tot_loose_flagstones
     title: Loose Flagstones

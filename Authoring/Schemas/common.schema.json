@@ -1,0 +1,728 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "Authoring/Schemas/common.schema.json",
+  "title": "Dice Delver Authoring Common Definitions",
+  "$defs": {
+    "actionType": {
+      "type": "string",
+      "enum": [
+        "Study",
+        "Survey",
+        "Hunt",
+        "Tinker",
+        "Prowl",
+        "Finesse",
+        "Wreck",
+        "Skirmish",
+        "Attune",
+        "Command",
+        "Consort",
+        "Sway"
+      ]
+    },
+    "rollPosition": {
+      "type": "string",
+      "enum": [
+        "controlled",
+        "risky",
+        "desperate"
+      ]
+    },
+    "rollEffect": {
+      "type": "string",
+      "enum": [
+        "limited",
+        "standard",
+        "great"
+      ]
+    },
+    "harmLevel": {
+      "type": "string",
+      "enum": [
+        "lesser",
+        "moderate",
+        "severe"
+      ]
+    },
+    "runOutcome": {
+      "type": "string",
+      "enum": [
+        "victory",
+        "escaped",
+        "defeat"
+      ]
+    },
+    "resistanceAttribute": {
+      "type": "string",
+      "enum": [
+        "insight",
+        "prowess",
+        "resolve"
+      ]
+    },
+    "modifier": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "bonusDice": {
+          "type": "integer"
+        },
+        "improvePosition": {
+          "type": "boolean"
+        },
+        "improveEffect": {
+          "type": "boolean"
+        },
+        "applicableToAction": {
+          "$ref": "#/$defs/actionType"
+        },
+        "applicableActions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/actionType"
+          }
+        },
+        "requiredTag": {
+          "type": "string"
+        },
+        "uses": {
+          "type": "integer"
+        },
+        "isOptionalToApply": {
+          "type": "boolean"
+        },
+        "description": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "description"
+      ]
+    },
+    "penalty": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "const": "reduceEffect"
+            },
+            "requiredTag": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "type"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "const": "increaseStressCost"
+            },
+            "amount": {
+              "type": "integer"
+            },
+            "requiredTag": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "type",
+            "amount"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "enum": [
+                "actionPenalty",
+                "banAction",
+                "actionPositionPenalty",
+                "actionEffectPenalty"
+              ]
+            },
+            "actionType": {
+              "$ref": "#/$defs/actionType"
+            },
+            "requiredTag": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "type",
+            "actionType"
+          ]
+        }
+      ]
+    },
+    "harmTier": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "description": {
+          "type": "string"
+        },
+        "penalty": {
+          "$ref": "#/$defs/penalty"
+        },
+        "boon": {
+          "$ref": "#/$defs/modifier"
+        }
+      },
+      "required": [
+        "description"
+      ]
+    },
+    "harmFamily": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "lesser": {
+          "$ref": "#/$defs/harmTier"
+        },
+        "moderate": {
+          "$ref": "#/$defs/harmTier"
+        },
+        "severe": {
+          "$ref": "#/$defs/harmTier"
+        },
+        "fatal": {
+          "$ref": "#/$defs/harmTier"
+        }
+      },
+      "required": [
+        "id",
+        "lesser",
+        "moderate",
+        "severe",
+        "fatal"
+      ]
+    },
+    "gameCondition": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "requiresMinEffectLevel",
+            "requiresExactEffectLevel",
+            "requiresMinPositionLevel",
+            "requiresExactPositionLevel",
+            "characterHasTreasureId",
+            "partyHasTreasureWithTag",
+            "clockProgress",
+            "scenarioFlagSet",
+            "scenarioCounter"
+          ]
+        },
+        "stringParam": {
+          "type": "string"
+        },
+        "intParam": {
+          "type": "integer"
+        },
+        "intParamMax": {
+          "type": "integer"
+        },
+        "effectParam": {
+          "$ref": "#/$defs/rollEffect"
+        },
+        "positionParam": {
+          "$ref": "#/$defs/rollPosition"
+        }
+      },
+      "required": [
+        "type"
+      ]
+    },
+    "resistanceRule": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "attribute": {
+          "$ref": "#/$defs/resistanceAttribute"
+        },
+        "amount": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "attribute"
+      ]
+    },
+    "choiceOption": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "consequences": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/consequence"
+          }
+        }
+      },
+      "required": [
+        "title",
+        "consequences"
+      ]
+    },
+    "actionOutcomes": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "success": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/consequence"
+          }
+        },
+        "partial": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/consequence"
+          }
+        },
+        "failure": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/consequence"
+          }
+        }
+      }
+    },
+    "actionOption": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "actionType": {
+          "$ref": "#/$defs/actionType"
+        },
+        "position": {
+          "$ref": "#/$defs/rollPosition"
+        },
+        "effect": {
+          "$ref": "#/$defs/rollEffect"
+        },
+        "requiresTest": {
+          "type": "boolean"
+        },
+        "isGroupAction": {
+          "type": "boolean"
+        },
+        "requiredTag": {
+          "type": "string"
+        },
+        "conditions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/gameCondition"
+          }
+        },
+        "outcomes": {
+          "$ref": "#/$defs/actionOutcomes"
+        }
+      },
+      "required": [
+        "name",
+        "actionType",
+        "position",
+        "effect",
+        "outcomes"
+      ]
+    },
+    "interactable": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "availableActions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/actionOption"
+          }
+        },
+        "conditions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/gameCondition"
+          }
+        },
+        "isThreat": {
+          "type": "boolean"
+        },
+        "usableUnderThreat": {
+          "type": "boolean"
+        },
+        "isDisplayOnly": {
+          "type": "boolean"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "description",
+        "availableActions"
+      ]
+    },
+    "consequence": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "gainStress",
+            "adjustStress",
+            "sufferHarm",
+            "tickClock",
+            "unlockConnection",
+            "removeInteractable",
+            "removeSelfInteractable",
+            "removeAction",
+            "addAction",
+            "addInteractable",
+            "addInteractableHere",
+            "gainTreasure",
+            "modifyDice",
+            "createChoice",
+            "triggerEvent",
+            "triggerConsequences",
+            "healHarm",
+            "setScenarioFlag",
+            "clearScenarioFlag",
+            "incrementScenarioCounter",
+            "setScenarioCounter",
+            "endRun"
+          ]
+        },
+        "amount": {
+          "type": "integer"
+        },
+        "level": {
+          "$ref": "#/$defs/harmLevel"
+        },
+        "familyId": {
+          "type": "string"
+        },
+        "clockName": {
+          "type": "string"
+        },
+        "fromNode": {
+          "type": "string"
+        },
+        "toNode": {
+          "type": "string"
+        },
+        "fromNodeID": {
+          "type": "string"
+        },
+        "toNodeID": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        },
+        "actionName": {
+          "type": "string"
+        },
+        "action": {
+          "$ref": "#/$defs/actionOption"
+        },
+        "inNode": {
+          "type": "string"
+        },
+        "inNodeID": {
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "enum": [
+                "current"
+              ]
+            }
+          ]
+        },
+        "interactable": {
+          "$ref": "#/$defs/interactable"
+        },
+        "interactableTemplateID": {
+          "type": "string"
+        },
+        "treasureId": {
+          "type": "string"
+        },
+        "duration": {
+          "type": "string"
+        },
+        "options": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/choiceOption"
+          }
+        },
+        "eventId": {
+          "type": "string"
+        },
+        "consequences": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/consequence"
+          }
+        },
+        "flagId": {
+          "type": "string"
+        },
+        "counterId": {
+          "type": "string"
+        },
+        "runOutcome": {
+          "$ref": "#/$defs/runOutcome"
+        },
+        "runOutcomeText": {
+          "type": "string"
+        },
+        "conditions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/gameCondition"
+          }
+        },
+        "description": {
+          "type": "string"
+        },
+        "resistance": {
+          "$ref": "#/$defs/resistanceRule"
+        }
+      },
+      "required": [
+        "type"
+      ]
+    },
+    "treasure": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "grantedModifier": {
+          "$ref": "#/$defs/modifier"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "description",
+        "grantedModifier"
+      ]
+    },
+    "gameClock": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "segments": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "progress": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "onCompleteConsequences": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/consequence"
+          }
+        },
+        "onTickConsequences": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/consequence"
+          }
+        }
+      },
+      "required": [
+        "name",
+        "segments",
+        "progress"
+      ]
+    },
+    "archetype": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "defaultActions": {
+          "type": "object",
+          "propertyNames": {
+            "$ref": "#/$defs/actionType"
+          },
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "description",
+        "defaultActions"
+      ]
+    },
+    "scenarioEvent": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "conditions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/gameCondition"
+          }
+        },
+        "consequences": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/consequence"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "consequences"
+      ]
+    },
+    "nodeConnection": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "to": {
+          "type": "string"
+        },
+        "toNodeID": {
+          "type": "string"
+        },
+        "isUnlocked": {
+          "type": "boolean"
+        },
+        "description": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "description"
+      ],
+      "anyOf": [
+        {
+          "required": [
+            "to"
+          ]
+        },
+        {
+          "required": [
+            "toNodeID"
+          ]
+        }
+      ]
+    },
+    "mapNode": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "uuid": {
+          "type": "string",
+          "pattern": "^[0-9a-fA-F-]{36}$"
+        },
+        "name": {
+          "type": "string"
+        },
+        "soundProfile": {
+          "type": "string"
+        },
+        "interactables": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/interactable"
+          }
+        },
+        "connections": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/nodeConnection"
+          }
+        },
+        "theme": {
+          "type": "string"
+        },
+        "isDiscovered": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "name",
+        "soundProfile"
+      ]
+    }
+  }
+}

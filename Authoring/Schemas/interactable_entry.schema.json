@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "Authoring/Schemas/interactable_entry.schema.json",
+  "title": "Split Interactable Entry",
+  "type": "object",
+  "properties": {
+    "authoringGroup": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "authoringGroup"
+  ],
+  "allOf": [
+    {
+      "$ref": "./common.schema.json#/$defs/interactable"
+    }
+  ],
+  "unevaluatedProperties": false
+}

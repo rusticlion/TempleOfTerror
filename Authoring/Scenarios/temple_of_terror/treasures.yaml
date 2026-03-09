@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=../../Schemas/treasures.schema.json
 - id: tot_rubbed_tablet
   name: Rubbed Tablet
   description: Charcoal rubbings of the temple's warning glyphs.

@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "Authoring/Schemas/interactables.schema.json",
+  "title": "Scenario Interactables",
+  "oneOf": [
+    {
+      "type": "array",
+      "items": {
+        "$ref": "./common.schema.json#/$defs/interactable"
+      }
+    },
+    {
+      "type": "object",
+      "propertyNames": {
+        "type": "string"
+      },
+      "additionalProperties": {
+        "type": "array",
+        "items": {
+          "$ref": "./common.schema.json#/$defs/interactable"
+        }
+      }
+    }
+  ]
+}

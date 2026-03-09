@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=../../Schemas/clocks.schema.json
 - name: Temple Collapse
   segments: 6
   progress: 0

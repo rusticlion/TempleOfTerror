@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "Authoring/Schemas/map.schema.json",
+  "title": "Scenario Map",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "startingNode": {
+      "type": "string"
+    },
+    "startingNodeID": {
+      "type": "string"
+    },
+    "nodes": {
+      "type": "object",
+      "propertyNames": {
+        "type": "string"
+      },
+      "additionalProperties": {
+        "$ref": "./common.schema.json#/$defs/mapNode"
+      }
+    }
+  },
+  "required": [
+    "nodes"
+  ],
+  "anyOf": [
+    {
+      "required": [
+        "startingNode"
+      ]
+    },
+    {
+      "required": [
+        "startingNodeID"
+      ]
+    }
+  ]
+}

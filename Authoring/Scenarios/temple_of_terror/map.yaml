@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=../../Schemas/map.schema.json
 startingNode: river_landing
 nodes:
   river_landing:

@@ -1,0 +1,9 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "Authoring/Schemas/archetypes.schema.json",
+  "title": "Scenario Archetypes",
+  "type": "array",
+  "items": {
+    "$ref": "./common.schema.json#/$defs/archetype"
+  }
+}

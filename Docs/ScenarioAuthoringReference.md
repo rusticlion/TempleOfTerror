@@ -35,11 +35,26 @@ Current workflow:
 3. Review the generated runtime JSON in `Content/Scenarios/<scenario_id>/`
 4. Run `./Scripts/validate_scenarios.sh`
 
+Preferred one-command authoring check:
+
+```bash
+./Scripts/check_authored_scenarios.sh <scenario_id>
+```
+
+This compiles authored YAML, validates the generated runtime scenario, and refreshes the authored map preview in `Authoring/Previews/` in one pass.
+
+Schema-backed editing:
+
+- YAML source files can point at local schemas under `Authoring/Schemas/` using a `yaml-language-server` modeline comment.
+- The starter templates and current authored scenario files already include those modelines.
+- Editors that support the common YAML language server convention can use them for enum completion, required-field checks, and inline docs.
+
 Current YAML compiler support:
 
 - direct YAML equivalents of `scenario.json`, `archetypes.json`, `clocks.json`, `treasures.json`, `harm_families.json`, and `interactables.json`
 - `map.yaml` with symbolic node ids and symbolic node references
 - optional `events.yaml` or `events/*.yaml`, compiled into `events.json`
+- optional `interactables/*.yaml` split files, compiled into `interactables.json`
 
 `map.yaml` is the only place where authoring sugar exists in v1:
 
@@ -47,6 +62,12 @@ Current YAML compiler support:
 - node keys are symbolic ids
 - `connections[].to`, `fromNode`, `toNode`, and `inNode` compile back into UUID-based runtime fields
 - authors may pin migrated maps to existing UUIDs with a node-local `uuid` field
+
+Split interactable file notes:
+
+- place reusable or focused authored entries under `Authoring/Scenarios/<scenario_id>/interactables/*.yaml`
+- each split interactable file should declare `authoringGroup` so it merges back into the grouped `interactables.json` output
+- scenario-local `interactables.yaml` can still exist alongside split files; the compiler merges both
 
 Required files:
 
@@ -260,6 +281,15 @@ Run for one scenario directory:
 ./Scripts/validate_scenarios.sh Content/Scenarios/<scenario_id>
 ```
 
+Compile and validate authored scenarios in one step:
+
+```bash
+./Scripts/check_authored_scenarios.sh
+./Scripts/check_authored_scenarios.sh <scenario_id>
+```
+
+This also refreshes `Authoring/Previews/<scenario_id>_map_preview.md` for authored fixed-map scenarios.
+
 Validator highlights:
 
 - schema/required-field errors
@@ -270,6 +300,48 @@ Validator highlights:
 - flag/counter reads without writes
 
 Errors block content; warnings are design-quality signals.
+
+## Guided Authoring Tools
+
+Create a new scenario skeleton:
+
+```bash
+./Scripts/scaffold_authoring.rb scenario shadow_of_a_doubt "Shadow of a Doubt"
+```
+
+Add a split event file:
+
+```bash
+./Scripts/scaffold_authoring.rb event temple_of_terror tot_idol_stirs
+```
+
+Add a split interactable file:
+
+```bash
+./Scripts/scaffold_authoring.rb interactable temple_of_terror tot_collapsing_bridge --group hazards --action-type Finesse
+```
+
+Append a node stub to `map.yaml`:
+
+```bash
+./Scripts/scaffold_authoring.rb node temple_of_terror idol_vault "Idol Vault"
+```
+
+Generate or refresh the authored map/content preview:
+
+```bash
+./Scripts/preview_authored_map.rb temple_of_terror
+```
+
+The generated preview includes:
+
+- scenario manifest summary
+- content-surface counts (archetypes, shared interactables, clocks, treasures, harm families, events)
+- fixed-map reachability summary
+- a Mermaid diagram of authored connections
+- per-node interactable and connection counts
+
+The scaffold script is backed by starter files in `Authoring/Templates/`.
 
 ## Author Tooling (Local Playtest)
 
@@ -303,6 +375,7 @@ Explicitly deferred from authoring contract:
    - fixed map file + `mapFile`, or
    - `interactables.json` for procgen.
 4. Add optional `events.json`, `clocks.json`, `treasures.json`, scenario-local `harm_families.json`.
-5. Validate with `./Scripts/validate_scenarios.sh Content/Scenarios/<scenario_id>`.
-6. Launch the app and branch-test with Author Tools.
-7. Resolve validator errors, then review warnings before content sign-off.
+5. Prefer `./Scripts/check_authored_scenarios.sh <scenario_id>` while authoring.
+6. Generate `./Scripts/preview_authored_map.rb <scenario_id>` when iterating on map structure, or rely on `check_authored_scenarios.sh` to refresh it automatically.
+7. Launch the app and branch-test with Author Tools.
+8. Resolve validator errors, then review warnings before content sign-off.

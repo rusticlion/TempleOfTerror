@@ -1,0 +1,22 @@
+# yaml-language-server: $schema=../../../Schemas/interactable_entry.schema.json
+authoringGroup: <%= group %>
+id: <%= interactable_id %>
+title: <%= title %>
+description: <%= description %>
+availableActions:
+  - name: Inspect it carefully
+    actionType: <%= action_type %>
+    position: risky
+    effect: standard
+    outcomes:
+      success:
+        - type: removeInteractable
+          id: self
+      partial:
+        - type: gainStress
+          amount: 1
+        - type: removeInteractable
+          id: self
+      failure:
+        - type: gainStress
+          amount: 1

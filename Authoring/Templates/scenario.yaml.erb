@@ -1,0 +1,12 @@
+# yaml-language-server: $schema=../../Schemas/scenario.schema.json
+id: <%= scenario_id %>
+title: <%= title %>
+description: <%= description %>
+entryNode: <%= starting_node_name %>
+mapFile: map_<%= scenario_id %>.json
+partySize: <%= party_size %>
+nativeArchetypeIDs:
+  - explorer
+  - scout
+  - scholar
+stressOverflowHarmFamilyID: mental_fraying

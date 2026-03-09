@@ -6,8 +6,16 @@ struct ScenarioValidationRunner {
         let args = CommandLine.arguments.dropFirst()
         let scenarioRootPath = args.first ?? defaultScenarioRootPath()
         let rootURL = URL(fileURLWithPath: scenarioRootPath, isDirectory: true)
+        let fileManager = FileManager.default
+        let scenarioJSONURL = rootURL.appendingPathComponent("scenario.json", isDirectory: false)
+        let reports: [ScenarioValidationReport]
 
-        let reports = ScenarioValidator().validateAllScenarios(at: rootURL)
+        if fileManager.fileExists(atPath: scenarioJSONURL.path) {
+            reports = [ScenarioValidator().validateScenario(at: rootURL)]
+        } else {
+            reports = ScenarioValidator().validateAllScenarios(at: rootURL)
+        }
+
         if reports.isEmpty {
             fputs("No scenarios found at \(rootURL.path)\n", stderr)
             exit(1)
@@ -21,6 +29,11 @@ struct ScenarioValidationRunner {
             print("---")
             errorCount += report.errors.count
             warningCount += report.warnings.count
+        }
+
+        if reports.count == 1, let report = reports.first, report.issues.isEmpty {
+            print(report.formattedDescription)
+            print("---")
         }
 
         print("Validation complete: \(reports.count) scenario(s), \(errorCount) error(s), \(warningCount) warning(s).")

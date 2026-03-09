@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=../../Schemas/harm_families.schema.json
 families:
   - id: head_trauma
     lesser:

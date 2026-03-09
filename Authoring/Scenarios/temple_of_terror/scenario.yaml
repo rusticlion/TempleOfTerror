@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=../../Schemas/scenario.schema.json
 id: temple_of_terror
 title: Temple of Terror
 description: Lead a 1970s expedition into a trap-laden tomb in search of a sun idol before curses and collapse claim the party.

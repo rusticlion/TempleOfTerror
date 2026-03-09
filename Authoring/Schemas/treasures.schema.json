@@ -1,0 +1,9 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "Authoring/Schemas/treasures.schema.json",
+  "title": "Scenario Treasures",
+  "type": "array",
+  "items": {
+    "$ref": "./common.schema.json#/$defs/treasure"
+  }
+}

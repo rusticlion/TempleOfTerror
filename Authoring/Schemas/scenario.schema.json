@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "Authoring/Schemas/scenario.schema.json",
+  "title": "Scenario Manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "entryNode": {
+      "type": "string"
+    },
+    "mapFile": {
+      "type": "string"
+    },
+    "partySize": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "nativeArchetypeIDs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "stressOverflowHarmFamilyID": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "id",
+    "title",
+    "description"
+  ]
+}

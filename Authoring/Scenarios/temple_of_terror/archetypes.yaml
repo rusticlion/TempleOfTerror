@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=../../Schemas/archetypes.schema.json
 - id: archaeologist
   name: Archaeologist
   description: Reads ruins, relics, and the ambitions of those reckless enough to disturb them.

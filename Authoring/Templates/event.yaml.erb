@@ -1,0 +1,7 @@
+# yaml-language-server: $schema=../../../Schemas/event.schema.json
+id: <%= event_id %>
+description: <%= description %>
+conditions: []
+consequences:
+  - type: setScenarioFlag
+    flagId: <%= event_id %>_resolved

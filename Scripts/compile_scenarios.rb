@@ -14,11 +14,11 @@ class ScenarioCompiler
     "archetypes.yaml" => "archetypes.json",
     "clocks.yaml" => "clocks.json",
     "treasures.yaml" => "treasures.json",
-    "harm_families.yaml" => "harm_families.json",
-    "interactables.yaml" => "interactables.json"
+    "harm_families.yaml" => "harm_families.json"
   }.freeze
 
   EVENT_GLOB = "*.{yaml,yml}".freeze
+  INTERACTABLE_GLOB = "*.{yaml,yml}".freeze
   UUID_PATTERN = /\A[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\z/i.freeze
   NODE_REF_KEYS = {
     "fromNode" => "fromNodeID",
@@ -45,23 +45,42 @@ class ScenarioCompiler
 
     output_dir = File.join(content_root, scenario_id)
     FileUtils.mkdir_p(output_dir)
+    previous_manifest = load_existing_json_object(File.join(output_dir, "scenario.json"))
+    scenario_document = nil
 
     DIRECT_DOCUMENTS.each do |source_name, output_name|
       source_path = File.join(source_dir, source_name)
-      next unless File.file?(source_path)
+      output_path = File.join(output_dir, output_name)
 
-      write_json(File.join(output_dir, output_name), deep_stringify(load_yaml(source_path)))
+      unless File.file?(source_path)
+        remove_generated_file(output_path)
+        next
+      end
+
+      document = deep_stringify(load_yaml(source_path))
+      scenario_document = document if source_name == "scenario.yaml"
+      write_json(output_path, document)
     end
 
-    node_lookup = compile_map(source_dir, output_dir, scenario_id)
+    compile_interactables(source_dir, output_dir)
+    node_lookup = compile_map(source_dir, output_dir, scenario_id, scenario_document, previous_manifest)
     compile_events(source_dir, output_dir, node_lookup)
 
     puts "Compiled #{scenario_id}"
   end
 
-  def compile_map(source_dir, output_dir, scenario_id)
+  def compile_map(source_dir, output_dir, scenario_id, scenario_document, previous_manifest)
     source_path = find_yaml_file(source_dir, "map")
-    return {} unless source_path
+    output_name = map_output_name(scenario_document, scenario_id)
+    output_path = File.join(output_dir, output_name)
+    stale_map_paths(output_dir, scenario_id, previous_manifest, output_name).each do |stale_path|
+      remove_generated_file(stale_path)
+    end
+
+    unless source_path
+      remove_generated_file(output_path)
+      return {}
+    end
 
     authored_map = deep_stringify(load_yaml(source_path))
     nodes = authored_map["nodes"]
@@ -92,7 +111,7 @@ class ScenarioCompiler
       "nodes" => compiled_nodes
     }
 
-    write_json(File.join(output_dir, map_output_name(source_dir, scenario_id)), compiled_map)
+    write_json(output_path, compiled_map)
     node_lookup
   end
 
@@ -113,6 +132,7 @@ class ScenarioCompiler
 
   def compile_events(source_dir, output_dir, node_lookup)
     event_sources = []
+    output_path = File.join(output_dir, "events.json")
 
     inline_path = find_yaml_file(source_dir, "events")
     if inline_path
@@ -123,9 +143,36 @@ class ScenarioCompiler
       event_sources.concat(normalize_event_collection(load_yaml(event_path), event_path))
     end
 
-    return if event_sources.empty?
+    if event_sources.empty?
+      remove_generated_file(output_path)
+      return
+    end
 
-    write_json(File.join(output_dir, "events.json"), transform_node_refs(event_sources, node_lookup, "#{source_dir}/events"))
+    write_json(output_path, transform_node_refs(event_sources, node_lookup, "#{source_dir}/events"))
+  end
+
+  def compile_interactables(source_dir, output_dir)
+    output_path = File.join(output_dir, "interactables.json")
+    inline_path = find_yaml_file(source_dir, "interactables")
+    file_paths = Dir[File.join(source_dir, "interactables", INTERACTABLE_GLOB)].sort
+
+    if inline_path.nil? && file_paths.empty?
+      remove_generated_file(output_path)
+      return
+    end
+
+    accumulator = init_interactable_accumulator(inline_path && deep_stringify(load_yaml(inline_path)), inline_path)
+
+    file_paths.each do |interactable_path|
+      merge_interactable_document(
+        accumulator,
+        deep_stringify(load_yaml(interactable_path)),
+        interactable_path,
+        from_split_file: true
+      )
+    end
+
+    write_json(output_path, finalize_interactables(accumulator))
   end
 
   def normalize_event_collection(document, source_path)
@@ -145,10 +192,7 @@ class ScenarioCompiler
 
     nodes.each do |symbolic_id, raw_node|
       node = deep_stringify(raw_node || {})
-      uuid = (node["uuid"] || stable_uuid(scenario_id, symbolic_id.to_s)).to_s
-      unless uuid.match?(UUID_PATTERN)
-        raise CompilationError, "#{source_path}: nodes.#{symbolic_id}.uuid is not a valid UUID: #{uuid}"
-      end
+      uuid = canonical_uuid_string(node["uuid"] || stable_uuid(scenario_id, symbolic_id.to_s), "#{source_path}: nodes.#{symbolic_id}.uuid")
       if reverse_lookup.key?(uuid)
         raise CompilationError, "#{source_path} assigns UUID #{uuid} to both #{reverse_lookup.fetch(uuid)} and #{symbolic_id}"
       end
@@ -186,18 +230,22 @@ class ScenarioCompiler
 
   def resolve_node_ref(raw_value, node_lookup, context)
     value = raw_value.to_s
-    return value if value.match?(UUID_PATTERN)
+    return canonical_uuid_string(value, context) if value.match?(UUID_PATTERN)
     return node_lookup.fetch(value) if node_lookup.key?(value)
 
     raise CompilationError, "Unknown node reference #{value.inspect} at #{context}"
   end
 
-  def map_output_name(source_dir, scenario_id)
-    scenario_path = find_yaml_file(source_dir, "scenario")
-    return "map_#{scenario_id}.json" unless scenario_path
+  def map_output_name(scenario_document, scenario_id)
+    scenario_document&.fetch("mapFile", nil) || "map_#{scenario_id}.json"
+  end
 
-    scenario = deep_stringify(load_yaml(scenario_path))
-    scenario["mapFile"] || "map_#{scenario_id}.json"
+  def stale_map_paths(output_dir, scenario_id, previous_manifest, current_output_name)
+    previous_output_name = previous_manifest&.fetch("mapFile", nil) || "map_#{scenario_id}.json"
+    candidate_names = [previous_output_name, "map_#{scenario_id}.json"].uniq
+    candidate_names
+      .reject { |name| name == current_output_name }
+      .map { |name| File.join(output_dir, name) }
   end
 
   def authored_scenarios
@@ -254,10 +302,140 @@ class ScenarioCompiler
     ].join("-")
   end
 
+  def canonical_uuid_string(raw_value, context)
+    value = raw_value.to_s
+    unless value.match?(UUID_PATTERN)
+      raise CompilationError, "#{context} is not a valid UUID: #{value}"
+    end
+
+    value.upcase
+  end
+
   def find_yaml_file(directory, basename)
     [".yaml", ".yml"]
       .map { |extension| File.join(directory, "#{basename}#{extension}") }
       .find { |candidate| File.file?(candidate) }
+  end
+
+  def init_interactable_accumulator(document, source_path)
+    accumulator = {
+      mode: nil,
+      array: [],
+      groups: {}
+    }
+
+    return accumulator if document.nil?
+
+    merge_interactable_document(accumulator, document, source_path, from_split_file: false)
+    accumulator
+  end
+
+  def merge_interactable_document(accumulator, document, source_path, from_split_file:)
+    case document
+    when Array
+      document.each_with_index do |entry, index|
+        merge_interactable_document(
+          accumulator,
+          deep_stringify(entry || {}),
+          "#{source_path}[#{index}]",
+          from_split_file: from_split_file
+        )
+      end
+    when Hash
+      if interactable_groups_hash?(document)
+        ensure_interactable_mode(accumulator, :groups, source_path)
+        document.each do |group_name, entries|
+          Array(entries).each_with_index do |entry, index|
+            merge_grouped_interactable_entry(
+              accumulator,
+              group_name.to_s,
+              deep_stringify(entry || {}),
+              "#{source_path}.#{group_name}[#{index}]",
+              allow_authoring_group: from_split_file
+            )
+          end
+        end
+      else
+        merge_single_interactable_entry(accumulator, document, source_path, from_split_file: from_split_file)
+      end
+    else
+      raise CompilationError, "#{source_path} must contain an interactable object, array, or grouped collection"
+    end
+  end
+
+  def merge_single_interactable_entry(accumulator, document, source_path, from_split_file:)
+    entry = deep_stringify(document)
+    group_name = (entry.delete("authoringGroup") || entry.delete("group"))&.to_s
+
+    if group_name
+      ensure_interactable_mode(accumulator, :groups, source_path)
+      merge_grouped_interactable_entry(
+        accumulator,
+        group_name,
+        entry,
+        source_path,
+        allow_authoring_group: false
+      )
+      return
+    end
+
+    if accumulator[:mode] == :groups && from_split_file
+      raise CompilationError, "#{source_path} must set authoringGroup when the scenario uses grouped interactables"
+    end
+
+    ensure_interactable_mode(accumulator, :array, source_path)
+    accumulator[:array] << entry
+  end
+
+  def merge_grouped_interactable_entry(accumulator, group_name, entry, source_path, allow_authoring_group:)
+    sanitized_entry = deep_stringify(entry)
+    if sanitized_entry.key?("authoringGroup") || sanitized_entry.key?("group")
+      unless allow_authoring_group
+        raise CompilationError, "#{source_path} may not nest authoringGroup inside a grouped interactable entry"
+      end
+      sanitized_entry.delete("authoringGroup")
+      sanitized_entry.delete("group")
+    end
+
+    accumulator[:groups][group_name] ||= []
+    accumulator[:groups][group_name] << sanitized_entry
+  end
+
+  def interactable_groups_hash?(document)
+    return false if document.key?("id") || document.key?("title") || document.key?("availableActions")
+
+    document.values.all? { |value| value.is_a?(Array) }
+  end
+
+  def ensure_interactable_mode(accumulator, desired_mode, source_path)
+    return accumulator[:mode] = desired_mode if accumulator[:mode].nil?
+    return if accumulator[:mode] == desired_mode
+
+    raise CompilationError, "#{source_path} mixes flat interactable arrays with grouped interactable collections"
+  end
+
+  def finalize_interactables(accumulator)
+    case accumulator[:mode]
+    when :array
+      accumulator[:array]
+    when :groups
+      accumulator[:groups]
+    else
+      []
+    end
+  end
+
+  def load_existing_json_object(path)
+    return nil unless File.file?(path)
+
+    document = JSON.parse(File.read(path))
+    document.is_a?(Hash) ? document : nil
+  rescue JSON::ParserError
+    nil
+  end
+
+  def remove_generated_file(path)
+    FileUtils.rm_f(path)
   end
 
   def authoring_root
