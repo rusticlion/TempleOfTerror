@@ -8,18 +8,20 @@ struct PendingRoll: Identifiable {
 
 struct ContentView: View {
     @StateObject private var viewModel: GameViewModel
+    @StateObject private var guidanceStore = GuidanceStore()
     @State private var pendingRoll: PendingRoll?
     @State private var selectedCharacterID: UUID? // Track selected character
     @State private var showingStatusSheet = false // Controls the party sheet
     @State private var showingMap = false // Controls the map sheet
     @State private var showingCharacterSheet = false // Controls the character drawer
+    @State private var showingQuickReference = false
     @State private var doorProgress: CGFloat = 0 // For sliding door transition
 #if DEBUG
     @State private var showingDebugTools = false
 #endif
     @Environment(\.scenePhase) private var scenePhase
 
-    init(scenario: String = "tomb", partyPlan: PartyBuildPlan? = nil) {
+    init(scenario: String = RuntimeDefaults.defaultScenarioID, partyPlan: PartyBuildPlan? = nil) {
         // Start a new game using the provided scenario
         let vm = GameViewModel(startNewWithScenario: scenario, partyPlan: partyPlan)
         _viewModel = StateObject(wrappedValue: vm)
@@ -45,6 +47,15 @@ struct ContentView: View {
         )
     }
 
+    private var selectedCharacterLocationName: String? {
+        guard let selectedCharacter else { return nil }
+        return characterLocationNames[selectedCharacter.id]
+    }
+
+    private var isPartySplit: Bool {
+        viewModel.isPartyActuallySplit()
+    }
+
     private var gameOverTitle: String {
         switch viewModel.gameState.runOutcome {
         case .victory:
@@ -60,7 +71,7 @@ struct ContentView: View {
         if let text = viewModel.gameState.runOutcomeText, !text.isEmpty {
             return text
         }
-        return "The tomb claims another party."
+        return RuntimeDefaults.genericDefeatText
     }
 
     private var movementButtonTitle: String {
@@ -69,6 +80,50 @@ struct ContentView: View {
 
     private var visibleClocks: [GameClock] {
         viewModel.gameState.activeClocks.filter { $0.progress > 0 }
+    }
+
+    private var contextualBanner: (style: InRunBannerStyle, title: String, message: String) {
+        if viewModel.isCharacterEngaged(selectedCharacterID) {
+            return (
+                .threat,
+                "Threat In Play",
+                "This explorer cannot leave until the danger in this room is handled."
+            )
+        }
+
+        if viewModel.partyMovementMode == .solo, isPartySplit {
+            let location = selectedCharacterLocationName ?? "their current room"
+            return (
+                .split,
+                "Split Party",
+                "Only the selected explorer will move. \(selectedCharacter?.name ?? "They") is currently at \(location)."
+            )
+        }
+
+        if viewModel.partyMovementMode == .solo {
+            return (
+                .neutral,
+                "Scout Mode",
+                "Only the selected explorer will move when you choose a path."
+            )
+        }
+
+        return (
+            .neutral,
+            "Traveling Together",
+            "All active explorers move as one party. Choose who should handle this room."
+        )
+    }
+
+    private var contextualHintID: InRunHintID? {
+        switch contextualBanner.style {
+        case .threat:
+            return .threatLock
+        case .split:
+            return .splitParty
+        case .neutral:
+            return nil
+        }
     }
 
     private var showingPendingResolution: Binding<Bool> {
@@ -114,16 +169,51 @@ struct ContentView: View {
 
                 ScrollView {
                     VStack(alignment: .leading, spacing: 16) {
-                        ClocksView(
-                            clocks: visibleClocks,
-                            title: "Active Clocks",
-                            prominent: true
+                        if let selectedCharacter {
+                            SelectedCharacterSummaryStrip(
+                                character: selectedCharacter,
+                                locationName: selectedCharacterLocationName,
+                                showLocation: isPartySplit
+                            )
+                        }
+
+                        if !visibleClocks.isEmpty {
+                            CondensedClockPanel(clocks: visibleClocks) {
+                                showingQuickReference = true
+                            }
+
+                            if guidanceStore.shouldShow(.activeClocks) {
+                                GuidanceHintCard(
+                                    hintID: .activeClocks,
+                                    title: "Clocks Track Pressure",
+                                    message: "Clocks show danger building or objectives progressing. Full clocks usually trigger an authored turn in the scenario.",
+                                    onDismiss: { guidanceStore.dismiss(.activeClocks) },
+                                    onOpenReference: { showingQuickReference = true }
+                                )
+                            }
+                        }
+
+                        ContextualInfoBanner(
+                            style: contextualBanner.style,
+                            title: contextualBanner.title,
+                            message: contextualBanner.message
                         )
+
+                        if let hintID = contextualHintID, guidanceStore.shouldShow(hintID) {
+                            GuidanceHintCard(
+                                hintID: hintID,
+                                title: hintID == .threatLock ? "Threats Lock Movement" : "Split Movement Changes Travel",
+                                message: hintID == .threatLock
+                                    ? "When a threat is active here, this explorer must deal with it before moving on."
+                                    : "When the party is split, path choices only move the selected explorer instead of the whole group.",
+                                onDismiss: { guidanceStore.dismiss(hintID) },
+                                onOpenReference: { showingQuickReference = true }
+                            )
+                        }
 
                         if let node = viewModel.node(for: selectedCharacterID) {
                             VStack(alignment: .leading, spacing: 16) {
                                 let items = viewModel.visibleInteractables(for: selectedCharacterID)
-                                let isEngaged = viewModel.isCharacterEngaged(selectedCharacterID)
 
                                 let vm = viewModel
                                 ForEach(items, id: \.id) { interactable in
@@ -142,20 +232,7 @@ struct ContentView: View {
                                     .transition(.scale(scale: 0.9).combined(with: .opacity))
                                 }
 
-                                if isEngaged {
-                                    Text("Threat in play. You can't leave this node until the danger here is dealt with.")
-                                        .font(Theme.systemFont(size: 12, weight: .medium))
-                                        .foregroundColor(Theme.danger)
-                                        .padding(.horizontal, 12)
-                                        .padding(.vertical, 10)
-                                        .frame(maxWidth: .infinity, alignment: .leading)
-                                        .background(Theme.danger.opacity(0.08))
-                                        .clipShape(RoundedRectangle(cornerRadius: 8))
-                                        .overlay(
-                                            RoundedRectangle(cornerRadius: 8)
-                                                .stroke(Theme.danger.opacity(0.25), lineWidth: 1)
-                                        )
-                                } else {
+                                if !viewModel.isCharacterEngaged(selectedCharacterID) {
                                     Divider()
 
                                     NodeConnectionsView(currentNode: viewModel.node(for: selectedCharacterID)) { connection in
@@ -215,7 +292,7 @@ struct ContentView: View {
                     .padding(.horizontal)
                     .padding(.top, 8)
                     .padding(.bottom, 10)
-                    .background(Theme.leather)
+                    .background(Theme.leather.opacity(0.92))
                     .overlay(alignment: .top) {
                         Rectangle()
                             .fill(Theme.leatherLight)
@@ -269,22 +346,23 @@ struct ContentView: View {
                 .background(Theme.toolbarBackground)
                 .animation(.easeInOut, value: showingCharacterSheet)
             }
-            .disabled(viewModel.gameState.status == .gameOver)
-            .sheet(item: $pendingRoll) { pending in
-                if let character = selectedCharacter {
-                    let clockID = viewModel.gameState.activeClocks.first?.id
-                    DiceRollView(viewModel: viewModel,
-                                 action: pending.action,
-                                 character: character,
-                                 clockID: clockID,
-                                 interactableID: pending.interactableID)
-                } else {
+                .disabled(viewModel.gameState.status == .gameOver)
+                .sheet(item: $pendingRoll) { pending in
+                    if let character = selectedCharacter {
+                        let clockID = viewModel.gameState.activeClocks.first?.id
+                        DiceRollView(viewModel: viewModel,
+                                     guidanceStore: guidanceStore,
+                                     action: pending.action,
+                                     character: character,
+                                     clockID: clockID,
+                                     interactableID: pending.interactableID)
+                    } else {
                     Text("No action selected")
                 }
-            }
-            .sheet(isPresented: showingPendingResolution) {
-                PendingResolutionView(viewModel: viewModel)
-            }
+                }
+                .sheet(isPresented: showingPendingResolution) {
+                    PendingResolutionView(viewModel: viewModel, guidanceStore: guidanceStore)
+                }
 
             SlidingDoor(progress: doorProgress)
 
@@ -326,10 +404,15 @@ struct ContentView: View {
         .sheet(isPresented: $showingMap) {
             MapView(viewModel: viewModel)
         }
+        .sheet(isPresented: $showingQuickReference) {
+            QuickReferenceSheetView()
+                .presentationDetents([.medium, .large])
+        }
 #if DEBUG
         .sheet(isPresented: $showingDebugTools) {
             DebugToolsView(
                 viewModel: viewModel,
+                guidanceStore: guidanceStore,
                 selectedCharacterID: $selectedCharacterID
             )
             .presentationDetents([.large])
@@ -342,21 +425,24 @@ struct ContentView: View {
         }
         .navigationBarBackButtonHidden(true)
         .toolbar {
-            ToolbarItem(placement: .automatic) {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button {
+                    showingQuickReference = true
+                } label: {
+                    Image(systemName: "questionmark.circle")
+                        .foregroundColor(Theme.parchmentDark)
+                }
+            }
 #if DEBUG
+            ToolbarItem(placement: .navigationBarTrailing) {
                 Button {
                     showingDebugTools = true
                 } label: {
                     Image(systemName: "wrench.and.screwdriver.fill")
                         .foregroundColor(Theme.parchmentDark)
                 }
-#else
-                Button(action: {}) {
-                    Image(systemName: "gearshape")
-                        .foregroundColor(Theme.parchmentDark)
-                }
-#endif
             }
+#endif
         }
     }
 }
@@ -382,8 +468,8 @@ private struct BottomToolbarButtonLabel: View {
         .foregroundColor(Theme.parchmentDark)
         .frame(maxWidth: .infinity)
         .padding(.horizontal, 10)
-        .padding(.vertical, 8)
-        .background(Theme.leatherLight.opacity(0.5))
+        .padding(.vertical, 7)
+        .background(Theme.leatherLight.opacity(0.34))
         .clipShape(Capsule())
         .overlay(Capsule().stroke(Theme.inkFaded.opacity(0.3), lineWidth: 1))
     }
@@ -391,7 +477,9 @@ private struct BottomToolbarButtonLabel: View {
 
 struct PendingResolutionView: View {
     @ObservedObject var viewModel: GameViewModel
+    @ObservedObject var guidanceStore: GuidanceStore
     @Environment(\.dismiss) private var dismiss
+    @State private var showingQuickReference = false
 
     private var canDismiss: Bool {
         viewModel.gameState.pendingResolution?.isAwaitingDecision != true
@@ -429,7 +517,11 @@ struct PendingResolutionView: View {
                 ResolutionNarrativeView(text: viewModel.pendingResolutionText())
 
                 if viewModel.gameState.pendingResolution?.isAwaitingDecision == true {
-                    ResolutionDecisionCard(viewModel: viewModel)
+                    ResolutionDecisionCard(
+                        viewModel: viewModel,
+                        guidanceStore: guidanceStore,
+                        onOpenReference: { showingQuickReference = true }
+                    )
                 }
 
                 Button("Done") {
@@ -450,6 +542,10 @@ struct PendingResolutionView: View {
             .padding(30)
         }
         .interactiveDismissDisabled(!canDismiss)
+        .sheet(isPresented: $showingQuickReference) {
+            QuickReferenceSheetView()
+                .presentationDetents([.medium, .large])
+        }
     }
 }
 
@@ -487,22 +583,22 @@ struct PartyMovementStatusView: View {
     private var title: String {
         switch viewModel.partyMovementMode {
         case .grouped:
-            return "Moving Together"
+            return "Together"
         case .solo where viewModel.isPartyActuallySplit():
             return "Split Up"
         case .solo:
-            return "Independent Movement"
+            return "Scout Mode"
         }
     }
 
     private var subtitle: String {
         switch viewModel.partyMovementMode {
         case .grouped:
-            return "All active explorers travel as one party."
+            return "All active explorers move together."
         case .solo where viewModel.isPartyActuallySplit():
-            return "The party is spread across \(locationGroups.count) rooms."
+            return "\(locationGroups.count) rooms currently occupied."
         case .solo:
-            return "Pick one explorer to move without dragging the rest along."
+            return "Only the selected explorer will move."
         }
     }
 
@@ -556,7 +652,7 @@ struct PartyMovementStatusView: View {
                 }
             }
 
-            if viewModel.partyMovementMode == .solo {
+            if viewModel.partyMovementMode == .solo && viewModel.isPartyActuallySplit() {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 8) {
                         ForEach(locationGroups) { group in
@@ -585,14 +681,14 @@ struct PartyMovementStatusView: View {
             }
         }
         .padding(.horizontal, 12)
-        .padding(.vertical, 10)
+        .padding(.vertical, 8)
         .background(
             RoundedRectangle(cornerRadius: 14)
-                .fill(Theme.leatherLight.opacity(0.55))
+                .fill(Theme.leatherLight.opacity(0.38))
         )
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Theme.parchmentDeep.opacity(0.18), lineWidth: 1)
+                .stroke(Theme.parchmentDeep.opacity(0.14), lineWidth: 1)
         )
     }
 }
@@ -618,6 +714,7 @@ struct SlidingDoor: View {
 #if DEBUG
 struct DebugToolsView: View {
     @ObservedObject var viewModel: GameViewModel
+    @ObservedObject var guidanceStore: GuidanceStore
     @Binding var selectedCharacterID: UUID?
     @Environment(\.dismiss) private var dismiss
 
@@ -728,6 +825,13 @@ struct DebugToolsView: View {
                             Text("\(clock.name): \(clock.progress)/\(clock.segments)")
                                 .font(Theme.systemFont(size: 12))
                         }
+                    }
+                }
+
+                Section("Guidance") {
+                    Button("Reset In-Run Hints") {
+                        guidanceStore.debugResetHints()
+                        statusMessage = "Guidance hints reset."
                     }
                 }
 

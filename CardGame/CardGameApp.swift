@@ -35,6 +35,7 @@ private struct DebugLaunchConfiguration {
 
     enum State: String {
         case fresh
+        case pressure
         case solo
         case split
     }
@@ -90,6 +91,11 @@ private struct DebugLaunchRootView: View {
         switch state {
         case .fresh:
             break
+        case .pressure:
+            if !viewModel.gameState.activeClocks.isEmpty {
+                let progress = max(1, min(2, viewModel.gameState.activeClocks[0].segments))
+                viewModel.gameState.activeClocks[0].progress = progress
+            }
         case .solo:
             viewModel.partyMovementMode = .solo
         case .split:
@@ -99,6 +105,11 @@ private struct DebugLaunchRootView: View {
                let connection = node.connections.first(where: \.isUnlocked) ?? node.connections.first {
                 viewModel.move(characterID: characterID, to: connection)
             }
+        }
+
+        if let fixedDice = ProcessInfo.processInfo.environment["CODEX_DEBUG_FIXED_DICE"],
+           viewModel.setDebugFixedDice(from: fixedDice) {
+            viewModel.debugFixedDiceEnabled = true
         }
 
         return viewModel

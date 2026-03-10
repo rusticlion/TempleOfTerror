@@ -46,6 +46,7 @@
 		47F900A12E1A000100BEEF00 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47F900B12E1A000100BEEF00 /* Theme.swift */; };
 		47F900A22E1A000100BEEF00 /* Fonts in Resources */ = {isa = PBXBuildFile; fileRef = 47F900B22E1A000100BEEF00 /* Fonts */; };
 		47F900A32E1A000100BEEF00 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 47F900B32E1A000100BEEF00 /* LaunchScreen.storyboard */; };
+		48A100022E70000100A1B2C3 /* InRunUXSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 48A100012E70000100A1B2C3 /* InRunUXSupport.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -116,6 +117,7 @@
 		47F900B12E1A000100BEEF00 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 		47F900B22E1A000100BEEF00 /* Fonts */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Fonts; sourceTree = "<group>"; };
 		47F900B32E1A000100BEEF00 /* LaunchScreen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
+		48A100012E70000100A1B2C3 /* InRunUXSupport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InRunUXSupport.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -188,6 +190,7 @@
 				46A9D2282DE7D14C00FE459E /* HeaderView.swift */,
 				460D62992DE7BD4200D50D0C /* NodeConnectionsView.swift */,
 				460D62972DE7B4A400D50D0C /* DiceRollView.swift */,
+				48A100012E70000100A1B2C3 /* InRunUXSupport.swift */,
 				46D0A0022DF9EE0000FF1111 /* SceneKitDiceView.swift */,
 				46D0A0042DF9EE0000FF1111 /* DieNode.swift */,
 				460D62952DE7B39400D50D0C /* InteractableCardView.swift */,
@@ -407,6 +410,7 @@
 				460D62942DE7B24600D50D0C /* CharacterSelectorView.swift in Sources */,
 				460D62902DE7AA3900D50D0C /* Models.swift in Sources */,
 				460D62982DE7B4A400D50D0C /* DiceRollView.swift in Sources */,
+				48A100022E70000100A1B2C3 /* InRunUXSupport.swift in Sources */,
 				46D0A0012DF9EE0000FF1111 /* SceneKitDiceView.swift in Sources */,
 				46D0A0032DF9EE0000FF1111 /* DieNode.swift in Sources */,
 				460D62912DE7AA3900D50D0C /* PartyStatusView.swift in Sources */,

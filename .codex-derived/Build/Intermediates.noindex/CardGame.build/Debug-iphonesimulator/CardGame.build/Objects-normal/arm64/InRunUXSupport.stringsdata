@@ -1,0 +1,48 @@
+{
+  "source": "/Users/russellbates/JunkDrawer/Temple Of Terror/CardGame/InRunUXSupport.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Got it",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 94
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld/%lld",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 289
+        }
+      },
+      {
+        "comment": "",
+        "key": "Active Clocks",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 330
+        }
+      },
+      {
+        "comment": "",
+        "key": "Quick Reference",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 494
+        }
+      },
+      {
+        "comment": "",
+        "key": "Close",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 497
+        }
+      }
+    ]
+  },
+  "version": 1
+}

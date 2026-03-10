@@ -7,31 +7,7 @@
         "key": "Reference",
         "location": {
           "startingColumn": 22,
-          "startingLine": 192
-        }
-      },
-      {
-        "comment": "",
-        "key": "AUTO",
-        "location": {
-          "startingColumn": 46,
-          "startingLine": 137
-        }
-      },
-      {
-        "comment": "",
-        "key": "!",
-        "location": {
-          "startingColumn": 42,
-          "startingLine": 172
-        }
-      },
-      {
-        "comment": "",
-        "key": "+",
-        "location": {
-          "startingColumn": 42,
-          "startingLine": 182
+          "startingLine": 249
         }
       },
       {
@@ -39,7 +15,7 @@
         "key": "⚠",
         "location": {
           "startingColumn": 26,
-          "startingLine": 212
+          "startingLine": 269
         }
       },
       {
@@ -47,7 +23,7 @@
         "key": "THREAT",
         "location": {
           "startingColumn": 26,
-          "startingLine": 214
+          "startingLine": 271
         }
       }
     ]

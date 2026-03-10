@@ -23,7 +23,7 @@ final class CardGameTests: XCTestCase {
             .appendingPathComponent("Content", isDirectory: true)
     }
 
-    private func makeViewModel(scenario: String = "tomb") -> GameViewModel {
+    private func makeViewModel(scenario: String = RuntimeDefaults.defaultScenarioID) -> GameViewModel {
         var runtime = ScenarioRuntime()
         _ = runtime.activateScenario(named: scenario)
         let viewModel = GameViewModel(runtime: runtime)
@@ -1544,6 +1544,45 @@ final class CardGameTests: XCTestCase {
             vm.visibleInteractables(for: character.id).map(\.id),
             ["engineering_override_console", "hidden_supplies"]
         )
+    }
+
+    func testGuidanceStorePersistsDismissedHints() throws {
+        let suiteName = "GuidanceStoreTests.\(UUID().uuidString)"
+        guard let defaults = UserDefaults(suiteName: suiteName) else {
+            return XCTFail("Expected isolated UserDefaults suite.")
+        }
+        defaults.removePersistentDomain(forName: suiteName)
+
+        let firstStore = GuidanceStore(userDefaults: defaults, resetOnLaunch: false)
+        XCTAssertTrue(firstStore.shouldShow(.rollForecast))
+
+        firstStore.dismiss(.rollForecast)
+        XCTAssertFalse(firstStore.shouldShow(.rollForecast))
+
+        let secondStore = GuidanceStore(userDefaults: defaults, resetOnLaunch: false)
+        XCTAssertFalse(secondStore.shouldShow(.rollForecast))
+
+        defaults.removePersistentDomain(forName: suiteName)
+    }
+
+    func testGuidanceStoreDebugResetClearsDismissedHints() throws {
+        let suiteName = "GuidanceStoreResetTests.\(UUID().uuidString)"
+        guard let defaults = UserDefaults(suiteName: suiteName) else {
+            return XCTFail("Expected isolated UserDefaults suite.")
+        }
+        defaults.removePersistentDomain(forName: suiteName)
+
+        let store = GuidanceStore(userDefaults: defaults, resetOnLaunch: false)
+        store.dismiss(.activeClocks)
+        XCTAssertFalse(store.shouldShow(.activeClocks))
+
+        store.debugResetHints()
+        XCTAssertTrue(store.shouldShow(.activeClocks))
+
+        let reloadedStore = GuidanceStore(userDefaults: defaults, resetOnLaunch: false)
+        XCTAssertTrue(reloadedStore.shouldShow(.activeClocks))
+
+        defaults.removePersistentDomain(forName: suiteName)
     }
 
     private func makeValidatorFixtureRoot(

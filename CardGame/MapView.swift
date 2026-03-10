@@ -98,6 +98,18 @@ struct MapView: View {
         return node
     }
 
+    private var legendView: some View {
+        HStack(spacing: 14) {
+            Label("Gold ring = current location", systemImage: "circle")
+            Label("Dashed red path = locked route", systemImage: "line.diagonal")
+            Label("Number badge = multiple explorers", systemImage: "number.circle")
+        }
+        .font(Theme.systemFont(size: 10, weight: .medium))
+        .foregroundColor(Theme.inkFaded)
+        .lineLimit(2)
+        .minimumScaleFactor(0.85)
+    }
+
     var body: some View {
         NavigationStack {
             ZStack {
@@ -286,6 +298,9 @@ struct MapView: View {
                             }
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
                         }
+
+                        legendView
+                            .padding(.top, 4)
                     } else {
                         Text("No Map")
                             .font(Theme.bodyFont(size: 16, italic: true))

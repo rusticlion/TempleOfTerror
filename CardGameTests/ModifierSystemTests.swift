@@ -2,7 +2,7 @@ import XCTest
 @testable import CardGame
 
 final class ModifierSystemTests: XCTestCase {
-    private func makeViewModel(scenario: String = "tomb") -> GameViewModel {
+    private func makeViewModel(scenario: String = RuntimeDefaults.defaultScenarioID) -> GameViewModel {
         var runtime = ScenarioRuntime()
         _ = runtime.activateScenario(named: scenario)
         let viewModel = GameViewModel(runtime: runtime)

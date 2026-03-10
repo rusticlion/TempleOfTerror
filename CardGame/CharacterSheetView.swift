@@ -178,26 +178,6 @@ struct CharacterSheetView: View {
                     .stroke(Theme.parchmentDeep.opacity(0.3), lineWidth: 1)
             )
 
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Actions")
-                    .font(Theme.systemFont(size: 11, weight: .medium))
-                    .foregroundColor(Theme.inkLight)
-                VStack(alignment: .leading, spacing: 4) {
-                    ForEach(character.actions.sorted(by: { $0.key < $1.key }), id: \.key) { actionName, rating in
-                        HStack(spacing: 4) {
-                            Text(actionName)
-                                .font(Theme.bodyFont(size: 11))
-                                .foregroundColor(Theme.inkLight)
-                            Text(String(repeating: "●", count: rating) + String(repeating: "○", count: max(0, 4 - rating)))
-                                .font(Theme.systemFont(size: 11))
-                                .foregroundColor(Theme.gold)
-                                .tracking(1)
-                            Spacer()
-                        }
-                    }
-                }
-            }
-
             if !character.treasures.isEmpty {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Treasures")
@@ -215,6 +195,26 @@ struct CharacterSheetView: View {
                             }
                         }
                         .padding(.vertical, 2)
+                    }
+                }
+            }
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Action Ratings")
+                    .font(Theme.systemFont(size: 11, weight: .medium))
+                    .foregroundColor(Theme.inkLight)
+                VStack(alignment: .leading, spacing: 4) {
+                    ForEach(character.actions.sorted(by: { $0.key < $1.key }), id: \.key) { actionName, rating in
+                        HStack(spacing: 4) {
+                            Text(actionName)
+                                .font(Theme.bodyFont(size: 11))
+                                .foregroundColor(Theme.inkLight)
+                            Text(String(repeating: "●", count: rating) + String(repeating: "○", count: max(0, 4 - rating)))
+                                .font(Theme.systemFont(size: 11))
+                                .foregroundColor(Theme.gold)
+                                .tracking(1)
+                            Spacer()
+                        }
                     }
                 }
             }

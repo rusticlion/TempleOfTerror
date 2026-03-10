@@ -1,5 +1,10 @@
 import Foundation
 
+enum RuntimeDefaults {
+    static let defaultScenarioID = "temple_of_terror"
+    static let genericDefeatText = "The expedition claims another party."
+}
+
 enum GameStatus: String, Codable {
     case playing
     case gameOver
@@ -128,7 +133,7 @@ struct PendingConsequenceResolution: Codable {
 struct GameState: Codable {
     /// Identifier for the scenario that generated this run. Used when loading
     /// to reinitialize the `ContentLoader` with the correct data bundle.
-    var scenarioName: String = "tomb"
+    var scenarioName: String = RuntimeDefaults.defaultScenarioID
 
     var party: [Character] = []
     var activeClocks: [GameClock] = []
@@ -152,7 +157,7 @@ struct GameState: Codable {
     }
 
     init(
-        scenarioName: String = "tomb",
+        scenarioName: String = RuntimeDefaults.defaultScenarioID,
         party: [Character] = [],
         activeClocks: [GameClock] = [],
         dungeon: DungeonMap? = nil,
@@ -183,7 +188,7 @@ struct GameState: Codable {
 
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        scenarioName = try container.decodeIfPresent(String.self, forKey: .scenarioName) ?? "tomb"
+        scenarioName = try container.decodeIfPresent(String.self, forKey: .scenarioName) ?? RuntimeDefaults.defaultScenarioID
         party = try container.decodeIfPresent([Character].self, forKey: .party) ?? []
         activeClocks = try container.decodeIfPresent([GameClock].self, forKey: .activeClocks) ?? []
         dungeon = try container.decodeIfPresent(DungeonMap.self, forKey: .dungeon)

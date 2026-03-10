@@ -624,7 +624,7 @@ class GameViewModel: ObservableObject {
 
     /// Starts a brand new run, resetting the game state. The scenario id
     /// corresponds to a folder within `Content/Scenarios`.
-    func startNewRun(scenario: String = "tomb", partyPlan: PartyBuildPlan? = nil) {
+    func startNewRun(scenario: String = RuntimeDefaults.defaultScenarioID, partyPlan: PartyBuildPlan? = nil) {
         self.gameState = runtime.newGameState(scenario: scenario, partyPlan: partyPlan)
         if let startingNodeID = gameState.dungeon?.startingNodeID {
             syncAmbientAudio(for: gameState.dungeon?.nodes[startingNodeID.uuidString])

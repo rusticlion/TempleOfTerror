@@ -44,17 +44,17 @@
       },
       {
         "comment": "",
-        "key": "Actions",
+        "key": "Treasures",
         "location": {
-          "startingColumn": 22,
-          "startingLine": 182
+          "startingColumn": 26,
+          "startingLine": 183
         }
       },
       {
         "comment": "",
-        "key": "Treasures",
+        "key": "Action Ratings",
         "location": {
-          "startingColumn": 26,
+          "startingColumn": 22,
           "startingLine": 203
         }
       },

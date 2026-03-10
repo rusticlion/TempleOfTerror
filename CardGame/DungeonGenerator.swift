@@ -45,7 +45,7 @@ class DungeonGenerator {
         var nodeIDs: [UUID] = []
         var lockedConnection: (from: UUID, to: UUID)? = nil
 
-        let themes = ["antechamber", "corridor", "trap_chamber", "shrine"]
+        let themes = ["approach", "transit", "hazard", "objective"]
 
         let soundProfiles = ["cave_drips", "chasm_wind", "silent_tomb"]
 
@@ -59,7 +59,7 @@ class DungeonGenerator {
 
             let newNode = MapNode(
                 id: UUID(),
-                name: "Forgotten Antechamber \(i + 1)",
+                name: "Uncharted Area \(i + 1)",
                 soundProfile: soundProfiles.randomElement() ?? "silent_tomb",
                 interactables: [],
                 connections: connections,
@@ -69,7 +69,7 @@ class DungeonGenerator {
             nodeIDs.append(newNode.id)
 
             if let prev = previousNode {
-                let desc = i == nodeCount - 1 ? "Path to the final chamber" : "Deeper into the tomb"
+                let desc = i == nodeCount - 1 ? "Push toward the objective" : "Advance deeper into the site"
                 let connection = NodeConnection(toNodeID: newNode.id, description: desc)
                 nodes[prev.id.uuidString]?.connections.append(connection)
             }
@@ -142,7 +142,7 @@ struct ScenarioRuntime {
     private var activeContentLoader: ContentLoader
 
     init(
-        defaultScenario: String = "tomb",
+        defaultScenario: String = RuntimeDefaults.defaultScenarioID,
         contentLoaderFactory: @escaping (String) -> ContentLoader = { ContentLoader(scenario: $0) },
         dungeonGeneratorFactory: @escaping (ContentLoader) -> DungeonGenerator = { DungeonGenerator(content: $0) },
         partyBuilderFactory: @escaping (ContentLoader) -> PartyBuilderService = { PartyBuilderService(content: $0) }
@@ -164,7 +164,7 @@ struct ScenarioRuntime {
         return loader
     }
 
-    mutating func newGameState(scenario: String = "tomb", partyPlan: PartyBuildPlan? = nil) -> GameState {
+    mutating func newGameState(scenario: String = RuntimeDefaults.defaultScenarioID, partyPlan: PartyBuildPlan? = nil) -> GameState {
         let content = activateScenario(named: scenario)
         let generator = dungeonGeneratorFactory(content)
         let manifest = content.scenarioManifest

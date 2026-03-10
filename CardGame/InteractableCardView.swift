@@ -1,6 +1,13 @@
 import SwiftUI
 
 struct InteractableCardView: View {
+    private struct ActionStateCue: Identifiable {
+        let id = UUID()
+        let text: String
+        let foreground: Color
+        let fill: Color
+    }
+
     @ObservedObject var viewModel: GameViewModel
     let interactable: Interactable
     let selectedCharacter: Character?
@@ -88,6 +95,52 @@ struct InteractableCardView: View {
         return false
     }
 
+    private func projection(for action: ActionOption) -> RollProjectionDetails? {
+        guard let selectedCharacter else { return nil }
+        return viewModel.calculateProjection(
+            for: action,
+            with: selectedCharacter,
+            interactableTags: interactable.tags
+        )
+    }
+
+    private func blockedLabel(for action: ActionOption, projection: RollProjectionDetails?) -> String? {
+        if let tag = action.requiredTag, !viewModel.partyHasTreasureTag(tag) {
+            return "Needs \(tag)"
+        }
+
+        guard projection?.isActionBanned == true else { return nil }
+        if let note = projection?.notes.first(where: { $0.localizedCaseInsensitiveContains("banned") }) {
+            let cleaned = note
+                .trimmingCharacters(in: CharacterSet(charactersIn: "()"))
+                .replacingOccurrences(of: "Action banned by ", with: "")
+            return "Blocked: \(cleaned)"
+        }
+        return "Blocked"
+    }
+
+    private func stateCues(for action: ActionOption, projection: RollProjectionDetails?) -> [ActionStateCue] {
+        var cues: [ActionStateCue] = []
+
+        if let blocked = blockedLabel(for: action, projection: projection) {
+            cues.append(ActionStateCue(text: blocked, foreground: .white, fill: Theme.danger.opacity(0.82)))
+        }
+
+        if !action.requiresTest {
+            cues.append(ActionStateCue(text: "Auto", foreground: Theme.ink, fill: Theme.parchmentDeep.opacity(0.8)))
+        }
+
+        if hasBonus(for: action) {
+            cues.append(ActionStateCue(text: "Bonus ready", foreground: Theme.ink, fill: Theme.success.opacity(0.78)))
+        }
+
+        if hasPenalty(for: action) {
+            cues.append(ActionStateCue(text: "Penalty active", foreground: .white, fill: Theme.dangerLight.opacity(0.86)))
+        }
+
+        return cues
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text(interactable.title)
@@ -120,6 +173,8 @@ struct InteractableCardView: View {
                 ForEach(interactable.availableActions, id: \.name) { action in
                     let displayName = action.name
                     let emoji = ActionEmoji.emoji(for: action.actionType)
+                    let actionProjection = projection(for: action)
+                    let cues = stateCues(for: action, projection: actionProjection)
                     Button {
                         onActionTapped(action)
                     } label: {
@@ -129,27 +184,51 @@ struct InteractableCardView: View {
                                 .frame(width: 28)
 
                             VStack(alignment: .leading, spacing: 1) {
-                                HStack(spacing: 6) {
+                                HStack(alignment: .top, spacing: 6) {
                                     Text(displayName)
                                         .font(Theme.bodyFontMedium(size: 14))
                                         .foregroundColor(Theme.ink)
-                                    if !action.requiresTest {
-                                        Text("AUTO")
-                                            .font(Theme.systemFont(size: 10, weight: .semibold))
-                                            .foregroundColor(Theme.inkFaded)
+                                    Spacer(minLength: 0)
+                                }
+
+                                HStack(spacing: 6) {
+                                    Text(action.actionType)
+                                        .font(Theme.systemFont(size: 11))
+                                        .foregroundColor(Theme.inkLight)
+
+                                    DualLabelForecastChip(
+                                        title: "Risk",
+                                        value: (actionProjection?.finalPosition ?? action.position).rawValue.capitalized,
+                                        accent: Theme.positionColor(actionProjection?.finalPosition ?? action.position),
+                                        compact: true
+                                    )
+                                    .accessibilityIdentifier("actionForecastRiskChip")
+
+                                    DualLabelForecastChip(
+                                        title: "Impact",
+                                        value: (actionProjection?.finalEffect ?? action.effect).rawValue.capitalized,
+                                        accent: Theme.parchmentDeep,
+                                        compact: true
+                                    )
+                                    .accessibilityIdentifier("actionForecastImpactChip")
+                                }
+
+                                if !cues.isEmpty {
+                                    ScrollView(.horizontal, showsIndicators: false) {
+                                        HStack(spacing: 6) {
+                                            ForEach(cues) { cue in
+                                                InRunStateBadge(
+                                                    text: cue.text,
+                                                    foreground: cue.foreground,
+                                                    fill: cue.fill
+                                                )
+                                            }
+                                        }
                                     }
                                 }
-                                Text(action.actionType)
-                                    .font(Theme.systemFont(size: 11))
-                                    .foregroundColor(Theme.inkLight)
                             }
 
                             Spacer()
-
-                            Circle()
-                                .fill(Theme.positionColor(action.position))
-                                .frame(width: 7, height: 7)
-                                .opacity(0.7)
                         }
                         .padding(.horizontal, 14)
                         .padding(.vertical, 10)
@@ -163,29 +242,7 @@ struct InteractableCardView: View {
                     .buttonStyle(.plain)
                     .disabled(actionDisabled(action))
                     .opacity(actionDisabled(action) ? 0.4 : 1)
-                    .overlay(alignment: .topTrailing) {
-                        if hasPenalty(for: action) {
-                            Circle()
-                                .fill(Theme.danger)
-                                .frame(width: 16, height: 16)
-                                .overlay(
-                                    Text("!")
-                                        .font(Theme.systemFont(size: 10, weight: .bold))
-                                        .foregroundColor(.white)
-                                )
-                                .offset(x: 4, y: -4)
-                        } else if hasBonus(for: action) {
-                            Circle()
-                                .fill(Theme.success)
-                                .frame(width: 16, height: 16)
-                                .overlay(
-                                    Text("+")
-                                        .font(Theme.systemFont(size: 10, weight: .bold))
-                                        .foregroundColor(.white)
-                                )
-                                .offset(x: 4, y: -4)
-                        }
-                    }
+                    .accessibilityIdentifier("interactableActionButton")
                 }
             } else if interactable.isDisplayOnly {
                 Theme.InkDivider()

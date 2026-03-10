@@ -152,7 +152,7 @@ extension DecodingError {
 }
 
 class ContentLoader {
-    /// Shared loader using the default scenario ("tomb"). This can be
+    /// Shared loader using the app's default scenario. This can be
     /// reassigned when the player selects a different scenario from the
     /// main menu.
     static var shared = ContentLoader()
@@ -171,7 +171,7 @@ class ContentLoader {
     let eventDict: [String: ScenarioEvent]
 
     /// Initialize a loader for a specific scenario directory.
-    init(scenario: String = "tomb") {
+    init(scenario: String = RuntimeDefaults.defaultScenarioID) {
         self.scenarioName = scenario
         self.scenarioManifest = Self.loadManifest(for: scenario)
         self.interactableTemplates = Self.load("interactables.json", for: scenario)
