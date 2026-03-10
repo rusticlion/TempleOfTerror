@@ -390,6 +390,8 @@ struct Character: Identifiable, Codable {
     var stress: Int
     var harm: HarmState
     var actions: [String: Int] // e.g., ["Study": 2, "Tinker": 1]
+    var traitTags: [String] = []
+    var stateTags: [String] = []
     var treasures: [Treasure] = []
     var modifiers: [Modifier] = []
     /// Whether this character can still act. Characters become defeated after
@@ -397,7 +399,8 @@ struct Character: Identifiable, Codable {
     var isDefeated: Bool = false
 
     enum CodingKeys: String, CodingKey {
-        case id, name, archetypeID, characterClass, stress, harm, actions, treasures, modifiers, isDefeated
+        case id, name, archetypeID, characterClass, stress, harm, actions
+        case traitTags, stateTags, treasures, modifiers, isDefeated
     }
 
     init(id: UUID,
@@ -407,6 +410,8 @@ struct Character: Identifiable, Codable {
          stress: Int,
          harm: HarmState,
          actions: [String: Int],
+         traitTags: [String] = [],
+         stateTags: [String] = [],
          treasures: [Treasure] = [],
          modifiers: [Modifier] = [],
          isDefeated: Bool = false) {
@@ -417,6 +422,8 @@ struct Character: Identifiable, Codable {
         self.stress = stress
         self.harm = harm
         self.actions = actions
+        self.traitTags = Character.normalizedTags(traitTags)
+        self.stateTags = Character.normalizedTags(stateTags)
         self.treasures = treasures
         self.modifiers = modifiers
         self.isDefeated = isDefeated
@@ -431,6 +438,12 @@ struct Character: Identifiable, Codable {
         stress = try container.decode(Int.self, forKey: .stress)
         harm = try container.decode(HarmState.self, forKey: .harm)
         actions = try container.decode([String: Int].self, forKey: .actions)
+        traitTags = Character.normalizedTags(
+            try container.decodeIfPresent([String].self, forKey: .traitTags) ?? []
+        )
+        stateTags = Character.normalizedTags(
+            try container.decodeIfPresent([String].self, forKey: .stateTags) ?? []
+        )
         treasures = try container.decodeIfPresent([Treasure].self, forKey: .treasures) ?? []
         modifiers = try container.decodeIfPresent([Modifier].self, forKey: .modifiers) ?? []
         isDefeated = try container.decodeIfPresent(Bool.self, forKey: .isDefeated) ?? false
@@ -445,6 +458,12 @@ struct Character: Identifiable, Codable {
         try container.encode(stress, forKey: .stress)
         try container.encode(harm, forKey: .harm)
         try container.encode(actions, forKey: .actions)
+        if !traitTags.isEmpty {
+            try container.encode(traitTags, forKey: .traitTags)
+        }
+        if !stateTags.isEmpty {
+            try container.encode(stateTags, forKey: .stateTags)
+        }
         if !treasures.isEmpty {
             try container.encode(treasures, forKey: .treasures)
         }
@@ -454,6 +473,42 @@ struct Character: Identifiable, Codable {
         if isDefeated {
             try container.encode(isDefeated, forKey: .isDefeated)
         }
+    }
+
+    var allTags: [String] {
+        Character.normalizedTags(traitTags + stateTags)
+    }
+
+    func hasTag(_ tag: String) -> Bool {
+        allTags.contains(tag)
+    }
+
+    mutating func addStateTag(_ tag: String) -> Bool {
+        let trimmed = tag.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return false }
+        guard !stateTags.contains(trimmed), !traitTags.contains(trimmed) else { return false }
+        stateTags.append(trimmed)
+        stateTags = Character.normalizedTags(stateTags)
+        return true
+    }
+
+    mutating func removeStateTag(_ tag: String) -> Bool {
+        let trimmed = tag.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return false }
+        let originalCount = stateTags.count
+        stateTags.removeAll { $0 == trimmed }
+        return stateTags.count != originalCount
+    }
+
+    private static func normalizedTags(_ tags: [String]) -> [String] {
+        var seen: Set<String> = []
+        var normalized: [String] = []
+        for tag in tags {
+            let trimmed = tag.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !trimmed.isEmpty, seen.insert(trimmed).inserted else { continue }
+            normalized.append(trimmed)
+        }
+        return normalized
     }
 }
 
@@ -665,6 +720,49 @@ struct ArchetypeDefinition: Codable, Identifiable, Hashable {
     var name: String
     var description: String
     var defaultActions: [String: Int]
+    var personalityTagPool: [String] = []
+
+    enum CodingKeys: String, CodingKey {
+        case id, name, description, defaultActions, personalityTagPool
+    }
+
+    init(
+        id: String,
+        name: String,
+        description: String,
+        defaultActions: [String: Int],
+        personalityTagPool: [String] = []
+    ) {
+        self.id = id
+        self.name = name
+        self.description = description
+        self.defaultActions = defaultActions
+        self.personalityTagPool = personalityTagPool
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(String.self, forKey: .id)
+        name = try container.decode(String.self, forKey: .name)
+        description = try container.decode(String.self, forKey: .description)
+        defaultActions = try container.decode([String: Int].self, forKey: .defaultActions)
+        personalityTagPool = try container.decodeIfPresent([String].self, forKey: .personalityTagPool)?
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty } ?? []
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(name, forKey: .name)
+        try container.encode(description, forKey: .description)
+        try container.encode(defaultActions, forKey: .defaultActions)
+        if !personalityTagPool.isEmpty {
+            try container.encode(personalityTagPool, forKey: .personalityTagPool)
+        }
+    }
 }
 
 struct GameClock: Identifiable, Codable {
@@ -880,7 +978,10 @@ struct GameCondition: Codable {
         case requiresMinPositionLevel
         case requiresExactPositionLevel
         case characterHasTreasureId
+        case characterHasTag
+        case characterLacksTag
         case partyHasTreasureWithTag
+        case partyHasMemberWithTag
         case clockProgress
         case scenarioFlagSet
         case scenarioCounter
@@ -944,6 +1045,8 @@ struct Consequence: Codable {
         case clearScenarioFlag
         case incrementScenarioCounter
         case setScenarioCounter
+        case addCharacterTag
+        case removeCharacterTag
         case endRun
     }
 
@@ -969,6 +1072,7 @@ struct Consequence: Codable {
     var triggered: [Consequence]?
     var flagId: String?
     var counterId: String?
+    var tag: String?
     var endingOutcome: RunOutcome?
     var endingText: String?
     var resistance: ResistanceRule?
@@ -985,7 +1089,7 @@ struct Consequence: Codable {
         case interactable, interactableTemplateID, treasure, treasureId
         case duration, options, eventId, consequences
         case actionName, action, conditions, description
-        case flagId, counterId, runOutcome, runOutcomeText, resistance
+        case flagId, counterId, tag, runOutcome, runOutcomeText, resistance
     }
 
     init(kind: ConsequenceKind) {
@@ -1015,6 +1119,7 @@ struct Consequence: Codable {
         triggered = try container.decodeIfPresent([Consequence].self, forKey: .consequences)
         flagId = try container.decodeIfPresent(String.self, forKey: .flagId)
         counterId = try container.decodeIfPresent(String.self, forKey: .counterId)
+        tag = try container.decodeIfPresent(String.self, forKey: .tag)
         endingOutcome = try container.decodeIfPresent(RunOutcome.self, forKey: .runOutcome)
         endingText = try container.decodeIfPresent(String.self, forKey: .runOutcomeText)
         resistance = try container.decodeIfPresent(ResistanceRule.self, forKey: .resistance)
@@ -1148,6 +1253,12 @@ struct Consequence: Codable {
             try container.encode(ConsequenceKind.setScenarioCounter, forKey: .type)
             try container.encodeIfPresent(counterId, forKey: .counterId)
             try container.encodeIfPresent(amount, forKey: .amount)
+        case .addCharacterTag:
+            try container.encode(ConsequenceKind.addCharacterTag, forKey: .type)
+            try container.encodeIfPresent(tag, forKey: .tag)
+        case .removeCharacterTag:
+            try container.encode(ConsequenceKind.removeCharacterTag, forKey: .type)
+            try container.encodeIfPresent(tag, forKey: .tag)
         case .endRun:
             try container.encode(ConsequenceKind.endRun, forKey: .type)
             try container.encodeIfPresent(endingOutcome, forKey: .runOutcome)
@@ -1315,6 +1426,18 @@ extension Consequence {
     static func clearScenarioFlag(_ flagId: String) -> Consequence {
         var c = Consequence(kind: .clearScenarioFlag)
         c.flagId = flagId
+        return c
+    }
+
+    static func addCharacterTag(_ tag: String) -> Consequence {
+        var c = Consequence(kind: .addCharacterTag)
+        c.tag = tag
+        return c
+    }
+
+    static func removeCharacterTag(_ tag: String) -> Consequence {
+        var c = Consequence(kind: .removeCharacterTag)
+        c.tag = tag
         return c
     }
 

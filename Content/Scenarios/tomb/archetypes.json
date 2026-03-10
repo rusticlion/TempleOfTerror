@@ -7,7 +7,8 @@
       "Study": 2,
       "Survey": 1,
       "Tinker": 1
-    }
+    },
+    "personalityTagPool": ["Curious", "Methodical", "Glory-Seeking", "Superstitious"]
   },
   {
     "id": "brawler",
@@ -17,7 +18,8 @@
       "Skirmish": 2,
       "Wreck": 1,
       "Command": 1
-    }
+    },
+    "personalityTagPool": ["Stubborn", "Protective", "Hotheaded", "Boastful"]
   },
   {
     "id": "mystic",
@@ -27,7 +29,8 @@
       "Attune": 2,
       "Study": 1,
       "Consort": 1
-    }
+    },
+    "personalityTagPool": ["Haunted", "Reverent", "Serene", "Ominous"]
   },
   {
     "id": "scout",
@@ -38,7 +41,8 @@
       "Hunt": 1,
       "Survey": 1,
       "Prowl": 1
-    }
+    },
+    "personalityTagPool": ["Wary", "Restless", "Resourceful", "Secretive"]
   },
   {
     "id": "scholar",
@@ -48,7 +52,8 @@
       "Study": 2,
       "Attune": 1,
       "Consort": 1
-    }
+    },
+    "personalityTagPool": ["Obsessive", "Skeptical", "Dry-Witted", "Patient"]
   },
   {
     "id": "thief",
@@ -58,6 +63,7 @@
       "Finesse": 2,
       "Prowl": 1,
       "Survey": 1
-    }
+    },
+    "personalityTagPool": ["Greedy", "Cagey", "Daring", "Smooth"]
   }
 ]

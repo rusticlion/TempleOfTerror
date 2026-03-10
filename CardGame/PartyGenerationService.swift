@@ -90,7 +90,8 @@ class PartyBuilderService {
                 characterClass: selectedArchetype.name,
                 stress: 0,
                 harm: HarmState(),
-                actions: selectedArchetype.defaultActions
+                actions: selectedArchetype.defaultActions,
+                traitTags: drawTraitTags(from: selectedArchetype.personalityTagPool, count: 2)
             )
             party.append(newCharacter)
         }
@@ -108,5 +109,17 @@ class PartyBuilderService {
         }
 
         return resolved
+    }
+
+    private func drawTraitTags(from pool: [String], count: Int) -> [String] {
+        var seen: Set<String> = []
+        let normalizedPool = pool.compactMap { rawTag -> String? in
+            let trimmed = rawTag.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !trimmed.isEmpty, seen.insert(trimmed).inserted else { return nil }
+            return trimmed
+        }
+
+        guard !normalizedPool.isEmpty, count > 0 else { return [] }
+        return Array(normalizedPool.shuffled().prefix(min(count, normalizedPool.count))).sorted()
     }
 }

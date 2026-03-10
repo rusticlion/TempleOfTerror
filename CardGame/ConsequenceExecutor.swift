@@ -474,6 +474,18 @@ struct ConsequenceExecutor {
             if let counterID = consequence.counterId {
                 gameState.scenarioCounters[counterID] = consequence.amount ?? 0
             }
+        case .addCharacterTag:
+            if let tag = consequence.tag,
+               addCharacterStateTag(tag, toCharacter: actingCharacter.id, gameState: &gameState),
+               !narrativeUsed {
+                append("Gained tag: \(tag).", to: &resolution)
+            }
+        case .removeCharacterTag:
+            if let tag = consequence.tag,
+               removeCharacterStateTag(tag, fromCharacter: actingCharacter.id, gameState: &gameState),
+               !narrativeUsed {
+                append("Lost tag: \(tag).", to: &resolution)
+            }
         case .endRun:
             gameState.status = .gameOver
             gameState.runOutcome = consequence.endingOutcome
@@ -509,9 +521,21 @@ struct ConsequenceExecutor {
                 if let treasureID = condition.stringParam {
                     conditionMet = character.treasures.contains(where: { $0.id == treasureID })
                 }
+            case .characterHasTag:
+                if let tag = condition.stringParam {
+                    conditionMet = character.hasTag(tag)
+                }
+            case .characterLacksTag:
+                if let tag = condition.stringParam {
+                    conditionMet = !character.hasTag(tag)
+                }
             case .partyHasTreasureWithTag:
                 if let tag = condition.stringParam {
                     conditionMet = partyHasTreasureTag(tag, gameState: gameState)
+                }
+            case .partyHasMemberWithTag:
+                if let tag = condition.stringParam {
+                    conditionMet = partyHasMemberWithTag(tag, gameState: gameState)
                 }
             case .clockProgress:
                 if let name = condition.stringParam,
@@ -695,6 +719,28 @@ struct ConsequenceExecutor {
             }
         }
         return false
+    }
+
+    private func partyHasMemberWithTag(_ tag: String, gameState: GameState) -> Bool {
+        gameState.party.contains { !$0.isDefeated && $0.hasTag(tag) }
+    }
+
+    private func addCharacterStateTag(
+        _ tag: String,
+        toCharacter characterID: UUID,
+        gameState: inout GameState
+    ) -> Bool {
+        guard let index = gameState.party.firstIndex(where: { $0.id == characterID }) else { return false }
+        return gameState.party[index].addStateTag(tag)
+    }
+
+    private func removeCharacterStateTag(
+        _ tag: String,
+        fromCharacter characterID: UUID,
+        gameState: inout GameState
+    ) -> Bool {
+        guard let index = gameState.party.firstIndex(where: { $0.id == characterID }) else { return false }
+        return gameState.party[index].removeStateTag(tag)
     }
 
     private func applyStressDelta(

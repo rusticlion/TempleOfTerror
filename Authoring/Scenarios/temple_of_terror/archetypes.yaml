@@ -6,6 +6,11 @@
     Study: 2
     Survey: 1
     Tinker: 1
+  personalityTagPool:
+    - Curious
+    - Methodical
+    - Glory-Seeking
+    - Superstitious
 - id: linguist
   name: Linguist
   description: Deciphers dead tongues, temple iconography, and the warnings everyone else ignored.
@@ -13,6 +18,11 @@
     Study: 2
     Consort: 1
     Attune: 1
+  personalityTagPool:
+    - Diplomatic
+    - Obsessive
+    - Scholarly
+    - Dry-Witted
 - id: guide
   name: Guide
   description: Knows how to read the land, spot trouble early, and keep an expedition moving.
@@ -20,6 +30,11 @@
     Survey: 2
     Prowl: 1
     Hunt: 1
+  personalityTagPool:
+    - Watchful
+    - Practical
+    - Protective
+    - Wary
 - id: daredevil
   name: Daredevil
   description: Crosses gaps, springs clear of traps, and survives on timing and nerve.
@@ -27,6 +42,11 @@
     Finesse: 2
     Prowl: 1
     Skirmish: 1
+  personalityTagPool:
+    - Reckless
+    - Charming
+    - Restless
+    - Showy
 - id: bruiser
   name: Bruiser
   description: Breaks obstacles, statues, and bad ideas with blunt force and louder confidence.
@@ -34,6 +54,11 @@
     Wreck: 2
     Skirmish: 1
     Command: 1
+  personalityTagPool:
+    - Stubborn
+    - Loyal
+    - Hotheaded
+    - Intimidating
 - id: mystic
   name: Mystic
   description: Senses curses, relic power, and the truths that old temples prefer to bury.
@@ -41,3 +66,8 @@
     Attune: 2
     Study: 1
     Consort: 1
+  personalityTagPool:
+    - Ominous
+    - Reverent
+    - Haunted
+    - Serene

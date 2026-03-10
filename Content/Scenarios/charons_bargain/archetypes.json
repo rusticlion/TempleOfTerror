@@ -6,7 +6,8 @@
     "defaultActions": {
       "Study": 3,
       "Tinker": 1
-    }
+    },
+    "personalityTagPool": ["Clinical", "Obsessive", "Curious", "Detached"]
   },
   {
     "id": "mercenary",
@@ -16,7 +17,8 @@
       "Skirmish": 2,
       "Wreck": 1,
       "Command": 1
-    }
+    },
+    "personalityTagPool": ["Disciplined", "Scarred", "Protective", "Cold"]
   },
   {
     "id": "pilot",
@@ -25,7 +27,8 @@
     "defaultActions": {
       "Finesse": 3,
       "Attune": 1
-    }
+    },
+    "personalityTagPool": ["Cocky", "Lucky", "Restless", "Nerve-Steady"]
   },
   {
     "id": "scavenger",
@@ -36,7 +39,8 @@
       "Survey": 1,
       "Prowl": 1,
       "Consort": 1
-    }
+    },
+    "personalityTagPool": ["Resourceful", "Greedy", "Paranoid", "Improvisational"]
   },
   {
     "id": "medic",
@@ -45,7 +49,8 @@
     "defaultActions": {
       "Study": 2,
       "Consort": 2
-    }
+    },
+    "personalityTagPool": ["Compassionate", "Overworked", "Steady", "Haunted"]
   },
   {
     "id": "engineer",
@@ -54,6 +59,7 @@
     "defaultActions": {
       "Tinker": 2,
       "Wreck": 2
-    }
+    },
+    "personalityTagPool": ["Methodical", "Blunt", "Stubborn", "Problem-Solver"]
   }
 ]

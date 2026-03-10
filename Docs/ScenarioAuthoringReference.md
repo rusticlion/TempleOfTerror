@@ -4,6 +4,8 @@ This is the authoritative reference for scenario authors.
 
 It describes the current runtime contract for authored content in the anthology-focused Forged in the Dark engine.
 
+For the step-by-step creation flow, see `Docs/ScenarioAuthoringWalkthrough.md`.
+
 ## Scope and Stability
 
 The following content surfaces are considered v1-stable for authoring:
@@ -119,6 +121,26 @@ Field notes:
 - `stressOverflowHarmFamilyID` should be set explicitly.
   - If omitted, runtime defaults to `mental_fraying`.
 
+## Archetypes and Character Tags
+
+`archetypes.json` supports these authored fields:
+
+- `id`, `name`, `description`, `defaultActions`
+- optional `personalityTagPool`
+
+`personalityTagPool` is a lightweight flavor pool for generated characters.
+
+- Runtime draws up to two distinct tags from the pool when creating a character from that archetype.
+- These become persistent character `traitTags` for the run.
+- Scenario content can also add and remove temporary `stateTags` during play.
+
+Authoring guidance:
+
+- Keep generated tags short and evocative: `Curious`, `Superstitious`, `Hotheaded`, `Methodical`
+- Prefer personality or outlook over direct stat modifiers
+- Most tags should be flavor-forward and only occasionally referenced by authored conditions
+- Avoid overly broad generic tags like `Smart`, `Strong`, `Good`
+
 ## Interactables and Threat Pressure
 
 `Interactable` supports these authored fields:
@@ -202,7 +224,10 @@ Supported `GameCondition.type` values:
 - `requiresMinPositionLevel` (`positionParam`)
 - `requiresExactPositionLevel` (`positionParam`)
 - `characterHasTreasureId` (`stringParam` treasure id)
+- `characterHasTag` (`stringParam` tag)
+- `characterLacksTag` (`stringParam` tag)
 - `partyHasTreasureWithTag` (`stringParam` tag)
+- `partyHasMemberWithTag` (`stringParam` tag)
 - `clockProgress` (`stringParam` clock name, `intParam` minimum progress, optional `intParamMax`)
 - `scenarioFlagSet` (`stringParam` flag id)
 - `scenarioCounter` (`stringParam` counter id, optional `intParam` min and `intParamMax` max)
@@ -229,6 +254,8 @@ Supported `Consequence.type` values and required params:
 - `clearScenarioFlag`: `flagId`
 - `incrementScenarioCounter`: `counterId`, optional `amount` (defaults to 1)
 - `setScenarioCounter`: `counterId`, `amount` (target value)
+- `addCharacterTag`: `tag` (applies to the acting character)
+- `removeCharacterTag`: `tag` (applies to the acting character)
 - `endRun`: optional `runOutcome`, optional `runOutcomeText`
 
 Each consequence may also include:

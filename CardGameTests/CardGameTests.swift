@@ -837,6 +837,34 @@ final class CardGameTests: XCTestCase {
         )
     }
 
+    func testScenarioValidatorRequiresTagForCharacterTagConsequences() throws {
+        let scenarioID = "validator_missing_character_tag"
+        let fixture = try makeValidatorFixtureRoot(scenarioID: scenarioID)
+        defer { try? FileManager.default.removeItem(at: fixture.rootURL) }
+
+        let addTag = Consequence(kind: .addCharacterTag)
+        let action = ActionOption(
+            name: "Receive the Mark",
+            actionType: "Study",
+            position: .controlled,
+            effect: .standard,
+            outcomes: [.success: [addTag]]
+        )
+        let interactable = Interactable(
+            id: "marking_altar",
+            title: "Marking Altar",
+            description: "",
+            availableActions: [action]
+        )
+        try writeJSON([interactable], to: fixture.scenarioURL.appendingPathComponent("interactables.json"))
+
+        let report = ScenarioValidator().validateScenario(at: fixture.scenarioURL)
+        XCTAssertTrue(
+            report.errors.contains(where: { $0.message.contains("addCharacterTag requires tag.") }),
+            report.formattedDescription
+        )
+    }
+
     func testScenarioValidatorRejectsAmbiguousInteractableSpawnForms() throws {
         let scenarioID = "validator_bad_spawn_forms"
         let fixture = try makeValidatorFixtureRoot(scenarioID: scenarioID, mapFile: "map.json")
@@ -931,6 +959,146 @@ final class CardGameTests: XCTestCase {
             party.compactMap(\.archetypeID),
             ["pilot", "medic", "engineer"]
         )
+    }
+
+    func testPartyBuilderAssignsTwoDistinctTraitTagsFromArchetypePool() throws {
+        let loader = ContentLoader(scenario: "charons_bargain")
+        let builder = PartyBuilderService(content: loader)
+        let plan = PartyBuildPlan(
+            partySize: 1,
+            nativeArchetypeIDs: ["scientist"],
+            selectedArchetypeIDs: ["scientist"],
+            mode: .manualSelection
+        )
+
+        let party = builder.buildParty(using: plan)
+        let character = try XCTUnwrap(party.first)
+        let archetype = try XCTUnwrap(loader.archetypeTemplates.first(where: { $0.id == "scientist" }))
+
+        XCTAssertEqual(character.traitTags.count, 2)
+        XCTAssertEqual(Set(character.traitTags).count, 2)
+        XCTAssertTrue(Set(character.traitTags).isSubset(of: Set(archetype.personalityTagPool)))
+        XCTAssertTrue(character.stateTags.isEmpty)
+    }
+
+    func testCharacterTagConsequenceUnlocksTagGatedInteractable() throws {
+        let vm = GameViewModel()
+        let nodeID = UUID()
+        let tag = "Marked by the Tomb"
+
+        let oathAction = ActionOption(
+            name: "Accept the Omen",
+            actionType: "Study",
+            position: .controlled,
+            effect: .standard,
+            requiresTest: false,
+            outcomes: [.success: [.addCharacterTag(tag)]]
+        )
+        let hiddenAction = ActionOption(
+            name: "Open the Inner Door",
+            actionType: "Tinker",
+            position: .risky,
+            effect: .standard,
+            outcomes: [.success: []]
+        )
+
+        let node = MapNode(
+            id: nodeID,
+            name: "Sanctum",
+            soundProfile: "",
+            interactables: [
+                Interactable(
+                    id: "oath_tablet",
+                    title: "Oath Tablet",
+                    description: "",
+                    availableActions: [oathAction]
+                ),
+                Interactable(
+                    id: "inner_door",
+                    title: "Inner Door",
+                    description: "",
+                    availableActions: [hiddenAction],
+                    conditions: [GameCondition(type: .characterHasTag, stringParam: tag)]
+                )
+            ],
+            connections: []
+        )
+
+        let character = Character(
+            id: UUID(),
+            name: "Nadia",
+            characterClass: "Scholar",
+            stress: 0,
+            harm: HarmState(),
+            actions: ["Study": 1, "Tinker": 1]
+        )
+
+        vm.gameState.dungeon = DungeonMap(nodes: [nodeID.uuidString: node], startingNodeID: nodeID)
+        vm.gameState.party = [character]
+        vm.gameState.characterLocations[character.id.uuidString] = nodeID
+
+        XCTAssertEqual(vm.visibleInteractables(for: character.id).map(\.id), ["oath_tablet"])
+
+        _ = vm.performFreeAction(for: oathAction, with: character, interactableID: "oath_tablet")
+
+        XCTAssertTrue(vm.gameState.party[0].stateTags.contains(tag))
+        XCTAssertEqual(Set(vm.visibleInteractables(for: character.id).map(\.id)), Set(["oath_tablet", "inner_door"]))
+    }
+
+    func testPartyHasMemberWithTagConditionUsesAnotherPartyMemberTraitTag() throws {
+        let vm = GameViewModel()
+        let nodeID = UUID()
+        let sharedAction = ActionOption(
+            name: "Translate the Inscription",
+            actionType: "Study",
+            position: .controlled,
+            effect: .standard,
+            conditions: [GameCondition(type: .partyHasMemberWithTag, stringParam: "Translator")],
+            outcomes: [.success: []]
+        )
+
+        let node = MapNode(
+            id: nodeID,
+            name: "Archive",
+            soundProfile: "",
+            interactables: [
+                Interactable(
+                    id: "sealed_archive",
+                    title: "Sealed Archive",
+                    description: "",
+                    availableActions: [sharedAction]
+                )
+            ],
+            connections: []
+        )
+
+        let lead = Character(
+            id: UUID(),
+            name: "Alex",
+            characterClass: "Scout",
+            stress: 0,
+            harm: HarmState(),
+            actions: ["Study": 1]
+        )
+        let translator = Character(
+            id: UUID(),
+            name: "Mina",
+            archetypeID: "linguist",
+            characterClass: "Linguist",
+            stress: 0,
+            harm: HarmState(),
+            actions: ["Study": 2],
+            traitTags: ["Translator", "Patient"]
+        )
+
+        vm.gameState.dungeon = DungeonMap(nodes: [nodeID.uuidString: node], startingNodeID: nodeID)
+        vm.gameState.party = [lead, translator]
+        vm.gameState.characterLocations[lead.id.uuidString] = nodeID
+        vm.gameState.characterLocations[translator.id.uuidString] = nodeID
+
+        let visible = vm.visibleInteractables(for: lead.id)
+        XCTAssertEqual(visible.count, 1)
+        XCTAssertEqual(visible.first?.availableActions.map(\.name), ["Translate the Inscription"])
     }
 
     func testRestartCurrentScenarioReusesLaunchPartyPlan() throws {
@@ -1050,7 +1218,9 @@ final class CardGameTests: XCTestCase {
             characterClass: "Scholar",
             stress: 2,
             harm: HarmState(),
-            actions: ["Study": 2]
+            actions: ["Study": 2],
+            traitTags: ["Curious", "Methodical"],
+            stateTags: ["Marked by the Tomb"]
         )
         let gameState = GameState(
             scenarioName: "charons_bargain",
@@ -1068,6 +1238,8 @@ final class CardGameTests: XCTestCase {
         XCTAssertEqual(loaded.scenarioName, "charons_bargain")
         XCTAssertEqual(loaded.party.count, 1)
         XCTAssertEqual(loaded.party[0].name, "Saver")
+        XCTAssertEqual(loaded.party[0].traitTags, ["Curious", "Methodical"])
+        XCTAssertEqual(loaded.party[0].stateTags, ["Marked by the Tomb"])
         XCTAssertEqual(loaded.scenarioFlags["flag"], true)
         XCTAssertEqual(loaded.scenarioCounters["counter"], 3)
     }

@@ -130,11 +130,11 @@
 		</data>
 		<key>CardGame.debug.dylib</key>
 		<data>
-		j157IZ4tKJVdr1plGZpFhFNzRJs=
+		r0yqz1c0iOoQ3veQOxQDak7DoRg=
 		</data>
 		<key>Content/Scenarios/charons_bargain/archetypes.json</key>
 		<data>
-		5YT1oOKGfHvwVDVC/S0v5iacR0Q=
+		3WePKCFhhti1iRdmyFEoOlXkibc=
 		</data>
 		<key>Content/Scenarios/charons_bargain/clocks.json</key>
 		<data>
@@ -166,7 +166,7 @@
 		</data>
 		<key>Content/Scenarios/temple_of_terror/archetypes.json</key>
 		<data>
-		beA83njotcMtHlaNfqG2RTAdo8o=
+		/isVtsU+//Gubt345O5bLjgPjs0=
 		</data>
 		<key>Content/Scenarios/temple_of_terror/clocks.json</key>
 		<data>
@@ -258,7 +258,7 @@
 		</data>
 		<key>Content/Scenarios/tomb/archetypes.json</key>
 		<data>
-		zuFscOMBVRyZu0EDJRbhHVtNiNY=
+		Yn/A82Japb8jrKsQ1zm9RkW0SAk=
 		</data>
 		<key>Content/Scenarios/tomb/clocks.json</key>
 		<data>
@@ -462,7 +462,7 @@
 		</data>
 		<key>PlugIns/CardGameTests.xctest/CardGameTests</key>
 		<data>
-		yS6H6TDx4anfhVCIgbhkw+YiBGU=
+		C18+YxdqTkgjb/xeuhG5sz2q06Y=
 		</data>
 		<key>PlugIns/CardGameTests.xctest/Info.plist</key>
 		<data>
@@ -704,14 +704,14 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			oiXklvJ3ABdXZdgYDcxTLo/HeKWW6YO80psir7fLwoc=
+			7RfdToGpc41dplRk4Y0odMYOdppso9+aATp3A+lnj24=
 			</data>
 		</dict>
 		<key>Content/Scenarios/charons_bargain/archetypes.json</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			p9mELDH6wLMzZ9lMvh7Lv8T2SnIvWrO/BlXEfCJWY6M=
+			shnACbLxLtK5b9HBIM4mJz4cX9Iq+8BKS4lSUBWdclc=
 			</data>
 		</dict>
 		<key>Content/Scenarios/charons_bargain/clocks.json</key>
@@ -767,7 +767,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			rfZuqreKECbAENZp6VoKPpLiAvlS2rGtCBtKr+1th80=
+			YLHspMnL8uhioJrotENl0pKPPQ9unMwx1KFcf92DqN4=
 			</data>
 		</dict>
 		<key>Content/Scenarios/temple_of_terror/clocks.json</key>
@@ -928,7 +928,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			RMiwCxFvwQSZekPsrMQKVakoejyY8O7ZBjKZ63be5HE=
+			DPR1PuIMDc2iEnzcxs56h93xfVZx8mc2dwuV5B7R52w=
 			</data>
 		</dict>
 		<key>Content/Scenarios/tomb/clocks.json</key>
@@ -1271,7 +1271,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			1Fk8GcG93P15NRSwFY+DFt9ilgO6x+J1q9vcWPAKfEg=
+			qgBlFTZD2wDmsnTvSSedVyVaQswxH8hZGe4C5HHLkJ4=
 			</data>
 		</dict>
 		<key>PlugIns/CardGameTests.xctest/Info.plist</key>

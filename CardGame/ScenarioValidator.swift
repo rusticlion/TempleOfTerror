@@ -332,6 +332,13 @@ struct ScenarioValidator {
             )
         }
 
+        for archetype in archetypes {
+            validateArchetype(
+                archetype,
+                state: &state
+            )
+        }
+
         for treasure in treasures {
             validateTreasure(
                 treasure,
@@ -772,6 +779,36 @@ struct ScenarioValidator {
             catalog: catalog,
             state: &state
         )
+    }
+
+    private func validateArchetype(
+        _ archetype: ArchetypeDefinition,
+        state: inout ValidationState
+    ) {
+        let tags = archetype.personalityTagPool.map {
+            $0.trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+
+        if tags.contains(where: \.isEmpty) {
+            state.report.add(
+                severity: .error,
+                file: "archetypes.json",
+                path: "archetype[\(archetype.id)].personalityTagPool",
+                message: "personalityTagPool cannot contain blank tags."
+            )
+        }
+
+        var seen: Set<String> = []
+        for tag in tags where !tag.isEmpty {
+            if !seen.insert(tag).inserted {
+                state.report.add(
+                    severity: .warning,
+                    file: "archetypes.json",
+                    path: "archetype[\(archetype.id)].personalityTagPool",
+                    message: "Duplicate personality tag '\(tag)' will be ignored at runtime."
+                )
+            }
+        }
     }
 
     private func validateHarmFamily(
@@ -1221,6 +1258,17 @@ struct ScenarioValidator {
                     )
                 }
 
+            case .addCharacterTag, .removeCharacterTag:
+                if let tag = consequence.tag, !tag.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    break
+                }
+                state.report.add(
+                    severity: .error,
+                    file: file,
+                    path: consequencePath,
+                    message: "\(consequence.kind.rawValue) requires tag."
+                )
+
             case .endRun:
                 if consequence.endingOutcome == nil {
                     state.report.add(
@@ -1337,6 +1385,15 @@ struct ScenarioValidator {
                         message: "characterHasTreasureId requires stringParam."
                     )
                 }
+
+            case .characterHasTag, .characterLacksTag, .partyHasMemberWithTag:
+                require(
+                    !(condition.stringParam?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ?? true),
+                    file: file,
+                    path: conditionPath,
+                    message: "\(condition.type.rawValue) requires stringParam tag.",
+                    state: &state
+                )
 
             case .partyHasTreasureWithTag:
                 require(

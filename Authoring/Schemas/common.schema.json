@@ -219,7 +219,10 @@
             "requiresMinPositionLevel",
             "requiresExactPositionLevel",
             "characterHasTreasureId",
+            "characterHasTag",
+            "characterLacksTag",
             "partyHasTreasureWithTag",
+            "partyHasMemberWithTag",
             "clockProgress",
             "scenarioFlagSet",
             "scenarioCounter"
@@ -423,6 +426,8 @@
             "clearScenarioFlag",
             "incrementScenarioCounter",
             "setScenarioCounter",
+            "addCharacterTag",
+            "removeCharacterTag",
             "endRun"
           ]
         },
@@ -505,6 +510,9 @@
           "type": "string"
         },
         "counterId": {
+          "type": "string"
+        },
+        "tag": {
           "type": "string"
         },
         "runOutcome": {
@@ -615,6 +623,12 @@
           "additionalProperties": {
             "type": "integer",
             "minimum": 0
+          }
+        },
+        "personalityTagPool": {
+          "type": "array",
+          "items": {
+            "type": "string"
           }
         }
       },

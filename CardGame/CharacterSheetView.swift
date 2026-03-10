@@ -42,6 +42,29 @@ struct CharacterSheetView: View {
     }
 
     @ViewBuilder
+    private func tagSection(
+        title: String,
+        tags: [String],
+        fill: Color,
+        foreground: Color,
+        border: Color
+    ) -> some View {
+        if !tags.isEmpty {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title)
+                    .font(Theme.systemFont(size: 11, weight: .medium))
+                    .foregroundColor(Theme.inkLight)
+                FlexibleTagWrap(
+                    tags: tags,
+                    fill: fill,
+                    foreground: foreground,
+                    border: border
+                )
+            }
+        }
+    }
+
+    @ViewBuilder
     private func harmRow(level: HarmLevel,
                          entries: [(familyId: String, description: String)],
                          slots: Int) -> some View {
@@ -123,6 +146,22 @@ struct CharacterSheetView: View {
                     .font(Theme.systemFont(size: 11))
                     .foregroundColor(Theme.inkFaded)
             }
+
+            tagSection(
+                title: "Traits",
+                tags: character.traitTags,
+                fill: Theme.parchment.opacity(0.72),
+                foreground: Theme.ink,
+                border: Theme.parchmentDeep.opacity(0.35)
+            )
+
+            tagSection(
+                title: "Current State",
+                tags: character.stateTags,
+                fill: Theme.danger.opacity(0.12),
+                foreground: Theme.danger,
+                border: Theme.danger.opacity(0.25)
+            )
 
             VStack(alignment: .leading, spacing: 7) {
                 VStack(alignment: .leading, spacing: 3) {
@@ -232,6 +271,33 @@ struct CharacterSheetView: View {
         }
         .popover(item: $selectedHarm) { harm in
             HarmTooltipView(familyId: harm.familyId, level: harm.level, harmFamilies: harmFamilies)
+        }
+    }
+}
+
+private struct FlexibleTagWrap: View {
+    let tags: [String]
+    let fill: Color
+    let foreground: Color
+    let border: Color
+
+    private let columns = [GridItem(.adaptive(minimum: 88), spacing: 6)]
+
+    var body: some View {
+        LazyVGrid(columns: columns, alignment: .leading, spacing: 6) {
+            ForEach(tags, id: \.self) { tag in
+                Text(tag)
+                    .font(Theme.systemFont(size: 10, weight: .semibold))
+                    .foregroundColor(foreground)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 5)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(fill, in: RoundedRectangle(cornerRadius: 7))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 7)
+                            .stroke(border, lineWidth: 1)
+                    )
+            }
         }
     }
 }
