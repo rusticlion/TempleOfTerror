@@ -219,6 +219,12 @@ struct RollRulesEngine {
                     )
                 )
             }
+
+            optionalInfos.sort { lhs, rhs in
+                if lhs.description == "Push Yourself" { return true }
+                if rhs.description == "Push Yourself" { return false }
+                return lhs.description.localizedCaseInsensitiveCompare(rhs.description) == .orderedAscending
+            }
         }
 
         return (projection, optionalInfos)

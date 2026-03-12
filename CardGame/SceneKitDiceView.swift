@@ -31,11 +31,13 @@ class SceneKitDiceController: NSObject, ObservableObject, SCNSceneRendererDelega
     fileprivate var dice: [DieNode] = []
     var onDiceSettled: (([Int]) -> Void)? = nil
     @Published private(set) var isViewportReady = false
+    weak var scene: SCNScene?
     private var awaitingResults = false
     var pushedDiceCount: Int = 0
     /// Ensures we don't return a result until the dice have actually moved.
     private var hasStartedRolling = false
     private var rollStartTime: TimeInterval = 0
+    private let winnerMarkerName = "tray-winner-marker"
 
     /// Dynamic tray dimensions in world-space units.
     var trayInnerWidth: Float = 8.0
@@ -84,7 +86,7 @@ class SceneKitDiceController: NSObject, ObservableObject, SCNSceneRendererDelega
         awaitingResults = true
         hasStartedRolling = false
         rollStartTime = CACurrentMediaTime()
-        highlightDie(at: nil, fadeOthers: false)
+        highlightDice(at: [], fadeOthers: false, isCritical: false)
 
         let maxX = Swift.max(trayPlayableHalfWidth - dieContainmentRadius - 0.18, 0.40)
         let maxZ = Swift.max(trayPlayableHalfDepth - dieContainmentRadius - 0.18, 0.40)
@@ -127,19 +129,107 @@ class SceneKitDiceController: NSObject, ObservableObject, SCNSceneRendererDelega
         }
     }
 
-    func highlightDie(at index: Int?, fadeOthers: Bool) {
-        guard let index else {
+    func highlightDice(at indices: [Int], fadeOthers: Bool, isCritical: Bool) {
+        let validIndices = indices.filter { dice.indices.contains($0) }
+
+        guard !validIndices.isEmpty else {
             for die in dice {
-                die.setHighlighted(false)
+                die.setHighlighted(false, critical: false)
                 die.setOpacity(1.0)
             }
+            updateWinnerMarkers(for: [], isCritical: false)
             return
         }
 
+        let highlighted = Set(validIndices)
         for (i, die) in dice.enumerated() {
-            let isSelected = i == index
-            die.setHighlighted(isSelected)
-            die.setOpacity(isSelected ? 1.0 : (fadeOthers ? 0.14 : 0.8))
+            let isSelected = highlighted.contains(i)
+            die.setHighlighted(isSelected, critical: isCritical && isSelected)
+            die.setOpacity(isSelected ? 1.0 : (fadeOthers ? 0.22 : 0.8))
+        }
+
+        updateWinnerMarkers(for: validIndices, isCritical: isCritical)
+    }
+
+    private func updateWinnerMarkers(for indices: [Int], isCritical: Bool) {
+        scene?.rootNode.childNodes
+            .filter { $0.name == winnerMarkerName }
+            .forEach { $0.removeFromParentNode() }
+
+        guard let scene else { return }
+
+        let validIndices = indices.filter { dice.indices.contains($0) }
+        guard !validIndices.isEmpty else { return }
+
+        let markerColor = isCritical
+            ? UIColor(red: 1.0, green: 0.90, blue: 0.58, alpha: 1)
+            : UIColor(red: 1.0, green: 0.84, blue: 0.44, alpha: 1)
+
+        let positions = validIndices.map { index -> SCNVector3 in
+            let die = dice[index]
+            let position = die.node.presentation.position
+            let ringRadius = CGFloat(max(die.containmentRadius * (isCritical ? 0.78 : 0.72), 0.34))
+            let pipeRadius = CGFloat(max(die.containmentRadius * 0.08, 0.035))
+
+            let ring = SCNTorus(ringRadius: ringRadius, pipeRadius: pipeRadius)
+            let material = SCNMaterial()
+            material.lightingModel = .constant
+            material.diffuse.contents = UIColor.clear
+            material.emission.contents = markerColor
+            material.transparent.contents = UIColor.white
+            ring.materials = [material]
+
+            let markerNode = SCNNode(geometry: ring)
+            markerNode.name = winnerMarkerName
+            markerNode.position = SCNVector3(position.x, 0.03, position.z)
+            markerNode.eulerAngles = SCNVector3(Float.pi / 2, 0, 0)
+            markerNode.opacity = 0.0
+            markerNode.scale = SCNVector3(isCritical ? 0.78 : 0.82, isCritical ? 0.78 : 0.82, isCritical ? 0.78 : 0.82)
+            scene.rootNode.addChildNode(markerNode)
+
+            let fadeIn = SCNAction.fadeOpacity(to: isCritical ? 1.0 : 0.95, duration: 0.12)
+            fadeIn.timingMode = .easeInEaseOut
+            let scaleUp = SCNAction.scale(to: 1.0, duration: 0.18)
+            scaleUp.timingMode = .easeInEaseOut
+            markerNode.runAction(.group([fadeIn, scaleUp]))
+
+            return position
+        }
+
+        guard isCritical, positions.count > 1 else { return }
+
+        for index in 0..<(positions.count - 1) {
+            let start = positions[index]
+            let end = positions[index + 1]
+            let dx = end.x - start.x
+            let dz = end.z - start.z
+            let distance = sqrt(dx * dx + dz * dz)
+            guard distance > 0.01 else { continue }
+
+            let link = SCNBox(
+                width: CGFloat(distance),
+                height: 0.02,
+                length: 0.06,
+                chamferRadius: 0.02
+            )
+            let linkMaterial = SCNMaterial()
+            linkMaterial.lightingModel = .constant
+            linkMaterial.diffuse.contents = UIColor.clear
+            linkMaterial.emission.contents = markerColor
+            link.materials = [linkMaterial]
+
+            let linkNode = SCNNode(geometry: link)
+            linkNode.name = winnerMarkerName
+            linkNode.position = SCNVector3((start.x + end.x) / 2, 0.03, (start.z + end.z) / 2)
+            linkNode.eulerAngles = SCNVector3(0, -atan2(dz, dx), 0)
+            linkNode.opacity = 0.0
+            scene.rootNode.addChildNode(linkNode)
+
+            let shimmerIn = SCNAction.fadeOpacity(to: 0.72, duration: 0.16)
+            shimmerIn.timingMode = .easeInEaseOut
+            let shimmerOut = SCNAction.fadeOpacity(to: 0.48, duration: 0.28)
+            shimmerOut.timingMode = .easeInEaseOut
+            linkNode.runAction(.sequence([shimmerIn, shimmerOut]))
         }
     }
 
@@ -317,6 +407,7 @@ struct SceneKitDiceView: UIViewRepresentable {
     func makeUIView(context: Context) -> SCNView {
         let scnView = LayoutAwareSCNView()
         let scene = SCNScene()
+        controller.scene = scene
         scnView.scene = scene
         scnView.delegate = controller
 
@@ -359,6 +450,7 @@ struct SceneKitDiceView: UIViewRepresentable {
 
     func updateUIView(_ uiView: SCNView, context: Context) {
         guard let scene = uiView.scene else { return }
+        controller.scene = scene
 
         context.coordinator.desiredDiceCount = diceCount
         context.coordinator.desiredPushedDice = pushedDice

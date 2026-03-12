@@ -47,7 +47,15 @@
         "key": "Done",
         "location": {
           "startingColumn": 24,
-          "startingLine": 527
+          "startingLine": 535
+        }
+      },
+      {
+        "comment": "",
+        "key": "Aftermath",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 518
         }
       },
       {
@@ -55,7 +63,7 @@
         "key": "Author Tools",
         "location": {
           "startingColumn": 30,
-          "startingLine": 999
+          "startingLine": 1007
         }
       },
       {
@@ -63,7 +71,7 @@
         "key": "Dice Override",
         "location": {
           "startingColumn": 25,
-          "startingLine": 760
+          "startingLine": 768
         }
       },
       {
@@ -71,7 +79,7 @@
         "key": "Node Jump",
         "location": {
           "startingColumn": 25,
-          "startingLine": 777
+          "startingLine": 785
         }
       },
       {
@@ -79,7 +87,7 @@
         "key": "Scenario State",
         "location": {
           "startingColumn": 25,
-          "startingLine": 812
+          "startingLine": 820
         }
       },
       {
@@ -87,7 +95,7 @@
         "key": "Guidance",
         "location": {
           "startingColumn": 25,
-          "startingLine": 831
+          "startingLine": 839
         }
       },
       {
@@ -95,7 +103,7 @@
         "key": "Flags and Counters",
         "location": {
           "startingColumn": 25,
-          "startingLine": 838
+          "startingLine": 846
         }
       },
       {
@@ -103,7 +111,7 @@
         "key": "Treasure and Modifier Grants",
         "location": {
           "startingColumn": 25,
-          "startingLine": 898
+          "startingLine": 906
         }
       },
       {
@@ -111,7 +119,7 @@
         "key": "Last Action",
         "location": {
           "startingColumn": 29,
-          "startingLine": 993
+          "startingLine": 1001
         }
       },
       {
@@ -119,7 +127,7 @@
         "key": "Current: [%@]",
         "location": {
           "startingColumn": 26,
-          "startingLine": 772
+          "startingLine": 780
         }
       },
       {
@@ -127,7 +135,7 @@
         "key": "Enable Fixed Dice Pattern",
         "location": {
           "startingColumn": 28,
-          "startingLine": 761
+          "startingLine": 769
         }
       },
       {
@@ -135,7 +143,7 @@
         "key": "e.g. 6,5,3",
         "location": {
           "startingColumn": 31,
-          "startingLine": 762
+          "startingLine": 770
         }
       },
       {
@@ -143,7 +151,7 @@
         "key": "Apply Pattern",
         "location": {
           "startingColumn": 28,
-          "startingLine": 765
+          "startingLine": 773
         }
       },
       {
@@ -151,7 +159,7 @@
         "key": "No fixed-map nodes are loaded in this run.",
         "location": {
           "startingColumn": 30,
-          "startingLine": 779
+          "startingLine": 787
         }
       },
       {
@@ -159,7 +167,7 @@
         "key": "Target Node",
         "location": {
           "startingColumn": 32,
-          "startingLine": 783
+          "startingLine": 791
         }
       },
       {
@@ -167,7 +175,7 @@
         "key": "Move Entire Party",
         "location": {
           "startingColumn": 32,
-          "startingLine": 789
+          "startingLine": 797
         }
       },
       {
@@ -175,7 +183,7 @@
         "key": "Jump",
         "location": {
           "startingColumn": 32,
-          "startingLine": 791
+          "startingLine": 799
         }
       },
       {
@@ -183,7 +191,7 @@
         "key": "No active clocks.",
         "location": {
           "startingColumn": 30,
-          "startingLine": 820
+          "startingLine": 828
         }
       },
       {
@@ -191,7 +199,7 @@
         "key": "%@: %@",
         "location": {
           "startingColumn": 30,
-          "startingLine": 815
+          "startingLine": 823
         }
       },
       {
@@ -199,7 +207,7 @@
         "key": "%@: %lld/%lld",
         "location": {
           "startingColumn": 34,
-          "startingLine": 825
+          "startingLine": 833
         }
       },
       {
@@ -207,7 +215,7 @@
         "key": "Reset In-Run Hints",
         "location": {
           "startingColumn": 28,
-          "startingLine": 832
+          "startingLine": 840
         }
       },
       {
@@ -215,7 +223,7 @@
         "key": "Flags: none",
         "location": {
           "startingColumn": 30,
-          "startingLine": 874
+          "startingLine": 882
         }
       },
       {
@@ -223,7 +231,7 @@
         "key": "Counters: none",
         "location": {
           "startingColumn": 30,
-          "startingLine": 886
+          "startingLine": 894
         }
       },
       {
@@ -231,7 +239,7 @@
         "key": "Flag ID",
         "location": {
           "startingColumn": 31,
-          "startingLine": 839
+          "startingLine": 847
         }
       },
       {
@@ -239,7 +247,7 @@
         "key": "Counter ID",
         "location": {
           "startingColumn": 31,
-          "startingLine": 853
+          "startingLine": 861
         }
       },
       {
@@ -247,7 +255,7 @@
         "key": "Counter Value",
         "location": {
           "startingColumn": 31,
-          "startingLine": 856
+          "startingLine": 864
         }
       },
       {
@@ -255,7 +263,7 @@
         "key": "Set Flag",
         "location": {
           "startingColumn": 32,
-          "startingLine": 843
+          "startingLine": 851
         }
       },
       {
@@ -263,7 +271,7 @@
         "key": "Clear Flag",
         "location": {
           "startingColumn": 32,
-          "startingLine": 847
+          "startingLine": 855
         }
       },
       {
@@ -271,7 +279,7 @@
         "key": "Set Counter",
         "location": {
           "startingColumn": 32,
-          "startingLine": 859
+          "startingLine": 867
         }
       },
       {
@@ -279,7 +287,7 @@
         "key": "+1",
         "location": {
           "startingColumn": 32,
-          "startingLine": 863
+          "startingLine": 871
         }
       },
       {
@@ -287,7 +295,7 @@
         "key": "-1",
         "location": {
           "startingColumn": 32,
-          "startingLine": 867
+          "startingLine": 875
         }
       },
       {
@@ -295,7 +303,7 @@
         "key": "Flag %@ = %@",
         "location": {
           "startingColumn": 34,
-          "startingLine": 880
+          "startingLine": 888
         }
       },
       {
@@ -303,7 +311,7 @@
         "key": "Counter %@ = %lld",
         "location": {
           "startingColumn": 34,
-          "startingLine": 892
+          "startingLine": 900
         }
       },
       {
@@ -311,7 +319,7 @@
         "key": "No active party members available.",
         "location": {
           "startingColumn": 30,
-          "startingLine": 900
+          "startingLine": 908
         }
       },
       {
@@ -319,7 +327,7 @@
         "key": "No treasure templates are available for this scenario.",
         "location": {
           "startingColumn": 30,
-          "startingLine": 912
+          "startingLine": 920
         }
       },
       {
@@ -327,7 +335,7 @@
         "key": "Character",
         "location": {
           "startingColumn": 32,
-          "startingLine": 904
+          "startingLine": 912
         }
       },
       {
@@ -335,7 +343,7 @@
         "key": "Treasure",
         "location": {
           "startingColumn": 32,
-          "startingLine": 916
+          "startingLine": 924
         }
       },
       {
@@ -343,7 +351,7 @@
         "key": "Grant Treasure",
         "location": {
           "startingColumn": 32,
-          "startingLine": 921
+          "startingLine": 929
         }
       },
       {
@@ -351,7 +359,7 @@
         "key": "Modifier Description",
         "location": {
           "startingColumn": 31,
-          "startingLine": 968
+          "startingLine": 976
         }
       },
       {
@@ -359,7 +367,7 @@
         "key": "Bonus Dice",
         "location": {
           "startingColumn": 31,
-          "startingLine": 969
+          "startingLine": 977
         }
       },
       {
@@ -367,7 +375,7 @@
         "key": "Uses (0 = unlimited)",
         "location": {
           "startingColumn": 31,
-          "startingLine": 971
+          "startingLine": 979
         }
       },
       {
@@ -375,7 +383,7 @@
         "key": "Improve Position",
         "location": {
           "startingColumn": 28,
-          "startingLine": 973
+          "startingLine": 981
         }
       },
       {
@@ -383,7 +391,7 @@
         "key": "Improve Effect",
         "location": {
           "startingColumn": 28,
-          "startingLine": 974
+          "startingLine": 982
         }
       },
       {
@@ -391,7 +399,7 @@
         "key": "Grant Custom Modifier",
         "location": {
           "startingColumn": 28,
-          "startingLine": 975
+          "startingLine": 983
         }
       },
       {
@@ -399,7 +407,7 @@
         "key": "+1d",
         "location": {
           "startingColumn": 32,
-          "startingLine": 936
+          "startingLine": 944
         }
       },
       {
@@ -407,7 +415,7 @@
         "key": "Pos+",
         "location": {
           "startingColumn": 32,
-          "startingLine": 946
+          "startingLine": 954
         }
       },
       {
@@ -415,7 +423,7 @@
         "key": "Eff+",
         "location": {
           "startingColumn": 32,
-          "startingLine": 956
+          "startingLine": 964
         }
       },
       {
@@ -423,7 +431,7 @@
         "key": "Close",
         "location": {
           "startingColumn": 28,
-          "startingLine": 1002
+          "startingLine": 1010
         }
       }
     ]

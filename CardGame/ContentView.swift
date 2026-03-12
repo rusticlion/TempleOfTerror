@@ -514,7 +514,15 @@ struct PendingResolutionView: View {
                         .foregroundColor(Theme.inkFaded)
                 }
 
-                ResolutionNarrativeView(text: viewModel.pendingResolutionText())
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Aftermath")
+                        .font(Theme.systemFont(size: 11, weight: .semibold))
+                        .foregroundColor(Theme.inkFaded)
+                        .textCase(.uppercase)
+                        .tracking(0.7)
+
+                    ResolutionAftermathView(entries: viewModel.pendingResolutionEntries())
+                }
 
                 if viewModel.gameState.pendingResolution?.isAwaitingDecision == true {
                     ResolutionDecisionCard(

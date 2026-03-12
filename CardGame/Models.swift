@@ -97,6 +97,60 @@ struct PendingResistanceState: Codable {
     var consequence: Consequence
     var prompt: String?
     var attribute: ResistanceAttribute
+    var title: String
+    var summary: String
+    var resistPreview: String
+    var sequenceIndex: Int
+    var sequenceTotal: Int
+
+    init(
+        consequence: Consequence,
+        prompt: String?,
+        attribute: ResistanceAttribute,
+        title: String = "Consequence",
+        summary: String = "",
+        resistPreview: String = "",
+        sequenceIndex: Int = 1,
+        sequenceTotal: Int = 1
+    ) {
+        self.consequence = consequence
+        self.prompt = prompt
+        self.attribute = attribute
+        self.title = title
+        self.summary = summary
+        self.resistPreview = resistPreview
+        self.sequenceIndex = sequenceIndex
+        self.sequenceTotal = sequenceTotal
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case consequence, prompt, attribute, title, summary, resistPreview
+        case sequenceIndex, sequenceTotal
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        consequence = try container.decode(Consequence.self, forKey: .consequence)
+        prompt = try container.decodeIfPresent(String.self, forKey: .prompt)
+        attribute = try container.decode(ResistanceAttribute.self, forKey: .attribute)
+        title = try container.decodeIfPresent(String.self, forKey: .title) ?? "Consequence"
+        summary = try container.decodeIfPresent(String.self, forKey: .summary) ?? ""
+        resistPreview = try container.decodeIfPresent(String.self, forKey: .resistPreview) ?? ""
+        sequenceIndex = max(try container.decodeIfPresent(Int.self, forKey: .sequenceIndex) ?? 1, 1)
+        sequenceTotal = max(try container.decodeIfPresent(Int.self, forKey: .sequenceTotal) ?? 1, sequenceIndex)
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(consequence, forKey: .consequence)
+        try container.encodeIfPresent(prompt, forKey: .prompt)
+        try container.encode(attribute, forKey: .attribute)
+        try container.encode(title, forKey: .title)
+        try container.encode(summary, forKey: .summary)
+        try container.encode(resistPreview, forKey: .resistPreview)
+        try container.encode(sequenceIndex, forKey: .sequenceIndex)
+        try container.encode(sequenceTotal, forKey: .sequenceTotal)
+    }
 }
 
 struct ConsequenceResolutionFrame: Codable {
@@ -112,6 +166,57 @@ struct PendingConsequenceResolution: Codable {
     var pendingResistance: PendingResistanceState?
     var rollPresentation: PendingRollPresentation?
     var requiresAcknowledgement: Bool = false
+    var resolvedResistanceCount: Int = 0
+
+    init(
+        source: ResolutionSource,
+        frames: [ConsequenceResolutionFrame],
+        resolvedDescriptions: [String],
+        pendingChoice: PendingChoiceState?,
+        pendingResistance: PendingResistanceState?,
+        rollPresentation: PendingRollPresentation?,
+        requiresAcknowledgement: Bool = false,
+        resolvedResistanceCount: Int = 0
+    ) {
+        self.source = source
+        self.frames = frames
+        self.resolvedDescriptions = resolvedDescriptions
+        self.pendingChoice = pendingChoice
+        self.pendingResistance = pendingResistance
+        self.rollPresentation = rollPresentation
+        self.requiresAcknowledgement = requiresAcknowledgement
+        self.resolvedResistanceCount = resolvedResistanceCount
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case source, frames, resolvedDescriptions, pendingChoice
+        case pendingResistance, rollPresentation, requiresAcknowledgement
+        case resolvedResistanceCount
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        source = try container.decode(ResolutionSource.self, forKey: .source)
+        frames = try container.decode([ConsequenceResolutionFrame].self, forKey: .frames)
+        resolvedDescriptions = try container.decodeIfPresent([String].self, forKey: .resolvedDescriptions) ?? []
+        pendingChoice = try container.decodeIfPresent(PendingChoiceState.self, forKey: .pendingChoice)
+        pendingResistance = try container.decodeIfPresent(PendingResistanceState.self, forKey: .pendingResistance)
+        rollPresentation = try container.decodeIfPresent(PendingRollPresentation.self, forKey: .rollPresentation)
+        requiresAcknowledgement = try container.decodeIfPresent(Bool.self, forKey: .requiresAcknowledgement) ?? false
+        resolvedResistanceCount = max(try container.decodeIfPresent(Int.self, forKey: .resolvedResistanceCount) ?? 0, 0)
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(source, forKey: .source)
+        try container.encode(frames, forKey: .frames)
+        try container.encode(resolvedDescriptions, forKey: .resolvedDescriptions)
+        try container.encodeIfPresent(pendingChoice, forKey: .pendingChoice)
+        try container.encodeIfPresent(pendingResistance, forKey: .pendingResistance)
+        try container.encodeIfPresent(rollPresentation, forKey: .rollPresentation)
+        try container.encode(requiresAcknowledgement, forKey: .requiresAcknowledgement)
+        try container.encode(resolvedResistanceCount, forKey: .resolvedResistanceCount)
+    }
 
     var resolvedText: String {
         resolvedDescriptions.joined(separator: "\n")

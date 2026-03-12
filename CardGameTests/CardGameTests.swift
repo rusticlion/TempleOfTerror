@@ -1494,6 +1494,105 @@ final class CardGameTests: XCTestCase {
         XCTAssertTrue(vm.gameState.pendingResolution?.resolvedText.contains("Stress Overload!") == true)
     }
 
+    func testPendingResistanceIncludesConcreteFallbackSummary() throws {
+        let character = Character(
+            id: UUID(),
+            name: "Occultist",
+            characterClass: "Whisper",
+            stress: 0,
+            harm: HarmState(),
+            actions: ["Attune": 2]
+        )
+        let vm = GameViewModel()
+        vm.gameState.party = [character]
+
+        let action = ActionOption(
+            name: "Read the warning",
+            actionType: "Attune",
+            position: .risky,
+            effect: .standard,
+            outcomes: [.success: [.gainStress(3)]]
+        )
+
+        _ = vm.performAction(for: action, with: character, interactableID: nil, usingDice: [6])
+
+        let resistance = vm.gameState.pendingResolution?.pendingResistance
+        XCTAssertEqual(resistance?.title, "+3 Stress")
+        XCTAssertEqual(resistance?.summary, "You would take 3 Stress.")
+        XCTAssertEqual(resistance?.resistPreview, "Resist: reduce to +1 Stress.")
+    }
+
+    func testPendingResistanceQueuePreviewShowsUpcomingFallout() throws {
+        let character = Character(
+            id: UUID(),
+            name: "Scout",
+            characterClass: "Scout",
+            stress: 0,
+            harm: HarmState(),
+            actions: ["Study": 1]
+        )
+        let vm = GameViewModel()
+        vm.gameState.party = [character]
+        vm.gameState.activeClocks = [GameClock(name: "Alarm", segments: 6, progress: 0)]
+
+        let action = ActionOption(
+            name: "Probe the seal",
+            actionType: "Study",
+            position: .risky,
+            effect: .standard,
+            outcomes: [
+                .success: [
+                    .gainStress(1),
+                    .tickClock(name: "Alarm", amount: 2)
+                ]
+            ]
+        )
+
+        _ = vm.performAction(for: action, with: character, interactableID: nil, usingDice: [6])
+
+        let previews = vm.pendingResistanceQueuePreview()
+        XCTAssertEqual(previews.count, 1)
+        XCTAssertEqual(previews.first?.title, "Alarm +2")
+        XCTAssertEqual(previews.first?.summary, "Alarm advances by 2.")
+    }
+
+    func testPendingResistanceTracksQueueProgressAcrossMultipleFalloutCards() throws {
+        let character = Character(
+            id: UUID(),
+            name: "Scout",
+            characterClass: "Scout",
+            stress: 0,
+            harm: HarmState(),
+            actions: ["Study": 1]
+        )
+        let vm = GameViewModel()
+        vm.gameState.party = [character]
+        vm.gameState.activeClocks = [GameClock(name: "Alarm", segments: 6, progress: 0)]
+
+        let action = ActionOption(
+            name: "Probe the seal",
+            actionType: "Study",
+            position: .risky,
+            effect: .standard,
+            outcomes: [
+                .success: [
+                    .gainStress(1),
+                    .tickClock(name: "Alarm", amount: 2)
+                ]
+            ]
+        )
+
+        _ = vm.performAction(for: action, with: character, interactableID: nil, usingDice: [6])
+
+        XCTAssertEqual(vm.gameState.pendingResolution?.pendingResistance?.sequenceIndex, 1)
+        XCTAssertEqual(vm.gameState.pendingResolution?.pendingResistance?.sequenceTotal, 2)
+
+        _ = vm.acceptPendingResistance()
+
+        XCTAssertEqual(vm.gameState.pendingResolution?.pendingResistance?.sequenceIndex, 2)
+        XCTAssertEqual(vm.gameState.pendingResolution?.pendingResistance?.sequenceTotal, 2)
+    }
+
     func testScenarioRuntimeGroupedMoveUpdatesPartyLocationsAndDiscovery() throws {
         let startID = UUID()
         let nextID = UUID()

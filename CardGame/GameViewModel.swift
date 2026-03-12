@@ -225,6 +225,10 @@ class GameViewModel: ObservableObject {
         gameState.pendingResolution?.resolvedText ?? ""
     }
 
+    func pendingResolutionEntries() -> [String] {
+        gameState.pendingResolution?.resolvedDescriptions ?? []
+    }
+
     private func appendToPendingResolutionLog(_ text: String) {
         guard !text.isEmpty, gameState.pendingResolution != nil else { return }
         gameState.pendingResolution?.resolvedDescriptions.append(text)
@@ -243,6 +247,16 @@ class GameViewModel: ObservableObject {
         guard let attribute = pendingResistanceAttribute(),
               let character = pendingResolutionCharacter() else { return nil }
         return attribute.dicePool(for: character)
+    }
+
+    func pendingResistanceQueuePreview(limit: Int = 3) -> [PendingResistanceState] {
+        guard let pendingResolution = gameState.pendingResolution else { return [] }
+        let executor = makeConsequenceExecutor()
+        return executor.previewUpcomingResistances(
+            in: pendingResolution,
+            gameState: gameState,
+            limit: limit
+        )
     }
 
     @discardableResult

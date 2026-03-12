@@ -4,226 +4,394 @@
     "Localizable": [
       {
         "comment": "",
-        "key": "Awaiting your decision.",
+        "key": "Resolved fallout will collect here.",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 26
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld",
+        "location": {
+          "startingColumn": 42,
+          "startingLine": 43
+        }
+      },
+      {
+        "comment": "",
+        "key": "Rolled %lld",
         "location": {
           "startingColumn": 22,
-          "startingLine": 9
+          "startingLine": 124
+        }
+      },
+      {
+        "comment": "",
+        "key": "No Stress",
+        "location": {
+          "startingColumn": 48,
+          "startingLine": 131
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld Stress",
+        "location": {
+          "startingColumn": 62,
+          "startingLine": 131
+        }
+      },
+      {
+        "comment": "",
+        "key": "Loaded",
+        "location": {
+          "startingColumn": 33,
+          "startingLine": 254
+        }
+      },
+      {
+        "comment": "",
+        "key": "Ready",
+        "location": {
+          "startingColumn": 44,
+          "startingLine": 254
+        }
+      },
+      {
+        "comment": "",
+        "key": "Resistance is armed in the tray below.",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 465
         }
       },
       {
         "comment": "",
         "key": "Resist with %@",
         "location": {
-          "startingColumn": 26,
-          "startingLine": 84
+          "startingColumn": 30,
+          "startingLine": 386
         }
       },
       {
         "comment": "",
-        "key": "Resist to reduce or avoid this consequence, then pay Stress based on how strong the resistance roll is.",
-        "location": {
-          "startingColumn": 26,
-          "startingLine": 92
-        }
-      },
-      {
-        "comment": "",
-        "key": "Roll %lldd6 and pay 6 minus the highest result in Stress.",
-        "location": {
-          "startingColumn": 32,
-          "startingLine": 109
-        }
-      },
-      {
-        "comment": "",
-        "key": "Roll 2d6, keep the lower die, and pay 6 minus that result in Stress.",
-        "location": {
-          "startingColumn": 32,
-          "startingLine": 110
-        }
-      },
-      {
-        "comment": "",
-        "key": "Back",
+        "key": "Fallout %lld of %lld",
         "location": {
           "startingColumn": 36,
-          "startingLine": 115
+          "startingLine": 372
         }
       },
       {
         "comment": "",
-        "key": "Roll Resistance",
+        "key": "Fallout",
         "location": {
           "startingColumn": 36,
-          "startingLine": 127
+          "startingLine": 373
+        }
+      },
+      {
+        "comment": "",
+        "key": "If You Resist",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 405
+        }
+      },
+      {
+        "comment": "",
+        "key": "Still In The Queue",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 431
+        }
+      },
+      {
+        "comment": "",
+        "key": "Cancel",
+        "location": {
+          "startingColumn": 40,
+          "startingLine": 470
         }
       },
       {
         "comment": "",
         "key": "Take It",
         "location": {
-          "startingColumn": 36,
-          "startingLine": 140
+          "startingColumn": 40,
+          "startingLine": 482
+        }
+      },
+      {
+        "comment": "",
+        "key": "Take It",
+        "location": {
+          "startingColumn": 40,
+          "startingLine": 500
         }
       },
       {
         "comment": "",
         "key": "Resist",
         "location": {
-          "startingColumn": 36,
-          "startingLine": 152
+          "startingColumn": 40,
+          "startingLine": 516
         }
       },
       {
         "comment": "",
-        "key": "Debug fixed roll: %@",
+        "key": "Back",
         "location": {
-          "startingColumn": 34,
-          "startingLine": 666
+          "startingColumn": 40,
+          "startingLine": 530
         }
       },
       {
         "comment": "",
-        "key": "Done",
+        "key": "Roll Resistance",
         "location": {
-          "startingColumn": 32,
-          "startingLine": 709
+          "startingColumn": 40,
+          "startingLine": 542
+        }
+      },
+      {
+        "comment": "",
+        "key": "Take It",
+        "location": {
+          "startingColumn": 40,
+          "startingLine": 555
+        }
+      },
+      {
+        "comment": "",
+        "key": "Resist",
+        "location": {
+          "startingColumn": 40,
+          "startingLine": 571
         }
       },
       {
         "comment": "",
         "key": "✦ CRITICAL ✦",
         "location": {
-          "startingColumn": 38,
-          "startingLine": 379
+          "startingColumn": 26,
+          "startingLine": 1055
         }
       },
       {
         "comment": "",
         "key": "Rolled a %lld",
         "location": {
-          "startingColumn": 34,
-          "startingLine": 385
+          "startingColumn": 22,
+          "startingLine": 1061
         }
       },
       {
         "comment": "",
         "key": "Impact: %@",
         "location": {
-          "startingColumn": 38,
-          "startingLine": 390
+          "startingColumn": 26,
+          "startingLine": 1066
         }
       },
       {
         "comment": "",
         "key": "Attempting",
         "location": {
-          "startingColumn": 34,
-          "startingLine": 401
+          "startingColumn": 22,
+          "startingLine": 1077
         }
       },
       {
         "comment": "",
         "key": "%@ %lld",
         "location": {
-          "startingColumn": 34,
-          "startingLine": 411
+          "startingColumn": 22,
+          "startingLine": 1087
+        }
+      },
+      {
+        "comment": "",
+        "key": "Fallout Settling",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 1113
+        }
+      },
+      {
+        "comment": "",
+        "key": "The tray is resolving the resisted fallout before the next choice appears.",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 1119
+        }
+      },
+      {
+        "comment": "",
+        "key": "Aftermath",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 1133
         }
       },
       {
         "comment": "",
         "key": "Forecast",
         "location": {
-          "startingColumn": 42,
-          "startingLine": 435
+          "startingColumn": 34,
+          "startingLine": 1150
         }
       },
       {
         "comment": "",
         "key": "This action is currently blocked.",
         "location": {
-          "startingColumn": 64,
-          "startingLine": 441
+          "startingColumn": 56,
+          "startingLine": 1156
         }
       },
       {
         "comment": "",
         "key": "Commit to the roll with the current risk and impact.",
         "location": {
-          "startingColumn": 102,
-          "startingLine": 441
+          "startingColumn": 94,
+          "startingLine": 1156
         }
       },
       {
         "comment": "",
         "key": "0d6",
         "location": {
-          "startingColumn": 60,
-          "startingLine": 454
+          "startingColumn": 52,
+          "startingLine": 1169
         }
       },
       {
         "comment": "",
         "key": "%lldd6",
         "location": {
-          "startingColumn": 68,
-          "startingLine": 454
+          "startingColumn": 60,
+          "startingLine": 1169
         }
       },
       {
         "comment": "",
         "key": "Blocked Right Now",
         "location": {
-          "startingColumn": 42,
-          "startingLine": 479
+          "startingColumn": 34,
+          "startingLine": 1194
         }
       },
       {
         "comment": "",
         "key": "Optional Boosts",
         "location": {
-          "startingColumn": 38,
-          "startingLine": 517
+          "startingColumn": 30,
+          "startingLine": 1233
         }
       },
       {
         "comment": "",
         "key": "Why This Forecast Changed",
         "location": {
-          "startingColumn": 38,
-          "startingLine": 568
+          "startingColumn": 30,
+          "startingLine": 1254
         }
       },
       {
         "comment": "",
         "key": "Helpful Factors",
         "location": {
-          "startingColumn": 46,
-          "startingLine": 576
+          "startingColumn": 38,
+          "startingLine": 1262
         }
       },
       {
         "comment": "",
         "key": "Hindrances",
         "location": {
-          "startingColumn": 46,
-          "startingLine": 592
+          "startingColumn": 38,
+          "startingLine": 1278
+        }
+      },
+      {
+        "comment": "",
+        "key": "Resolve the fallout above. If you resist, the tray will arm here.",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 1317
+        }
+      },
+      {
+        "comment": "",
+        "key": "Resistance Roll",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 1305
+        }
+      },
+      {
+        "comment": "",
+        "key": "Debug fixed roll: %@",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 1401
+        }
+      },
+      {
+        "comment": "",
+        "key": "Debug resistance roll: %@",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 1446
+        }
+      },
+      {
+        "comment": "",
+        "key": "The fallout settles...",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 1480
+        }
+      },
+      {
+        "comment": "",
+        "key": "Choose how to resolve the fallout above.",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 1486
+        }
+      },
+      {
+        "comment": "",
+        "key": "Done",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 1492
         }
       },
       {
         "comment": "",
         "key": "Action Banned",
         "location": {
-          "startingColumn": 64,
-          "startingLine": 683
+          "startingColumn": 52,
+          "startingLine": 1417
         }
       },
       {
         "comment": "",
         "key": "Roll the Dice",
         "location": {
-          "startingColumn": 82,
-          "startingLine": 683
+          "startingColumn": 70,
+          "startingLine": 1417
+        }
+      },
+      {
+        "comment": "",
+        "key": "Roll Resistance",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 1457
         }
       }
     ]

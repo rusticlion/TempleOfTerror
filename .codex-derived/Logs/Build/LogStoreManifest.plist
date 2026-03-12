@@ -6,7 +6,7 @@
 	<integer>12</integer>
 	<key>logs</key>
 	<dict>
-		<key>54138158-BBEB-4630-BFCF-FE18DF9510A9</key>
+		<key>9461EA47-0D0C-4EBE-A7AB-560DCC9B65A0</key>
 		<dict>
 			<key>className</key>
 			<string>IDECommandLineBuildLog</string>
@@ -15,7 +15,7 @@
 			<key>domainType</key>
 			<string>Xcode.IDEActivityLogDomainType.BuildLog</string>
 			<key>fileName</key>
-			<string>54138158-BBEB-4630-BFCF-FE18DF9510A9.xcactivitylog</string>
+			<string>9461EA47-0D0C-4EBE-A7AB-560DCC9B65A0.xcactivitylog</string>
 			<key>hasPrimaryLog</key>
 			<true/>
 			<key>primaryObservable</key>
@@ -38,17 +38,17 @@
 			<key>schemeIdentifier-sharedScheme</key>
 			<integer>1</integer>
 			<key>signature</key>
-			<string>Building project CardGame for testing with scheme CardGame</string>
+			<string>Testing project CardGame with scheme CardGame</string>
 			<key>timeStartedRecording</key>
-			<real>795025796.39496505</real>
+			<real>795038367.92970395</real>
 			<key>timeStoppedRecording</key>
-			<real>795025813.43104303</real>
+			<real>795038376.39112794</real>
 			<key>title</key>
-			<string>Building project CardGame for testing with scheme CardGame</string>
+			<string>Testing project CardGame with scheme CardGame</string>
 			<key>uniqueIdentifier</key>
-			<string>54138158-BBEB-4630-BFCF-FE18DF9510A9</string>
+			<string>9461EA47-0D0C-4EBE-A7AB-560DCC9B65A0</string>
 		</dict>
-		<key>CBB70EF7-BCDE-48D3-A377-F345E48C3C85</key>
+		<key>A43B7898-6E08-4611-A998-C9CCA83000F0</key>
 		<dict>
 			<key>className</key>
 			<string>IDECommandLineBuildLog</string>
@@ -57,7 +57,7 @@
 			<key>domainType</key>
 			<string>Xcode.IDEActivityLogDomainType.BuildLog</string>
 			<key>fileName</key>
-			<string>CBB70EF7-BCDE-48D3-A377-F345E48C3C85.xcactivitylog</string>
+			<string>A43B7898-6E08-4611-A998-C9CCA83000F0.xcactivitylog</string>
 			<key>hasPrimaryLog</key>
 			<true/>
 			<key>primaryObservable</key>
@@ -80,15 +80,15 @@
 			<key>schemeIdentifier-sharedScheme</key>
 			<integer>1</integer>
 			<key>signature</key>
-			<string>Building project CardGame for testing with scheme CardGame</string>
+			<string>Testing project CardGame with scheme CardGame</string>
 			<key>timeStartedRecording</key>
-			<real>795027029.688079</real>
+			<real>795037740.40712798</real>
 			<key>timeStoppedRecording</key>
-			<real>795027054.96926296</real>
+			<real>795037741.44301999</real>
 			<key>title</key>
-			<string>Building project CardGame for testing with scheme CardGame</string>
+			<string>Testing project CardGame with scheme CardGame</string>
 			<key>uniqueIdentifier</key>
-			<string>CBB70EF7-BCDE-48D3-A377-F345E48C3C85</string>
+			<string>A43B7898-6E08-4611-A998-C9CCA83000F0</string>
 		</dict>
 	</dict>
 </dict>

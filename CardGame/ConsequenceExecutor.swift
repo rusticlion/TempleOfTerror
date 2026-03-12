@@ -71,6 +71,48 @@ struct ConsequenceExecutor {
         return advance(&resolution, gameState: &gameState)
     }
 
+    func previewUpcomingResistances(
+        in pendingResolution: PendingConsequenceResolution,
+        gameState: GameState,
+        limit: Int = 3
+    ) -> [PendingResistanceState] {
+        guard limit > 0 else { return [] }
+
+        var previews: [PendingResistanceState] = []
+        for frame in pendingResolution.frames {
+            guard let character = frame.context.character(in: gameState) else { continue }
+
+            for consequence in frame.remainingConsequences {
+                if consequence.kind == .createChoice {
+                    return previews
+                }
+
+                guard areConditionsMet(
+                    conditions: consequence.conditions,
+                    forCharacter: character,
+                    finalEffect: frame.context.finalEffect,
+                    finalPosition: frame.context.finalPosition,
+                    gameState: gameState
+                ) else {
+                    continue
+                }
+
+                if let preview = makePendingResistanceState(
+                    for: consequence,
+                    context: frame.context,
+                    gameState: gameState
+                ) {
+                    previews.append(preview)
+                    if previews.count >= limit {
+                        return previews
+                    }
+                }
+            }
+        }
+
+        return previews
+    }
+
     func chooseOption(
         at index: Int,
         in pendingResolution: PendingConsequenceResolution,
@@ -104,6 +146,7 @@ struct ConsequenceExecutor {
         }
 
         resolution.pendingResistance = nil
+        resolution.resolvedResistanceCount += 1
         apply(
             pendingResistance.consequence,
             context: context,
@@ -133,6 +176,7 @@ struct ConsequenceExecutor {
             usingDice: diceResults
         )
         resolution.pendingResistance = nil
+        resolution.resolvedResistanceCount += 1
 
         append(pendingResistance.prompt, to: &resolution)
         append(
@@ -216,12 +260,17 @@ struct ConsequenceExecutor {
                 return ProcessingResult(description: resolution.resolvedText, pendingResolution: resolution)
             }
 
-            if let resistanceRule = resistanceRule(for: consequence) {
-                resolution.pendingResistance = PendingResistanceState(
-                    consequence: consequence,
-                    prompt: consequence.description,
-                    attribute: resistanceRule.attribute
+            if let pendingResistance = makePendingResistanceState(
+                for: consequence,
+                context: context,
+                gameState: gameState,
+                sequenceIndex: resolution.resolvedResistanceCount + 1,
+                sequenceTotal: resolution.resolvedResistanceCount + 1 + countUpcomingVisibleResistances(
+                    in: resolution,
+                    gameState: gameState
                 )
+            ) {
+                resolution.pendingResistance = pendingResistance
                 resolution.requiresAcknowledgement = true
                 return ProcessingResult(description: resolution.resolvedText, pendingResolution: resolution)
             }
@@ -889,6 +938,180 @@ struct ConsequenceExecutor {
             return amount > 0 ? rule : nil
         default:
             return nil
+        }
+    }
+
+    private func makePendingResistanceState(
+        for consequence: Consequence,
+        context: ConsequenceContext,
+        gameState: GameState,
+        sequenceIndex: Int = 1,
+        sequenceTotal: Int = 1
+    ) -> PendingResistanceState? {
+        guard let resistanceRule = resistanceRule(for: consequence) else { return nil }
+
+        let trimmedPrompt = consequence.description?
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        let prompt = (trimmedPrompt?.isEmpty == false) ? trimmedPrompt : nil
+
+        return PendingResistanceState(
+            consequence: consequence,
+            prompt: prompt,
+            attribute: resistanceRule.attribute,
+            title: falloutTitle(for: consequence),
+            summary: falloutSummary(for: consequence, gameState: gameState, futureTense: true),
+            resistPreview: resistancePreview(for: consequence, attribute: resistanceRule.attribute),
+            sequenceIndex: sequenceIndex,
+            sequenceTotal: sequenceTotal
+        )
+    }
+
+    private func countUpcomingVisibleResistances(
+        in pendingResolution: PendingConsequenceResolution,
+        gameState: GameState
+    ) -> Int {
+        var count = 0
+
+        for frame in pendingResolution.frames {
+            guard let character = frame.context.character(in: gameState) else { continue }
+
+            for consequence in frame.remainingConsequences {
+                if consequence.kind == .createChoice {
+                    return count
+                }
+
+                guard areConditionsMet(
+                    conditions: consequence.conditions,
+                    forCharacter: character,
+                    finalEffect: frame.context.finalEffect,
+                    finalPosition: frame.context.finalPosition,
+                    gameState: gameState
+                ) else {
+                    continue
+                }
+
+                if resistanceRule(for: consequence) != nil {
+                    count += 1
+                }
+            }
+        }
+
+        return count
+    }
+
+    private func falloutTitle(for consequence: Consequence) -> String {
+        switch consequence.kind {
+        case .sufferHarm:
+            if let level = consequence.level {
+                return "\(level.rawValue.capitalized) Harm"
+            }
+            return "Harm"
+        case .gainStress, .adjustStress:
+            let amount = consequence.amount ?? 0
+            if amount > 0 {
+                return "+\(amount) Stress"
+            } else if amount < 0 {
+                return "Recover \(abs(amount)) Stress"
+            }
+            return "Stress"
+        case .tickClock:
+            let amount = consequence.amount ?? 0
+            if let clockName = consequence.clockName, amount > 0 {
+                return "\(clockName) +\(amount)"
+            }
+            return amount > 0 ? "Clock +\(amount)" : "Clock"
+        default:
+            return "Consequence"
+        }
+    }
+
+    private func falloutSummary(
+        for consequence: Consequence,
+        gameState: GameState,
+        futureTense: Bool
+    ) -> String {
+        switch consequence.kind {
+        case .sufferHarm:
+            let levelText = consequence.level?.rawValue.capitalized ?? "Unknown"
+            let harmText = harmDescription(for: consequence, gameState: gameState)
+            if futureTense {
+                return "You would suffer \(levelText) Harm: \(harmText)."
+            }
+            return "\(levelText) Harm: \(harmText)."
+        case .gainStress, .adjustStress:
+            let amount = consequence.amount ?? 0
+            if amount > 0 {
+                if futureTense {
+                    return "You would take \(amount) Stress."
+                }
+                return "+\(amount) Stress."
+            } else if amount < 0 {
+                if futureTense {
+                    return "You would recover \(abs(amount)) Stress."
+                }
+                return "Recover \(abs(amount)) Stress."
+            }
+            return futureTense ? "Your Stress would change." : "Stress changes."
+        case .tickClock:
+            let clockName = consequence.clockName ?? "A clock"
+            let amount = consequence.amount ?? 0
+            if futureTense {
+                return "\(clockName) advances by \(amount)."
+            }
+            return "\(clockName) +\(amount)."
+        default:
+            if let description = consequence.description,
+               !description.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                return description
+            }
+            return futureTense ? "This consequence would apply." : "This consequence applies."
+        }
+    }
+
+    private func resistancePreview(
+        for consequence: Consequence,
+        attribute: ResistanceAttribute
+    ) -> String {
+        guard let mitigated = mitigatedConsequence(from: consequence, using: attribute) else {
+            return "Resist: avoid this."
+        }
+
+        switch mitigated.kind {
+        case .sufferHarm:
+            if let level = mitigated.level {
+                return "Resist: reduce to \(level.rawValue.capitalized) Harm."
+            }
+            return "Resist: reduce this Harm."
+        case .gainStress, .adjustStress:
+            let amount = mitigated.amount ?? 0
+            if amount > 0 {
+                return "Resist: reduce to +\(amount) Stress."
+            }
+            return "Resist: avoid this."
+        case .tickClock:
+            let amount = mitigated.amount ?? 0
+            if let clockName = mitigated.clockName {
+                return "Resist: reduce to \(clockName) +\(amount)."
+            }
+            return "Resist: reduce this clock by \(amount)."
+        default:
+            return "Resist: soften this."
+        }
+    }
+
+    private func harmDescription(for consequence: Consequence, gameState: GameState) -> String {
+        guard let familyID = consequence.familyId else { return "Unknown Harm" }
+        guard let family = content.harmFamilyDict[familyID] else { return familyID }
+
+        switch consequence.level {
+        case .lesser:
+            return family.lesser.description
+        case .moderate:
+            return family.moderate.description
+        case .severe:
+            return family.severe.description
+        case .none:
+            return family.lesser.description
         }
     }
 

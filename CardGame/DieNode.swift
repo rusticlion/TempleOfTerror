@@ -15,6 +15,7 @@ class DieNode {
     private var baseVisualScale: SCNVector3 = SCNVector3(1, 1, 1)
 
     private var isHighlighted: Bool = false
+    private var isCriticalHighlight: Bool = false
     private let highlightActionKey = "die-highlight-pulse"
 
     /// Containment radius used by tray bounds logic.
@@ -202,22 +203,29 @@ class DieNode {
         }
     }
 
-    func setHighlighted(_ highlighted: Bool) {
+    func setHighlighted(_ highlighted: Bool, critical: Bool = false) {
         isHighlighted = highlighted
+        isCriticalHighlight = highlighted && critical
 
         if highlighted {
-            setEmissiveColor(UIColor(red: 1.0, green: 0.85, blue: 0.42, alpha: 1))
+            let emissive = critical
+                ? UIColor(red: 1.0, green: 0.90, blue: 0.58, alpha: 1)
+                : UIColor(red: 1.0, green: 0.85, blue: 0.42, alpha: 1)
+            setEmissiveColor(emissive)
             visualNode.removeAction(forKey: highlightActionKey)
 
-            let base = scaled(restingScale(), by: 1.16)
-            let peak = scaled(restingScale(), by: 1.24)
+            let base = scaled(restingScale(), by: critical ? 1.12 : 1.08)
+            let peak = scaled(restingScale(), by: critical ? 1.22 : 1.18)
+            let restingHighlight = scaled(restingScale(), by: critical ? 1.14 : 1.10)
             visualNode.scale = base
 
-            let pulseUp = SCNAction.scale(to: CGFloat(peak.x), duration: 0.14)
+            let pulseUp = SCNAction.scale(to: CGFloat(peak.x), duration: 0.12)
             pulseUp.timingMode = .easeInEaseOut
-            let pulseDown = SCNAction.scale(to: CGFloat(base.x), duration: 0.18)
+            let pulseDown = SCNAction.scale(to: CGFloat(base.x), duration: 0.16)
             pulseDown.timingMode = .easeInEaseOut
-            let pulse = SCNAction.repeatForever(.sequence([pulseUp, pulseDown]))
+            let settle = SCNAction.scale(to: CGFloat(restingHighlight.x), duration: 0.16)
+            settle.timingMode = .easeInEaseOut
+            let pulse = SCNAction.sequence([pulseUp, pulseDown, settle])
             visualNode.runAction(pulse, forKey: highlightActionKey)
         } else {
             applyIdleVisualState(animated: true)
@@ -238,7 +246,7 @@ class DieNode {
         isPushed = pushed
 
         if isHighlighted {
-            setHighlighted(true)
+            setHighlighted(true, critical: isCriticalHighlight)
         } else {
             applyIdleVisualState(animated: true)
         }

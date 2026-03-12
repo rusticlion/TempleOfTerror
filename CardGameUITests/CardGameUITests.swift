@@ -59,6 +59,16 @@ final class CardGameUITests: XCTestCase {
         XCTAssertTrue(app.descendants(matching: .any)["guidanceHint_resistancePrompt"].waitForExistence(timeout: 10))
     }
 
+    func testRollButtonIsReachableWithoutScrolling() throws {
+        let app = launchApp()
+
+        openFirstTestAction(in: app)
+
+        let rollButton = app.buttons["rollDiceButton"]
+        XCTAssertTrue(rollButton.waitForExistence(timeout: 5))
+        XCTAssertTrue(rollButton.isHittable)
+    }
+
     func testSplitPartyStateShowsBannerAndSelectedCharacterLocation() throws {
         let app = launchApp(state: "split")
 
@@ -103,11 +113,7 @@ final class CardGameUITests: XCTestCase {
     private func tapRollButton(in app: XCUIApplication) {
         let rollButton = app.buttons["rollDiceButton"]
         XCTAssertTrue(rollButton.waitForExistence(timeout: 5))
-
-        if !rollButton.isHittable {
-            app.swipeUp()
-        }
-
+        XCTAssertTrue(rollButton.isHittable)
         rollButton.tap()
     }
 

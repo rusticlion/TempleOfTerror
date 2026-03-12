@@ -102,7 +102,7 @@
 		</data>
 		<key>AssetPlaceholders/texture_dicetray_surface.md</key>
 		<data>
-		HlnrCsUr1PmBpYlJfenPfQDYiZ4=
+		kagabsHhxhg4hmfQFNKmOlTe3oo=
 		</data>
 		<key>AssetPlaceholders/texture_dicetray_surface.png</key>
 		<data>
@@ -130,7 +130,7 @@
 		</data>
 		<key>CardGame.debug.dylib</key>
 		<data>
-		NqE2hAXtgTuI2iKpCuAo+t7MtEQ=
+		TAmDpuyIhuq87pNKEqhomIDGKv4=
 		</data>
 		<key>Content/Scenarios/charons_bargain/archetypes.json</key>
 		<data>
@@ -170,19 +170,19 @@
 		</data>
 		<key>Content/Scenarios/shadow_of_a_doubt/clocks.json</key>
 		<data>
-		zQ1MwyNGdQQI99T1547JpuW3mg0=
+		9pWTz8xqH75HtAPgjgR0IK95VJE=
 		</data>
 		<key>Content/Scenarios/shadow_of_a_doubt/harm_families.json</key>
 		<data>
-		l7tpIiR2rtCISGED4E+k/+ZCTu8=
+		lgF59JoM1xhvtXVvtQCcA29JP4g=
 		</data>
 		<key>Content/Scenarios/shadow_of_a_doubt/interactables.json</key>
 		<data>
-		Xzay6ikGRe402UMiChS1TuXqW+U=
+		C1bUDAYwp0q+xTmOAcbNgyY/7dw=
 		</data>
 		<key>Content/Scenarios/shadow_of_a_doubt/map_shadow_of_a_doubt.json</key>
 		<data>
-		0R+zCb1vbc1wypzPvvdumLh/FNU=
+		k067fa8ombqWVQuVelTlSESsoQk=
 		</data>
 		<key>Content/Scenarios/shadow_of_a_doubt/scenario.json</key>
 		<data>
@@ -190,7 +190,7 @@
 		</data>
 		<key>Content/Scenarios/shadow_of_a_doubt/treasures.json</key>
 		<data>
-		zQ1MwyNGdQQI99T1547JpuW3mg0=
+		9pWTz8xqH75HtAPgjgR0IK95VJE=
 		</data>
 		<key>Content/Scenarios/temple_of_terror/archetypes.json</key>
 		<data>
@@ -490,7 +490,7 @@
 		</data>
 		<key>PlugIns/CardGameTests.xctest/CardGameTests</key>
 		<data>
-		3dIM/m1ejeugn9y6RIYrfYW7VZ8=
+		aBTjAT0wP+bxfXxO7GizgmKD59w=
 		</data>
 		<key>PlugIns/CardGameTests.xctest/Info.plist</key>
 		<data>
@@ -683,7 +683,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			XQxQitFI13xI7DkUmGRFKkw8JlbaqXcH8VS0AEI2Fuo=
+			s8Pn4KIZK/Yx4xExVmFeedSJu0lTl+IwMbFzsm4w2C0=
 			</data>
 		</dict>
 		<key>AssetPlaceholders/texture_dicetray_surface.png</key>
@@ -732,7 +732,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			adEzRDeQrR02LFGzRElzOpQk7uvhz+TZe49pMYwvlm0=
+			manimFVRZPH7yaoYfn2Z1zcaZcXZPEvxgaHmHHjWrXU=
 			</data>
 		</dict>
 		<key>Content/Scenarios/charons_bargain/archetypes.json</key>
@@ -802,28 +802,28 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			N1F+Xz3GaBn2H1p7uKzhkhKCQV8QVR0t76XD6wmFtXA=
+			K6M8oFV/G7W3uojWf50Ak8cYWjbsUf4re9k3LT4AHW0=
 			</data>
 		</dict>
 		<key>Content/Scenarios/shadow_of_a_doubt/harm_families.json</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			MF5EVWso9MgyeFDgvPeqXtdN7jTqSQE4ZPKgd5obw6c=
+			ac1sr7L2f2CJ/Ve0yv0Ik3xD/PKJF93GlLocwPmcgA4=
 			</data>
 		</dict>
 		<key>Content/Scenarios/shadow_of_a_doubt/interactables.json</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			yj0WO6sFU4GCciYUBWjzvvfqrBh869doeOC2Pp5EI1Y=
+			2RQXb9UL1/VlcAAGoxqpe3nTrRfO4gyOX/IGHVy3SBc=
 			</data>
 		</dict>
 		<key>Content/Scenarios/shadow_of_a_doubt/map_shadow_of_a_doubt.json</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			3+IqcW48aMBP2YJE6NhNZhRD1Bw+xJrkmrkG+I1D4dY=
+			TcbgkuZ5z+szqaCW0stoGKbQHi6+6ATTzp0puVc2AKs=
 			</data>
 		</dict>
 		<key>Content/Scenarios/shadow_of_a_doubt/scenario.json</key>
@@ -837,7 +837,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			N1F+Xz3GaBn2H1p7uKzhkhKCQV8QVR0t76XD6wmFtXA=
+			K6M8oFV/G7W3uojWf50Ak8cYWjbsUf4re9k3LT4AHW0=
 			</data>
 		</dict>
 		<key>Content/Scenarios/temple_of_terror/archetypes.json</key>
@@ -1348,7 +1348,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			DZiAdKydciYpO1M9KUZHKyhNABy5gBBhxj/8YHsyRvg=
+			W3K3UI00bRVs4AVsAKo4MgbffuKjSEuYfw8FosiIgHA=
 			</data>
 		</dict>
 		<key>PlugIns/CardGameTests.xctest/Info.plist</key>
