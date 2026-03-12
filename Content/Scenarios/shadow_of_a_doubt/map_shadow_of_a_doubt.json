@@ -1,0 +1,38 @@
+{
+  "startingNodeID": "D04E37DB-9093-56D7-9348-975968C3CE92",
+  "nodes": {
+    "D04E37DB-9093-56D7-9348-975968C3CE92": {
+      "id": "D04E37DB-9093-56D7-9348-975968C3CE92",
+      "name": "Parlor Room",
+      "soundProfile": "cave_drips",
+      "interactables": [
+        {
+          "id": "shadow_of_a_doubt_break_camp",
+          "title": "Break Camp",
+          "description": "You can call the expedition off before it becomes a disaster.",
+          "availableActions": [
+            {
+              "name": "Leave while you can",
+              "actionType": "Consort",
+              "position": "controlled",
+              "effect": "standard",
+              "requiresTest": false,
+              "outcomes": {
+                "success": [
+                  {
+                    "type": "endRun",
+                    "runOutcome": "escaped",
+                    "runOutcomeText": "You leave with your people alive and your ambition deferred."
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "connections": [],
+      "theme": "approach",
+      "isDiscovered": true
+    }
+  }
+}

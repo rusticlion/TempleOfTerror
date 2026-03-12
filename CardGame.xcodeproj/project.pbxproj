@@ -47,6 +47,8 @@
 		47F900A22E1A000100BEEF00 /* Fonts in Resources */ = {isa = PBXBuildFile; fileRef = 47F900B22E1A000100BEEF00 /* Fonts */; };
 		47F900A32E1A000100BEEF00 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 47F900B32E1A000100BEEF00 /* LaunchScreen.storyboard */; };
 		48A100022E70000100A1B2C3 /* InRunUXSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 48A100012E70000100A1B2C3 /* InRunUXSupport.swift */; };
+		48B200012E71000100A1B2C3 /* ScenarioCatalogStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 48B200112E71000100A1B2C3 /* ScenarioCatalogStore.swift */; };
+		48B200022E71000100A1B2C3 /* ScenarioCatalogViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 48B200122E71000100A1B2C3 /* ScenarioCatalogViewModel.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -118,6 +120,8 @@
 		47F900B22E1A000100BEEF00 /* Fonts */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Fonts; sourceTree = "<group>"; };
 		47F900B32E1A000100BEEF00 /* LaunchScreen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
 		48A100012E70000100A1B2C3 /* InRunUXSupport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InRunUXSupport.swift; sourceTree = "<group>"; };
+		48B200112E71000100A1B2C3 /* ScenarioCatalogStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScenarioCatalogStore.swift; sourceTree = "<group>"; };
+		48B200122E71000100A1B2C3 /* ScenarioCatalogViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScenarioCatalogViewModel.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -176,6 +180,8 @@
 				464B59D42DEA5EB60002EA59 /* HarmTooltipView.swift */,
 				464B59D22DEA5DBF0002EA59 /* TreasureTooltipView.swift */,
 				464B59D02DEA27510002EA59 /* MainMenuView.swift */,
+				48B200122E71000100A1B2C3 /* ScenarioCatalogViewModel.swift */,
+				48B200112E71000100A1B2C3 /* ScenarioCatalogStore.swift */,
 				464B59CE2DEA1EF30002EA59 /* MapView.swift */,
 				464B59CC2DEA1A850002EA59 /* CharacterSheetView.swift */,
 				464B59CA2DE817190002EA59 /* AssetPlaceholders */,
@@ -400,6 +406,7 @@
 				464B59CF2DEA1EF30002EA59 /* MapView.swift in Sources */,
 				4688D5782DF8A18200668E94 /* ActionEmoji.swift in Sources */,
 				460D628D2DE7AA3900D50D0C /* ContentView.swift in Sources */,
+				48B200022E71000100A1B2C3 /* ScenarioCatalogViewModel.swift in Sources */,
 				46A9D22B2DE7D2E500FE459E /* StatusSheetView.swift in Sources */,
 				464B59D52DEA5EB60002EA59 /* HarmTooltipView.swift in Sources */,
 				460D628E2DE7AA3900D50D0C /* CardGameApp.swift in Sources */,
@@ -410,6 +417,7 @@
 				460D62942DE7B24600D50D0C /* CharacterSelectorView.swift in Sources */,
 				460D62902DE7AA3900D50D0C /* Models.swift in Sources */,
 				460D62982DE7B4A400D50D0C /* DiceRollView.swift in Sources */,
+				48B200012E71000100A1B2C3 /* ScenarioCatalogStore.swift in Sources */,
 				48A100022E70000100A1B2C3 /* InRunUXSupport.swift in Sources */,
 				46D0A0012DF9EE0000FF1111 /* SceneKitDiceView.swift in Sources */,
 				46D0A0032DF9EE0000FF1111 /* DieNode.swift in Sources */,

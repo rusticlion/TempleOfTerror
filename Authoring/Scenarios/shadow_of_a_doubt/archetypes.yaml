@@ -1,0 +1,36 @@
+# yaml-language-server: $schema=../../Schemas/archetypes.schema.json
+- id: priest
+  name: Priest
+  description: A man of the cloth, guide to the lost and forgotten.
+  defaultActions:
+    Consort: 2
+    Attune: 1
+    Study: 1
+  personalityTagPool:
+    - Reverent
+    - Haunted
+    - Ominous
+    - Serene
+- id: detective
+  name: Detective
+  description: A sharp-eyed investigator, sees the truth in the shadows.
+  defaultActions:
+    Survey: 2
+    Prowl: 1
+    Hunt: 1
+  personalityTagPool:
+    - Cautious
+    - Curious
+    - Obsessive
+    - Skeptical
+- id: professor
+  name: Professor
+  description: A curious mind, seeks the truth in the world and the unknown.
+  defaultActions:
+    Study: 2
+    Tinker: 1
+    Command: 1
+  personalityTagPool:
+    - Curious
+    - Occult
+    - Methodical

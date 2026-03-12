@@ -76,6 +76,7 @@ struct ResolvedScenarioCatalogEntry: Identifiable, Hashable {
     let catalogEntry: ScenarioCatalogEntry
     let runtimeScenarioID: String?
     let runtimeManifest: ScenarioManifest?
+    let isTestingUnlocked: Bool
 
     var id: String { catalogEntry.id }
 
@@ -90,16 +91,32 @@ struct ResolvedScenarioCatalogEntry: Identifiable, Hashable {
         runtimeScenarioID != nil && runtimeManifest != nil
     }
 
+    var isIncludedByDefault: Bool {
+        availabilityModel == .included
+    }
+
+    var isReleaseReady: Bool {
+        contentStatus == .bundled
+    }
+
+    var isAccessibleWithoutTestingUnlock: Bool {
+        isImplemented && isIncludedByDefault && isReleaseReady
+    }
+
+    var canEnableTestingAccess: Bool {
+        isImplemented && !isAccessibleWithoutTestingUnlock
+    }
+
     var isStartable: Bool {
-        availabilityModel == .included && isImplemented
+        isAccessibleWithoutTestingUnlock || (canEnableTestingAccess && isTestingUnlocked)
     }
 
     var isPurchasable: Bool {
-        availabilityModel == .iap
+        availabilityModel == .iap && !isStartable
     }
 
     var isComingSoon: Bool {
-        contentStatus == .placeholder || availabilityModel == .comingSoon
+        !isImplemented || availabilityModel == .comingSoon || (contentStatus == .placeholder && !isTestingUnlocked)
     }
 
     var priceLabel: String {
@@ -112,11 +129,15 @@ struct ResolvedScenarioCatalogEntry: Identifiable, Hashable {
     }
 
     var availabilityLabel: String {
+        if isStartable && !isAccessibleWithoutTestingUnlock {
+            return "Testing Enabled"
+        }
+
         switch availabilityModel {
         case .included:
-            return isStartable ? "Included" : "Included Soon"
+            return isReleaseReady ? "Included" : "In Development"
         case .iap:
-            return "Premium"
+            return isImplemented ? "Premium" : "Premium Soon"
         case .comingSoon:
             return "Coming Soon"
         }
@@ -229,7 +250,8 @@ class ContentLoader {
 
     static func resolveCatalogEntries(
         _ catalog: ScenarioCatalogManifest,
-        availableScenarios: [ScenarioManifest]
+        availableScenarios: [ScenarioManifest],
+        testingUnlockedScenarioIDs: Set<String> = []
     ) -> [ResolvedScenarioCatalogEntry] {
         catalog.scenarios
             .sorted { lhs, rhs in
@@ -245,16 +267,24 @@ class ContentLoader {
                 return ResolvedScenarioCatalogEntry(
                     catalogEntry: entry,
                     runtimeScenarioID: matchedManifest?.id,
-                    runtimeManifest: matchedManifest
+                    runtimeManifest: matchedManifest,
+                    isTestingUnlocked: entry.allScenarioIDs.contains(where: testingUnlockedScenarioIDs.contains)
                 )
             }
     }
 
-    static func availableScenarioCatalogEntries(bundle: Bundle = .main) -> [ResolvedScenarioCatalogEntry] {
+    static func availableScenarioCatalogEntries(
+        bundle: Bundle = .main,
+        testingUnlockedScenarioIDs: Set<String> = []
+    ) -> [ResolvedScenarioCatalogEntry] {
         guard let catalog = availableScenarioCatalog(bundle: bundle) else {
             return []
         }
-        return resolveCatalogEntries(catalog, availableScenarios: availableScenarios(bundle: bundle))
+        return resolveCatalogEntries(
+            catalog,
+            availableScenarios: availableScenarios(bundle: bundle),
+            testingUnlockedScenarioIDs: testingUnlockedScenarioIDs
+        )
     }
 
     private static func loadManifest(for scenario: String) -> ScenarioManifest? {

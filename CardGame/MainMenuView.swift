@@ -2,15 +2,14 @@ import SwiftUI
 
 struct MainMenuView: View {
     @State private var showingScenarioSelect = false
-    @State private var availableScenarios: [ResolvedScenarioCatalogEntry] = ContentLoader.availableScenarioCatalogEntries()
+    @State private var showingSettings = false
+    @StateObject private var catalogViewModel = ScenarioCatalogViewModel()
     @State private var path = NavigationPath()
     @State private var continueVM: GameViewModel?
     @State private var continueActive = false
-    @State private var storefrontNotice: StorefrontNotice?
 
     private var preferredScenario: ResolvedScenarioCatalogEntry? {
-        availableScenarios.first(where: { $0.recommendedStart && $0.isStartable })
-            ?? availableScenarios.first(where: \.isStartable)
+        catalogViewModel.preferredScenario
     }
 
     var body: some View {
@@ -96,18 +95,25 @@ struct MainMenuView: View {
                     }
                     .buttonStyle(.plain)
 
-                    Button("Settings") { }
+                    Button {
+                            showingSettings = true
+                    } label: {
+                        Text("Settings")
+                        }
                         .font(Theme.displayFont(size: 16, weight: .semibold))
-                        .foregroundColor(Theme.inkFaded)
+                        .foregroundColor(catalogViewModel.hasTestingAccessOverrides ? Theme.gold : Theme.inkFaded)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 11)
                         .overlay(
                             RoundedRectangle(cornerRadius: 8)
                                 .stroke(style: StrokeStyle(lineWidth: 1, dash: [4, 3]))
-                                .foregroundColor(Theme.inkFaded.opacity(0.5))
+                                .foregroundColor(
+                                    catalogViewModel.hasTestingAccessOverrides
+                                        ? Theme.gold.opacity(0.55)
+                                        : Theme.inkFaded.opacity(0.5)
+                                )
                         )
                         .buttonStyle(.plain)
-                        .disabled(true)
 
                     Spacer()
                 }
@@ -124,38 +130,37 @@ struct MainMenuView: View {
                 }
             }
             .sheet(isPresented: $showingScenarioSelect) {
-                ScenarioSelectView(available: availableScenarios) { manifest in
+                ScenarioSelectView(
+                    available: catalogViewModel.availableScenarios
+                ) { manifest in
                     path.append(manifest)
                     showingScenarioSelect = false
-                } onPurchase: { scenario in
-                    storefrontNotice = StorefrontNotice(
-                        title: scenario.title,
-                        message: "StoreKit purchase flow is not wired yet. This catalog entry is configured as \(scenario.priceLabel)."
-                    )
+                } onEnableTestingAccess: { scenario in
+                    catalogViewModel.enableTestingAccess(for: scenario)
+                } onDisableTestingAccess: { scenario in
+                    catalogViewModel.disableTestingAccess(for: scenario)
+                } onResetTestingAccess: {
+                    catalogViewModel.resetTestingAccess()
                 }
                 .presentationBackground(Theme.bgWarm)
             }
-            .alert(item: $storefrontNotice) { notice in
-                Alert(
-                    title: Text(notice.title),
-                    message: Text(notice.message),
-                    dismissButton: .default(Text("OK"))
-                )
+            .sheet(isPresented: $showingSettings) {
+                SettingsView(catalogViewModel: catalogViewModel)
+                    .presentationBackground(Theme.bgWarm)
+            }
+            .onAppear {
+                catalogViewModel.refresh()
             }
         }
     }
 }
 
-private struct StorefrontNotice: Identifiable {
-    let id = UUID()
-    let title: String
-    let message: String
-}
-
 private struct ScenarioSelectView: View {
     var available: [ResolvedScenarioCatalogEntry]
     var onSelect: (ResolvedScenarioCatalogEntry) -> Void
-    var onPurchase: (ResolvedScenarioCatalogEntry) -> Void
+    var onEnableTestingAccess: (ResolvedScenarioCatalogEntry) -> Void
+    var onDisableTestingAccess: (ResolvedScenarioCatalogEntry) -> Void
+    var onResetTestingAccess: () -> Void
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -209,9 +214,21 @@ private struct ScenarioSelectView: View {
                             .padding(.vertical, 9)
                             .background(Theme.gold)
                             .clipShape(Capsule())
-                        } else if scenario.isPurchasable {
-                            Button("Buy \(scenario.priceLabel)") {
-                                onPurchase(scenario)
+
+                            if scenario.canEnableTestingAccess {
+                                Button("Disable Test Access") {
+                                    onDisableTestingAccess(scenario)
+                                }
+                                .font(Theme.systemFont(size: 13, weight: .semibold))
+                                .foregroundColor(Theme.ink)
+                                .padding(.horizontal, 14)
+                                .padding(.vertical, 9)
+                                .background(Theme.parchmentDeep.opacity(0.55))
+                                .clipShape(Capsule())
+                            }
+                        } else if scenario.canEnableTestingAccess {
+                            Button("Enable For Testing") {
+                                onEnableTestingAccess(scenario)
                             }
                             .font(Theme.systemFont(size: 13, weight: .semibold))
                             .foregroundColor(Theme.parchment)
@@ -238,6 +255,103 @@ private struct ScenarioSelectView: View {
             .scrollContentBackground(.hidden)
             .background(Theme.bgWarm)
             .navigationTitle("Scenarios")
+            .toolbar {
+                if available.contains(where: \.isTestingUnlocked) {
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button("Reset Test Access") {
+                            onResetTestingAccess()
+                        }
+                        .font(Theme.systemFont(size: 14, weight: .semibold))
+                        .foregroundColor(Theme.gold)
+                    }
+                }
+
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Close") { dismiss() }
+                        .font(Theme.systemFont(size: 14, weight: .semibold))
+                        .foregroundColor(Theme.parchment)
+                }
+            }
+        }
+    }
+}
+
+private struct SettingsView: View {
+    @ObservedObject var catalogViewModel: ScenarioCatalogViewModel
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            List {
+                Section {
+                    Text("Local testing access overrides live only on this device. Use them to play premium or in-development scenarios before StoreKit is wired.")
+                        .font(Theme.bodyFont(size: 14))
+                        .foregroundColor(Theme.inkLight)
+                        .listRowBackground(Theme.parchment.opacity(0.9))
+                } header: {
+                    Text("Scenario Testing Access")
+                        .font(Theme.systemFont(size: 12, weight: .semibold))
+                }
+
+                Section {
+                    if catalogViewModel.testingAccessScenarios.isEmpty {
+                        Text("No scenario testing access overrides are active.")
+                            .font(Theme.bodyFont(size: 14, italic: true))
+                            .foregroundColor(Theme.inkFaded)
+                            .listRowBackground(Theme.parchment.opacity(0.9))
+                    } else {
+                        ForEach(catalogViewModel.testingAccessScenarios) { scenario in
+                            HStack(alignment: .top, spacing: 12) {
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text(scenario.title)
+                                        .font(Theme.displayFont(size: 18, weight: .semibold))
+                                        .foregroundColor(Theme.ink)
+
+                                    Text(scenario.availabilityModel == .iap ? "Premium scenario testing enabled" : "In-development scenario testing enabled")
+                                        .font(Theme.systemFont(size: 12, weight: .medium))
+                                        .foregroundColor(Theme.inkFaded)
+                                }
+
+                                Spacer(minLength: 12)
+
+                                Button("Remove") {
+                                    catalogViewModel.disableTestingAccess(for: scenario)
+                                }
+                                .font(Theme.systemFont(size: 12, weight: .semibold))
+                                .foregroundColor(Theme.ink)
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 8)
+                                .background(Theme.parchmentDeep.opacity(0.6))
+                                .clipShape(Capsule())
+                                .buttonStyle(.plain)
+                            }
+                            .listRowBackground(Theme.parchment.opacity(0.9))
+                        }
+                    }
+                } header: {
+                    Text("Active Overrides")
+                        .font(Theme.systemFont(size: 12, weight: .semibold))
+                }
+
+                Section {
+                    Button {
+                        catalogViewModel.resetTestingAccess()
+                    } label: {
+                        Text("Clear All Scenario Test Access")
+                            .font(Theme.systemFont(size: 14, weight: .semibold))
+                            .foregroundColor(catalogViewModel.hasTestingAccessOverrides ? Theme.danger : Theme.inkFaded)
+                    }
+                    .disabled(!catalogViewModel.hasTestingAccessOverrides)
+                    .listRowBackground(Theme.parchment.opacity(0.9))
+                } footer: {
+                    Text("Included bundled scenarios remain playable after clearing overrides.")
+                        .font(Theme.bodyFont(size: 12, italic: true))
+                        .foregroundColor(Theme.inkFaded)
+                }
+            }
+            .scrollContentBackground(.hidden)
+            .background(Theme.bgWarm)
+            .navigationTitle("Settings")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Close") { dismiss() }

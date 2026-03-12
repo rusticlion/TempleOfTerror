@@ -41,3 +41,54 @@ struct SaveGameStore: GameStateStoring {
         try FileManager.default.removeItem(at: saveURL)
     }
 }
+
+protocol ScenarioEntitlementStoring {
+    func loadTestingUnlockedScenarioIDs() -> Set<String>
+    func saveTestingUnlockedScenarioIDs(_ scenarioIDs: Set<String>)
+    func setTestingUnlocked(_ isUnlocked: Bool, forScenarioID scenarioID: String)
+    func resetTestingUnlockedScenarioIDs()
+}
+
+struct EntitlementStore: ScenarioEntitlementStoring {
+    let userDefaults: UserDefaults
+    let storageKey: String
+
+    init(
+        userDefaults: UserDefaults = .standard,
+        storageKey: String = "scenarioTestingUnlockedIDs"
+    ) {
+        self.userDefaults = userDefaults
+        self.storageKey = storageKey
+    }
+
+    func loadTestingUnlockedScenarioIDs() -> Set<String> {
+        let storedScenarioIDs = userDefaults.stringArray(forKey: storageKey) ?? []
+        return Set(
+            storedScenarioIDs.compactMap { rawID in
+                let trimmedID = rawID.trimmingCharacters(in: .whitespacesAndNewlines)
+                return trimmedID.isEmpty ? nil : trimmedID
+            }
+        )
+    }
+
+    func saveTestingUnlockedScenarioIDs(_ scenarioIDs: Set<String>) {
+        userDefaults.set(scenarioIDs.sorted(), forKey: storageKey)
+    }
+
+    func setTestingUnlocked(_ isUnlocked: Bool, forScenarioID scenarioID: String) {
+        let trimmedID = scenarioID.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedID.isEmpty else { return }
+
+        var unlockedScenarioIDs = loadTestingUnlockedScenarioIDs()
+        if isUnlocked {
+            unlockedScenarioIDs.insert(trimmedID)
+        } else {
+            unlockedScenarioIDs.remove(trimmedID)
+        }
+        saveTestingUnlockedScenarioIDs(unlockedScenarioIDs)
+    }
+
+    func resetTestingUnlockedScenarioIDs() {
+        userDefaults.removeObject(forKey: storageKey)
+    }
+}

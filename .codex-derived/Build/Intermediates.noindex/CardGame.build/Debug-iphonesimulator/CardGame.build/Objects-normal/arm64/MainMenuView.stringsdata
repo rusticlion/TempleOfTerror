@@ -7,15 +7,7 @@
         "key": "Dice Delver",
         "location": {
           "startingColumn": 26,
-          "startingLine": 24
-        }
-      },
-      {
-        "comment": "",
-        "key": "Settings",
-        "location": {
-          "startingColumn": 28,
-          "startingLine": 99
+          "startingLine": 23
         }
       },
       {
@@ -23,7 +15,7 @@
         "key": "Start New Game",
         "location": {
           "startingColumn": 30,
-          "startingLine": 43
+          "startingLine": 42
         }
       },
       {
@@ -31,7 +23,7 @@
         "key": "Continue",
         "location": {
           "startingColumn": 30,
-          "startingLine": 70
+          "startingLine": 69
         }
       },
       {
@@ -39,15 +31,15 @@
         "key": "Scenario Select",
         "location": {
           "startingColumn": 30,
-          "startingLine": 87
+          "startingLine": 86
         }
       },
       {
         "comment": "",
-        "key": "OK",
+        "key": "Settings",
         "location": {
-          "startingColumn": 50,
-          "startingLine": 142
+          "startingColumn": 30,
+          "startingLine": 101
         }
       },
       {
@@ -55,7 +47,7 @@
         "key": "Scenarios",
         "location": {
           "startingColumn": 30,
-          "startingLine": 240
+          "startingLine": 257
         }
       },
       {
@@ -63,15 +55,31 @@
         "key": "Play",
         "location": {
           "startingColumn": 36,
-          "startingLine": 202
+          "startingLine": 207
         }
       },
       {
         "comment": "",
-        "key": "Buy %@",
+        "key": "Disable Test Access",
+        "location": {
+          "startingColumn": 40,
+          "startingLine": 219
+        }
+      },
+      {
+        "comment": "",
+        "key": "Enable For Testing",
         "location": {
           "startingColumn": 36,
-          "startingLine": 213
+          "startingLine": 230
+        }
+      },
+      {
+        "comment": "",
+        "key": "Reset Test Access",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 261
         }
       },
       {
@@ -79,7 +87,95 @@
         "key": "Close",
         "location": {
           "startingColumn": 28,
-          "startingLine": 243
+          "startingLine": 270
+        }
+      },
+      {
+        "comment": "",
+        "key": "Settings",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 354
+        }
+      },
+      {
+        "comment": "",
+        "key": "Local testing access overrides live only on this device. Use them to play premium or in-development scenarios before StoreKit is wired.",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 287
+        }
+      },
+      {
+        "comment": "",
+        "key": "Scenario Testing Access",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 292
+        }
+      },
+      {
+        "comment": "",
+        "key": "No scenario testing access overrides are active.",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 298
+        }
+      },
+      {
+        "comment": "",
+        "key": "Remove",
+        "location": {
+          "startingColumn": 40,
+          "startingLine": 317
+        }
+      },
+      {
+        "comment": "",
+        "key": "Premium scenario testing enabled",
+        "location": {
+          "startingColumn": 79,
+          "startingLine": 310
+        }
+      },
+      {
+        "comment": "",
+        "key": "In-development scenario testing enabled",
+        "location": {
+          "startingColumn": 116,
+          "startingLine": 310
+        }
+      },
+      {
+        "comment": "",
+        "key": "Active Overrides",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 332
+        }
+      },
+      {
+        "comment": "",
+        "key": "Clear All Scenario Test Access",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 340
+        }
+      },
+      {
+        "comment": "",
+        "key": "Included bundled scenarios remain playable after clearing overrides.",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 347
+        }
+      },
+      {
+        "comment": "",
+        "key": "Close",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 357
         }
       },
       {
@@ -87,7 +183,7 @@
         "key": "Selected Party",
         "location": {
           "startingColumn": 26,
-          "startingLine": 350
+          "startingLine": 464
         }
       },
       {
@@ -95,7 +191,7 @@
         "key": "Choose %lld archetypes. Tap a selected card to remove it; tapping a new card when full replaces the oldest pick.",
         "location": {
           "startingColumn": 26,
-          "startingLine": 354
+          "startingLine": 468
         }
       },
       {
@@ -103,7 +199,7 @@
         "key": "No archetypes available for this scenario.",
         "location": {
           "startingColumn": 30,
-          "startingLine": 359
+          "startingLine": 473
         }
       },
       {
@@ -111,7 +207,7 @@
         "key": "%lld/%lld selected",
         "location": {
           "startingColumn": 26,
-          "startingLine": 388
+          "startingLine": 502
         }
       },
       {
@@ -119,7 +215,7 @@
         "key": "Shuffle Picks",
         "location": {
           "startingColumn": 30,
-          "startingLine": 376
+          "startingLine": 490
         }
       },
       {
@@ -127,7 +223,7 @@
         "key": "Available Archetypes",
         "location": {
           "startingColumn": 26,
-          "startingLine": 394
+          "startingLine": 508
         }
       },
       {
@@ -135,7 +231,7 @@
         "key": "Begin Scenario",
         "location": {
           "startingColumn": 26,
-          "startingLine": 430
+          "startingLine": 544
         }
       },
       {
@@ -143,7 +239,7 @@
         "key": "%lld",
         "location": {
           "startingColumn": 18,
-          "startingLine": 486
+          "startingLine": 600
         }
       },
       {
@@ -151,7 +247,7 @@
         "key": "%lld",
         "location": {
           "startingColumn": 26,
-          "startingLine": 533
+          "startingLine": 647
         }
       }
     ]

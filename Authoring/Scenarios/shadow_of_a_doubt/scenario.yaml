@@ -1,0 +1,12 @@
+# yaml-language-server: $schema=../../Schemas/scenario.schema.json
+id: shadow_of_a_doubt
+title: Shadow of a Doubt
+description: There's a light in the attic. There's a wolf at the door.
+entryNode: Parlor Room
+mapFile: map_shadow_of_a_doubt.json
+partySize: 3
+nativeArchetypeIDs:
+  - priest
+  - detective
+  - professor
+stressOverflowHarmFamilyID: mental_fraying

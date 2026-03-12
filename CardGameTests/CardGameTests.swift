@@ -721,6 +721,67 @@ final class CardGameTests: XCTestCase {
         XCTAssertTrue(temple.isStartable)
     }
 
+    func testCatalogResolutionRequiresTestingUnlockForImplementedPremiumAndPlaceholderScenarios() throws {
+        let catalogURL = Self.contentRootURL.appendingPathComponent("scenario_catalog.json")
+        let catalog = try ContentLoader.loadScenarioCatalog(from: catalogURL)
+        let resolved = ContentLoader.resolveCatalogEntries(
+            catalog,
+            availableScenarios: [
+                ScenarioManifest(
+                    id: "shadow_of_a_doubt",
+                    title: "Shadow of a Doubt",
+                    description: "Implemented haunted house scenario."
+                ),
+                ScenarioManifest(
+                    id: "charons_bargain",
+                    title: "Charon's Bargain",
+                    description: "Implemented premium freighter horror scenario."
+                )
+            ]
+        )
+
+        let shadow = try XCTUnwrap(resolved.first(where: { $0.catalogEntry.scenarioID == "shadow_of_a_doubt" }))
+        XCTAssertFalse(shadow.isStartable)
+        XCTAssertTrue(shadow.canEnableTestingAccess)
+        XCTAssertEqual(shadow.availabilityLabel, "In Development")
+
+        let bargain = try XCTUnwrap(resolved.first(where: { $0.catalogEntry.scenarioID == "charons_bargain" }))
+        XCTAssertFalse(bargain.isStartable)
+        XCTAssertTrue(bargain.canEnableTestingAccess)
+        XCTAssertEqual(bargain.availabilityLabel, "Premium")
+    }
+
+    func testCatalogResolutionAllowsTestingUnlockForImplementedPremiumAndPlaceholderScenarios() throws {
+        let catalogURL = Self.contentRootURL.appendingPathComponent("scenario_catalog.json")
+        let catalog = try ContentLoader.loadScenarioCatalog(from: catalogURL)
+        let resolved = ContentLoader.resolveCatalogEntries(
+            catalog,
+            availableScenarios: [
+                ScenarioManifest(
+                    id: "shadow_of_a_doubt",
+                    title: "Shadow of a Doubt",
+                    description: "Implemented haunted house scenario."
+                ),
+                ScenarioManifest(
+                    id: "charons_bargain",
+                    title: "Charon's Bargain",
+                    description: "Implemented premium freighter horror scenario."
+                )
+            ],
+            testingUnlockedScenarioIDs: ["shadow_of_a_doubt", "charons_bargain"]
+        )
+
+        let shadow = try XCTUnwrap(resolved.first(where: { $0.catalogEntry.scenarioID == "shadow_of_a_doubt" }))
+        XCTAssertTrue(shadow.isTestingUnlocked)
+        XCTAssertTrue(shadow.isStartable)
+        XCTAssertEqual(shadow.availabilityLabel, "Testing Enabled")
+
+        let bargain = try XCTUnwrap(resolved.first(where: { $0.catalogEntry.scenarioID == "charons_bargain" }))
+        XCTAssertTrue(bargain.isTestingUnlocked)
+        XCTAssertTrue(bargain.isStartable)
+        XCTAssertEqual(bargain.availabilityLabel, "Testing Enabled")
+    }
+
     func testScenarioValidatorRejectsUnsupportedActionTypes() throws {
         let scenarioID = "validator_bad_action"
         let fixture = try makeValidatorFixtureRoot(scenarioID: scenarioID)
@@ -1242,6 +1303,35 @@ final class CardGameTests: XCTestCase {
         XCTAssertEqual(loaded.party[0].stateTags, ["Marked by the Tomb"])
         XCTAssertEqual(loaded.scenarioFlags["flag"], true)
         XCTAssertEqual(loaded.scenarioCounters["counter"], 3)
+    }
+
+    func testEntitlementStorePersistsTestingUnlockedScenarioIDs() throws {
+        let suiteName = "EntitlementStoreTests.\(UUID().uuidString)"
+        guard let defaults = UserDefaults(suiteName: suiteName) else {
+            return XCTFail("Expected isolated UserDefaults suite.")
+        }
+        defaults.removePersistentDomain(forName: suiteName)
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+
+        let store = EntitlementStore(
+            userDefaults: defaults,
+            storageKey: "scenarioTestingUnlockedIDs.test"
+        )
+
+        XCTAssertTrue(store.loadTestingUnlockedScenarioIDs().isEmpty)
+
+        store.setTestingUnlocked(true, forScenarioID: "charons_bargain")
+        store.setTestingUnlocked(true, forScenarioID: "shadow_of_a_doubt")
+        XCTAssertEqual(
+            store.loadTestingUnlockedScenarioIDs(),
+            Set(["charons_bargain", "shadow_of_a_doubt"])
+        )
+
+        store.setTestingUnlocked(false, forScenarioID: "shadow_of_a_doubt")
+        XCTAssertEqual(store.loadTestingUnlockedScenarioIDs(), Set(["charons_bargain"]))
+
+        store.resetTestingUnlockedScenarioIDs()
+        XCTAssertTrue(store.loadTestingUnlockedScenarioIDs().isEmpty)
     }
 
     func testCreateChoicePausesResolutionAndPersistsAcrossSaveLoad() throws {

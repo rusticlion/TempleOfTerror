@@ -1,0 +1,24 @@
+# yaml-language-server: $schema=../../Schemas/map.schema.json
+startingNode: parlor_room
+nodes:
+  parlor_room:
+    name: Parlor Room
+    soundProfile: cave_drips
+    theme: approach
+    isDiscovered: true
+    interactables:
+      - id: shadow_of_a_doubt_break_camp
+        title: Break Camp
+        description: You can call the expedition off before it becomes a disaster.
+        availableActions:
+          - name: Leave while you can
+            actionType: Consort
+            position: controlled
+            effect: standard
+            requiresTest: false
+            outcomes:
+              success:
+                - type: endRun
+                  runOutcome: escaped
+                  runOutcomeText: You leave with your people alive and your ambition deferred.
+    connections: []
