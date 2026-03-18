@@ -122,11 +122,29 @@ class ScenarioCompiler
       destination = connection["to"] || connection["toNodeID"]
       raise CompilationError, "#{connection_path} is missing to/toNodeID" if destination.nil?
 
-      {
+      compiled_connection = {
         "toNodeID" => resolve_node_ref(destination, node_lookup, "#{connection_path}.to"),
         "isUnlocked" => connection.fetch("isUnlocked", true),
         "description" => require_key(connection, "description", connection_path)
       }
+
+      if connection.key?("conditions")
+        compiled_connection["conditions"] = transform_node_refs(
+          connection["conditions"],
+          node_lookup,
+          "#{connection_path}.conditions"
+        )
+      end
+
+      if connection.key?("onTraverse")
+        compiled_connection["onTraverse"] = transform_node_refs(
+          connection["onTraverse"],
+          node_lookup,
+          "#{connection_path}.onTraverse"
+        )
+      end
+
+      compiled_connection
     end
   end
 

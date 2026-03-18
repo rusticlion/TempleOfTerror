@@ -175,6 +175,10 @@ struct InteractableCardView: View {
                     let emoji = ActionEmoji.emoji(for: action.actionType)
                     let actionProjection = projection(for: action)
                     let cues = stateCues(for: action, projection: actionProjection)
+                    let actionRating = selectedCharacter?.actions[action.actionType] ?? 0
+                    let actionLabel = action.requiresTest
+                        ? "\(action.actionType) \(actionRating)"
+                        : action.actionType
                     Button {
                         onActionTapped(action)
                     } label: {
@@ -192,8 +196,8 @@ struct InteractableCardView: View {
                                 }
 
                                 HStack(spacing: 6) {
-                                    Text(action.actionType)
-                                        .font(Theme.systemFont(size: 11))
+                                    Text(actionLabel)
+                                        .font(Theme.systemFont(size: 11, weight: .semibold))
                                         .foregroundColor(Theme.inkLight)
 
                                     DualLabelForecastChip(

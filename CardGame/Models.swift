@@ -1134,6 +1134,8 @@ struct Consequence: Codable {
         case sufferHarm
         case tickClock
         case unlockConnection
+        case lockConnection
+        case moveActingCharacterToNode
         case removeInteractable
         case removeSelfInteractable
         case removeAction
@@ -1292,6 +1294,13 @@ struct Consequence: Codable {
             try container.encode(ConsequenceKind.unlockConnection, forKey: .type)
             try container.encodeIfPresent(fromNodeID, forKey: .fromNodeID)
             try container.encodeIfPresent(toNodeID, forKey: .toNodeID)
+        case .lockConnection:
+            try container.encode(ConsequenceKind.lockConnection, forKey: .type)
+            try container.encodeIfPresent(fromNodeID, forKey: .fromNodeID)
+            try container.encodeIfPresent(toNodeID, forKey: .toNodeID)
+        case .moveActingCharacterToNode:
+            try container.encode(ConsequenceKind.moveActingCharacterToNode, forKey: .type)
+            try container.encodeIfPresent(toNodeID, forKey: .toNodeID)
         case .removeInteractable:
             try container.encode(ConsequenceKind.removeInteractable, forKey: .type)
             try container.encodeIfPresent(interactableId, forKey: .id)
@@ -1400,6 +1409,21 @@ extension Consequence {
     static func unlockConnection(fromNodeID: UUID, toNodeID: UUID) -> Consequence {
         var consequence = Consequence(kind: .unlockConnection)
         consequence.fromNodeID = fromNodeID
+        consequence.toNodeID = toNodeID
+        return consequence
+    }
+
+    /// Convenience constructor for locking a connection between two nodes.
+    static func lockConnection(fromNodeID: UUID, toNodeID: UUID) -> Consequence {
+        var consequence = Consequence(kind: .lockConnection)
+        consequence.fromNodeID = fromNodeID
+        consequence.toNodeID = toNodeID
+        return consequence
+    }
+
+    /// Move the acting character to another authored node.
+    static func moveActingCharacterToNode(_ toNodeID: UUID) -> Consequence {
+        var consequence = Consequence(kind: .moveActingCharacterToNode)
         consequence.toNodeID = toNodeID
         return consequence
     }
@@ -1698,6 +1722,22 @@ struct NodeConnection: Codable {
     var toNodeID: UUID
     var isUnlocked: Bool = true // A path could be locked initially
     var description: String // e.g., "A dark tunnel", "A rickety bridge"
+    var conditions: [GameCondition]? = nil
+    var onTraverse: [Consequence]? = nil
+
+    init(
+        toNodeID: UUID,
+        isUnlocked: Bool = true,
+        description: String,
+        conditions: [GameCondition]? = nil,
+        onTraverse: [Consequence]? = nil
+    ) {
+        self.toNodeID = toNodeID
+        self.isUnlocked = isUnlocked
+        self.description = description
+        self.conditions = conditions
+        self.onTraverse = onTraverse
+    }
 }
 
 // MARK: - Persistence Helpers

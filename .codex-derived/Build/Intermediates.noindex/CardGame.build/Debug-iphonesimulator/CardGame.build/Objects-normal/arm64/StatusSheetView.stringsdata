@@ -1,5 +1,80 @@
 {
   "source": "/Users/russellbates/JunkDrawer/Temple Of Terror/CardGame/StatusSheetView.swift",
-  "tables": {},
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Expedition",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 161
+        }
+      },
+      {
+        "comment": "",
+        "key": "Tap an explorer to make them the acting explorer.",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 153
+        }
+      },
+      {
+        "comment": "",
+        "key": "Party By Room",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 124
+        }
+      },
+      {
+        "comment": "",
+        "key": "Active Pressure",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 143
+        }
+      },
+      {
+        "comment": "",
+        "key": "Close",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 164
+        }
+      },
+      {
+        "comment": "",
+        "key": "No active clocks",
+        "location": {
+          "startingColumn": 46,
+          "startingLine": 179
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld active clock%@",
+        "location": {
+          "startingColumn": 67,
+          "startingLine": 179
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@ (%lld)",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 208
+        }
+      },
+      {
+        "comment": "",
+        "key": "Stress %lld / 9",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 238
+        }
+      }
+    ]
+  },
   "version": 1
 }

@@ -234,68 +234,6 @@ private struct OptionalBoostCard: View {
     }
 }
 
-private struct LoadoutSummaryCard: View {
-    let title: String
-    let primaryLine: String
-    let secondaryLine: String?
-    let isLoaded: Bool
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack(alignment: .center, spacing: 10) {
-                Text(title)
-                    .font(Theme.systemFont(size: 11, weight: .semibold))
-                    .foregroundColor(isLoaded ? Theme.goldBright : Theme.inkFaded)
-                    .textCase(.uppercase)
-                    .tracking(0.7)
-
-                Spacer(minLength: 8)
-
-                Text(isLoaded ? "Loaded" : "Ready")
-                    .font(Theme.systemFont(size: 10, weight: .semibold))
-                    .foregroundColor(isLoaded ? Theme.ink : Theme.parchmentDark)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 5)
-                    .background(
-                        isLoaded ? Theme.goldBright : Theme.parchment.opacity(0.08),
-                        in: Capsule()
-                    )
-            }
-
-            Text(primaryLine)
-                .font(Theme.bodyFontMedium(size: 15))
-                .foregroundColor(Theme.parchment)
-                .fixedSize(horizontal: false, vertical: true)
-
-            if let secondaryLine, !secondaryLine.isEmpty {
-                Text(secondaryLine)
-                    .font(Theme.systemFont(size: 11))
-                    .foregroundColor(Theme.parchmentDark)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-        }
-        .padding(14)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            LinearGradient(
-                colors: isLoaded
-                    ? [Theme.gold.opacity(0.14), Theme.leatherLight.opacity(0.88)]
-                    : [Theme.parchment.opacity(0.05), Theme.leather.opacity(0.66)],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            ),
-            in: RoundedRectangle(cornerRadius: 14)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 14)
-                .stroke(
-                    isLoaded ? Theme.goldBright.opacity(0.4) : Theme.parchmentDeep.opacity(0.18),
-                    lineWidth: 1
-                )
-        )
-    }
-}
-
 struct ResolutionDecisionCard: View {
     @ObservedObject var viewModel: GameViewModel
     @ObservedObject var guidanceStore: GuidanceStore
@@ -989,53 +927,6 @@ struct DiceRollView: View {
         return trimmed
     }
 
-    private var loadoutPrimaryLine: String {
-        guard let baseProjection, let displayedProjection else {
-            return "Forecast ready."
-        }
-
-        guard hasLoadedBoosts else {
-            return "\(baseProjection.finalDiceCount)d6 at \(baseProjection.finalPosition.rawValue.capitalized) / \(baseProjection.finalEffect.rawValue.capitalized)."
-        }
-
-        var segments: [String] = []
-
-        if baseProjection.finalDiceCount != displayedProjection.finalDiceCount {
-            segments.append("\(baseProjection.finalDiceCount)d6 -> \(displayedProjection.finalDiceCount)d6")
-        }
-        if baseProjection.finalPosition != displayedProjection.finalPosition {
-            segments.append(
-                "Risk: \(baseProjection.finalPosition.rawValue.capitalized) -> \(displayedProjection.finalPosition.rawValue.capitalized)"
-            )
-        }
-        if baseProjection.finalEffect != displayedProjection.finalEffect {
-            segments.append(
-                "Impact: \(baseProjection.finalEffect.rawValue.capitalized) -> \(displayedProjection.finalEffect.rawValue.capitalized)"
-            )
-        }
-
-        let costSegments = selectedModifierInfos
-            .map(\.remainingUses)
-            .filter { $0.localizedCaseInsensitiveContains("cost") }
-            .map { text in
-                text.localizedCaseInsensitiveContains("cost:")
-                    ? text
-                    : "Cost: " + text.replacingOccurrences(of: "Costs ", with: "", options: .caseInsensitive)
-            }
-        segments.append(contentsOf: costSegments)
-
-        if segments.isEmpty {
-            return "Loaded modifiers will apply to this throw."
-        }
-        return segments.joined(separator: "  •  ")
-    }
-
-    private var loadoutSecondaryLine: String? {
-        guard hasLoadedBoosts else { return nil }
-        let loadedNames = selectedModifierInfos.map(\.description).joined(separator: "  •  ")
-        return loadedNames.isEmpty ? nil : "Committed: \(loadedNames)"
-    }
-
     @ViewBuilder
     private var titleSection: some View {
         if let result = result, showOutcome {
@@ -1387,14 +1278,6 @@ struct DiceRollView: View {
     @ViewBuilder
     private var stageFooterContent: some View {
         if result == nil {
-            LoadoutSummaryCard(
-                title: isDisplayedActionBanned ? "Blocked" : "Loadout",
-                primaryLine: isDisplayedActionBanned ? "This action cannot be attempted right now." : loadoutPrimaryLine,
-                secondaryLine: isDisplayedActionBanned ? blockedReasonText : loadoutSecondaryLine,
-                isLoaded: !isDisplayedActionBanned && hasLoadedBoosts
-            )
-            .accessibilityIdentifier("rollLoadoutSummary")
-
             if let projection = displayedProjection,
                !projection.isActionBanned,
                let debugDice = viewModel.debugActionDiceOverride(rawPool: projection.rawDicePool) {

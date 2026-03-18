@@ -162,6 +162,218 @@ struct InRunStateBadge: View {
     }
 }
 
+enum ActionRatingCatalog {
+    static let displayOrder: [String] = [
+        "Study", "Survey", "Hunt", "Tinker",
+        "Prowl", "Finesse", "Wreck", "Skirmish",
+        "Attune", "Command", "Consort", "Sway"
+    ]
+
+    static func sortedNonZeroRatings(for character: Character) -> [(name: String, rating: Int)] {
+        character.actions
+            .filter { $0.value > 0 }
+            .map { (name: $0.key, rating: $0.value) }
+            .sorted { lhs, rhs in
+                let lhsIndex = displayOrder.firstIndex(of: lhs.name) ?? Int.max
+                let rhsIndex = displayOrder.firstIndex(of: rhs.name) ?? Int.max
+                if lhsIndex != rhsIndex {
+                    return lhsIndex < rhsIndex
+                }
+                if lhs.rating != rhs.rating {
+                    return lhs.rating > rhs.rating
+                }
+                return lhs.name < rhs.name
+            }
+    }
+
+    static func nonZeroRatingText(for character: Character) -> String {
+        sortedNonZeroRatings(for: character)
+            .map { "\($0.name) \($0.rating)" }
+            .joined(separator: " • ")
+    }
+}
+
+extension Character {
+    var coarseHarmStateLabel: String {
+        if isDefeated {
+            return "Defeated"
+        }
+        if !harm.severe.isEmpty {
+            return "Severe"
+        }
+        if !harm.moderate.isEmpty {
+            return "Moderate"
+        }
+        if !harm.lesser.isEmpty {
+            return "Lesser"
+        }
+        return "Fresh"
+    }
+
+    var coarseHarmTint: Color {
+        if isDefeated || !harm.severe.isEmpty {
+            return Theme.danger
+        }
+        if !harm.moderate.isEmpty {
+            return Theme.dangerLight
+        }
+        if !harm.lesser.isEmpty {
+            return Theme.gold
+        }
+        return Theme.success
+    }
+}
+
+struct ActionRatingsLine: View {
+    let character: Character
+    var fontSize: CGFloat = 13
+    var foreground: Color = Theme.parchmentDark
+
+    var body: some View {
+        Text(ActionRatingCatalog.nonZeroRatingText(for: character))
+            .font(Theme.bodyFont(size: fontSize))
+            .foregroundColor(foreground)
+            .fixedSize(horizontal: false, vertical: true)
+            .lineSpacing(2)
+    }
+}
+
+struct StressTrackView: View {
+    let stress: Int
+    var total: Int = 9
+    var filled: Color = Theme.gold
+    var empty: Color = Theme.inkFaded.opacity(0.3)
+    var size: CGFloat = 10
+
+    var body: some View {
+        HStack(spacing: 4) {
+            ForEach(1...total, id: \.self) { index in
+                Circle()
+                    .fill(stress >= index ? filled : empty)
+                    .frame(width: size, height: size)
+                    .overlay(
+                        Circle()
+                            .stroke(stress >= index ? Theme.goldBright : Theme.inkFaded.opacity(0.35), lineWidth: 0.5)
+                    )
+            }
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Stress \(stress) of \(total)")
+    }
+}
+
+struct PressureSummaryItem: Identifiable {
+    let id = UUID()
+    let text: String
+    let foreground: Color
+    let fill: Color
+}
+
+struct CompactPressureRow: View {
+    let items: [PressureSummaryItem]
+
+    var body: some View {
+        if !items.isEmpty {
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 8) {
+                    ForEach(items) { item in
+                        Text(item.text)
+                            .font(Theme.systemFont(size: 11, weight: .semibold))
+                            .foregroundColor(item.foreground)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 6)
+                            .background(item.fill, in: Capsule())
+                    }
+                }
+                .padding(.horizontal, 2)
+            }
+            .accessibilityElement(children: .contain)
+            .accessibilityIdentifier("compactPressureRow")
+        }
+    }
+}
+
+struct ActiveExplorerTacticalHUD: View {
+    let character: Character
+    let immediateWarnings: [String]
+    let onOpenDetails: () -> Void
+    var embeddedInRail: Bool = false
+
+    private var titleSize: CGFloat {
+        embeddedInRail ? 18 : 22
+    }
+
+    private var actionFontSize: CGFloat {
+        embeddedInRail ? 13 : 14
+    }
+
+    private var verticalSpacing: CGFloat {
+        embeddedInRail ? 8 : 10
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: verticalSpacing) {
+            HStack(alignment: .top, spacing: 12) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(character.name)
+                        .font(Theme.displayFont(size: titleSize, weight: .semibold))
+                        .foregroundColor(Theme.parchment)
+
+                    Text(character.characterClass)
+                        .font(Theme.systemFont(size: 11, weight: .semibold))
+                        .foregroundColor(Theme.inkFaded)
+                        .textCase(.uppercase)
+                        .tracking(0.7)
+                }
+
+                Spacer(minLength: 12)
+
+                VStack(alignment: .trailing, spacing: 8) {
+                    InRunStateBadge(
+                        text: character.coarseHarmStateLabel,
+                        foreground: character.coarseHarmTint == Theme.gold ? Theme.ink : .white,
+                        fill: character.coarseHarmTint.opacity(0.85)
+                    )
+
+                    Button("Details", action: onOpenDetails)
+                        .font(Theme.systemFont(size: 11, weight: .semibold))
+                        .foregroundColor(Theme.gold)
+                        .buttonStyle(.plain)
+                }
+            }
+
+            VStack(alignment: .leading, spacing: 5) {
+                Text("Stress \(character.stress)/9")
+                    .font(Theme.systemFont(size: 11, weight: .semibold))
+                    .foregroundColor(Theme.inkFaded)
+
+                StressTrackView(stress: character.stress)
+            }
+
+            ActionRatingsLine(character: character, fontSize: actionFontSize, foreground: Theme.parchmentDark)
+
+            if !immediateWarnings.isEmpty {
+                Text(immediateWarnings.joined(separator: " • "))
+                    .font(Theme.systemFont(size: 11, weight: .semibold))
+                    .foregroundColor(Theme.dangerLight)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .padding(.horizontal, embeddedInRail ? 0 : 16)
+        .padding(.vertical, embeddedInRail ? 0 : 14)
+        .background(
+            RoundedRectangle(cornerRadius: 14)
+                .fill(embeddedInRail ? Color.clear : Theme.leatherLight.opacity(0.72))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(embeddedInRail ? Color.clear : Theme.parchmentDeep.opacity(0.24), lineWidth: 1)
+        )
+        .accessibilityElement(children: .contain)
+        .accessibilityIdentifier("activeExplorerTacticalHUD")
+    }
+}
+
 struct SelectedCharacterSummaryStrip: View {
     let character: Character
     var locationName: String?

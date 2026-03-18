@@ -2,14 +2,6 @@ import XCTest
 @testable import CardGame
 
 final class ModifierSystemTests: XCTestCase {
-    private func makeViewModel(scenario: String = RuntimeDefaults.defaultScenarioID) -> GameViewModel {
-        var runtime = ScenarioRuntime()
-        _ = runtime.activateScenario(named: scenario)
-        let viewModel = GameViewModel(runtime: runtime)
-        viewModel.gameState.scenarioName = scenario
-        return viewModel
-    }
-
     func makeTestCharacter() -> Character {
         Character(id: UUID(),
                   name: "Tester",
@@ -34,7 +26,7 @@ final class ModifierSystemTests: XCTestCase {
         let alwaysOn = Modifier(bonusDice: 1, uses: 1, isOptionalToApply: false, description: "Battle Fury")
         character.modifiers = [optional, alwaysOn]
 
-        let viewModel = makeViewModel()
+        let viewModel = TestFixtures.makeViewModel()
         let context = viewModel.getRollContext(for: makeTestAction(), with: character)
 
         XCTAssertEqual(context.baseProjection.finalDiceCount, 3)
@@ -79,7 +71,7 @@ final class ModifierSystemTests: XCTestCase {
         var character = makeTestCharacter()
         let mod = Modifier(bonusDice: 1, uses: 1, isOptionalToApply: true, description: "Charm")
         character.modifiers = [mod]
-        let vm = makeViewModel()
+        let vm = TestFixtures.makeViewModel()
         vm.gameState.party = [character]
         vm.gameState.characterLocations[character.id.uuidString] = UUID()
 
@@ -112,7 +104,7 @@ final class ModifierSystemTests: XCTestCase {
     }
 
     func testActionEffectPenalty() throws {
-        let vm = makeViewModel(scenario: "test_penalty")
+        let vm = TestFixtures.makeViewModel(scenario: "test_penalty")
         var character = makeTestCharacter()
         character.actions["Prowl"] = 2
         character.harm.lesser = [(familyId: "sprain", description: "Ankle Sprain")]
@@ -124,7 +116,7 @@ final class ModifierSystemTests: XCTestCase {
     }
 
     func testBanActionMarksProjectionAndSuppressesOptionalModifiers() throws {
-        let vm = makeViewModel(scenario: "temple_of_terror")
+        let vm = TestFixtures.makeViewModel(scenario: "temple_of_terror")
         var character = makeTestCharacter()
         character.actions["Tinker"] = 2
         character.harm.moderate = [(familyId: "gear_damage", description: "Broken Tools")]
@@ -162,7 +154,7 @@ final class ModifierSystemTests: XCTestCase {
     }
 
     func testPerformActionReturnsCannotForBannedAction() throws {
-        let vm = makeViewModel(scenario: "temple_of_terror")
+        let vm = TestFixtures.makeViewModel(scenario: "temple_of_terror")
         var character = makeTestCharacter()
         character.actions["Tinker"] = 2
         character.harm.moderate = [(familyId: "gear_damage", description: "Broken Tools")]
@@ -198,7 +190,7 @@ final class ModifierSystemTests: XCTestCase {
     }
 
     func testTagConditionalPenalty() throws {
-        let vm = makeViewModel(scenario: "test_tag_penalty")
+        let vm = TestFixtures.makeViewModel(scenario: "test_tag_penalty")
         var character = makeTestCharacter()
         character.actions["Tinker"] = 2
         character.harm.lesser = [(familyId: "flora_allergy", description: "Allergic Reaction")]
@@ -231,7 +223,7 @@ final class ModifierSystemTests: XCTestCase {
         let treasure = Treasure(id: "test_charm", name: "Charm Stone", description: "", grantedModifier: mod)
         character.modifiers = [mod]
         character.treasures = [treasure]
-        let vm = makeViewModel()
+        let vm = TestFixtures.makeViewModel()
         vm.gameState.party = [character]
         vm.gameState.characterLocations[character.id.uuidString] = UUID()
 
@@ -260,7 +252,8 @@ final class ModifierSystemTests: XCTestCase {
         let action = ActionOption(name: "Repair", actionType: "Tinker", position: .risky, effect: .standard)
         let context = vm.getRollContext(for: action, with: character)
         guard let treasureModifier = context.optionalModifiers.first(where: { $0.description == "Scrap Parts" }) else {
-            return XCTFail("Expected treasure modifier to be available")
+            XCTFail("Expected treasure modifier to be available")
+            return
         }
 
         let result = vm.performAction(for: action,
@@ -274,7 +267,7 @@ final class ModifierSystemTests: XCTestCase {
     }
 
     func testPushStressCostIncludesActiveHarmPenalty() throws {
-        let vm = makeViewModel()
+        let vm = TestFixtures.makeViewModel()
         var character = makeTestCharacter()
         character.stress = 6
         character.harm.lesser = [(familyId: "mental_anguish", description: "Unease")]
@@ -284,7 +277,8 @@ final class ModifierSystemTests: XCTestCase {
         let action = makeTestAction()
         let context = vm.getRollContext(for: action, with: character)
         guard let push = context.optionalModifiers.first(where: { $0.description == "Push Yourself" }) else {
-            return XCTFail("Expected Push Yourself option to be available")
+            XCTFail("Expected Push Yourself option to be available")
+            return
         }
         XCTAssertEqual(push.remainingUses, "Costs 3 Stress")
 
@@ -295,5 +289,54 @@ final class ModifierSystemTests: XCTestCase {
                              chosenOptionalModifierIDs: [push.id])
 
         XCTAssertEqual(vm.gameState.party[0].stress, 9)
+    }
+
+    func testActionResolverGroupActionAppliesLeaderStressAndConsequences() throws {
+        let runtime = ScenarioRuntime()
+        let resolver = ActionResolver(
+            runtime: runtime,
+            rollRules: RollRulesEngine(),
+            debugLogging: false
+        )
+
+        let leader = Character(
+            id: UUID(),
+            name: "Leader",
+            characterClass: "Rogue",
+            stress: 0,
+            harm: HarmState(),
+            actions: ["Skirmish": 2]
+        )
+        let ally = Character(
+            id: UUID(),
+            name: "Ally",
+            characterClass: "Guardian",
+            stress: 0,
+            harm: HarmState(),
+            actions: ["Skirmish": 1]
+        )
+        let groupAction = ActionOption(
+            name: "Coordinated Strike",
+            actionType: "Skirmish",
+            position: .risky,
+            effect: .standard,
+            isGroupAction: true,
+            outcomes: [.success: [.setScenarioFlag("group_success")]]
+        )
+
+        var gameState = GameState(party: [leader, ally])
+        let result = resolver.performAction(
+            for: groupAction,
+            with: leader,
+            interactableID: nil,
+            partyMovementMode: .grouped,
+            groupRolls: [[2], [6]],
+            in: &gameState
+        )
+
+        XCTAssertEqual(result.outcome, "Full Success!")
+        XCTAssertEqual(gameState.party[0].stress, 1)
+        XCTAssertEqual(gameState.scenarioFlags["group_success"], true)
+        XCTAssertTrue(result.consequences.contains("Leader takes 1 Stress"))
     }
 }

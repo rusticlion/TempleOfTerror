@@ -7,7 +7,18 @@ struct ResolvedDiceRoll {
 }
 
 struct RollRulesEngine {
+    static let pushYourselfModifierID = UUID(uuidString: "0F2B2A84-7027-4B8A-ABEB-0CEB6A46E50D")!
     private let basePushStressCost = 2
+
+    func makePushYourselfModifier() -> Modifier {
+        Modifier(
+            id: Self.pushYourselfModifierID,
+            bonusDice: 1,
+            uses: 1,
+            isOptionalToApply: true,
+            description: "Push Yourself"
+        )
+    }
 
     func calculateProjection(
         for action: ActionOption,
@@ -208,7 +219,7 @@ struct RollRulesEngine {
 
             let pushCost = pushStressCost(for: character, interactableTags: tags, harmFamilies: harmFamilies)
             if character.stress + pushCost <= 9 {
-                let pushModifier = Modifier(bonusDice: 1, uses: 1, isOptionalToApply: true, description: "Push Yourself")
+                let pushModifier = makePushYourselfModifier()
                 optionalInfos.append(
                     SelectableModifierInfo(
                         id: pushModifier.id,
@@ -449,5 +460,448 @@ struct RollRulesEngine {
             effect = effect.increased()
             notes.append("(+1 Effect from \(description))")
         }
+    }
+}
+
+struct ActionResolver {
+    private let runtime: ScenarioRuntime
+    private let rollRules: RollRulesEngine
+    private let pendingResolutionDriver: PendingResolutionDriver
+
+    private var harmFamilies: [String: HarmFamily] {
+        runtime.content.harmFamilyDict
+    }
+
+    init(
+        runtime: ScenarioRuntime,
+        rollRules: RollRulesEngine,
+        debugLogging: Bool
+    ) {
+        self.runtime = runtime
+        self.rollRules = rollRules
+        self.pendingResolutionDriver = PendingResolutionDriver(
+            runtime: runtime,
+            debugLogging: debugLogging
+        )
+    }
+
+    @discardableResult
+    func performFreeAction(
+        for action: ActionOption,
+        with character: Character,
+        interactableID: String?,
+        in gameState: inout GameState
+    ) -> String {
+        guard let currentCharacter = currentCharacter(for: character.id, in: gameState) else {
+            return "Character not found."
+        }
+
+        let tags = interactableTags(
+            for: currentCharacter.id,
+            interactableID: interactableID,
+            in: gameState
+        )
+        let projection = rollRules.calculateProjection(
+            for: action,
+            with: currentCharacter,
+            interactableTags: tags,
+            harmFamilies: harmFamilies
+        )
+        let consequences = action.outcomes[.success] ?? []
+        let context = ConsequenceContext(
+            characterID: currentCharacter.id,
+            interactableID: interactableID,
+            finalEffect: projection.finalEffect,
+            finalPosition: projection.finalPosition,
+            isCritical: false
+        )
+        return pendingResolutionDriver.processConsequences(
+            consequences,
+            context: context,
+            source: .freeAction,
+            rollPresentation: nil,
+            in: &gameState
+        )
+    }
+
+    func performAction(
+        for action: ActionOption,
+        with character: Character,
+        interactableID: String?,
+        usingDice diceResults: [Int]? = nil,
+        chosenOptionalModifierIDs: [UUID] = [],
+        partyMovementMode: PartyMovementMode,
+        groupRolls: [[Int]]? = nil,
+        in gameState: inout GameState
+    ) -> DiceRollResult {
+        if action.isGroupAction {
+            return performGroupAction(
+                for: action,
+                leader: character,
+                interactableID: interactableID,
+                partyMovementMode: partyMovementMode,
+                groupRolls: groupRolls,
+                in: &gameState
+            )
+        }
+
+        guard let charIndex = gameState.party.firstIndex(where: { $0.id == character.id }) else {
+            return errorResult("Character not found.")
+        }
+
+        let currentCharacter = gameState.party[charIndex]
+        let tags = interactableTags(
+            for: currentCharacter.id,
+            interactableID: interactableID,
+            in: gameState
+        )
+        let context = rollRules.getRollContext(
+            for: action,
+            with: currentCharacter,
+            interactableTags: tags,
+            harmFamilies: harmFamilies
+        )
+        var workingProjection = context.baseProjection
+
+        if workingProjection.isActionBanned {
+            return cannotResult(workingProjection.notes.joined(separator: "\n"))
+        }
+
+        var appliedOptionalMods: [Modifier] = []
+        var consumedMessages: [String] = []
+
+        let pushModifierIDs = Set(
+            context.optionalModifiers
+                .filter { $0.description == "Push Yourself" }
+                .map(\.id)
+        )
+        let mutableChosenIDs = chosenOptionalModifierIDs.filter { !pushModifierIDs.contains($0) }
+        let contextModifiersByID = Dictionary(
+            uniqueKeysWithValues: context.optionalModifiers.map { ($0.id, $0.modifierData) }
+        )
+
+        if chosenOptionalModifierIDs.contains(where: { pushModifierIDs.contains($0) }),
+           let pushModifier = applyPushYourselfDuringAction(
+                toCharacterAt: charIndex,
+                interactableTags: tags,
+                in: &gameState
+           ) {
+            appliedOptionalMods.append(pushModifier)
+        }
+
+        var modsToKeep: [Modifier] = []
+        var consumedModIDs: [UUID] = []
+        for var modifier in gameState.party[charIndex].modifiers {
+            if mutableChosenIDs.contains(modifier.id) {
+                appliedOptionalMods.append(modifier)
+                if modifier.uses > 0 {
+                    modifier.uses -= 1
+                    if modifier.uses == 0 {
+                        consumedModIDs.append(modifier.id)
+                        let name = modifier.description.replacingOccurrences(of: "from ", with: "")
+                        consumedMessages.append("Used up \(name).")
+                        continue
+                    }
+                }
+            }
+            modsToKeep.append(modifier)
+        }
+        gameState.party[charIndex].modifiers = modsToKeep
+
+        for modifierID in mutableChosenIDs where !appliedOptionalMods.contains(where: { $0.id == modifierID }) {
+            if let contextModifier = contextModifiersByID[modifierID] {
+                appliedOptionalMods.append(contextModifier)
+            }
+        }
+
+        gameState.party[charIndex].treasures.removeAll { treasure in
+            consumedModIDs.contains(treasure.grantedModifier.id)
+        }
+
+        workingProjection = rollRules.calculateEffectiveProjection(
+            baseProjection: workingProjection,
+            applying: appliedOptionalMods
+        )
+        var finalEffect = workingProjection.finalEffect
+        let finalPosition = workingProjection.finalPosition
+        let resolvedRoll = rollRules.resolveRoll(
+            using: diceResults,
+            rawPool: workingProjection.rawDicePool
+        )
+        let outcome = rollRules.outcome(for: resolvedRoll.highestRoll)
+        let highestRoll = resolvedRoll.highestRoll
+        let isCritical = resolvedRoll.isCritical
+        let actualDiceRolled = resolvedRoll.actualDiceRolled
+        let consequencesToApply = action.outcomes[outcome.outcome] ?? []
+        var consequencesDescription = ""
+
+        if isCritical && highestRoll >= 4 {
+            finalEffect = finalEffect.increased()
+        }
+
+        let eligibleConsequences = consequencesToApply.filter { consequence in
+            pendingResolutionDriver.areConditionsMet(
+                conditions: consequence.conditions,
+                forCharacter: currentCharacter,
+                finalEffect: finalEffect,
+                finalPosition: finalPosition,
+                in: gameState
+            )
+        }
+        let consequenceContext = ConsequenceContext(
+            characterID: currentCharacter.id,
+            interactableID: interactableID,
+            finalEffect: finalEffect,
+            finalPosition: finalPosition,
+            isCritical: isCritical
+        )
+        let rollPresentation = PendingRollPresentation(
+            characterID: currentCharacter.id,
+            actionName: action.name,
+            highestRoll: highestRoll,
+            outcome: outcome.label,
+            actualDiceRolled: actualDiceRolled,
+            isCritical: isCritical,
+            finalEffect: finalEffect
+        )
+        consequencesDescription = pendingResolutionDriver.processConsequences(
+            eligibleConsequences,
+            context: consequenceContext,
+            source: .roll,
+            rollPresentation: rollPresentation,
+            in: &gameState
+        )
+
+        if isCritical && highestRoll >= 4 {
+            let criticalMessage = "Critical Success! Effect increased to \(finalEffect.rawValue.capitalized)."
+            consequencesDescription = appendLine(
+                criticalMessage,
+                to: consequencesDescription
+            )
+            appendToPendingResolutionLog(criticalMessage, in: &gameState)
+        }
+
+        if !consumedMessages.isEmpty {
+            AudioManager.shared.play(sound: "sfx_modifier_consume.wav")
+            let consumedText = consumedMessages.joined(separator: "\n")
+            consequencesDescription = appendLine(
+                consumedText,
+                to: consequencesDescription
+            )
+            appendToPendingResolutionLog(consumedText, in: &gameState)
+        }
+
+        return DiceRollResult(
+            highestRoll: highestRoll,
+            outcome: outcome.label,
+            consequences: consequencesDescription,
+            actualDiceRolled: actualDiceRolled,
+            isCritical: isCritical,
+            finalEffect: finalEffect,
+            isAwaitingDecision: gameState.pendingResolution?.isAwaitingDecision == true
+        )
+    }
+
+    func pushYourself(
+        for character: Character,
+        in gameState: inout GameState
+    ) {
+        guard let charIndex = gameState.party.firstIndex(where: { $0.id == character.id }) else { return }
+        let pushCost = rollRules.pushStressCost(
+            for: gameState.party[charIndex],
+            interactableTags: [],
+            harmFamilies: harmFamilies
+        )
+        gameState.party[charIndex].stress += pushCost
+        _ = pendingResolutionDriver.checkStressOverflow(
+            for: charIndex,
+            in: &gameState
+        )
+    }
+
+    private func performGroupAction(
+        for action: ActionOption,
+        leader: Character,
+        interactableID: String?,
+        partyMovementMode: PartyMovementMode,
+        groupRolls: [[Int]]?,
+        in gameState: inout GameState
+    ) -> DiceRollResult {
+        guard partyMovementMode == .grouped,
+              !runtime.isPartyActuallySplit(in: gameState) else {
+            return cannotResult("Party must be together for a group action.")
+        }
+
+        var bestRoll = 0
+        var failures = 0
+        var rollIndex = 0
+
+        for member in gameState.party where !member.isDefeated {
+            let dicePool = max(member.actions[action.actionType] ?? 0, 1)
+            let memberRolls = groupRolls?[safe: rollIndex]
+            let highest = resolveGroupMemberHighestRoll(
+                dicePool: dicePool,
+                using: memberRolls
+            )
+            rollIndex += 1
+
+            bestRoll = max(bestRoll, highest)
+            if highest <= 3 {
+                failures += 1
+            }
+        }
+
+        let outcome = rollRules.outcome(for: bestRoll)
+        let consequences = action.outcomes[outcome.outcome] ?? []
+        let context = ConsequenceContext(
+            characterID: leader.id,
+            interactableID: interactableID,
+            finalEffect: action.effect,
+            finalPosition: action.position,
+            isCritical: false
+        )
+        let rollPresentation = PendingRollPresentation(
+            characterID: leader.id,
+            actionName: action.name,
+            highestRoll: bestRoll,
+            outcome: outcome.label,
+            actualDiceRolled: nil,
+            isCritical: false,
+            finalEffect: nil
+        )
+        var description = pendingResolutionDriver.processConsequences(
+            consequences,
+            context: context,
+            source: .roll,
+            rollPresentation: rollPresentation,
+            in: &gameState
+        )
+
+        if let leaderIndex = gameState.party.firstIndex(where: { $0.id == leader.id }) {
+            gameState.party[leaderIndex].stress += failures
+            if let overflow = pendingResolutionDriver.checkStressOverflow(
+                for: leaderIndex,
+                in: &gameState
+            ) {
+                description = appendLine(overflow, to: description)
+                appendToPendingResolutionLog(overflow, in: &gameState)
+            }
+            if failures > 0 {
+                let failureText = "Leader takes \(failures) Stress from allies' slips."
+                description = appendLine(failureText, to: description)
+                appendToPendingResolutionLog(failureText, in: &gameState)
+            }
+        }
+
+        return DiceRollResult(
+            highestRoll: bestRoll,
+            outcome: outcome.label,
+            consequences: description,
+            actualDiceRolled: nil,
+            isCritical: nil,
+            finalEffect: nil,
+            isAwaitingDecision: gameState.pendingResolution?.isAwaitingDecision == true
+        )
+    }
+
+    private func applyPushYourselfDuringAction(
+        toCharacterAt index: Int,
+        interactableTags: [String],
+        in gameState: inout GameState
+    ) -> Modifier? {
+        let pushCost = rollRules.pushStressCost(
+            for: gameState.party[index],
+            interactableTags: interactableTags,
+            harmFamilies: harmFamilies
+        )
+        guard gameState.party[index].stress + pushCost <= 9 else { return nil }
+
+        gameState.party[index].stress += pushCost
+        _ = pendingResolutionDriver.checkStressOverflow(
+            for: index,
+            in: &gameState
+        )
+        return rollRules.makePushYourselfModifier()
+    }
+
+    private func currentCharacter(
+        for characterID: UUID,
+        in gameState: GameState
+    ) -> Character? {
+        gameState.party.first(where: { $0.id == characterID })
+    }
+
+    private func interactableTags(
+        for characterID: UUID,
+        interactableID: String?,
+        in gameState: GameState
+    ) -> [String] {
+        guard let interactableID,
+              let nodeID = gameState.characterLocations[characterID.uuidString],
+              let interactable = gameState.dungeon?.nodes[nodeID.uuidString]?.interactables.first(where: { $0.id == interactableID }) else {
+            return []
+        }
+        return interactable.tags
+    }
+
+    private func appendToPendingResolutionLog(
+        _ text: String,
+        in gameState: inout GameState
+    ) {
+        guard !text.isEmpty, gameState.pendingResolution != nil else { return }
+        gameState.pendingResolution?.resolvedDescriptions.append(text)
+    }
+
+    private func appendLine(
+        _ text: String,
+        to existing: String
+    ) -> String {
+        guard !existing.isEmpty else { return text }
+        return existing + "\n" + text
+    }
+
+    private func resolveGroupMemberHighestRoll(
+        dicePool: Int,
+        using providedResults: [Int]?
+    ) -> Int {
+        if let providedResults, !providedResults.isEmpty {
+            return providedResults.max() ?? 0
+        }
+
+        var highest = 0
+        for _ in 0..<dicePool {
+            highest = max(highest, Int.random(in: 1...6))
+        }
+        return highest
+    }
+
+    private func errorResult(_ message: String) -> DiceRollResult {
+        DiceRollResult(
+            highestRoll: 0,
+            outcome: "Error",
+            consequences: message,
+            actualDiceRolled: nil,
+            isCritical: nil,
+            finalEffect: nil,
+            isAwaitingDecision: false
+        )
+    }
+
+    private func cannotResult(_ message: String) -> DiceRollResult {
+        DiceRollResult(
+            highestRoll: 0,
+            outcome: "Cannot",
+            consequences: message,
+            actualDiceRolled: nil,
+            isCritical: nil,
+            finalEffect: nil,
+            isAwaitingDecision: false
+        )
+    }
+}
+
+private extension Array {
+    subscript(safe index: Int) -> Element? {
+        indices.contains(index) ? self[index] : nil
     }
 }

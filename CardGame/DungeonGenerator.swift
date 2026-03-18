@@ -263,7 +263,7 @@ struct ScenarioRuntime {
         movingGroupedParty: Bool,
         in gameState: inout GameState
     ) -> MoveOutcome {
-        guard connection.isUnlocked, !isCharacterEngaged(characterID, in: gameState) else {
+        guard canTraverse(characterID: characterID, via: connection, in: gameState) else {
             return MoveOutcome(didMove: false, enteredNode: nil)
         }
 
@@ -275,9 +275,29 @@ struct ScenarioRuntime {
             gameState.characterLocations[characterID.uuidString] = connection.toNodeID
         }
 
-        gameState.dungeon?.nodes[connection.toNodeID.uuidString]?.isDiscovered = true
-        let enteredNode = gameState.dungeon?.nodes[connection.toNodeID.uuidString]
+        let enteredNode = discoverNode(id: connection.toNodeID, in: &gameState)
         return MoveOutcome(didMove: true, enteredNode: enteredNode)
+    }
+
+    func canTraverse(
+        characterID: UUID,
+        via connection: NodeConnection,
+        in gameState: GameState
+    ) -> Bool {
+        guard connection.isUnlocked, !isCharacterEngaged(characterID, in: gameState) else {
+            return false
+        }
+        guard let character = gameState.party.first(where: { $0.id == characterID }) else {
+            return false
+        }
+
+        return areConditionsMet(
+            connection.conditions,
+            for: character,
+            finalEffect: .standard,
+            finalPosition: .risky,
+            gameState: gameState
+        )
     }
 
     @discardableResult
@@ -291,6 +311,30 @@ struct ScenarioRuntime {
         }
         gameState.dungeon?.nodes[fromNodeID.uuidString]?.connections[connectionIndex].isUnlocked = true
         return true
+    }
+
+    @discardableResult
+    func lockConnection(
+        fromNodeID: UUID,
+        toNodeID: UUID,
+        in gameState: inout GameState
+    ) -> Bool {
+        guard let connectionIndex = gameState.dungeon?.nodes[fromNodeID.uuidString]?.connections.firstIndex(where: { $0.toNodeID == toNodeID }) else {
+            return false
+        }
+        gameState.dungeon?.nodes[fromNodeID.uuidString]?.connections[connectionIndex].isUnlocked = false
+        return true
+    }
+
+    @discardableResult
+    func moveCharacter(
+        id characterID: UUID,
+        toNodeID: UUID,
+        in gameState: inout GameState
+    ) -> MapNode? {
+        guard gameState.dungeon?.nodes[toNodeID.uuidString] != nil else { return nil }
+        gameState.characterLocations[characterID.uuidString] = toNodeID
+        return discoverNode(id: toNodeID, in: &gameState)
     }
 
     @discardableResult
@@ -388,8 +432,7 @@ struct ScenarioRuntime {
     ) -> Bool {
         ConsequenceExecutor(
             debugLogging: false,
-            runtime: self,
-            content: activeContentLoader
+            runtime: self
         ).areConditionsMet(
             conditions: conditions,
             forCharacter: character,
@@ -397,5 +440,11 @@ struct ScenarioRuntime {
             finalPosition: finalPosition,
             gameState: gameState
         )
+    }
+
+    @discardableResult
+    private func discoverNode(id nodeID: UUID, in gameState: inout GameState) -> MapNode? {
+        gameState.dungeon?.nodes[nodeID.uuidString]?.isDiscovered = true
+        return gameState.dungeon?.nodes[nodeID.uuidString]
     }
 }

@@ -2,14 +2,6 @@ import XCTest
 @testable import CardGame
 
 final class StressOverflowTests: XCTestCase {
-    private func makeViewModel(scenario: String = RuntimeDefaults.defaultScenarioID) -> GameViewModel {
-        var runtime = ScenarioRuntime()
-        _ = runtime.activateScenario(named: scenario)
-        let viewModel = GameViewModel(runtime: runtime)
-        viewModel.gameState.scenarioName = scenario
-        return viewModel
-    }
-
     func testOverflowAppliesMentalFraying() throws {
         var character = Character(id: UUID(),
                                   name: "Tester",
@@ -19,7 +11,7 @@ final class StressOverflowTests: XCTestCase {
                                   actions: ["Study": 1],
                                   treasures: [],
                                   modifiers: [])
-        let vm = makeViewModel()
+        let vm = TestFixtures.makeViewModel()
         vm.gameState.party = [character]
         vm.gameState.characterLocations[character.id.uuidString] = UUID()
 

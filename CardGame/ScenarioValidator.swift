@@ -497,6 +497,24 @@ struct ScenarioValidator {
                         message: "Connection points to missing node \(connection.toNodeID.uuidString)."
                     )
                 }
+
+                validateConditions(
+                    connection.conditions,
+                    file: mapFile,
+                    path: "node[\(node.id.uuidString)].connections[\(index)].conditions",
+                    catalog: catalog,
+                    state: &state
+                )
+
+                if let onTraverse = connection.onTraverse {
+                    validateConsequences(
+                        onTraverse,
+                        file: mapFile,
+                        path: "node[\(node.id.uuidString)].connections[\(index)].onTraverse",
+                        catalog: catalog,
+                        state: &state
+                    )
+                }
             }
 
             if !reachableNodeIDs.contains(node.id) {
@@ -693,7 +711,7 @@ struct ScenarioValidator {
     ) -> Bool {
         for consequence in consequences {
             switch consequence.kind {
-            case .unlockConnection, .triggerEvent, .endRun:
+            case .unlockConnection, .moveActingCharacterToNode, .triggerEvent, .endRun:
                 return true
 
             case .createChoice:
@@ -1039,6 +1057,64 @@ struct ScenarioValidator {
                             file: file,
                             path: consequencePath,
                             message: "unlockConnection references missing toNodeID \(toNodeID.uuidString)."
+                        )
+                    }
+                }
+
+            case .lockConnection:
+                if catalog.hasFixedMap {
+                    require(
+                        consequence.fromNodeID != nil,
+                        file: file,
+                        path: consequencePath,
+                        message: "lockConnection requires fromNodeID.",
+                        state: &state
+                    )
+                    require(
+                        consequence.toNodeID != nil,
+                        file: file,
+                        path: consequencePath,
+                        message: "lockConnection requires toNodeID.",
+                        state: &state
+                    )
+
+                    if let fromNodeID = consequence.fromNodeID,
+                       !catalog.nodeIDs.contains(fromNodeID) {
+                        state.report.add(
+                            severity: .error,
+                            file: file,
+                            path: consequencePath,
+                            message: "lockConnection references missing fromNodeID \(fromNodeID.uuidString)."
+                        )
+                    }
+                    if let toNodeID = consequence.toNodeID,
+                       !catalog.nodeIDs.contains(toNodeID) {
+                        state.report.add(
+                            severity: .error,
+                            file: file,
+                            path: consequencePath,
+                            message: "lockConnection references missing toNodeID \(toNodeID.uuidString)."
+                        )
+                    }
+                }
+
+            case .moveActingCharacterToNode:
+                if catalog.hasFixedMap {
+                    require(
+                        consequence.toNodeID != nil,
+                        file: file,
+                        path: consequencePath,
+                        message: "moveActingCharacterToNode requires toNodeID.",
+                        state: &state
+                    )
+
+                    if let toNodeID = consequence.toNodeID,
+                       !catalog.nodeIDs.contains(toNodeID) {
+                        state.report.add(
+                            severity: .error,
+                            file: file,
+                            path: consequencePath,
+                            message: "moveActingCharacterToNode references missing toNodeID \(toNodeID.uuidString)."
                         )
                     }
                 }

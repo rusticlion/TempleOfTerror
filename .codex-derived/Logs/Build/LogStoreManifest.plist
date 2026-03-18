@@ -6,7 +6,7 @@
 	<integer>12</integer>
 	<key>logs</key>
 	<dict>
-		<key>9461EA47-0D0C-4EBE-A7AB-560DCC9B65A0</key>
+		<key>60C407A7-4211-41E1-B626-4DE0E65F3263</key>
 		<dict>
 			<key>className</key>
 			<string>IDECommandLineBuildLog</string>
@@ -15,13 +15,13 @@
 			<key>domainType</key>
 			<string>Xcode.IDEActivityLogDomainType.BuildLog</string>
 			<key>fileName</key>
-			<string>9461EA47-0D0C-4EBE-A7AB-560DCC9B65A0.xcactivitylog</string>
+			<string>60C407A7-4211-41E1-B626-4DE0E65F3263.xcactivitylog</string>
 			<key>hasPrimaryLog</key>
 			<true/>
 			<key>primaryObservable</key>
 			<dict>
 				<key>highLevelStatus</key>
-				<string>S</string>
+				<string>W</string>
 				<key>totalNumberOfAnalyzerIssues</key>
 				<integer>0</integer>
 				<key>totalNumberOfErrors</key>
@@ -29,7 +29,7 @@
 				<key>totalNumberOfTestFailures</key>
 				<integer>0</integer>
 				<key>totalNumberOfWarnings</key>
-				<integer>0</integer>
+				<integer>1</integer>
 			</dict>
 			<key>schemeIdentifier-containerName</key>
 			<string>CardGame project</string>
@@ -38,17 +38,17 @@
 			<key>schemeIdentifier-sharedScheme</key>
 			<integer>1</integer>
 			<key>signature</key>
-			<string>Testing project CardGame with scheme CardGame</string>
+			<string>Building project CardGame for testing with scheme CardGame</string>
 			<key>timeStartedRecording</key>
-			<real>795038367.92970395</real>
+			<real>795378163.96633005</real>
 			<key>timeStoppedRecording</key>
-			<real>795038376.39112794</real>
+			<real>795378180.95838106</real>
 			<key>title</key>
-			<string>Testing project CardGame with scheme CardGame</string>
+			<string>Building project CardGame for testing with scheme CardGame</string>
 			<key>uniqueIdentifier</key>
-			<string>9461EA47-0D0C-4EBE-A7AB-560DCC9B65A0</string>
+			<string>60C407A7-4211-41E1-B626-4DE0E65F3263</string>
 		</dict>
-		<key>A43B7898-6E08-4611-A998-C9CCA83000F0</key>
+		<key>B8ACCB70-6CE8-4AD4-89FC-9CFB71D01271</key>
 		<dict>
 			<key>className</key>
 			<string>IDECommandLineBuildLog</string>
@@ -57,7 +57,7 @@
 			<key>domainType</key>
 			<string>Xcode.IDEActivityLogDomainType.BuildLog</string>
 			<key>fileName</key>
-			<string>A43B7898-6E08-4611-A998-C9CCA83000F0.xcactivitylog</string>
+			<string>B8ACCB70-6CE8-4AD4-89FC-9CFB71D01271.xcactivitylog</string>
 			<key>hasPrimaryLog</key>
 			<true/>
 			<key>primaryObservable</key>
@@ -80,15 +80,15 @@
 			<key>schemeIdentifier-sharedScheme</key>
 			<integer>1</integer>
 			<key>signature</key>
-			<string>Testing project CardGame with scheme CardGame</string>
+			<string>Building project CardGame for testing with scheme CardGame</string>
 			<key>timeStartedRecording</key>
-			<real>795037740.40712798</real>
+			<real>795378195.71073794</real>
 			<key>timeStoppedRecording</key>
-			<real>795037741.44301999</real>
+			<real>795378196.73637998</real>
 			<key>title</key>
-			<string>Testing project CardGame with scheme CardGame</string>
+			<string>Building project CardGame for testing with scheme CardGame</string>
 			<key>uniqueIdentifier</key>
-			<string>A43B7898-6E08-4611-A998-C9CCA83000F0</string>
+			<string>B8ACCB70-6CE8-4AD4-89FC-9CFB71D01271</string>
 		</dict>
 	</dict>
 </dict>

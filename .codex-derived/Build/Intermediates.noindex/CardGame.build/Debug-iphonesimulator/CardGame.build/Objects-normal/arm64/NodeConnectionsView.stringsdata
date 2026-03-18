@@ -14,16 +14,16 @@
         "comment": "",
         "key": "↳",
         "location": {
-          "startingColumn": 34,
-          "startingLine": 21
+          "startingColumn": 30,
+          "startingLine": 23
         }
       },
       {
         "comment": "",
         "key": "→",
         "location": {
-          "startingColumn": 38,
-          "startingLine": 37
+          "startingColumn": 34,
+          "startingLine": 43
         }
       }
     ]

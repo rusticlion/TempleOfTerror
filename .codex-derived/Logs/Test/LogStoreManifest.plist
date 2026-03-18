@@ -6,10 +6,10 @@
 	<integer>12</integer>
 	<key>logs</key>
 	<dict>
-		<key>1272100B-A2E8-4FD8-8721-7F1DF9AC1C0F</key>
+		<key>E008F6CE-8D3C-4FE7-A1FC-7500B0EB8A21</key>
 		<dict>
 			<key>auxiliaryLogUniqueIdentifier</key>
-			<string>A43B7898-6E08-4611-A998-C9CCA83000F0</string>
+			<string>5A562544-A03A-4AA0-910D-2D3FED8C3317</string>
 			<key>auxiliaryObservable</key>
 			<dict>
 				<key>highLevelStatus</key>
@@ -30,7 +30,7 @@
 			<key>domainType</key>
 			<string>com.apple.dt.unit.cocoaUnitTest</string>
 			<key>fileName</key>
-			<string>Test-CardGame-2026.03.12_14-49-00--0500.xcresult</string>
+			<string>Test-CardGame-2026.03.13_10-04-50--0500.xcresult</string>
 			<key>hasAuxiliaryLog</key>
 			<true/>
 			<key>hasPrimaryLog</key>
@@ -57,72 +57,13 @@
 			<key>signature</key>
 			<string>Test CardGame</string>
 			<key>timeStartedRecording</key>
-			<real>795037740.40761805</real>
+			<real>795107090.75366294</real>
 			<key>timeStoppedRecording</key>
-			<real>795037754.94127703</real>
+			<real>795107229.26443005</real>
 			<key>title</key>
 			<string>Test CardGame</string>
 			<key>uniqueIdentifier</key>
-			<string>1272100B-A2E8-4FD8-8721-7F1DF9AC1C0F</string>
-		</dict>
-		<key>2773E7C6-468E-4C87-811C-66B33ECD2780</key>
-		<dict>
-			<key>auxiliaryLogUniqueIdentifier</key>
-			<string>9461EA47-0D0C-4EBE-A7AB-560DCC9B65A0</string>
-			<key>auxiliaryObservable</key>
-			<dict>
-				<key>highLevelStatus</key>
-				<string>S</string>
-				<key>totalNumberOfAnalyzerIssues</key>
-				<integer>0</integer>
-				<key>totalNumberOfErrors</key>
-				<integer>0</integer>
-				<key>totalNumberOfTestFailures</key>
-				<integer>0</integer>
-				<key>totalNumberOfWarnings</key>
-				<integer>0</integer>
-			</dict>
-			<key>className</key>
-			<string>IDESchemeActionsInvocationRecord</string>
-			<key>documentTypeString</key>
-			<string>&lt;nil&gt;</string>
-			<key>domainType</key>
-			<string>com.apple.dt.unit.cocoaUnitTest</string>
-			<key>fileName</key>
-			<string>Test-CardGame-2026.03.12_14-59-27--0500.xcresult</string>
-			<key>hasAuxiliaryLog</key>
-			<true/>
-			<key>hasPrimaryLog</key>
-			<true/>
-			<key>primaryObservable</key>
-			<dict>
-				<key>highLevelStatus</key>
-				<string>T</string>
-				<key>totalNumberOfAnalyzerIssues</key>
-				<integer>0</integer>
-				<key>totalNumberOfErrors</key>
-				<integer>0</integer>
-				<key>totalNumberOfTestFailures</key>
-				<integer>1</integer>
-				<key>totalNumberOfWarnings</key>
-				<integer>0</integer>
-			</dict>
-			<key>schemeIdentifier-containerName</key>
-			<string>CardGame project</string>
-			<key>schemeIdentifier-schemeName</key>
-			<string>CardGame</string>
-			<key>schemeIdentifier-sharedScheme</key>
-			<integer>1</integer>
-			<key>signature</key>
-			<string>Test CardGame</string>
-			<key>timeStartedRecording</key>
-			<real>795038367.93380797</real>
-			<key>timeStoppedRecording</key>
-			<real>795038503.56902695</real>
-			<key>title</key>
-			<string>Test CardGame</string>
-			<key>uniqueIdentifier</key>
-			<string>2773E7C6-468E-4C87-811C-66B33ECD2780</string>
+			<string>E008F6CE-8D3C-4FE7-A1FC-7500B0EB8A21</string>
 		</dict>
 	</dict>
 </dict>

@@ -290,16 +290,17 @@ class SceneKitDiceController: NSObject, ObservableObject, SCNSceneRendererDelega
 
     /// Safety clamp so dice can never escape the visible tray bounds even on high bounces.
     private func enforceContainmentBounds() {
-        let maxX = max(trayPlayableHalfWidth - dieContainmentRadius, 0.35)
-        let maxZ = max(trayPlayableHalfDepth - dieContainmentRadius, 0.35)
-
         for (index, die) in dice.enumerated() {
             guard let body = die.node.physicsBody else { continue }
-            var position = die.node.position
+            let maxX = max(trayPlayableHalfWidth - die.containmentRadius, 0.35)
+            let maxZ = max(trayPlayableHalfDepth - die.containmentRadius, 0.35)
+            var position = die.node.presentation.position
             var velocity = body.velocity
+            var angularVelocity = body.angularVelocity
             var clamped = false
             let overflowX = max(abs(position.x) - maxX, 0)
             let overflowZ = max(abs(position.z) - maxZ, 0)
+            let minimumSafeY = max(die.containmentRadius + 0.08, 0.42)
 
             #if DEBUG
             if debugInstrumentation {
@@ -313,28 +314,31 @@ class SceneKitDiceController: NSObject, ObservableObject, SCNSceneRendererDelega
 
             if position.x < -maxX {
                 position.x = -maxX
-                velocity.x = abs(velocity.x) * 0.35
                 clamped = true
             } else if position.x > maxX {
                 position.x = maxX
-                velocity.x = -abs(velocity.x) * 0.35
                 clamped = true
             }
 
             if position.z < -maxZ {
                 position.z = -maxZ
-                velocity.z = abs(velocity.z) * 0.35
                 clamped = true
             } else if position.z > maxZ {
                 position.z = maxZ
-                velocity.z = -abs(velocity.z) * 0.35
                 clamped = true
             }
 
             if clamped {
-                position.y = max(position.y, 0.42)
+                position.y = max(position.y, minimumSafeY)
+                velocity.x = 0
+                velocity.z = 0
+                velocity.y = max(min(velocity.y, 0.25), -0.15)
+                angularVelocity.w *= 0.45
                 die.node.position = position
+                body.clearAllForces()
+                body.resetTransform()
                 body.velocity = velocity
+                body.angularVelocity = angularVelocity
 
                 #if DEBUG
                 if debugInstrumentation {
@@ -363,9 +367,16 @@ struct SceneKitDiceView: UIViewRepresentable {
     private let edgeInset: Float = 0.34
     private let wallHeight: Float = 2.25
     private let wallThickness: Float = 0.34
+    private let containmentWallHeight: Float = 4.6
+    private let containmentWallThickness: Float = 0.18
+    private let containmentWallInset: Float = 0.04
 
     private func clamp(_ value: Float, min minValue: Float, max maxValue: Float) -> Float {
         Swift.max(minValue, Swift.min(maxValue, value))
+    }
+
+    private func playableHalfExtent(for innerExtent: Float) -> Float {
+        max(innerExtent * 0.5 - wallThickness * 0.5 - containmentWallThickness - containmentWallInset, 1.2)
     }
 
     func makeCoordinator() -> Coordinator {
@@ -563,8 +574,8 @@ struct SceneKitDiceView: UIViewRepresentable {
         if force || widthChanged || depthChanged || trayMissing {
             controller.trayInnerWidth = innerWidth
             controller.trayInnerDepth = innerDepth
-            controller.trayPlayableHalfWidth = innerWidth * 0.5 - wallThickness * 0.5
-            controller.trayPlayableHalfDepth = innerDepth * 0.5 - wallThickness * 0.5
+            controller.trayPlayableHalfWidth = playableHalfExtent(for: innerWidth)
+            controller.trayPlayableHalfDepth = playableHalfExtent(for: innerDepth)
             buildTray(in: scene, innerWidth: innerWidth, innerDepth: innerDepth)
             clampDiceIntoVisibleBounds()
 
@@ -684,6 +695,8 @@ struct SceneKitDiceView: UIViewRepresentable {
         rightLip.position = SCNVector3(innerWidth / 2 - lipDepth / 2, 0.02, 0)
         root.addChildNode(rightLip)
 
+        addContainmentWalls(to: root, innerWidth: innerWidth, innerDepth: innerDepth)
+
         scene.rootNode.addChildNode(root)
     }
 
@@ -734,7 +747,59 @@ struct SceneKitDiceView: UIViewRepresentable {
             pos.z = clamp(pos.z, min: -maxZ, max: maxZ)
             pos.y = Swift.max(pos.y, 0.6)
             die.node.position = pos
+            die.node.physicsBody?.resetTransform()
         }
+    }
+
+    private func addContainmentWalls(to root: SCNNode, innerWidth: Float, innerDepth: Float) {
+        let wallMaterial = makeContainmentMaterial()
+        let containmentY = containmentWallHeight * 0.5 - 0.21
+        let containmentHalfWidth = controller.trayPlayableHalfWidth + containmentWallThickness * 0.5
+        let containmentHalfDepth = controller.trayPlayableHalfDepth + containmentWallThickness * 0.5
+
+        let frontBackContainmentGeometry = SCNBox(
+            width: CGFloat(innerWidth),
+            height: CGFloat(containmentWallHeight),
+            length: CGFloat(containmentWallThickness),
+            chamferRadius: 0.01
+        )
+        frontBackContainmentGeometry.materials = Array(repeating: wallMaterial, count: 6)
+
+        let backContainment = SCNNode(geometry: frontBackContainmentGeometry)
+        backContainment.position = SCNVector3(0, containmentY, -containmentHalfDepth)
+        backContainment.physicsBody = SCNPhysicsBody.static()
+        backContainment.opacity = 0.0
+        backContainment.castsShadow = false
+        root.addChildNode(backContainment)
+
+        let frontContainment = SCNNode(geometry: frontBackContainmentGeometry)
+        frontContainment.position = SCNVector3(0, containmentY, containmentHalfDepth)
+        frontContainment.physicsBody = SCNPhysicsBody.static()
+        frontContainment.opacity = 0.0
+        frontContainment.castsShadow = false
+        root.addChildNode(frontContainment)
+
+        let leftRightContainmentGeometry = SCNBox(
+            width: CGFloat(containmentWallThickness),
+            height: CGFloat(containmentWallHeight),
+            length: CGFloat(innerDepth),
+            chamferRadius: 0.01
+        )
+        leftRightContainmentGeometry.materials = Array(repeating: wallMaterial, count: 6)
+
+        let leftContainment = SCNNode(geometry: leftRightContainmentGeometry)
+        leftContainment.position = SCNVector3(-containmentHalfWidth, containmentY, 0)
+        leftContainment.physicsBody = SCNPhysicsBody.static()
+        leftContainment.opacity = 0.0
+        leftContainment.castsShadow = false
+        root.addChildNode(leftContainment)
+
+        let rightContainment = SCNNode(geometry: leftRightContainmentGeometry)
+        rightContainment.position = SCNVector3(containmentHalfWidth, containmentY, 0)
+        rightContainment.physicsBody = SCNPhysicsBody.static()
+        rightContainment.opacity = 0.0
+        rightContainment.castsShadow = false
+        root.addChildNode(rightContainment)
     }
 
     private func makeFrameMaterial() -> SCNMaterial {
@@ -753,6 +818,17 @@ struct SceneKitDiceView: UIViewRepresentable {
         material.diffuse.contents = UIColor(red: 0.15, green: 0.12, blue: 0.10, alpha: 1)
         material.roughness.contents = 0.88
         material.metalness.contents = 0.02
+        return material
+    }
+
+    private func makeContainmentMaterial() -> SCNMaterial {
+        let material = SCNMaterial()
+        material.lightingModel = .constant
+        material.diffuse.contents = UIColor.clear
+        material.emission.contents = UIColor.clear
+        material.transparency = 0.0
+        material.writesToDepthBuffer = false
+        material.colorBufferWriteMask = []
         return material
     }
 

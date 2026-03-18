@@ -114,9 +114,12 @@ class DieNode {
             Float.random(in: 0...Float.pi * 2),
             Float.random(in: 0...Float.pi * 2)
         )
-        node.physicsBody?.clearAllForces()
-        node.physicsBody?.velocity = SCNVector3Zero
-        node.physicsBody?.angularVelocity = SCNVector4Zero
+        if let body = node.physicsBody {
+            body.clearAllForces()
+            body.velocity = SCNVector3Zero
+            body.angularVelocity = SCNVector4Zero
+            body.resetTransform()
+        }
     }
 
     /// Determine which face is pointing upward based on the node's orientation.

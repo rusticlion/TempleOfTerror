@@ -47,13 +47,12 @@ struct ContentView: View {
         )
     }
 
-    private var selectedCharacterLocationName: String? {
-        guard let selectedCharacter else { return nil }
-        return characterLocationNames[selectedCharacter.id]
-    }
-
     private var isPartySplit: Bool {
         viewModel.isPartyActuallySplit()
+    }
+
+    private var selectedNode: MapNode? {
+        viewModel.node(for: selectedCharacterID)
     }
 
     private var gameOverTitle: String {
@@ -74,56 +73,120 @@ struct ContentView: View {
         return RuntimeDefaults.genericDefeatText
     }
 
-    private var movementButtonTitle: String {
-        viewModel.partyMovementMode == .grouped ? "Split Up" : "Regroup"
-    }
-
     private var visibleClocks: [GameClock] {
         viewModel.gameState.activeClocks.filter { $0.progress > 0 }
     }
 
-    private var contextualBanner: (style: InRunBannerStyle, title: String, message: String) {
-        if viewModel.isCharacterEngaged(selectedCharacterID) {
-            return (
-                .threat,
-                "Threat In Play",
-                "This explorer cannot leave until the danger in this room is handled."
-            )
-        }
+    private var prioritizedClocks: [GameClock] {
+        visibleClocks.sorted { lhs, rhs in
+            let lhsRatio = lhs.segments == 0 ? 0 : Double(lhs.progress) / Double(lhs.segments)
+            let rhsRatio = rhs.segments == 0 ? 0 : Double(rhs.progress) / Double(rhs.segments)
 
-        if viewModel.partyMovementMode == .solo, isPartySplit {
-            let location = selectedCharacterLocationName ?? "their current room"
-            return (
-                .split,
-                "Split Party",
-                "Only the selected explorer will move. \(selectedCharacter?.name ?? "They") is currently at \(location)."
-            )
+            if lhsRatio != rhsRatio {
+                return lhsRatio > rhsRatio
+            }
+            if lhs.progress != rhs.progress {
+                return lhs.progress > rhs.progress
+            }
+            return lhs.name < rhs.name
         }
-
-        if viewModel.partyMovementMode == .solo {
-            return (
-                .neutral,
-                "Scout Mode",
-                "Only the selected explorer will move when you choose a path."
-            )
-        }
-
-        return (
-            .neutral,
-            "Traveling Together",
-            "All active explorers move as one party. Choose who should handle this room."
-        )
     }
 
-    private var contextualHintID: InRunHintID? {
-        switch contextualBanner.style {
-        case .threat:
-            return .threatLock
-        case .split:
-            return .splitParty
-        case .neutral:
-            return nil
+    private var visibleInteractables: [Interactable] {
+        viewModel.visibleInteractables(for: selectedCharacterID)
+    }
+
+    private var occupiedRoomCount: Int {
+        max(Set(viewModel.gameState.characterLocations.values).count, 1)
+    }
+
+    private var movementModeSummaryTitle: String {
+        switch viewModel.partyMovementMode {
+        case .grouped:
+            return "Together"
+        case .solo where isPartySplit:
+            return "Split: \(occupiedRoomCount) rooms"
+        case .solo:
+            return "Scout"
         }
+    }
+
+    private var movementModeCompactTitle: String {
+        switch viewModel.partyMovementMode {
+        case .grouped:
+            return "Together"
+        case .solo where isPartySplit:
+            return "Split"
+        case .solo:
+            return "Scout"
+        }
+    }
+
+    private var pressureItems: [PressureSummaryItem] {
+        var items: [PressureSummaryItem] = []
+
+        if viewModel.isCharacterEngaged(selectedCharacterID) {
+            items.append(
+                PressureSummaryItem(
+                    text: "Threat Here",
+                    foreground: .white,
+                    fill: Theme.danger.opacity(0.88)
+                )
+            )
+            items.append(
+                PressureSummaryItem(
+                    text: "Movement Blocked",
+                    foreground: .white,
+                    fill: Theme.dangerLight.opacity(0.82)
+                )
+            )
+        }
+
+        if let primaryClock = prioritizedClocks.first {
+            items.append(
+                PressureSummaryItem(
+                    text: "\(primaryClock.name) \(primaryClock.progress)/\(primaryClock.segments)",
+                    foreground: Theme.ink,
+                    fill: Theme.gold.opacity(0.82)
+                )
+            )
+        }
+
+        if prioritizedClocks.count > 1 {
+            items.append(
+                PressureSummaryItem(
+                    text: "+\(prioritizedClocks.count - 1) more",
+                    foreground: Theme.parchmentDark,
+                    fill: Theme.leatherLight.opacity(0.85)
+                )
+            )
+        }
+
+        return items
+    }
+
+    private var activeExplorerWarnings: [String] {
+        guard let selectedCharacter else { return [] }
+
+        var warnings: [String] = []
+        var seen: Set<String> = []
+
+        for interactable in visibleInteractables {
+            for action in interactable.availableActions where action.requiresTest {
+                let projection = viewModel.calculateProjection(
+                    for: action,
+                    with: selectedCharacter,
+                    interactableTags: interactable.tags
+                )
+
+                let warning = immediateWarning(for: action, projection: projection)
+                if let warning, seen.insert(warning).inserted {
+                    warnings.append(warning)
+                }
+            }
+        }
+
+        return warnings
     }
 
     private var showingPendingResolution: Binding<Bool> {
@@ -154,6 +217,29 @@ struct ContentView: View {
         }
     }
 
+    private func immediateWarning(
+        for action: ActionOption,
+        projection: RollProjectionDetails
+    ) -> String? {
+        if projection.isActionBanned {
+            return "\(action.actionType) blocked"
+        }
+
+        if projection.notes.contains(where: { $0.contains("(-1d") }) {
+            return "\(action.actionType) -1d"
+        }
+
+        if projection.notes.contains(where: { $0.contains("(-Position") }) {
+            return "\(action.actionType) Position-"
+        }
+
+        if projection.notes.contains(where: { $0.contains("(-1 Effect") || $0.contains("(-Effect") }) {
+            return "\(action.actionType) Effect-"
+        }
+
+        return nil
+    }
+
 
     var body: some View {
         ZStack {
@@ -169,54 +255,20 @@ struct ContentView: View {
 
                 ScrollView {
                     VStack(alignment: .leading, spacing: 16) {
-                        if let selectedCharacter {
-                            SelectedCharacterSummaryStrip(
-                                character: selectedCharacter,
-                                locationName: selectedCharacterLocationName,
-                                showLocation: isPartySplit
-                            )
-                        }
+                        CompactPressureRow(items: pressureItems)
 
-                        if !visibleClocks.isEmpty {
-                            CondensedClockPanel(clocks: visibleClocks) {
-                                showingQuickReference = true
-                            }
-
-                            if guidanceStore.shouldShow(.activeClocks) {
-                                GuidanceHintCard(
-                                    hintID: .activeClocks,
-                                    title: "Clocks Track Pressure",
-                                    message: "Clocks show danger building or objectives progressing. Full clocks usually trigger an authored turn in the scenario.",
-                                    onDismiss: { guidanceStore.dismiss(.activeClocks) },
-                                    onOpenReference: { showingQuickReference = true }
-                                )
-                            }
-                        }
-
-                        ContextualInfoBanner(
-                            style: contextualBanner.style,
-                            title: contextualBanner.title,
-                            message: contextualBanner.message
-                        )
-
-                        if let hintID = contextualHintID, guidanceStore.shouldShow(hintID) {
-                            GuidanceHintCard(
-                                hintID: hintID,
-                                title: hintID == .threatLock ? "Threats Lock Movement" : "Split Movement Changes Travel",
-                                message: hintID == .threatLock
-                                    ? "When a threat is active here, this explorer must deal with it before moving on."
-                                    : "When the party is split, path choices only move the selected explorer instead of the whole group.",
-                                onDismiss: { guidanceStore.dismiss(hintID) },
-                                onOpenReference: { showingQuickReference = true }
-                            )
-                        }
-
-                        if let node = viewModel.node(for: selectedCharacterID) {
+                        if let node = selectedNode {
                             VStack(alignment: .leading, spacing: 16) {
-                                let items = viewModel.visibleInteractables(for: selectedCharacterID)
+                                if !visibleInteractables.isEmpty {
+                                    Text("In This Room")
+                                        .font(Theme.systemFont(size: 11, weight: .semibold))
+                                        .tracking(0.8)
+                                        .textCase(.uppercase)
+                                        .foregroundColor(Theme.inkFaded)
+                                }
 
                                 let vm = viewModel
-                                ForEach(items, id: \.id) { interactable in
+                                ForEach(visibleInteractables, id: \.id) { interactable in
                                     InteractableCardView(viewModel: vm,
                                                         interactable: interactable,
                                                         selectedCharacter: selectedCharacter) { action in
@@ -233,11 +285,17 @@ struct ContentView: View {
                                 }
 
                                 if !viewModel.isCharacterEngaged(selectedCharacterID) {
-                                    Divider()
+                                    Theme.InkDivider()
 
-                                    NodeConnectionsView(currentNode: viewModel.node(for: selectedCharacterID)) { connection in
+                                    NodeConnectionsView(
+                                        connections: viewModel.presentedConnections(for: selectedCharacterID)
+                                    ) { connection in
                                         performTransition(to: connection)
                                     }
+                                } else {
+                                    Theme.InkDivider()
+
+                                    BlockedPathsView()
                                 }
                             }
                             .id(node.id)
@@ -249,67 +307,61 @@ struct ContentView: View {
                         }
                     }
                     .padding()
-                    .animation(.default, value: viewModel.node(for: selectedCharacterID)?.id)
+                    .animation(.default, value: selectedNode?.id)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
 
-                VStack(spacing: 8) {
-                    if showingCharacterSheet, let character = selectedCharacter {
-                        CharacterSheetView(
-                            character: character,
-                            locationName: viewModel.getNodeName(for: character.id),
-                            harmFamilies: viewModel.harmFamilies
-                        )
-                            .transition(.move(edge: .bottom))
-                            .padding(.horizontal)
-                    }
+                VStack(spacing: 10) {
+                    VStack(spacing: 0) {
+                        if let selectedCharacter {
+                            ActiveExplorerTacticalHUD(
+                                character: selectedCharacter,
+                                immediateWarnings: activeExplorerWarnings,
+                                onOpenDetails: {
+                                    showingCharacterSheet = true
+                                },
+                                embeddedInRail: true
+                            )
+                            .padding(.horizontal, 12)
+                            .padding(.top, 12)
+                            .padding(.bottom, 10)
 
-                    VStack(spacing: 6) {
-                        Button {
-                            withAnimation {
-                                showingCharacterSheet.toggle()
-                            }
-                        } label: {
-                            Image(systemName: showingCharacterSheet ? "chevron.down" : "chevron.up")
-                                .foregroundColor(Theme.parchmentDark)
-                                .padding(6)
-                                .background(Theme.leatherLight.opacity(0.8), in: Circle())
+                            Rectangle()
+                                .fill(Theme.parchmentDeep.opacity(0.18))
+                                .frame(height: 1)
+                                .padding(.horizontal, 12)
                         }
-                        .buttonStyle(.plain)
-
-                        PartyMovementStatusView(
-                            viewModel: viewModel,
-                            selectedCharacterID: selectedCharacterID,
-                            characterLocationNames: characterLocationNames
-                        )
 
                         CharacterSelectorView(characters: viewModel.gameState.party,
                                               selectedCharacterID: $selectedCharacterID,
                                               movementMode: viewModel.partyMovementMode,
                                               locationNames: characterLocationNames)
+                            .frame(maxWidth: .infinity)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 10)
                     }
-                    .frame(maxWidth: .infinity)
-                    .padding(.horizontal)
-                    .padding(.top, 8)
-                    .padding(.bottom, 10)
-                    .background(Theme.leather.opacity(0.92))
-                    .overlay(alignment: .top) {
-                        Rectangle()
-                            .fill(Theme.leatherLight)
-                            .frame(height: 1)
-                    }
+                    .background(
+                        RoundedRectangle(cornerRadius: 18)
+                            .fill(Theme.leather.opacity(0.9))
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 18)
+                            .stroke(Theme.parchmentDeep.opacity(0.18), lineWidth: 1)
+                    )
 
-                    HStack(spacing: 10) {
+                    HStack(spacing: 8) {
                         Button {
                             viewModel.toggleMovementMode()
                         } label: {
                             BottomToolbarButtonLabel(
-                                title: movementButtonTitle,
+                                title: movementModeSummaryTitle,
+                                compactTitle: movementModeCompactTitle,
                                 systemImage: "arrow.triangle.branch"
                             )
                         }
                         .buttonStyle(.plain)
                         .frame(maxWidth: .infinity)
+                        .accessibilityValue(movementModeSummaryTitle)
                         .disabled(viewModel.partyMovementMode == .solo && !viewModel.canRegroup())
                         .opacity(viewModel.partyMovementMode == .solo && !viewModel.canRegroup() ? 0.6 : 1)
                         .accessibilityIdentifier("movementModeButton")
@@ -318,7 +370,7 @@ struct ContentView: View {
                             showingStatusSheet.toggle()
                         } label: {
                             BottomToolbarButtonLabel(
-                                title: "Status",
+                                title: "Party",
                                 systemImage: "person.3.fill"
                             )
                         }
@@ -338,13 +390,11 @@ struct ContentView: View {
                         .frame(maxWidth: .infinity)
                         .accessibilityIdentifier("mapButton")
                     }
-                    .padding(.horizontal)
-                    .padding(.bottom, 2)
                 }
-                .padding(.top, 6)
-                .padding(.bottom, 8)
+                .padding(.horizontal, 12)
+                .padding(.top, 10)
+                .padding(.bottom, 12)
                 .background(Theme.toolbarBackground)
-                .animation(.easeInOut, value: showingCharacterSheet)
             }
                 .disabled(viewModel.gameState.status == .gameOver)
                 .sheet(item: $pendingRoll) { pending in
@@ -362,6 +412,23 @@ struct ContentView: View {
                 }
                 .sheet(isPresented: showingPendingResolution) {
                     PendingResolutionView(viewModel: viewModel, guidanceStore: guidanceStore)
+                }
+                .sheet(isPresented: $showingCharacterSheet) {
+                    if let character = selectedCharacter {
+                        ScrollView {
+                            CharacterSheetView(
+                                character: character,
+                                locationName: viewModel.getNodeName(for: character.id),
+                                harmFamilies: viewModel.harmFamilies
+                            )
+                            .padding()
+                        }
+                        .background(Theme.bgWarm)
+                        .presentationBackground(Theme.bgWarm)
+                        .presentationDetents([.medium, .large])
+                    } else {
+                        Text("No explorer selected")
+                    }
                 }
 
             SlidingDoor(progress: doorProgress)
@@ -398,7 +465,10 @@ struct ContentView: View {
             }
         }
         .sheet(isPresented: $showingStatusSheet) {
-            StatusSheetView(viewModel: viewModel)
+            StatusSheetView(
+                viewModel: viewModel,
+                selectedCharacterID: $selectedCharacterID
+            )
                 .presentationDetents([.medium, .large])
         }
         .sheet(isPresented: $showingMap) {
@@ -455,23 +525,60 @@ struct ContentView_Previews: PreviewProvider {
 
 private struct BottomToolbarButtonLabel: View {
     let title: String
+    var compactTitle: String? = nil
     let systemImage: String
 
     var body: some View {
-        HStack(spacing: 6) {
+        ViewThatFits {
+            labelRow(title: title)
+            if let compactTitle {
+                labelRow(title: compactTitle)
+            }
             Image(systemName: systemImage)
-            Text(title)
-                .lineLimit(1)
-                .minimumScaleFactor(0.8)
         }
         .font(Theme.systemFont(size: 14, weight: .semibold))
         .foregroundColor(Theme.parchmentDark)
         .frame(maxWidth: .infinity)
-        .padding(.horizontal, 10)
+        .padding(.horizontal, 8)
         .padding(.vertical, 7)
         .background(Theme.leatherLight.opacity(0.34))
         .clipShape(Capsule())
         .overlay(Capsule().stroke(Theme.inkFaded.opacity(0.3), lineWidth: 1))
+    }
+
+    private func labelRow(title: String) -> some View {
+        HStack(spacing: 6) {
+            Image(systemName: systemImage)
+            Text(title)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+                .allowsTightening(true)
+        }
+    }
+}
+
+private struct BlockedPathsView: View {
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Paths")
+                .font(Theme.systemFont(size: 11, weight: .semibold))
+                .tracking(1)
+                .textCase(.uppercase)
+                .foregroundColor(Theme.inkFaded)
+
+            Text("Movement is blocked until the danger in this room is handled.")
+                .font(Theme.bodyFont(size: 14, italic: true))
+                .foregroundColor(Theme.parchmentDark)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 12)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Theme.leatherLight.opacity(0.45), in: RoundedRectangle(cornerRadius: 10))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 10)
+                        .stroke(Theme.danger.opacity(0.22), lineWidth: 1)
+                )
+        }
+        .accessibilityIdentifier("blockedPathsView")
     }
 }
 

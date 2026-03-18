@@ -19,12 +19,11 @@ struct ConsequenceExecutor {
 
     init(
         debugLogging: Bool,
-        runtime: ScenarioRuntime = ScenarioRuntime(),
-        content: ContentLoader? = nil
+        runtime: ScenarioRuntime
     ) {
         self.debugLogging = debugLogging
         self.runtime = runtime
-        self.content = content ?? runtime.content
+        self.content = runtime.content
     }
 
     private enum EventResolutionStatus {
@@ -378,6 +377,20 @@ struct ConsequenceExecutor {
                 if !narrativeUsed {
                     append("A path has opened!", to: &resolution)
                 }
+            }
+        case .lockConnection:
+            if let fromNodeID = consequence.fromNodeID,
+               let toNodeID = consequence.toNodeID,
+               runtime.lockConnection(fromNodeID: fromNodeID, toNodeID: toNodeID, in: &gameState) {
+                if !narrativeUsed {
+                    append("A path slams shut.", to: &resolution)
+                }
+            }
+        case .moveActingCharacterToNode:
+            if let toNodeID = consequence.toNodeID,
+               let destination = runtime.moveCharacter(id: actingCharacter.id, toNodeID: toNodeID, in: &gameState),
+               !narrativeUsed {
+                append("Moved to \(destination.name).", to: &resolution)
             }
         case .removeInteractable:
             if let interactableID = consequence.interactableId,
@@ -1162,5 +1175,118 @@ struct ConsequenceExecutor {
         let targetIndex = currentIndex - reduction
         guard targetIndex >= 0 else { return nil }
         return levels[targetIndex]
+    }
+}
+
+struct PendingResolutionDriver {
+    private let executor: ConsequenceExecutor
+
+    init(
+        runtime: ScenarioRuntime,
+        debugLogging: Bool
+    ) {
+        self.executor = ConsequenceExecutor(
+            debugLogging: debugLogging,
+            runtime: runtime
+        )
+    }
+
+    func previewUpcomingResistances(
+        in gameState: GameState,
+        limit: Int = 3
+    ) -> [PendingResistanceState] {
+        guard let pendingResolution = gameState.pendingResolution else { return [] }
+        return executor.previewUpcomingResistances(
+            in: pendingResolution,
+            gameState: gameState,
+            limit: limit
+        )
+    }
+
+    @discardableResult
+    func choosePendingChoice(
+        at index: Int,
+        in gameState: inout GameState
+    ) -> String {
+        guard let pendingResolution = gameState.pendingResolution else { return "" }
+        let result = executor.chooseOption(
+            at: index,
+            in: pendingResolution,
+            gameState: &gameState
+        )
+        gameState.pendingResolution = result.pendingResolution
+        return result.description
+    }
+
+    @discardableResult
+    func acceptPendingResistance(
+        in gameState: inout GameState
+    ) -> String {
+        guard let pendingResolution = gameState.pendingResolution else { return "" }
+        let result = executor.acceptResistance(
+            in: pendingResolution,
+            gameState: &gameState
+        )
+        gameState.pendingResolution = result.pendingResolution
+        return result.description
+    }
+
+    @discardableResult
+    func resistPendingConsequence(
+        usingDice diceResults: [Int]? = nil,
+        in gameState: inout GameState
+    ) -> ConsequenceExecutor.ResistanceRollOutcome? {
+        guard let pendingResolution = gameState.pendingResolution else { return nil }
+        guard let (result, rollOutcome) = executor.resist(
+            in: pendingResolution,
+            usingDice: diceResults,
+            gameState: &gameState
+        ) else {
+            return nil
+        }
+        gameState.pendingResolution = result.pendingResolution
+        return rollOutcome
+    }
+
+    @discardableResult
+    func processConsequences(
+        _ consequences: [Consequence],
+        context: ConsequenceContext,
+        source: ResolutionSource,
+        rollPresentation: PendingRollPresentation?,
+        in gameState: inout GameState
+    ) -> String {
+        let result = executor.process(
+            consequences,
+            context: context,
+            source: source,
+            rollPresentation: rollPresentation,
+            gameState: &gameState
+        )
+        gameState.pendingResolution = result.pendingResolution
+        return result.description
+    }
+
+    func areConditionsMet(
+        conditions: [GameCondition]?,
+        forCharacter character: Character,
+        finalEffect: RollEffect,
+        finalPosition: RollPosition,
+        in gameState: GameState
+    ) -> Bool {
+        executor.areConditionsMet(
+            conditions: conditions,
+            forCharacter: character,
+            finalEffect: finalEffect,
+            finalPosition: finalPosition,
+            gameState: gameState
+        )
+    }
+
+    func checkStressOverflow(
+        for index: Int,
+        in gameState: inout GameState
+    ) -> String? {
+        executor.checkStressOverflow(for: index, gameState: &gameState)
     }
 }

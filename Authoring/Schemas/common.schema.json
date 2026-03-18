@@ -410,6 +410,8 @@
             "sufferHarm",
             "tickClock",
             "unlockConnection",
+            "lockConnection",
+            "moveActingCharacterToNode",
             "removeInteractable",
             "removeSelfInteractable",
             "removeAction",
@@ -682,6 +684,18 @@
         },
         "description": {
           "type": "string"
+        },
+        "conditions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/gameCondition"
+          }
+        },
+        "onTraverse": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/consequence"
+          }
         }
       },
       "required": [

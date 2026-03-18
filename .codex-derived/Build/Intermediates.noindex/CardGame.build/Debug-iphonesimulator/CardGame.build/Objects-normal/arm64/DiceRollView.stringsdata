@@ -44,26 +44,10 @@
       },
       {
         "comment": "",
-        "key": "Loaded",
-        "location": {
-          "startingColumn": 33,
-          "startingLine": 254
-        }
-      },
-      {
-        "comment": "",
-        "key": "Ready",
-        "location": {
-          "startingColumn": 44,
-          "startingLine": 254
-        }
-      },
-      {
-        "comment": "",
         "key": "Resistance is armed in the tray below.",
         "location": {
           "startingColumn": 34,
-          "startingLine": 465
+          "startingLine": 403
         }
       },
       {
@@ -71,7 +55,7 @@
         "key": "Resist with %@",
         "location": {
           "startingColumn": 30,
-          "startingLine": 386
+          "startingLine": 324
         }
       },
       {
@@ -79,7 +63,7 @@
         "key": "Fallout %lld of %lld",
         "location": {
           "startingColumn": 36,
-          "startingLine": 372
+          "startingLine": 310
         }
       },
       {
@@ -87,7 +71,7 @@
         "key": "Fallout",
         "location": {
           "startingColumn": 36,
-          "startingLine": 373
+          "startingLine": 311
         }
       },
       {
@@ -95,7 +79,7 @@
         "key": "If You Resist",
         "location": {
           "startingColumn": 30,
-          "startingLine": 405
+          "startingLine": 343
         }
       },
       {
@@ -103,7 +87,7 @@
         "key": "Still In The Queue",
         "location": {
           "startingColumn": 34,
-          "startingLine": 431
+          "startingLine": 369
         }
       },
       {
@@ -111,7 +95,7 @@
         "key": "Cancel",
         "location": {
           "startingColumn": 40,
-          "startingLine": 470
+          "startingLine": 408
         }
       },
       {
@@ -119,7 +103,7 @@
         "key": "Take It",
         "location": {
           "startingColumn": 40,
-          "startingLine": 482
+          "startingLine": 420
         }
       },
       {
@@ -127,7 +111,7 @@
         "key": "Take It",
         "location": {
           "startingColumn": 40,
-          "startingLine": 500
+          "startingLine": 438
         }
       },
       {
@@ -135,7 +119,7 @@
         "key": "Resist",
         "location": {
           "startingColumn": 40,
-          "startingLine": 516
+          "startingLine": 454
         }
       },
       {
@@ -143,7 +127,7 @@
         "key": "Back",
         "location": {
           "startingColumn": 40,
-          "startingLine": 530
+          "startingLine": 468
         }
       },
       {
@@ -151,7 +135,7 @@
         "key": "Roll Resistance",
         "location": {
           "startingColumn": 40,
-          "startingLine": 542
+          "startingLine": 480
         }
       },
       {
@@ -159,7 +143,7 @@
         "key": "Take It",
         "location": {
           "startingColumn": 40,
-          "startingLine": 555
+          "startingLine": 493
         }
       },
       {
@@ -167,7 +151,7 @@
         "key": "Resist",
         "location": {
           "startingColumn": 40,
-          "startingLine": 571
+          "startingLine": 509
         }
       },
       {
@@ -175,7 +159,7 @@
         "key": "✦ CRITICAL ✦",
         "location": {
           "startingColumn": 26,
-          "startingLine": 1055
+          "startingLine": 946
         }
       },
       {
@@ -183,7 +167,7 @@
         "key": "Rolled a %lld",
         "location": {
           "startingColumn": 22,
-          "startingLine": 1061
+          "startingLine": 952
         }
       },
       {
@@ -191,7 +175,7 @@
         "key": "Impact: %@",
         "location": {
           "startingColumn": 26,
-          "startingLine": 1066
+          "startingLine": 957
         }
       },
       {
@@ -199,7 +183,7 @@
         "key": "Attempting",
         "location": {
           "startingColumn": 22,
-          "startingLine": 1077
+          "startingLine": 968
         }
       },
       {
@@ -207,7 +191,7 @@
         "key": "%@ %lld",
         "location": {
           "startingColumn": 22,
-          "startingLine": 1087
+          "startingLine": 978
         }
       },
       {
@@ -215,7 +199,7 @@
         "key": "Fallout Settling",
         "location": {
           "startingColumn": 30,
-          "startingLine": 1113
+          "startingLine": 1004
         }
       },
       {
@@ -223,7 +207,7 @@
         "key": "The tray is resolving the resisted fallout before the next choice appears.",
         "location": {
           "startingColumn": 30,
-          "startingLine": 1119
+          "startingLine": 1010
         }
       },
       {
@@ -231,7 +215,7 @@
         "key": "Aftermath",
         "location": {
           "startingColumn": 26,
-          "startingLine": 1133
+          "startingLine": 1024
         }
       },
       {
@@ -239,7 +223,7 @@
         "key": "Forecast",
         "location": {
           "startingColumn": 34,
-          "startingLine": 1150
+          "startingLine": 1041
         }
       },
       {
@@ -247,7 +231,7 @@
         "key": "This action is currently blocked.",
         "location": {
           "startingColumn": 56,
-          "startingLine": 1156
+          "startingLine": 1047
         }
       },
       {
@@ -255,7 +239,7 @@
         "key": "Commit to the roll with the current risk and impact.",
         "location": {
           "startingColumn": 94,
-          "startingLine": 1156
+          "startingLine": 1047
         }
       },
       {
@@ -263,7 +247,7 @@
         "key": "0d6",
         "location": {
           "startingColumn": 52,
-          "startingLine": 1169
+          "startingLine": 1060
         }
       },
       {
@@ -271,7 +255,7 @@
         "key": "%lldd6",
         "location": {
           "startingColumn": 60,
-          "startingLine": 1169
+          "startingLine": 1060
         }
       },
       {
@@ -279,7 +263,7 @@
         "key": "Blocked Right Now",
         "location": {
           "startingColumn": 34,
-          "startingLine": 1194
+          "startingLine": 1085
         }
       },
       {
@@ -287,7 +271,7 @@
         "key": "Optional Boosts",
         "location": {
           "startingColumn": 30,
-          "startingLine": 1233
+          "startingLine": 1124
         }
       },
       {
@@ -295,7 +279,7 @@
         "key": "Why This Forecast Changed",
         "location": {
           "startingColumn": 30,
-          "startingLine": 1254
+          "startingLine": 1145
         }
       },
       {
@@ -303,7 +287,7 @@
         "key": "Helpful Factors",
         "location": {
           "startingColumn": 38,
-          "startingLine": 1262
+          "startingLine": 1153
         }
       },
       {
@@ -311,7 +295,7 @@
         "key": "Hindrances",
         "location": {
           "startingColumn": 38,
-          "startingLine": 1278
+          "startingLine": 1169
         }
       },
       {
@@ -319,7 +303,7 @@
         "key": "Resolve the fallout above. If you resist, the tray will arm here.",
         "location": {
           "startingColumn": 18,
-          "startingLine": 1317
+          "startingLine": 1208
         }
       },
       {
@@ -327,7 +311,7 @@
         "key": "Resistance Roll",
         "location": {
           "startingColumn": 22,
-          "startingLine": 1305
+          "startingLine": 1196
         }
       },
       {
@@ -335,7 +319,7 @@
         "key": "Debug fixed roll: %@",
         "location": {
           "startingColumn": 22,
-          "startingLine": 1401
+          "startingLine": 1284
         }
       },
       {
@@ -343,7 +327,7 @@
         "key": "Debug resistance roll: %@",
         "location": {
           "startingColumn": 22,
-          "startingLine": 1446
+          "startingLine": 1329
         }
       },
       {
@@ -351,7 +335,7 @@
         "key": "The fallout settles...",
         "location": {
           "startingColumn": 18,
-          "startingLine": 1480
+          "startingLine": 1363
         }
       },
       {
@@ -359,7 +343,7 @@
         "key": "Choose how to resolve the fallout above.",
         "location": {
           "startingColumn": 18,
-          "startingLine": 1486
+          "startingLine": 1369
         }
       },
       {
@@ -367,7 +351,7 @@
         "key": "Done",
         "location": {
           "startingColumn": 20,
-          "startingLine": 1492
+          "startingLine": 1375
         }
       },
       {
@@ -375,7 +359,7 @@
         "key": "Action Banned",
         "location": {
           "startingColumn": 52,
-          "startingLine": 1417
+          "startingLine": 1300
         }
       },
       {
@@ -383,7 +367,7 @@
         "key": "Roll the Dice",
         "location": {
           "startingColumn": 70,
-          "startingLine": 1417
+          "startingLine": 1300
         }
       },
       {
@@ -391,7 +375,7 @@
         "key": "Roll Resistance",
         "location": {
           "startingColumn": 22,
-          "startingLine": 1457
+          "startingLine": 1340
         }
       }
     ]

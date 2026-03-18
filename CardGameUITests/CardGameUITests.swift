@@ -13,11 +13,11 @@ final class CardGameUITests: XCTestCase {
         continueAfterFailure = false
     }
 
-    func testMainScreenShowsSelectedCharacterSummaryAndActiveClocksTogether() throws {
+    func testMainScreenShowsTacticalHudAndPressureRow() throws {
         let app = launchApp(state: "pressure")
 
-        XCTAssertTrue(app.descendants(matching: .any)["selectedCharacterSummaryStrip"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.descendants(matching: .any)["condensedClockPanel"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.descendants(matching: .any)["activeExplorerTacticalHUD"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.descendants(matching: .any)["compactPressureRow"].waitForExistence(timeout: 5))
     }
 
     func testActionRowsExposeRiskAndImpactBeforeOpeningRollScreen() throws {
@@ -69,11 +69,25 @@ final class CardGameUITests: XCTestCase {
         XCTAssertTrue(rollButton.isHittable)
     }
 
-    func testSplitPartyStateShowsBannerAndSelectedCharacterLocation() throws {
+    func testSplitPartyStateShowsSummaryInMovementDock() throws {
         let app = launchApp(state: "split")
 
-        XCTAssertTrue(app.descendants(matching: .any)["contextualBanner_split"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.descendants(matching: .any)["selectedCharacterSummaryLocation"].waitForExistence(timeout: 5))
+        let movementButton = app.buttons["movementModeButton"]
+        XCTAssertTrue(movementButton.waitForExistence(timeout: 5))
+
+        let summary = (movementButton.value as? String) ?? movementButton.label
+        XCTAssertTrue(summary.contains("Split:"))
+    }
+
+    func testPartySheetPresentsExpeditionDrawer() throws {
+        let app = launchApp(state: "split")
+
+        let partyButton = app.buttons["statusButton"]
+        XCTAssertTrue(partyButton.waitForExistence(timeout: 5))
+        partyButton.tap()
+
+        XCTAssertTrue(app.descendants(matching: .any)["expeditionDrawer"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Party By Room"].waitForExistence(timeout: 5))
     }
 
     func testLaunchPerformance() throws {

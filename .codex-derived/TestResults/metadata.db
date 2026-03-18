@@ -13,277 +13,282 @@
 				<key>testAddActionConsequence</key>
 				<dict>
 					<key>mrnet</key>
-					<real>0.058040022850036621</real>
+					<real>0.074560999870300293</real>
 				</dict>
 				<key>testAdjustStressRecoversStressAndClampsAtZero</key>
 				<dict>
 					<key>mrnet</key>
-					<real>0.0044910907745361328</real>
+					<real>0.0041130781173706055</real>
 				</dict>
 				<key>testAuthoredEventCanRelocateThreatAcrossNodes</key>
 				<dict>
 					<key>mrnet</key>
-					<real>0.032287955284118652</real>
+					<real>0.015053987503051758</real>
 				</dict>
 				<key>testAuthoredEventUpdatesScenarioState</key>
 				<dict>
 					<key>mrnet</key>
-					<real>0.0081799030303955078</real>
+					<real>0.073264956474304199</real>
 				</dict>
 				<key>testAuthoredEventUsesRunContentAfterSharedLoaderChanges</key>
 				<dict>
 					<key>mrnet</key>
-					<real>0.028944969177246094</real>
+					<real>0.031301975250244141</real>
 				</dict>
 				<key>testCatalogResolutionAllowsTestingUnlockForImplementedPremiumAndPlaceholderScenarios</key>
 				<dict>
 					<key>mrnet</key>
-					<real>0.0020309686660766602</real>
+					<real>0.0022450685501098633</real>
 				</dict>
 				<key>testCatalogResolutionBridgesTempleToLegacyTombRuntime</key>
 				<dict>
 					<key>mrnet</key>
-					<real>0.00089800357818603516</real>
+					<real>0.0011429786682128906</real>
 				</dict>
 				<key>testCatalogResolutionPrefersTempleRuntimeOverLegacyTombWhenBothExist</key>
 				<dict>
 					<key>mrnet</key>
-					<real>0.00081098079681396484</real>
+					<real>0.0010309219360351562</real>
 				</dict>
 				<key>testCatalogResolutionRequiresTestingUnlockForImplementedPremiumAndPlaceholderScenarios</key>
 				<dict>
 					<key>mrnet</key>
-					<real>0.00082099437713623047</real>
+					<real>0.0012680292129516602</real>
 				</dict>
 				<key>testCharacterTagConsequenceUnlocksTagGatedInteractable</key>
 				<dict>
 					<key>mrnet</key>
-					<real>0.0048979520797729492</real>
+					<real>0.0047680139541625977</real>
 				</dict>
 				<key>testConditionHiddenThreatDoesNotEngageOrBlockMovement</key>
 				<dict>
 					<key>mrnet</key>
-					<real>0.0024350881576538086</real>
+					<real>0.0024830102920532227</real>
 				</dict>
 				<key>testContentLoaderMergesGlobalAndScenarioHarmFamilies</key>
 				<dict>
 					<key>mrnet</key>
-					<real>0.016167998313903809</real>
+					<real>0.015326023101806641</real>
 				</dict>
 				<key>testContentLoaderUsesScenarioLocalArchetypes</key>
 				<dict>
 					<key>mrnet</key>
-					<real>0.0040569305419921875</real>
+					<real>0.0041190385818481445</real>
 				</dict>
 				<key>testCreateChoicePausesResolutionAndPersistsAcrossSaveLoad</key>
 				<dict>
 					<key>mrnet</key>
-					<real>0.023885011672973633</real>
+					<real>0.025339961051940918</real>
 				</dict>
 				<key>testDungeonGeneratorResolvesEntryNodeByName</key>
 				<dict>
 					<key>mrnet</key>
-					<real>0.00090098381042480469</real>
+					<real>0.00069391727447509766</real>
 				</dict>
 				<key>testEntitlementStorePersistsTestingUnlockedScenarioIDs</key>
 				<dict>
 					<key>mrnet</key>
-					<real>0.008025050163269043</real>
+					<real>0.0075969696044921875</real>
 				</dict>
 				<key>testExample</key>
 				<dict>
 					<key>mrnet</key>
-					<real>0.0010550022125244141</real>
+					<real>0.00095891952514648438</real>
 				</dict>
 				<key>testGuidanceStoreDebugResetClearsDismissedHints</key>
 				<dict>
 					<key>mrnet</key>
-					<real>0.0081750154495239258</real>
+					<real>0.0073590278625488281</real>
 				</dict>
 				<key>testGuidanceStorePersistsDismissedHints</key>
 				<dict>
 					<key>mrnet</key>
-					<real>0.0048079490661621094</real>
+					<real>0.0049090385437011719</real>
 				</dict>
 				<key>testHealHarmConsequence</key>
 				<dict>
 					<key>mrnet</key>
-					<real>0.0074830055236816406</real>
+					<real>0.009243011474609375</real>
 				</dict>
 				<key>testPackagedScenariosHaveNoValidationErrors</key>
 				<dict>
 					<key>mrnet</key>
-					<real>0.029258966445922852</real>
+					<real>0.046428918838500977</real>
 				</dict>
 				<key>testPartyBuilderAssignsTwoDistinctTraitTagsFromArchetypePool</key>
 				<dict>
 					<key>mrnet</key>
-					<real>0.0037569999694824219</real>
+					<real>0.0027929544448852539</real>
 				</dict>
 				<key>testPartyBuilderRespectsManualSelectionPlan</key>
 				<dict>
 					<key>mrnet</key>
-					<real>0.0036790370941162109</real>
+					<real>0.0023469924926757812</real>
 				</dict>
 				<key>testPartyHasMemberWithTagConditionUsesAnotherPartyMemberTraitTag</key>
 				<dict>
 					<key>mrnet</key>
-					<real>0.0031859874725341797</real>
+					<real>0.0033669471740722656</real>
 				</dict>
 				<key>testPendingResistanceIncludesConcreteFallbackSummary</key>
 				<dict>
 					<key>mrnet</key>
-					<real>0.0093899965286254883</real>
+					<real>0.016525983810424805</real>
 				</dict>
 				<key>testPendingResistanceQueuePreviewShowsUpcomingFallout</key>
 				<dict>
 					<key>mrnet</key>
-					<real>0.0050830841064453125</real>
+					<real>0.0044770240783691406</real>
 				</dict>
 				<key>testPendingResistanceTracksQueueProgressAcrossMultipleFalloutCards</key>
 				<dict>
 					<key>mrnet</key>
-					<real>0.0061440467834472656</real>
+					<real>0.0041470527648925781</real>
+				</dict>
+				<key>testPerformActionAppliesPushStressWhenSelectedFromRollContext</key>
+				<dict>
+					<key>mrnet</key>
+					<real>0.0042320489883422852</real>
 				</dict>
 				<key>testPerformFreeActionRejectsStaleConditionGatedAction</key>
 				<dict>
 					<key>mrnet</key>
-					<real>0.018525958061218262</real>
+					<real>0.014948010444641113</real>
 				</dict>
 				<key>testPerformanceExample</key>
 				<dict>
 					<key>mrnet</key>
-					<real>0.56970798969268799</real>
+					<real>0.8557279109954834</real>
 				</dict>
 				<key>testPressureInteractableCanResolveThreatWithoutCollapsingNode</key>
 				<dict>
 					<key>mrnet</key>
-					<real>0.025802969932556152</real>
+					<real>0.023344993591308594</real>
 				</dict>
 				<key>testPushYourselfUsesRunContentAfterSharedLoaderChanges</key>
 				<dict>
 					<key>mrnet</key>
-					<real>0.024228096008300781</real>
+					<real>0.022327065467834473</real>
 				</dict>
 				<key>testRemoveActionConsequence</key>
 				<dict>
 					<key>mrnet</key>
-					<real>0.0038419961929321289</real>
+					<real>0.0035370588302612305</real>
 				</dict>
 				<key>testRemoveInteractableConsequence</key>
 				<dict>
 					<key>mrnet</key>
-					<real>0.0040210485458374023</real>
+					<real>0.0026960372924804688</real>
 				</dict>
 				<key>testResistanceStressOverflowAppliesOverflowHarm</key>
 				<dict>
 					<key>mrnet</key>
-					<real>0.013878941535949707</real>
+					<real>0.017297029495239258</real>
 				</dict>
 				<key>testResistingClockTickReducesProgress</key>
 				<dict>
 					<key>mrnet</key>
-					<real>0.0051120519638061523</real>
+					<real>0.0033450126647949219</real>
 				</dict>
 				<key>testResistingStressConsequenceUsesResolveAndReducesAppliedStress</key>
 				<dict>
 					<key>mrnet</key>
-					<real>0.0038429498672485352</real>
+					<real>0.0051020383834838867</real>
 				</dict>
 				<key>testRestartCurrentScenarioKeepsScenarioSelection</key>
 				<dict>
 					<key>mrnet</key>
-					<real>0.014045953750610352</real>
+					<real>0.01205599308013916</real>
 				</dict>
 				<key>testRestartCurrentScenarioReusesLaunchPartyPlan</key>
 				<dict>
 					<key>mrnet</key>
-					<real>0.01807105541229248</real>
+					<real>0.014245986938476562</real>
 				</dict>
 				<key>testSaveGameStoreRoundTripsGameState</key>
 				<dict>
 					<key>mrnet</key>
-					<real>0.012662053108215332</real>
+					<real>0.0053420066833496094</real>
 				</dict>
 				<key>testScenarioCatalogIncludesLaunchPricingAndPurchaseMetadata</key>
 				<dict>
 					<key>mrnet</key>
-					<real>0.0060250759124755859</real>
+					<real>0.003564000129699707</real>
 				</dict>
 				<key>testScenarioCatalogLoadsFromContentManifest</key>
 				<dict>
 					<key>mrnet</key>
-					<real>0.0010199546813964844</real>
+					<real>0.00089299678802490234</real>
 				</dict>
 				<key>testScenarioRuntimeGroupedMoveUpdatesPartyLocationsAndDiscovery</key>
 				<dict>
 					<key>mrnet</key>
-					<real>0.0031180381774902344</real>
+					<real>0.0021620988845825195</real>
 				</dict>
 				<key>testScenarioRuntimeMoveBlockedWhileCharacterEngagedByThreat</key>
 				<dict>
 					<key>mrnet</key>
-					<real>0.0025570392608642578</real>
+					<real>0.0021311044692993164</real>
 				</dict>
 				<key>testScenarioRuntimeThreatEngagementIsLocalToThreatenedNode</key>
 				<dict>
 					<key>mrnet</key>
-					<real>0.002940058708190918</real>
+					<real>0.0021129846572875977</real>
 				</dict>
 				<key>testScenarioRuntimeVisibleInteractablesKeepPressureOptionsDuringThreat</key>
 				<dict>
 					<key>mrnet</key>
-					<real>0.0025900602340698242</real>
+					<real>0.0020489692687988281</real>
 				</dict>
 				<key>testScenarioValidatorRejectsAmbiguousInteractableSpawnForms</key>
 				<dict>
 					<key>mrnet</key>
-					<real>0.014955997467041016</real>
+					<real>0.011960983276367188</real>
 				</dict>
 				<key>testScenarioValidatorRejectsUnsupportedActionTypes</key>
 				<dict>
 					<key>mrnet</key>
-					<real>0.0054669380187988281</real>
+					<real>0.0054808855056762695</real>
 				</dict>
 				<key>testScenarioValidatorRequiresTagForCharacterTagConsequences</key>
 				<dict>
 					<key>mrnet</key>
-					<real>0.0055530071258544922</real>
+					<real>0.0059840679168701172</real>
 				</dict>
 				<key>testScenarioValidatorWarnsForLikelySoftLockNodes</key>
 				<dict>
 					<key>mrnet</key>
-					<real>0.0053139925003051758</real>
+					<real>0.0053269863128662109</real>
 				</dict>
 				<key>testScenarioValidatorWarnsForUnreachableFixedMapNodes</key>
 				<dict>
 					<key>mrnet</key>
-					<real>0.006074070930480957</real>
+					<real>0.004156947135925293</real>
 				</dict>
 				<key>testScenarioValidatorWarnsOnNegativeLegacyGainStress</key>
 				<dict>
 					<key>mrnet</key>
-					<real>0.0052790641784667969</real>
+					<real>0.0052928924560546875</real>
 				</dict>
 				<key>testStartNewRunUsesScenarioNativeArchetypes</key>
 				<dict>
 					<key>mrnet</key>
-					<real>0.012931942939758301</real>
+					<real>0.0088270902633666992</real>
 				</dict>
 				<key>testStressOverflowUsesScenarioConfiguredHarmFamily</key>
 				<dict>
 					<key>mrnet</key>
-					<real>0.0078229904174804688</real>
+					<real>0.0056629180908203125</real>
 				</dict>
 				<key>testTriggerEventSetsRunEndingState</key>
 				<dict>
 					<key>mrnet</key>
-					<real>0.016692042350769043</real>
+					<real>0.016673922538757324</real>
 				</dict>
 				<key>testVisibleInteractablesHideConditionGatedActions</key>
 				<dict>
 					<key>mrnet</key>
-					<real>0.004799962043762207</real>
+					<real>0.0034270286560058594</real>
 				</dict>
 			</dict>
 		</dict>
@@ -294,37 +299,52 @@
 				<key>testActionRowsExposeRiskAndImpactBeforeOpeningRollScreen</key>
 				<dict>
 					<key>mrnet</key>
-					<real>7.1183669567108154</real>
+					<real>7.4521759748458862</real>
 				</dict>
 				<key>testLaunchPerformance</key>
 				<dict>
 					<key>mrnet</key>
-					<real>32.363165974617004</real>
+					<real>25.242861032485962</real>
 				</dict>
 				<key>testMainScreenShowsSelectedCharacterSummaryAndActiveClocksTogether</key>
 				<dict>
 					<key>mrnet</key>
 					<real>7.647083044052124</real>
 				</dict>
+				<key>testMainScreenShowsTacticalHudAndPressureRow</key>
+				<dict>
+					<key>mrnet</key>
+					<real>6.1217429637908936</real>
+				</dict>
+				<key>testPartySheetPresentsExpeditionDrawer</key>
+				<dict>
+					<key>mrnet</key>
+					<real>8.4699490070343018</real>
+				</dict>
 				<key>testResistancePromptShowsHelperCopy</key>
 				<dict>
 					<key>mrnet</key>
-					<real>15.349318027496338</real>
+					<real>11.080320954322815</real>
 				</dict>
 				<key>testRollButtonIsReachableWithoutScrolling</key>
 				<dict>
 					<key>mrnet</key>
-					<real>8.4484320878982544</real>
+					<real>6.9373170137405396</real>
 				</dict>
 				<key>testRollForecastHintDismissalSuppressesRepeatDisplay</key>
 				<dict>
 					<key>mrnet</key>
-					<real>11.184530019760132</real>
+					<real>15.092650055885315</real>
 				</dict>
 				<key>testSplitPartyStateShowsBannerAndSelectedCharacterLocation</key>
 				<dict>
 					<key>mrnet</key>
 					<real>8.1045989990234375</real>
+				</dict>
+				<key>testSplitPartyStateShowsSummaryInMovementDock</key>
+				<dict>
+					<key>mrnet</key>
+					<real>5.4788780212402344</real>
 				</dict>
 			</dict>
 			<key>CardGameUITestsLaunchTests</key>
@@ -332,7 +352,7 @@
 				<key>testLaunch</key>
 				<dict>
 					<key>mrnet</key>
-					<real>5.8483580350875854</real>
+					<real>3.9533389806747437</real>
 				</dict>
 			</dict>
 		</dict>

@@ -12,10 +12,34 @@
       },
       {
         "comment": "",
+        "key": "Stress %lld of %lld",
+        "location": {
+          "startingColumn": 29,
+          "startingLine": 261
+        }
+      },
+      {
+        "comment": "",
+        "key": "Details",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 338
+        }
+      },
+      {
+        "comment": "",
+        "key": "Stress %lld/9",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 346
+        }
+      },
+      {
+        "comment": "",
         "key": "%lld/%lld",
         "location": {
           "startingColumn": 26,
-          "startingLine": 289
+          "startingLine": 501
         }
       },
       {
@@ -23,7 +47,7 @@
         "key": "Active Clocks",
         "location": {
           "startingColumn": 26,
-          "startingLine": 330
+          "startingLine": 542
         }
       },
       {
@@ -31,7 +55,7 @@
         "key": "Quick Reference",
         "location": {
           "startingColumn": 30,
-          "startingLine": 494
+          "startingLine": 706
         }
       },
       {
@@ -39,7 +63,7 @@
         "key": "Close",
         "location": {
           "startingColumn": 28,
-          "startingLine": 497
+          "startingLine": 709
         }
       }
     ]

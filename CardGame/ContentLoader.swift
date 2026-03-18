@@ -173,11 +173,6 @@ extension DecodingError {
 }
 
 class ContentLoader {
-    /// Shared loader using the app's default scenario. This can be
-    /// reassigned when the player selects a different scenario from the
-    /// main menu.
-    static var shared = ContentLoader()
-
     let scenarioName: String
     let scenarioManifest: ScenarioManifest?
     let interactableTemplates: [Interactable]

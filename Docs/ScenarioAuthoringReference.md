@@ -63,6 +63,7 @@ Current YAML compiler support:
 - top-level `startingNode` may use a symbolic node id
 - node keys are symbolic ids
 - `connections[].to`, `fromNode`, `toNode`, and `inNode` compile back into UUID-based runtime fields
+- `connections[].conditions` and `connections[].onTraverse` are supported
 - authors may pin migrated maps to existing UUIDs with a node-local `uuid` field
 
 Split interactable file notes:
@@ -232,6 +233,29 @@ Supported `GameCondition.type` values:
 - `scenarioFlagSet` (`stringParam` flag id)
 - `scenarioCounter` (`stringParam` counter id, optional `intParam` min and `intParamMax` max)
 
+Connection conditions use the same schema as interactable and consequence conditions.
+
+- They are evaluated against the character initiating the move.
+- Use them for temporary route gating such as "someone is holding the lever" or "the party has rope."
+- Keep persistent structural state in `isUnlocked` and authored lock/unlock consequences.
+
+## Connections
+
+Fixed-map `NodeConnection` supports:
+
+- `to` or `toNodeID`
+- `description`
+- optional `isUnlocked`
+- optional `conditions`
+- optional `onTraverse`
+
+Authoring guidance:
+
+- Use plain connections for ordinary movement.
+- Use connection `conditions` for live passability checks.
+- Use connection `onTraverse` for deterministic side effects after a successful move.
+- If traversal itself should carry Position/Effect, make it an action that uses `moveActingCharacterToNode` on outcome instead of a plain connection.
+
 ## Consequences
 
 Supported `Consequence.type` values and required params:
@@ -240,6 +264,8 @@ Supported `Consequence.type` values and required params:
 - `sufferHarm`: `level`, `familyId`
 - `tickClock`: `clockName`, `amount`
 - `unlockConnection`: `fromNodeID`, `toNodeID` (fixed-map usage)
+- `lockConnection`: `fromNodeID`, `toNodeID` (fixed-map usage)
+- `moveActingCharacterToNode`: `toNodeID` (fixed-map usage)
 - `removeInteractable`: `id` (or `id: "self"` for remove-self behavior)
 - `removeAction`: `id`, `actionName`
 - `addAction`: `id`, `action` payload
