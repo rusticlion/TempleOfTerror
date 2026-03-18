@@ -5,3 +5,13 @@ You will typically be assigned a ticket to complete from a sprint folder in the 
 Alternatively, you may be given a bug description to address.
 
 If we will need to add an asset to the project that you can't create yourself (like a .png or .wav) in order to implement a feature, add a placeholder Markdown document to /AssetPlaceholders, detailing the expectations of the asset to be created. Do not attempt to directly modify the contents of the /Assets/xcassets directory.
+
+For build, test, and simulator work, prefer the repo scripts in `/Scripts` over raw `xcodebuild` or `xcrun simctl` calls. The host machine may have `xcode-select` pointed at Command Line Tools even when full Xcode is installed, and the repo scripts handle that for you.
+
+Helpful entry points:
+- `Scripts/codex_doctor.sh`
+- `Scripts/build_app.sh`
+- `Scripts/launch_app.sh --state pressure`
+- `Scripts/run_tests.sh unit`
+- `Scripts/run_tests.sh ui`
+- `Scripts/check_authored_scenarios.sh`

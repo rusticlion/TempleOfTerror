@@ -6,7 +6,7 @@
 	<integer>12</integer>
 	<key>logs</key>
 	<dict>
-		<key>60C407A7-4211-41E1-B626-4DE0E65F3263</key>
+		<key>0BDD25F0-695E-4886-B805-4F2C36B9CF66</key>
 		<dict>
 			<key>className</key>
 			<string>IDECommandLineBuildLog</string>
@@ -15,49 +15,7 @@
 			<key>domainType</key>
 			<string>Xcode.IDEActivityLogDomainType.BuildLog</string>
 			<key>fileName</key>
-			<string>60C407A7-4211-41E1-B626-4DE0E65F3263.xcactivitylog</string>
-			<key>hasPrimaryLog</key>
-			<true/>
-			<key>primaryObservable</key>
-			<dict>
-				<key>highLevelStatus</key>
-				<string>W</string>
-				<key>totalNumberOfAnalyzerIssues</key>
-				<integer>0</integer>
-				<key>totalNumberOfErrors</key>
-				<integer>0</integer>
-				<key>totalNumberOfTestFailures</key>
-				<integer>0</integer>
-				<key>totalNumberOfWarnings</key>
-				<integer>1</integer>
-			</dict>
-			<key>schemeIdentifier-containerName</key>
-			<string>CardGame project</string>
-			<key>schemeIdentifier-schemeName</key>
-			<string>CardGame</string>
-			<key>schemeIdentifier-sharedScheme</key>
-			<integer>1</integer>
-			<key>signature</key>
-			<string>Building project CardGame for testing with scheme CardGame</string>
-			<key>timeStartedRecording</key>
-			<real>795378163.96633005</real>
-			<key>timeStoppedRecording</key>
-			<real>795378180.95838106</real>
-			<key>title</key>
-			<string>Building project CardGame for testing with scheme CardGame</string>
-			<key>uniqueIdentifier</key>
-			<string>60C407A7-4211-41E1-B626-4DE0E65F3263</string>
-		</dict>
-		<key>B8ACCB70-6CE8-4AD4-89FC-9CFB71D01271</key>
-		<dict>
-			<key>className</key>
-			<string>IDECommandLineBuildLog</string>
-			<key>documentTypeString</key>
-			<string>&lt;nil&gt;</string>
-			<key>domainType</key>
-			<string>Xcode.IDEActivityLogDomainType.BuildLog</string>
-			<key>fileName</key>
-			<string>B8ACCB70-6CE8-4AD4-89FC-9CFB71D01271.xcactivitylog</string>
+			<string>0BDD25F0-695E-4886-B805-4F2C36B9CF66.xcactivitylog</string>
 			<key>hasPrimaryLog</key>
 			<true/>
 			<key>primaryObservable</key>
@@ -82,13 +40,55 @@
 			<key>signature</key>
 			<string>Building project CardGame for testing with scheme CardGame</string>
 			<key>timeStartedRecording</key>
-			<real>795378195.71073794</real>
+			<real>795540119.97658098</real>
 			<key>timeStoppedRecording</key>
-			<real>795378196.73637998</real>
+			<real>795540120.77058601</real>
 			<key>title</key>
 			<string>Building project CardGame for testing with scheme CardGame</string>
 			<key>uniqueIdentifier</key>
-			<string>B8ACCB70-6CE8-4AD4-89FC-9CFB71D01271</string>
+			<string>0BDD25F0-695E-4886-B805-4F2C36B9CF66</string>
+		</dict>
+		<key>89FB67D7-3902-4872-BE90-F349E6C25BBB</key>
+		<dict>
+			<key>className</key>
+			<string>IDECommandLineBuildLog</string>
+			<key>documentTypeString</key>
+			<string>&lt;nil&gt;</string>
+			<key>domainType</key>
+			<string>Xcode.IDEActivityLogDomainType.BuildLog</string>
+			<key>fileName</key>
+			<string>89FB67D7-3902-4872-BE90-F349E6C25BBB.xcactivitylog</string>
+			<key>hasPrimaryLog</key>
+			<true/>
+			<key>primaryObservable</key>
+			<dict>
+				<key>highLevelStatus</key>
+				<string>S</string>
+				<key>totalNumberOfAnalyzerIssues</key>
+				<integer>0</integer>
+				<key>totalNumberOfErrors</key>
+				<integer>0</integer>
+				<key>totalNumberOfTestFailures</key>
+				<integer>0</integer>
+				<key>totalNumberOfWarnings</key>
+				<integer>0</integer>
+			</dict>
+			<key>schemeIdentifier-containerName</key>
+			<string>CardGame project</string>
+			<key>schemeIdentifier-schemeName</key>
+			<string>CardGame</string>
+			<key>schemeIdentifier-sharedScheme</key>
+			<integer>1</integer>
+			<key>signature</key>
+			<string>Building project CardGame for testing with scheme CardGame</string>
+			<key>timeStartedRecording</key>
+			<real>795539903.91194999</real>
+			<key>timeStoppedRecording</key>
+			<real>795539906.42676902</real>
+			<key>title</key>
+			<string>Building project CardGame for testing with scheme CardGame</string>
+			<key>uniqueIdentifier</key>
+			<string>89FB67D7-3902-4872-BE90-F349E6C25BBB</string>
 		</dict>
 	</dict>
 </dict>

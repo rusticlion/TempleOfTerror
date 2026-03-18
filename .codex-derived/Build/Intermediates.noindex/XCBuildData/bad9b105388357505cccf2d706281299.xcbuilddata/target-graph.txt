@@ -1,0 +1,6 @@
+Target dependency graph (3 targets)
+Target 'CardGameUITests' in project 'CardGame'
+➜ Explicit dependency on target 'CardGame' in project 'CardGame'
+Target 'CardGameTests' in project 'CardGame'
+➜ Explicit dependency on target 'CardGame' in project 'CardGame'
+Target 'CardGame' in project 'CardGame' (no dependencies)
