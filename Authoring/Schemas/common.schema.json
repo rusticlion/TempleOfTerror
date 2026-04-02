@@ -346,6 +346,29 @@
         }
       }
     },
+    "devilBargain": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "consequences": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/consequence"
+          }
+        }
+      },
+      "required": [
+        "title",
+        "description",
+        "consequences"
+      ]
+    },
     "actionOption": {
       "type": "object",
       "additionalProperties": false,
@@ -376,6 +399,9 @@
           "items": {
             "$ref": "#/$defs/gameCondition"
           }
+        },
+        "devilsBargain": {
+          "$ref": "#/$defs/devilBargain"
         },
         "outcomes": {
           "$ref": "#/$defs/actionOutcomes"
@@ -456,6 +482,7 @@
             "adjustStress",
             "sufferHarm",
             "tickClock",
+            "adjustClock",
             "unlockConnection",
             "lockConnection",
             "moveActingCharacterToNode",
@@ -470,6 +497,8 @@
             "removeTreasureWithTag",
             "grantModifier",
             "removeModifier",
+            "grantNodeModifier",
+            "removeNodeModifier",
             "modifyDice",
             "createChoice",
             "triggerEvent",
@@ -805,6 +834,12 @@
         },
         "isDiscovered": {
           "type": "boolean"
+        },
+        "activeModifiers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/modifier"
+          }
         },
         "onEnter": {
           "type": "array",

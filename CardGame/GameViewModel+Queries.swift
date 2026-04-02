@@ -87,6 +87,10 @@ extension GameViewModel {
         runtime.threats(for: characterID, in: gameState)
     }
 
+    func activeNodeModifiers(for characterID: UUID?) -> [Modifier] {
+        runtime.activeNodeModifiers(for: characterID, in: gameState)
+    }
+
     func isCharacterEngaged(_ characterID: UUID?) -> Bool {
         runtime.isCharacterEngaged(characterID, in: gameState)
     }

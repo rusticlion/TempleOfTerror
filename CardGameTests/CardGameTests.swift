@@ -1063,6 +1063,108 @@ final class CardGameTests: XCTestCase {
         )
     }
 
+    func testScenarioValidatorRejectsDevilsBargainOnNoRollAction() throws {
+        let scenarioID = "validator_bad_bargain_action"
+        let fixture = try makeValidatorFixtureRoot(scenarioID: scenarioID)
+        defer { try? FileManager.default.removeItem(at: fixture.rootURL) }
+
+        let action = ActionOption(
+            name: "Invoke Shortcut",
+            actionType: "Study",
+            position: .controlled,
+            effect: .standard,
+            requiresTest: false,
+            devilsBargain: DevilBargain(
+                title: "Ring the Alarm",
+                description: "Take +1d, but everyone hears it.",
+                consequences: [.adjustClock(name: "Alarm", amount: 2)]
+            ),
+            outcomes: [.success: []]
+        )
+        let interactable = Interactable(
+            id: "shortcut_console",
+            title: "Shortcut Console",
+            description: "",
+            availableActions: [action]
+        )
+
+        try writeJSON([interactable], to: fixture.scenarioURL.appendingPathComponent("interactables.json"))
+        try writeJSON(
+            [GameClock(name: "Alarm", segments: 4, progress: 0)],
+            to: fixture.scenarioURL.appendingPathComponent("clocks.json")
+        )
+
+        let report = ScenarioValidator().validateScenario(at: fixture.scenarioURL)
+        XCTAssertTrue(
+            report.errors.contains(where: { $0.message.contains("devilsBargain is only valid on actions that require a roll") }),
+            report.formattedDescription
+        )
+    }
+
+    func testScenarioValidatorRejectsInvalidAmbientNodeModifierAndZeroAdjustClock() throws {
+        let scenarioID = "validator_bad_node_modifier"
+        let fixture = try makeValidatorFixtureRoot(scenarioID: scenarioID, mapFile: "map.json")
+        defer { try? FileManager.default.removeItem(at: fixture.rootURL) }
+
+        let nodeID = UUID(uuidString: "00000000-0000-0000-0000-000000000401")!
+        let action = ActionOption(
+            name: "Pulse the Ward",
+            actionType: "Study",
+            position: .controlled,
+            effect: .standard,
+            outcomes: [.success: [.adjustClock(name: "Alarm", amount: 0)]]
+        )
+        let map = DungeonMap(
+            nodes: [
+                nodeID.uuidString: MapNode(
+                    id: nodeID,
+                    name: "Ward Chamber",
+                    soundProfile: "",
+                    interactables: [
+                        Interactable(
+                            id: "ward_console",
+                            title: "Ward Console",
+                            description: "",
+                            availableActions: [action]
+                        )
+                    ],
+                    connections: [],
+                    activeModifiers: [
+                        Modifier(
+                            sourceKey: "mist",
+                            bonusDice: -1,
+                            applicableActions: ["Study"],
+                            uses: 1,
+                            isOptionalToApply: true,
+                            description: "Clinging mist"
+                        )
+                    ]
+                )
+            ],
+            startingNodeID: nodeID
+        )
+
+        try writeJSON(map, to: fixture.scenarioURL.appendingPathComponent("map.json"))
+        try writeJSON(
+            [GameClock(name: "Alarm", segments: 4, progress: 0)],
+            to: fixture.scenarioURL.appendingPathComponent("clocks.json")
+        )
+
+        let report = ScenarioValidator().validateScenario(at: fixture.scenarioURL)
+        XCTAssertTrue(
+            report.errors.contains(where: { $0.message.contains("Ambient node modifiers must use isOptionalToApply: false") }),
+            report.formattedDescription
+        )
+        XCTAssertTrue(
+            report.errors.contains(where: { $0.message.contains("Ambient node modifiers must use uses: -1") }),
+            report.formattedDescription
+        )
+        XCTAssertTrue(
+            report.errors.contains(where: { $0.message.contains("adjustClock amount must be non-zero") }),
+            report.formattedDescription
+        )
+    }
+
     func testScenarioValidatorRejectsUnknownRemoveTreasureReference() throws {
         let scenarioID = "validator_bad_remove_treasure"
         let fixture = try makeValidatorFixtureRoot(scenarioID: scenarioID)

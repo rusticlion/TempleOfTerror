@@ -98,6 +98,10 @@ struct ContentView: View {
         viewModel.visibleInteractables(for: selectedCharacterID)
     }
 
+    private var activeRoomModifiers: [Modifier] {
+        viewModel.activeNodeModifiers(for: selectedCharacterID)
+    }
+
     private var occupiedRoomCount: Int {
         max(Set(viewModel.gameState.characterLocations.values).count, 1)
     }
@@ -276,6 +280,45 @@ struct ContentView: View {
 
                         if let node = selectedNode {
                             VStack(alignment: .leading, spacing: 16) {
+                                if !activeRoomModifiers.isEmpty {
+                                    VStack(alignment: .leading, spacing: 10) {
+                                        Text("Room Conditions")
+                                            .font(Theme.systemFont(size: 11, weight: .semibold))
+                                            .tracking(0.8)
+                                            .textCase(.uppercase)
+                                            .foregroundColor(Theme.inkFaded)
+
+                                        ForEach(Array(activeRoomModifiers.enumerated()), id: \.offset) { entry in
+                                            let modifier = entry.element
+                                            HStack(alignment: .top, spacing: 10) {
+                                                Image(systemName: "aqi.medium")
+                                                    .font(.system(size: 12, weight: .semibold))
+                                                    .foregroundColor(Theme.gold)
+                                                    .padding(.top, 2)
+
+                                                VStack(alignment: .leading, spacing: 4) {
+                                                    Text(modifier.description)
+                                                        .font(Theme.systemFont(size: 14, weight: .semibold))
+                                                        .foregroundColor(Theme.parchment)
+                                                    Text(modifier.shortDescription)
+                                                        .font(Theme.bodyFont(size: 13))
+                                                        .foregroundColor(Theme.parchmentDark)
+                                                }
+                                            }
+                                            .padding(12)
+                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                            .background(
+                                                RoundedRectangle(cornerRadius: 12)
+                                                    .fill(Theme.leather.opacity(0.72))
+                                            )
+                                            .overlay(
+                                                RoundedRectangle(cornerRadius: 12)
+                                                    .stroke(Theme.parchmentDeep.opacity(0.16), lineWidth: 1)
+                                            )
+                                        }
+                                    }
+                                }
+
                                 if !visibleInteractables.isEmpty {
                                     Text("In This Room")
                                         .font(Theme.systemFont(size: 11, weight: .semibold))

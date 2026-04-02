@@ -335,6 +335,80 @@ final class ModifierSystemTests: XCTestCase {
         XCTAssertEqual(vm.gameState.party[0].stress, 9)
     }
 
+    func testRollContextIncludesDevilsBargainAndStacksWithPush() throws {
+        let vm = GameViewModel()
+        let character = makeTestCharacter()
+
+        let action = ActionOption(
+            name: "Break Through",
+            actionType: "Skirmish",
+            position: .risky,
+            effect: .standard,
+            devilsBargain: DevilBargain(
+                title: "Wake the Watch",
+                description: "Take +1d, but the room alarm advances.",
+                consequences: [.adjustClock(name: "Alarm", amount: 2)]
+            )
+        )
+
+        let context = vm.getRollContext(for: action, with: character)
+        let bargain = try XCTUnwrap(
+            context.optionalModifiers.first(where: { $0.id == RollRulesEngine.devilsBargainModifierID })
+        )
+        let push = try XCTUnwrap(
+            context.optionalModifiers.first(where: { $0.id == RollRulesEngine.pushYourselfModifierID })
+        )
+
+        XCTAssertEqual(bargain.description, "Wake the Watch")
+        XCTAssertEqual(bargain.remainingUses, "Take +1d, but the room alarm advances.")
+
+        let projection = vm.calculateEffectiveProjection(
+            baseProjection: context.baseProjection,
+            applying: [push.modifierData, bargain.modifierData]
+        )
+
+        XCTAssertEqual(context.baseProjection.finalDiceCount, 2)
+        XCTAssertEqual(projection.finalDiceCount, 4)
+    }
+
+    func testNodeModifiersAffectProjectionAndForecastNotes() throws {
+        let vm = GameViewModel()
+        let nodeID = UUID()
+        let character = makeTestCharacter()
+
+        let floodedFloor = Modifier(
+            sourceKey: "flooded_floor",
+            bonusDice: -1,
+            applicableActions: ["Skirmish"],
+            uses: -1,
+            isOptionalToApply: false,
+            description: "Flooded footing"
+        )
+
+        vm.gameState.party = [character]
+        vm.gameState.characterLocations[character.id.uuidString] = nodeID
+        vm.gameState.dungeon = DungeonMap(
+            nodes: [
+                nodeID.uuidString: MapNode(
+                    id: nodeID,
+                    name: "Flooded Gallery",
+                    soundProfile: "water",
+                    interactables: [],
+                    connections: [],
+                    activeModifiers: [floodedFloor]
+                )
+            ],
+            startingNodeID: nodeID
+        )
+
+        let projection = vm.calculateProjection(for: makeTestAction(), with: character)
+        let context = vm.getRollContext(for: makeTestAction(), with: character)
+
+        XCTAssertEqual(projection.finalDiceCount, 1)
+        XCTAssertEqual(context.baseProjection.finalDiceCount, 1)
+        XCTAssertTrue(context.baseProjection.notes.contains(where: { $0.contains("Flooded footing") }))
+    }
+
     func testActionResolverGroupActionAppliesLeaderStressAndConsequences() throws {
         let runtime = ScenarioRuntime()
         let resolver = ActionResolver(

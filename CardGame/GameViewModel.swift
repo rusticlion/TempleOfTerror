@@ -270,6 +270,7 @@ class GameViewModel: ObservableObject {
             for: action,
             with: character,
             interactableTags: tags,
+            environmentModifiers: activeNodeModifiers(for: character.id),
             harmFamilies: activeHarmFamilies
         )
     }
@@ -279,6 +280,7 @@ class GameViewModel: ObservableObject {
             for: action,
             with: character,
             interactableTags: tags,
+            environmentModifiers: activeNodeModifiers(for: character.id),
             harmFamilies: activeHarmFamilies
         )
     }

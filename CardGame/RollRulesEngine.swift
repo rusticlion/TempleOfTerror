@@ -8,6 +8,7 @@ struct ResolvedDiceRoll {
 
 struct RollRulesEngine {
     static let pushYourselfModifierID = UUID(uuidString: "0F2B2A84-7027-4B8A-ABEB-0CEB6A46E50D")!
+    static let devilsBargainModifierID = UUID(uuidString: "7159DB20-98EC-4DFE-945B-02A8B25D07D7")!
     private let basePushStressCost = 2
 
     func makePushYourselfModifier() -> Modifier {
@@ -20,10 +21,21 @@ struct RollRulesEngine {
         )
     }
 
+    func makeDevilsBargainModifier(title: String) -> Modifier {
+        Modifier(
+            id: Self.devilsBargainModifierID,
+            bonusDice: 1,
+            uses: -1,
+            isOptionalToApply: true,
+            description: title
+        )
+    }
+
     func calculateProjection(
         for action: ActionOption,
         with character: Character,
         interactableTags tags: [String] = [],
+        environmentModifiers: [Modifier] = [],
         harmFamilies: [String: HarmFamily]
     ) -> RollProjectionDetails {
         var diceCount = character.actions[action.actionType] ?? 0
@@ -46,13 +58,13 @@ struct RollRulesEngine {
         }
 
         if !isActionBanned {
-            for modifier in character.modifiers {
+            for modifier in character.modifiers + environmentModifiers {
                 guard modifier.uses != 0 else { continue }
                 guard applies(modifier: modifier, to: action.actionType, tags: tags) else { continue }
 
                 if modifier.bonusDice != 0 {
                     diceCount += modifier.bonusDice
-                    var note = "(+\(modifier.bonusDice)d \(modifier.description)"
+                    var note = "(\(formattedDiceDelta(modifier.bonusDice)) \(modifier.description)"
                     if modifier.uses > 0 {
                         note += " (\(modifier.uses) use\(modifier.uses == 1 ? "" : "s") left)"
                     }
@@ -121,6 +133,7 @@ struct RollRulesEngine {
         for action: ActionOption,
         with character: Character,
         interactableTags tags: [String] = [],
+        environmentModifiers: [Modifier] = [],
         harmFamilies: [String: HarmFamily]
     ) -> (baseProjection: RollProjectionDetails, optionalModifiers: [SelectableModifierInfo]) {
         let initialProjection = projectionAfterHarms(
@@ -137,17 +150,17 @@ struct RollRulesEngine {
         let baseEffect = initialProjection.baseEffect
         var notes = initialProjection.notes
         let isActionBanned = initialProjection.isActionBanned
-        let uniqueModifiers = uniqueModifiers(for: character)
+        let availableModifiers = uniqueModifiers(for: character, environmentModifiers: environmentModifiers)
 
         if !isActionBanned {
-            for modifier in uniqueModifiers {
+            for modifier in availableModifiers {
                 guard modifier.uses != 0 else { continue }
                 guard !modifier.isOptionalToApply else { continue }
                 guard applies(modifier: modifier, to: action.actionType, tags: tags) else { continue }
 
                 if modifier.bonusDice != 0 {
                     diceCount += modifier.bonusDice
-                    notes.append("(+\(modifier.bonusDice)d \(modifier.description))")
+                    notes.append("(\(formattedDiceDelta(modifier.bonusDice)) \(modifier.description))")
                 }
                 if modifier.improvePosition {
                     position = position.improved()
@@ -181,7 +194,7 @@ struct RollRulesEngine {
 
         var optionalInfos: [SelectableModifierInfo] = []
         if !isActionBanned {
-            for modifier in uniqueModifiers {
+            for modifier in uniqueModifiers(for: character) {
                 guard modifier.isOptionalToApply else { continue }
                 guard modifier.uses != 0 else { continue }
                 guard applies(modifier: modifier, to: action.actionType, tags: tags) else { continue }
@@ -222,9 +235,23 @@ struct RollRulesEngine {
                 )
             }
 
+            if let bargain = action.devilsBargain {
+                optionalInfos.append(
+                    SelectableModifierInfo(
+                        id: Self.devilsBargainModifierID,
+                        description: bargain.title,
+                        detailedEffect: "+1d",
+                        remainingUses: bargain.description,
+                        modifierData: makeDevilsBargainModifier(title: bargain.title)
+                    )
+                )
+            }
+
             optionalInfos.sort { lhs, rhs in
-                if lhs.description == "Push Yourself" { return true }
-                if rhs.description == "Push Yourself" { return false }
+                if lhs.id == Self.pushYourselfModifierID { return true }
+                if rhs.id == Self.pushYourselfModifierID { return false }
+                if lhs.id == Self.devilsBargainModifierID { return true }
+                if rhs.id == Self.devilsBargainModifierID { return false }
                 return lhs.description.localizedCaseInsensitiveCompare(rhs.description) == .orderedAscending
             }
         }
@@ -430,17 +457,24 @@ struct RollRulesEngine {
         )
     }
 
-    private func uniqueModifiers(for character: Character) -> [Modifier] {
+    private func uniqueModifiers(
+        for character: Character,
+        environmentModifiers: [Modifier] = []
+    ) -> [Modifier] {
         var seenIDs: Set<UUID> = []
         var result: [Modifier] = []
 
-        for modifier in character.modifiers + character.treasures.map(\.grantedModifier) {
+        for modifier in character.modifiers + character.treasures.map(\.grantedModifier) + environmentModifiers {
             if seenIDs.insert(modifier.id).inserted {
                 result.append(modifier)
             }
         }
 
         return result
+    }
+
+    private func formattedDiceDelta(_ amount: Int) -> String {
+        amount > 0 ? "+\(amount)d" : "\(amount)d"
     }
 
     private func apply(
@@ -562,6 +596,7 @@ struct ActionResolver {
         let interactableTags: [String]
         let projection: RollProjectionDetails
         let consumedMessages: [String]
+        let bargainConsequences: [Consequence]
     }
 
     private let runtime: ScenarioRuntime
@@ -691,7 +726,7 @@ struct ActionResolver {
             finalPosition: finalPosition,
             isCritical: isCritical && highestRoll >= 4,
             gameState: gameState
-        )
+        ) + prepared.bargainConsequences
         let consequenceContext = ConsequenceContext(
             characterID: prepared.currentCharacter.id,
             interactableID: interactableID,
@@ -922,6 +957,7 @@ struct ActionResolver {
             for: action,
             with: currentCharacter,
             interactableTags: tags,
+            environmentModifiers: activeNodeModifiers(for: currentCharacter.id, in: gameState),
             harmFamilies: harmFamilies
         )
         var workingProjection = context.baseProjection
@@ -935,12 +971,10 @@ struct ActionResolver {
         var appliedOptionalMods: [Modifier] = []
         var consumedMessages: [String] = []
 
-        let pushModifierIDs = Set(
-            context.optionalModifiers
-                .filter { $0.description == "Push Yourself" }
-                .map(\.id)
-        )
-        let mutableChosenIDs = chosenOptionalModifierIDs.filter { !pushModifierIDs.contains($0) }
+        let mutableChosenIDs = chosenOptionalModifierIDs.filter {
+            $0 != RollRulesEngine.pushYourselfModifierID &&
+            $0 != RollRulesEngine.devilsBargainModifierID
+        }
         let contextModifiersByID = Dictionary(
             uniqueKeysWithValues: context.optionalModifiers.map { ($0.id, $0.modifierData) }
         )
@@ -951,13 +985,22 @@ struct ActionResolver {
             harmFamilies: harmFamilies
         )
 
-        if chosenOptionalModifierIDs.contains(where: { pushModifierIDs.contains($0) }),
+        if chosenOptionalModifierIDs.contains(RollRulesEngine.pushYourselfModifierID),
            let pushModifier = applyPushYourselfDuringAction(
                 toCharacterAt: characterIndex,
                 interactableTags: tags,
                 in: &gameState
            ) {
             appliedOptionalMods.append(pushModifier)
+        }
+
+        var bargainConsequences: [Consequence] = []
+        if chosenOptionalModifierIDs.contains(RollRulesEngine.devilsBargainModifierID),
+           let bargain = action.devilsBargain {
+            appliedOptionalMods.append(
+                rollRules.makeDevilsBargainModifier(title: bargain.title)
+            )
+            bargainConsequences = sanitizeBargainConsequences(bargain.consequences)
         }
 
         var modsToKeep: [Modifier] = []
@@ -1005,7 +1048,8 @@ struct ActionResolver {
                 currentCharacter: currentCharacter,
                 interactableTags: tags,
                 projection: workingProjection,
-                consumedMessages: consumedMessages
+                consumedMessages: consumedMessages,
+                bargainConsequences: bargainConsequences
             )
         )
     }
@@ -1035,6 +1079,21 @@ struct ActionResolver {
         }
     }
 
+    private func activeNodeModifiers(
+        for characterID: UUID,
+        in gameState: GameState
+    ) -> [Modifier] {
+        runtime.activeNodeModifiers(for: characterID, in: gameState)
+    }
+
+    private func sanitizeBargainConsequences(_ consequences: [Consequence]) -> [Consequence] {
+        consequences.map { consequence in
+            var sanitized = consequence
+            sanitized.resistance = nil
+            return sanitized
+        }
+    }
+
     private func groupActionParticipants(
         for leaderID: UUID,
         action: ActionOption,
@@ -1053,6 +1112,7 @@ struct ActionResolver {
                 for: action,
                 with: member,
                 interactableTags: interactableTags,
+                environmentModifiers: activeNodeModifiers(for: member.id, in: gameState),
                 harmFamilies: harmFamilies
             ).baseProjection
             return !projection.isActionBanned

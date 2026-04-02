@@ -712,4 +712,155 @@ final class PendingResolutionDriverTests: XCTestCase {
         XCTAssertEqual(viewModel.gameState.currentNodeID, startNodeID)
         XCTAssertEqual(viewModel.gameState.scenarioFlags["vault_first_entered"], true)
     }
+
+    func testDevilsBargainAppliesGuaranteedNonResistibleFalloutAfterRollOutcome() throws {
+        let character = Character(
+            id: UUID(),
+            name: "Breaker",
+            characterClass: "Rogue",
+            stress: 0,
+            harm: HarmState(),
+            actions: ["Skirmish": 2]
+        )
+        let viewModel = TestFixtures.makeViewModel(scenario: "test_lab")
+        viewModel.gameState.party = [character]
+
+        var bargainClock = Consequence.adjustClock(name: "Test Clock", amount: 2)
+        bargainClock.description = "Alarm sounds."
+        bargainClock.resistance = ResistanceRule(attribute: .insight, amount: 1)
+
+        var successFlag = Consequence.setScenarioFlag("door_open")
+        successFlag.description = "Door opens."
+
+        let action = ActionOption(
+            name: "Force the Seal",
+            actionType: "Skirmish",
+            position: .risky,
+            effect: .standard,
+            devilsBargain: DevilBargain(
+                title: "Wake the Watch",
+                description: "Take +1d, but the alarm advances.",
+                consequences: [bargainClock]
+            ),
+            outcomes: [.success: [successFlag]]
+        )
+
+        let result = viewModel.performAction(
+            for: action,
+            with: character,
+            interactableID: nil,
+            usingDice: [6, 5, 4],
+            chosenOptionalModifierIDs: [RollRulesEngine.devilsBargainModifierID]
+        )
+
+        XCTAssertEqual(viewModel.gameState.scenarioFlags["door_open"], true)
+        let createdClock = viewModel.gameState.activeClocks.first(where: { $0.name == "Test Clock" })
+        XCTAssertEqual(createdClock?.name, "Test Clock")
+        XCTAssertEqual(createdClock?.progress, 2)
+        XCTAssertFalse(result.isAwaitingDecision)
+        XCTAssertTrue(result.consequences.contains("Door opens."))
+        XCTAssertTrue(result.consequences.contains("Alarm sounds."))
+    }
+
+    func testAdjustClockCanReduceProgressWithoutTriggeringCallbacks() throws {
+        let character = Character(
+            id: UUID(),
+            name: "Warder",
+            characterClass: "Scholar",
+            stress: 0,
+            harm: HarmState(),
+            actions: ["Study": 2]
+        )
+        let viewModel = GameViewModel()
+        viewModel.gameState.party = [character]
+        viewModel.gameState.activeClocks = [
+            GameClock(
+                name: "Ward Stability",
+                segments: 4,
+                progress: 2,
+                onCompleteConsequences: [.setScenarioFlag("ward_broken")],
+                onTickConsequences: [.setScenarioFlag("ward_ticked")]
+            )
+        ]
+
+        let action = ActionOption(
+            name: "Reinforce the Glyph",
+            actionType: "Study",
+            position: .controlled,
+            effect: .standard,
+            requiresTest: false,
+            outcomes: [.success: [.adjustClock(name: "Ward Stability", amount: -1)]]
+        )
+
+        _ = viewModel.performFreeAction(for: action, with: character, interactableID: nil)
+
+        XCTAssertEqual(viewModel.gameState.activeClocks.first?.progress, 1)
+        XCTAssertNil(viewModel.gameState.scenarioFlags["ward_ticked"])
+        XCTAssertNil(viewModel.gameState.scenarioFlags["ward_broken"])
+    }
+
+    func testGrantAndRemoveNodeModifierMutateRoomState() throws {
+        let nodeID = UUID()
+        let character = Character(
+            id: UUID(),
+            name: "Engineer",
+            characterClass: "Engineer",
+            stress: 0,
+            harm: HarmState(),
+            actions: ["Tinker": 2]
+        )
+        let viewModel = GameViewModel()
+        viewModel.gameState.party = [character]
+        viewModel.gameState.characterLocations[character.id.uuidString] = nodeID
+        viewModel.gameState.dungeon = DungeonMap(
+            nodes: [
+                nodeID.uuidString: MapNode(
+                    id: nodeID,
+                    name: "Generator Room",
+                    soundProfile: "hum",
+                    interactables: [],
+                    connections: []
+                )
+            ],
+            startingNodeID: nodeID
+        )
+
+        let unstableField = Modifier(
+            sourceKey: "unstable_field",
+            bonusDice: -1,
+            applicableActions: ["Tinker"],
+            uses: -1,
+            isOptionalToApply: false,
+            description: "Unstable field"
+        )
+
+        let grantAction = ActionOption(
+            name: "Overload the Conduit",
+            actionType: "Tinker",
+            position: .controlled,
+            effect: .standard,
+            requiresTest: false,
+            outcomes: [.success: [.grantNodeModifier(unstableField)]]
+        )
+        let clearAction = ActionOption(
+            name: "Stabilize the Field",
+            actionType: "Tinker",
+            position: .controlled,
+            effect: .standard,
+            requiresTest: false,
+            outcomes: [.success: [.removeNodeModifier(sourceKey: "unstable_field")]]
+        )
+
+        _ = viewModel.performFreeAction(for: grantAction, with: character, interactableID: nil)
+        XCTAssertEqual(viewModel.activeNodeModifiers(for: character.id).count, 1)
+
+        let projected = viewModel.calculateProjection(
+            for: ActionOption(name: "Patch the Array", actionType: "Tinker", position: .risky, effect: .standard),
+            with: character
+        )
+        XCTAssertEqual(projected.finalDiceCount, 1)
+
+        _ = viewModel.performFreeAction(for: clearAction, with: character, interactableID: nil)
+        XCTAssertTrue(viewModel.activeNodeModifiers(for: character.id).isEmpty)
+    }
 }

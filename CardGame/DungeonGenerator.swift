@@ -248,6 +248,11 @@ struct ScenarioRuntime {
         return threats + pressureOptions
     }
 
+    func activeNodeModifiers(for characterID: UUID?, in gameState: GameState) -> [Modifier] {
+        guard let node = node(for: characterID, in: gameState) else { return [] }
+        return node.activeModifiers.filter { $0.uses != 0 }
+    }
+
     func isPartyActuallySplit(in gameState: GameState) -> Bool {
         Set(gameState.characterLocations.values).count > 1
     }
@@ -460,6 +465,39 @@ struct ScenarioRuntime {
     ) -> Bool {
         guard let nodeID = currentNodeID(for: characterID, in: gameState) else { return false }
         return addInteractable(interactable, inNodeID: nodeID, in: &gameState)
+    }
+
+    @discardableResult
+    func grantNodeModifier(
+        _ modifier: Modifier,
+        inNodeID nodeID: UUID,
+        in gameState: inout GameState
+    ) -> Bool {
+        guard gameState.dungeon?.nodes[nodeID.uuidString] != nil else { return false }
+
+        var grantedModifier = modifier
+        grantedModifier.id = UUID()
+        if let sourceKey = grantedModifier.sourceKey?.trimmingCharacters(in: .whitespacesAndNewlines),
+           !sourceKey.isEmpty {
+            grantedModifier.sourceKey = sourceKey
+            gameState.dungeon?.nodes[nodeID.uuidString]?.activeModifiers.removeAll { $0.sourceKey == sourceKey }
+        }
+
+        gameState.dungeon?.nodes[nodeID.uuidString]?.activeModifiers.append(grantedModifier)
+        return true
+    }
+
+    @discardableResult
+    func removeNodeModifier(
+        sourceKey: String,
+        fromNodeID nodeID: UUID,
+        in gameState: inout GameState
+    ) -> Bool {
+        guard var node = gameState.dungeon?.nodes[nodeID.uuidString] else { return false }
+        let before = node.activeModifiers.count
+        node.activeModifiers.removeAll { $0.sourceKey == sourceKey }
+        gameState.dungeon?.nodes[nodeID.uuidString] = node
+        return before != node.activeModifiers.count
     }
 
     func currentNodeID(for characterID: UUID, in gameState: GameState) -> UUID? {

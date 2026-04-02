@@ -411,7 +411,7 @@ struct ScenarioValidator {
                 severity: .warning,
                 file: "clocks.json",
                 path: "clock[\(clockName)]",
-                message: "Clock is ticked by content but has no intrinsic behavior and is never read by authored conditions."
+                message: "Clock is advanced by content but has no intrinsic behavior and is never read by authored conditions."
             )
         }
 
@@ -443,7 +443,7 @@ struct ScenarioValidator {
                 severity: .warning,
                 file: "clocks.json",
                 path: "clock[\(clockName)]",
-                message: "Clock is defined but never referenced by tickClock/clockProgress and has no intrinsic behavior."
+                message: "Clock is defined but never referenced by tickClock/adjustClock/clockProgress and has no intrinsic behavior."
             )
         }
 
@@ -536,6 +536,20 @@ struct ScenarioValidator {
                     catalog: catalog,
                     state: &state,
                     owningNodeID: node.id
+                )
+            }
+
+            for (modifierIndex, modifier) in node.activeModifiers.enumerated() {
+                validateModifier(
+                    modifier,
+                    file: mapFile,
+                    path: "node[\(node.id.uuidString)].activeModifiers[\(modifierIndex)]",
+                    catalog: catalog,
+                    state: &state,
+                    requiresSourceKey: true,
+                    warnOnExplicitRuntimeID: true,
+                    requireMechanicalEffect: true,
+                    requireAmbientNodeState: true
                 )
             }
 
@@ -805,6 +819,53 @@ struct ScenarioValidator {
                 state: &state
             )
         }
+
+        if let bargain = action.devilsBargain {
+            if !action.requiresTest {
+                state.report.add(
+                    severity: .error,
+                    file: file,
+                    path: "\(path).devilsBargain",
+                    message: "devilsBargain is only valid on actions that require a roll."
+                )
+            }
+
+            if bargain.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                state.report.add(
+                    severity: .error,
+                    file: file,
+                    path: "\(path).devilsBargain.title",
+                    message: "devilsBargain requires a non-empty title."
+                )
+            }
+
+            if bargain.description.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                state.report.add(
+                    severity: .error,
+                    file: file,
+                    path: "\(path).devilsBargain.description",
+                    message: "devilsBargain requires a non-empty description."
+                )
+            }
+
+            if bargain.consequences.isEmpty {
+                state.report.add(
+                    severity: .error,
+                    file: file,
+                    path: "\(path).devilsBargain.consequences",
+                    message: "devilsBargain requires one or more consequences."
+                )
+            } else {
+                validateConsequences(
+                    bargain.consequences,
+                    file: file,
+                    path: "\(path).devilsBargain.consequences",
+                    catalog: catalog,
+                    state: &state,
+                    allowResistance: false
+                )
+            }
+        }
     }
 
     private func validateTreasure(
@@ -928,7 +989,8 @@ struct ScenarioValidator {
         state: inout ValidationState,
         requiresSourceKey: Bool = false,
         warnOnExplicitRuntimeID: Bool = false,
-        requireMechanicalEffect: Bool = false
+        requireMechanicalEffect: Bool = false,
+        requireAmbientNodeState: Bool = false
     ) {
         if warnOnExplicitRuntimeID, modifier.usedExplicitIDField {
             state.report.add(
@@ -999,6 +1061,26 @@ struct ScenarioValidator {
                 message: "grantModifier must include at least one mechanical effect."
             )
         }
+
+        if requireAmbientNodeState {
+            if modifier.isOptionalToApply {
+                state.report.add(
+                    severity: .error,
+                    file: file,
+                    path: "\(path).isOptionalToApply",
+                    message: "Ambient node modifiers must use isOptionalToApply: false."
+                )
+            }
+
+            if modifier.uses != -1 {
+                state.report.add(
+                    severity: .error,
+                    file: file,
+                    path: "\(path).uses",
+                    message: "Ambient node modifiers must use uses: -1."
+                )
+            }
+        }
     }
 
     private func validateConsequences(
@@ -1007,7 +1089,8 @@ struct ScenarioValidator {
         path: String,
         catalog: ValidationCatalog,
         state: inout ValidationState,
-        owningNodeID: UUID? = nil
+        owningNodeID: UUID? = nil,
+        allowResistance: Bool = true
     ) {
         for (index, consequence) in consequences.enumerated() {
             let consequencePath = "\(path)[\(index)]"
@@ -1106,6 +1189,42 @@ struct ScenarioValidator {
                         file: file,
                         path: consequencePath,
                         message: "tickClock requires clockName."
+                    )
+                }
+
+            case .adjustClock:
+                require(
+                    consequence.amount != nil,
+                    file: file,
+                    path: consequencePath,
+                    message: "adjustClock requires amount.",
+                    state: &state
+                )
+                if consequence.amount == 0 {
+                    state.report.add(
+                        severity: .error,
+                        file: file,
+                        path: consequencePath,
+                        message: "adjustClock amount must be non-zero."
+                    )
+                }
+                if let clockName = consequence.clockName {
+                    state.referencedClockNames.insert(clockName)
+                    state.writtenClockNames.insert(clockName)
+                    if !catalog.clockNames.contains(clockName) {
+                        state.report.add(
+                            severity: .error,
+                            file: file,
+                            path: consequencePath,
+                            message: "Unknown clock '\(clockName)'."
+                        )
+                    }
+                } else {
+                    state.report.add(
+                        severity: .error,
+                        file: file,
+                        path: consequencePath,
+                        message: "adjustClock requires clockName."
                     )
                 }
 
@@ -1368,6 +1487,59 @@ struct ScenarioValidator {
                     state: &state
                 )
 
+            case .grantNodeModifier:
+                if let modifier = consequence.modifier {
+                    validateModifier(
+                        modifier,
+                        file: file,
+                        path: "\(consequencePath).modifier",
+                        catalog: catalog,
+                        state: &state,
+                        requiresSourceKey: true,
+                        warnOnExplicitRuntimeID: true,
+                        requireMechanicalEffect: true,
+                        requireAmbientNodeState: true
+                    )
+                } else {
+                    state.report.add(
+                        severity: .error,
+                        file: file,
+                        path: consequencePath,
+                        message: "grantNodeModifier requires modifier."
+                    )
+                }
+
+                if let nodeID = consequence.inNodeID,
+                   catalog.hasFixedMap,
+                   !catalog.nodeIDs.contains(nodeID) {
+                    state.report.add(
+                        severity: .error,
+                        file: file,
+                        path: consequencePath,
+                        message: "grantNodeModifier references missing node \(nodeID.uuidString)."
+                    )
+                }
+
+            case .removeNodeModifier:
+                require(
+                    !(consequence.sourceKey?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ?? true),
+                    file: file,
+                    path: consequencePath,
+                    message: "removeNodeModifier requires sourceKey.",
+                    state: &state
+                )
+
+                if let nodeID = consequence.inNodeID,
+                   catalog.hasFixedMap,
+                   !catalog.nodeIDs.contains(nodeID) {
+                    state.report.add(
+                        severity: .error,
+                        file: file,
+                        path: consequencePath,
+                        message: "removeNodeModifier references missing node \(nodeID.uuidString)."
+                    )
+                }
+
             case .modifyDice:
                 require(
                     consequence.amount != nil,
@@ -1399,7 +1571,8 @@ struct ScenarioValidator {
                             file: file,
                             path: "\(consequencePath).options[\(optionIndex):\(option.title)]",
                             catalog: catalog,
-                            state: &state
+                            state: &state,
+                            allowResistance: allowResistance
                         )
                     }
                 } else {
@@ -1438,7 +1611,8 @@ struct ScenarioValidator {
                         file: file,
                         path: "\(consequencePath).consequences",
                         catalog: catalog,
-                        state: &state
+                        state: &state,
+                        allowResistance: allowResistance
                     )
                 } else {
                     state.report.add(
@@ -1522,6 +1696,15 @@ struct ScenarioValidator {
                 }
             }
             
+            if !allowResistance, consequence.resistance != nil {
+                state.report.add(
+                    severity: .error,
+                    file: file,
+                    path: "\(consequencePath).resistance",
+                    message: "Devil's Bargain fallout cannot declare resistance."
+                )
+            }
+
             if let resistance = consequence.resistance,
                let amount = resistance.amount,
                amount < 0 {

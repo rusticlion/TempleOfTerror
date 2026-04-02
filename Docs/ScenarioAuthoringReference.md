@@ -221,6 +221,25 @@ Roll outcomes use keys:
 
 `critical` is additive. On a critical success, runtime still resolves the base `success` or `partial` outcome and then appends any authored `critical` consequences.
 
+Actions may also include:
+
+- optional `devilsBargain`
+
+`devilsBargain` supports:
+
+- `title`
+- `description`
+- `consequences`
+
+Beta semantics:
+
+- A bargain is optional and should be omitted on most actions.
+- Bargains are only valid on actions that require a roll.
+- Selecting the bargain grants `+1d`.
+- Bargains can stack with `Push Yourself` and other optional roll boosts.
+- Bargain fallout always resolves after the rolled outcome's normal consequences.
+- Bargain fallout cannot declare resistance.
+
 ## Conditions
 
 Supported `GameCondition.type` values:
@@ -271,6 +290,7 @@ Authoring guidance:
 
 Fixed-map `MapNode` also supports:
 
+- optional `activeModifiers`
 - optional `onFirstEnter`
 - optional `onEnter`
 
@@ -299,6 +319,7 @@ Important semantics:
 - Forced relocation through `moveActingCharacterToNode` fires destination node hooks too.
 - Same-node relocation is ignored and does not retrigger entry hooks.
 - Pending choice/resistance flow still pauses later hooks; `onEnter` does not run underneath an unresolved `onFirstEnter`.
+- `activeModifiers` are ambient room conditions. They apply to characters currently in that room and stop applying when the character leaves.
 
 ## Consequences
 
@@ -308,6 +329,7 @@ Supported `Consequence.type` values and required params:
 - `adjustStress`: `amount`
 - `sufferHarm`: `level`, `familyId`
 - `tickClock`: `clockName`, `amount`
+- `adjustClock`: `clockName`, `amount`
 - `unlockConnection`: `fromNodeID`, `toNodeID` (fixed-map usage)
 - `lockConnection`: `fromNodeID`, `toNodeID` (fixed-map usage)
 - `moveActingCharacterToNode`: `toNodeID` (fixed-map usage)
@@ -323,6 +345,8 @@ Supported `Consequence.type` values and required params:
 - `modifyDice`: `amount` (and optional `duration`)
 - `grantModifier`: `modifier` (`modifier.sourceKey` required for authored content; supports `targetScope`)
 - `removeModifier`: `sourceKey` (supports `targetScope`)
+- `grantNodeModifier`: `modifier`, optional `inNodeID` (`"current"` maps to add-here behavior)
+- `removeNodeModifier`: `sourceKey`, optional `inNodeID` (`"current"` maps to remove-here behavior)
 - `createChoice`: `options` (one or more)
 - `triggerEvent`: `eventId`
 - `triggerConsequences`: `consequences` (nested)
@@ -362,6 +386,8 @@ When a consequence has no partial mitigation rule, resisting avoids it entirely.
 - `tickClock`
 - `incrementScenarioCounter`
 - `modifyDice`
+
+`adjustClock` does not get an automatic default resistance rule. Authors may still attach an explicit `resistance` rule when the clock change is positive.
 
 Explicit `resistance.amount` must be `>= 0`.
 
@@ -408,6 +434,16 @@ Authoring rules:
 - finite always-on modifiers consume only when they materially affect a committed roll
 
 Use `modifyDice` when you only need a lightweight bonus and do not need the modifier to persist as visible run state.
+
+Ambient room state uses the same `Modifier` payload through `MapNode.activeModifiers` and `grantNodeModifier`.
+
+Node modifier authoring rules:
+
+- ambient node modifiers must use `isOptionalToApply: false`
+- ambient node modifiers must use `uses: -1`
+- authored `grantNodeModifier` requires `modifier.sourceKey`
+- authored `removeNodeModifier` removes by `sourceKey`
+- granting the same `sourceKey` to the same room replaces the prior room modifier instead of stacking it
 
 ## Authored Choices
 

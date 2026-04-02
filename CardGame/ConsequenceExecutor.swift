@@ -423,33 +423,23 @@ struct ConsequenceExecutor {
                     )
                 }
             }
-        case .tickClock:
+        case .tickClock, .adjustClock:
             if let clockName = consequence.clockName,
                let amount = consequence.amount {
-                if let clockIndex = gameState.activeClocks.firstIndex(where: { $0.name == clockName }) {
-                    let clockID = gameState.activeClocks[clockIndex].id
-                    let queuedFrames = updateClock(
-                        id: clockID,
-                        ticks: amount,
-                        actingCharacterID: actingCharacter.id,
-                        gameState: &gameState
-                    )
-                    if !narrativeUsed {
-                        append("The '\(clockName)' clock progresses by \(amount).", to: &resolution)
-                    }
-                    prepend(queuedFrames, to: &resolution)
-                } else if let clockTemplate = content.clockTemplates.first(where: { $0.name == clockName }) {
-                    var newClock = clockTemplate
-                    newClock.progress = amount
-                    gameState.activeClocks.append(newClock)
-                    if !narrativeUsed {
-                        append(
-                            "A new situation develops: '\(clockName)' [\(newClock.progress)/\(newClock.segments)].",
-                            to: &resolution
-                        )
-                    }
-                } else {
-                    print("WARNING: Attempted to tick a clock named '\(clockName)' that does not exist in the scenario's clock registry.")
+                let change = applyClockChange(
+                    named: clockName,
+                    amount: amount,
+                    actingCharacterID: actingCharacter.id,
+                    gameState: &gameState
+                )
+                if !narrativeUsed {
+                    append(clockChangeMessage(for: clockName, change: change), to: &resolution)
+                }
+                prepend(change.queuedFrames, to: &resolution)
+
+                if change.wasMissing && amount > 0 && !change.didCreate {
+                    let actionDescription = consequence.kind == .adjustClock ? "adjust" : "tick"
+                    print("WARNING: Attempted to \(actionDescription) a clock named '\(clockName)' that does not exist in the scenario's clock registry.")
                 }
             }
         case .unlockConnection:
@@ -669,6 +659,26 @@ struct ConsequenceExecutor {
                         )
                     }
                 }
+            }
+        case .grantNodeModifier:
+            if let modifier = consequence.modifier,
+               let nodeID = targetNodeID(for: consequence, actingCharacterID: actingCharacter.id, gameState: gameState),
+               runtime.grantNodeModifier(modifier, inNodeID: nodeID, in: &gameState),
+               !narrativeUsed {
+                append(
+                    "Room condition applied in \(nodeName(for: nodeID, gameState: gameState)): \(modifier.longDescription).",
+                    to: &resolution
+                )
+            }
+        case .removeNodeModifier:
+            if let sourceKey = consequence.sourceKey,
+               let nodeID = targetNodeID(for: consequence, actingCharacterID: actingCharacter.id, gameState: gameState),
+               runtime.removeNodeModifier(sourceKey: sourceKey, fromNodeID: nodeID, in: &gameState),
+               !narrativeUsed {
+                append(
+                    "Room condition cleared in \(nodeName(for: nodeID, gameState: gameState)): \(readableIdentifier(sourceKey)).",
+                    to: &resolution
+                )
             }
         case .modifyDice:
             if let amount = consequence.amount {
@@ -990,16 +1000,86 @@ struct ConsequenceExecutor {
         return messages.joined(separator: "\n")
     }
 
-    private func updateClock(
-        id: UUID,
-        ticks: Int,
+    private struct ClockChangeResult {
+        let previousProgress: Int
+        let currentProgress: Int
+        let segments: Int
+        let queuedFrames: [QueuedFrame]
+        let didCreate: Bool
+        let wasMissing: Bool
+
+        var actualDelta: Int {
+            currentProgress - previousProgress
+        }
+    }
+
+    private func applyClockChange(
+        named clockName: String,
+        amount: Int,
         actingCharacterID: UUID,
         gameState: inout GameState
-    ) -> [QueuedFrame] {
-        guard let index = gameState.activeClocks.firstIndex(where: { $0.id == id }) else { return [] }
+    ) -> ClockChangeResult {
+        if let index = gameState.activeClocks.firstIndex(where: { $0.name == clockName }) {
+            var clock = gameState.activeClocks[index]
+            let previousProgress = clock.progress
+            let nextProgress = max(0, min(clock.segments, previousProgress + amount))
+            clock.progress = nextProgress
+            let queuedFrames = clockCallbackFrames(
+                for: clock,
+                previousProgress: previousProgress,
+                currentProgress: nextProgress,
+                actingCharacterID: actingCharacterID
+            )
+            gameState.activeClocks[index] = clock
+            return ClockChangeResult(
+                previousProgress: previousProgress,
+                currentProgress: nextProgress,
+                segments: clock.segments,
+                queuedFrames: queuedFrames,
+                didCreate: false,
+                wasMissing: false
+            )
+        }
 
-        var clock = gameState.activeClocks[index]
-        clock.progress = min(clock.segments, clock.progress + ticks)
+        guard amount > 0,
+              let clockTemplate = content.clockTemplates.first(where: { $0.name == clockName }) else {
+            return ClockChangeResult(
+                previousProgress: 0,
+                currentProgress: 0,
+                segments: 0,
+                queuedFrames: [],
+                didCreate: false,
+                wasMissing: true
+            )
+        }
+
+        var newClock = clockTemplate
+        let currentProgress = min(newClock.segments, amount)
+        newClock.progress = currentProgress
+        let queuedFrames = clockCallbackFrames(
+            for: newClock,
+            previousProgress: 0,
+            currentProgress: currentProgress,
+            actingCharacterID: actingCharacterID
+        )
+        gameState.activeClocks.append(newClock)
+        return ClockChangeResult(
+            previousProgress: 0,
+            currentProgress: currentProgress,
+            segments: newClock.segments,
+            queuedFrames: queuedFrames,
+            didCreate: true,
+            wasMissing: false
+        )
+    }
+
+    private func clockCallbackFrames(
+        for clock: GameClock,
+        previousProgress: Int,
+        currentProgress: Int,
+        actingCharacterID: UUID
+    ) -> [QueuedFrame] {
+        guard currentProgress > previousProgress else { return [] }
 
         var queuedFrames: [QueuedFrame] = []
         let callbackContext = ConsequenceContext(
@@ -1014,13 +1094,13 @@ struct ConsequenceExecutor {
             queuedFrames.append(QueuedFrame(context: callbackContext, consequences: tickConsequences))
         }
 
-        if clock.progress >= clock.segments,
+        if previousProgress < clock.segments,
+           currentProgress >= clock.segments,
            let completeConsequences = clock.onCompleteConsequences,
            !completeConsequences.isEmpty {
             queuedFrames.append(QueuedFrame(context: callbackContext, consequences: completeConsequences))
         }
 
-        gameState.activeClocks[index] = clock
         return queuedFrames
     }
 
@@ -1217,6 +1297,41 @@ struct ConsequenceExecutor {
         let beforeCount = gameState.party[charIndex].modifiers.count
         gameState.party[charIndex].modifiers.removeAll { $0.sourceKey == trimmedSourceKey }
         return gameState.party[charIndex].modifiers.count != beforeCount
+    }
+
+    private func targetNodeID(
+        for consequence: Consequence,
+        actingCharacterID: UUID,
+        gameState: GameState
+    ) -> UUID? {
+        consequence.inNodeID ?? runtime.currentNodeID(for: actingCharacterID, in: gameState)
+    }
+
+    private func nodeName(for nodeID: UUID, gameState: GameState) -> String {
+        gameState.dungeon?.nodes[nodeID.uuidString]?.name ?? "this room"
+    }
+
+    private func authoredNodeName(for consequence: Consequence, gameState: GameState) -> String {
+        guard let nodeID = consequence.inNodeID else { return "this room" }
+        return nodeName(for: nodeID, gameState: gameState)
+    }
+
+    private func clockChangeMessage(
+        for clockName: String,
+        change: ClockChangeResult
+    ) -> String {
+        guard !change.wasMissing else { return "" }
+
+        if change.didCreate {
+            return "A new situation develops: '\(clockName)' [\(change.currentProgress)/\(change.segments)]."
+        }
+
+        let appliedDelta = change.actualDelta
+        guard appliedDelta != 0 else { return "" }
+        if appliedDelta > 0 {
+            return "The '\(clockName)' clock progresses by \(appliedDelta)."
+        }
+        return "The '\(clockName)' clock is reduced by \(abs(appliedDelta))."
     }
 
     private func scopedCharacterIDs(
@@ -1439,7 +1554,7 @@ struct ConsequenceExecutor {
                 return nil
             case .sufferHarm:
                 return (consequence.level != nil && consequence.familyId != nil) ? explicitRule : nil
-            case .gainStress, .adjustStress, .tickClock, .incrementScenarioCounter:
+            case .gainStress, .adjustStress, .tickClock, .adjustClock, .incrementScenarioCounter:
                 return (consequence.amount ?? 0) > 0 ? explicitRule : nil
             default:
                 return explicitRule
@@ -1547,12 +1662,17 @@ struct ConsequenceExecutor {
                 return "Recover \(abs(amount)) Stress"
             }
             return "Stress"
-        case .tickClock:
+        case .tickClock, .adjustClock:
             let amount = consequence.amount ?? 0
-            if let clockName = consequence.clockName, amount > 0 {
-                return "\(clockName) +\(amount)"
+            if let clockName = consequence.clockName, amount != 0 {
+                let sign = amount > 0 ? "+" : ""
+                return "\(clockName) \(sign)\(amount)"
             }
-            return amount > 0 ? "Clock +\(amount)" : "Clock"
+            if amount != 0 {
+                let sign = amount > 0 ? "+" : ""
+                return "Clock \(sign)\(amount)"
+            }
+            return "Clock"
         case .moveActingCharacterToNode:
             return "Forced Move"
         case .lockConnection:
@@ -1573,6 +1693,10 @@ struct ConsequenceExecutor {
             return "Lose Modifier"
         case .grantModifier:
             return "Modifier Applied"
+        case .grantNodeModifier:
+            return "Room Condition Applied"
+        case .removeNodeModifier:
+            return "Room Condition Cleared"
         case .modifyDice:
             let amount = consequence.amount ?? 0
             if amount > 0 {
@@ -1654,6 +1778,15 @@ struct ConsequenceExecutor {
                 return "\(clockName) advances by \(amount)."
             }
             return "\(clockName) +\(amount)."
+        case .adjustClock:
+            let clockName = consequence.clockName ?? "A clock"
+            let amount = consequence.amount ?? 0
+            if amount >= 0 {
+                return futureTense ? "\(clockName) advances by \(amount)." : "\(clockName) +\(amount)."
+            }
+            return futureTense
+                ? "\(clockName) is reduced by \(abs(amount))."
+                : "\(clockName) \(amount)."
         case .moveActingCharacterToNode:
             let destination = destinationName(for: consequence, gameState: gameState)
             if consequence.effectiveTargetScope != .actingCharacter {
@@ -1691,6 +1824,18 @@ struct ConsequenceExecutor {
                 return "\(falloutSubject(for: consequence, futureTense: futureTense)) gain \(modifierText)."
             }
             return futureTense ? "You would gain \(modifierText)." : "Gain \(modifierText)."
+        case .grantNodeModifier:
+            let modifierText = consequence.modifier?.longDescription ?? "a room condition"
+            let nodeName = authoredNodeName(for: consequence, gameState: gameState)
+            return futureTense
+                ? "\(nodeName) would gain \(modifierText)."
+                : "\(nodeName) gains \(modifierText)."
+        case .removeNodeModifier:
+            let sourceText = consequence.sourceKey.map(readableIdentifier) ?? "a room condition"
+            let nodeName = authoredNodeName(for: consequence, gameState: gameState)
+            return futureTense
+                ? "\(nodeName) would lose \(sourceText)."
+                : "\(nodeName) loses \(sourceText)."
         case .modifyDice:
             let amount = consequence.amount ?? 0
             let duration = consequence.duration ?? "next roll"
@@ -1809,10 +1954,11 @@ struct ConsequenceExecutor {
                 return "Resist: reduce to +\(amount) Stress."
             }
             return "Resist: avoid this."
-        case .tickClock:
+        case .tickClock, .adjustClock:
             let amount = mitigated.amount ?? 0
             if let clockName = mitigated.clockName {
-                return "Resist: reduce to \(clockName) +\(amount)."
+                let sign = amount > 0 ? "+" : ""
+                return "Resist: reduce to \(clockName) \(sign)\(amount)."
             }
             return "Resist: reduce this clock by \(amount)."
         case .modifyDice:
@@ -1946,7 +2092,7 @@ struct ConsequenceExecutor {
             adjusted.amount = newAmount
             adjusted.resistance = nil
             return adjusted
-        case .tickClock:
+        case .tickClock, .adjustClock:
             let reduction = max(rule?.amount ?? 2, 0)
             let newAmount = max(0, (consequence.amount ?? 0) - reduction)
             guard newAmount > 0 else { return nil }

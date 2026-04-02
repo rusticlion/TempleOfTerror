@@ -460,7 +460,7 @@ struct Modifier: Codable {
     /// Short summary combining mechanical effects for compact displays.
     var shortDescription: String {
         var parts: [String] = []
-        if bonusDice != 0 { parts.append("+\(bonusDice)d") }
+        if bonusDice != 0 { parts.append(formattedDiceDelta) }
         if improvePosition { parts.append("Pos+") }
         if improveEffect { parts.append("Effect+") }
         if parts.isEmpty { return description }
@@ -470,12 +470,16 @@ struct Modifier: Codable {
     /// Detailed description including effect keywords and base text.
     var longDescription: String {
         var parts: [String] = []
-        if bonusDice != 0 { parts.append("+\(bonusDice)d") }
+        if bonusDice != 0 { parts.append(formattedDiceDelta) }
         if improvePosition { parts.append("Improved Position") }
         if improveEffect { parts.append("+1 Effect") }
         let detail = parts.joined(separator: ", ")
         if detail.isEmpty { return description }
         return "\(detail) - \(description)"
+    }
+
+    private var formattedDiceDelta: String {
+        bonusDice > 0 ? "+\(bonusDice)d" : "\(bonusDice)d"
     }
 }
 
@@ -1038,11 +1042,12 @@ struct ActionOption: Codable {
     var isGroupAction: Bool = false
     var requiredTag: String? = nil
     var conditions: [GameCondition]? = nil
+    var devilsBargain: DevilBargain? = nil
     var outcomes: [RollOutcome: [Consequence]] = [:]
 
     enum CodingKeys: String, CodingKey {
         case name, actionType, position, effect, requiresTest
-        case isGroupAction, requiredTag, conditions, outcomes
+        case isGroupAction, requiredTag, conditions, devilsBargain, outcomes
     }
 
     init(name: String,
@@ -1053,6 +1058,7 @@ struct ActionOption: Codable {
          requiresTest: Bool = true,
          requiredTag: String? = nil,
          conditions: [GameCondition]? = nil,
+         devilsBargain: DevilBargain? = nil,
          outcomes: [RollOutcome: [Consequence]] = [:]) {
         self.name = name
         self.actionType = actionType
@@ -1062,6 +1068,7 @@ struct ActionOption: Codable {
         self.isGroupAction = isGroupAction
         self.requiredTag = requiredTag
         self.conditions = conditions
+        self.devilsBargain = devilsBargain
         self.outcomes = outcomes
     }
 
@@ -1075,6 +1082,7 @@ struct ActionOption: Codable {
         requiresTest = try container.decodeIfPresent(Bool.self, forKey: .requiresTest) ?? true
         requiredTag = try container.decodeIfPresent(String.self, forKey: .requiredTag)
         conditions = try container.decodeIfPresent([GameCondition].self, forKey: .conditions)
+        devilsBargain = try container.decodeIfPresent(DevilBargain.self, forKey: .devilsBargain)
         let rawOutcomes = try container.decodeIfPresent([String: [Consequence]].self, forKey: .outcomes) ?? [:]
         var mapped: [RollOutcome: [Consequence]] = [:]
         for (key, value) in rawOutcomes {
@@ -1099,6 +1107,7 @@ struct ActionOption: Codable {
         }
         try container.encodeIfPresent(requiredTag, forKey: .requiredTag)
         try container.encodeIfPresent(conditions, forKey: .conditions)
+        try container.encodeIfPresent(devilsBargain, forKey: .devilsBargain)
         var raw: [String: [Consequence]] = [:]
         for (key, value) in outcomes { raw[key.rawValue] = value }
         try container.encode(raw, forKey: .outcomes)
@@ -1114,6 +1123,12 @@ enum RollOutcome: String, Codable {
     case success
     case partial
     case failure
+}
+
+struct DevilBargain: Codable {
+    var title: String
+    var description: String
+    var consequences: [Consequence]
 }
 
 // MARK: - Conditional Consequences Support
@@ -1191,6 +1206,7 @@ struct Consequence: Codable {
         case adjustStress
         case sufferHarm
         case tickClock
+        case adjustClock
         case unlockConnection
         case lockConnection
         case moveActingCharacterToNode
@@ -1205,6 +1221,8 @@ struct Consequence: Codable {
         case removeTreasureWithTag
         case grantModifier
         case removeModifier
+        case grantNodeModifier
+        case removeNodeModifier
         case modifyDice
         case createChoice
         case triggerEvent
@@ -1338,10 +1356,12 @@ struct Consequence: Codable {
             }
         }
 
-        if resolvedKind == .grantModifier {
+        if resolvedKind == .grantModifier || resolvedKind == .grantNodeModifier {
             modifier = try container.decodeIfPresent(Modifier.self, forKey: .modifier)
-        } else if resolvedKind == .removeModifier {
+            inNodeID = try container.decodeIfPresent(UUID.self, forKey: .inNodeID)
+        } else if resolvedKind == .removeModifier || resolvedKind == .removeNodeModifier {
             sourceKey = try container.decodeIfPresent(String.self, forKey: .sourceKey)
+            inNodeID = try container.decodeIfPresent(UUID.self, forKey: .inNodeID)
         }
 
         conditions = try container.decodeIfPresent([GameCondition].self, forKey: .conditions)
@@ -1365,6 +1385,10 @@ struct Consequence: Codable {
             try container.encodeIfPresent(familyId, forKey: .familyId)
         case .tickClock:
             try container.encode(ConsequenceKind.tickClock, forKey: .type)
+            try container.encodeIfPresent(clockName, forKey: .clockName)
+            try container.encodeIfPresent(amount, forKey: .amount)
+        case .adjustClock:
+            try container.encode(ConsequenceKind.adjustClock, forKey: .type)
             try container.encodeIfPresent(clockName, forKey: .clockName)
             try container.encodeIfPresent(amount, forKey: .amount)
         case .unlockConnection:
@@ -1427,6 +1451,14 @@ struct Consequence: Codable {
         case .removeModifier:
             try container.encode(ConsequenceKind.removeModifier, forKey: .type)
             try container.encodeIfPresent(sourceKey, forKey: .sourceKey)
+        case .grantNodeModifier:
+            try container.encode(ConsequenceKind.grantNodeModifier, forKey: .type)
+            try container.encodeIfPresent(modifier, forKey: .modifier)
+            try container.encodeIfPresent(inNodeID, forKey: .inNodeID)
+        case .removeNodeModifier:
+            try container.encode(ConsequenceKind.removeNodeModifier, forKey: .type)
+            try container.encodeIfPresent(sourceKey, forKey: .sourceKey)
+            try container.encodeIfPresent(inNodeID, forKey: .inNodeID)
         case .modifyDice:
             try container.encode(ConsequenceKind.modifyDice, forKey: .type)
             try container.encodeIfPresent(amount, forKey: .amount)
@@ -1571,6 +1603,14 @@ extension Consequence {
         return c
     }
 
+    /// Adjust a named clock by the provided signed amount.
+    static func adjustClock(name: String, amount: Int) -> Consequence {
+        var c = Consequence(kind: .adjustClock)
+        c.clockName = name
+        c.amount = amount
+        return c
+    }
+
     /// Remove the specified interactable from the current node.
     static func removeInteractable(id: String) -> Consequence {
         var c = Consequence(kind: .removeInteractable)
@@ -1654,6 +1694,20 @@ extension Consequence {
     static func removeModifier(sourceKey: String) -> Consequence {
         var c = Consequence(kind: .removeModifier)
         c.sourceKey = sourceKey
+        return c
+    }
+
+    static func grantNodeModifier(_ modifier: Modifier, inNodeID: UUID? = nil) -> Consequence {
+        var c = Consequence(kind: .grantNodeModifier)
+        c.modifier = modifier
+        c.inNodeID = inNodeID
+        return c
+    }
+
+    static func removeNodeModifier(sourceKey: String, inNodeID: UUID? = nil) -> Consequence {
+        var c = Consequence(kind: .removeNodeModifier)
+        c.sourceKey = sourceKey
+        c.inNodeID = inNodeID
         return c
     }
 
@@ -1848,8 +1902,70 @@ struct MapNode: Identifiable, Codable {
     var connections: [NodeConnection]
     var theme: String? = nil
     var isDiscovered: Bool = false // To support fog of war
+    var activeModifiers: [Modifier] = []
     var onEnter: [Consequence]? = nil
     var onFirstEnter: [Consequence]? = nil
+
+    enum CodingKeys: String, CodingKey {
+        case id, name, soundProfile, interactables, connections
+        case theme, isDiscovered, activeModifiers, onEnter, onFirstEnter
+    }
+
+    init(
+        id: UUID,
+        name: String,
+        soundProfile: String,
+        interactables: [Interactable],
+        connections: [NodeConnection],
+        theme: String? = nil,
+        isDiscovered: Bool = false,
+        activeModifiers: [Modifier] = [],
+        onEnter: [Consequence]? = nil,
+        onFirstEnter: [Consequence]? = nil
+    ) {
+        self.id = id
+        self.name = name
+        self.soundProfile = soundProfile
+        self.interactables = interactables
+        self.connections = connections
+        self.theme = theme
+        self.isDiscovered = isDiscovered
+        self.activeModifiers = activeModifiers
+        self.onEnter = onEnter
+        self.onFirstEnter = onFirstEnter
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(UUID.self, forKey: .id)
+        name = try container.decode(String.self, forKey: .name)
+        soundProfile = try container.decode(String.self, forKey: .soundProfile)
+        interactables = try container.decodeIfPresent([Interactable].self, forKey: .interactables) ?? []
+        connections = try container.decodeIfPresent([NodeConnection].self, forKey: .connections) ?? []
+        theme = try container.decodeIfPresent(String.self, forKey: .theme)
+        isDiscovered = try container.decodeIfPresent(Bool.self, forKey: .isDiscovered) ?? false
+        activeModifiers = try container.decodeIfPresent([Modifier].self, forKey: .activeModifiers) ?? []
+        onEnter = try container.decodeIfPresent([Consequence].self, forKey: .onEnter)
+        onFirstEnter = try container.decodeIfPresent([Consequence].self, forKey: .onFirstEnter)
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(name, forKey: .name)
+        try container.encode(soundProfile, forKey: .soundProfile)
+        try container.encode(interactables, forKey: .interactables)
+        try container.encode(connections, forKey: .connections)
+        try container.encodeIfPresent(theme, forKey: .theme)
+        if isDiscovered {
+            try container.encode(isDiscovered, forKey: .isDiscovered)
+        }
+        if !activeModifiers.isEmpty {
+            try container.encode(activeModifiers, forKey: .activeModifiers)
+        }
+        try container.encodeIfPresent(onEnter, forKey: .onEnter)
+        try container.encodeIfPresent(onFirstEnter, forKey: .onFirstEnter)
+    }
 }
 
 // Represents a path from one node to another
