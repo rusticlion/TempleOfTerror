@@ -20,6 +20,8 @@ struct ContentView: View {
     @State private var showingDebugTools = false
 #endif
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @Environment(\.verticalSizeClass) private var verticalSizeClass
 
     init(scenario: String = RuntimeDefaults.defaultScenarioID, partyPlan: PartyBuildPlan? = nil) {
         // Start a new game using the provided scenario
@@ -122,6 +124,10 @@ struct ContentView: View {
         }
     }
 
+    private var prefersPortraitRail: Bool {
+        horizontalSizeClass == .compact && verticalSizeClass != .compact
+    }
+
     private var pressureItems: [PressureSummaryItem] {
         var items: [PressureSummaryItem] = []
 
@@ -197,6 +203,17 @@ struct ContentView: View {
                    pendingRoll == nil,
                    viewModel.gameState.pendingResolution?.isComplete == true {
                     viewModel.clearPendingResolution()
+                }
+            }
+        )
+    }
+
+    private var activeErrorBinding: Binding<UserFacingError?> {
+        Binding(
+            get: { viewModel.activeError },
+            set: { newValue in
+                if newValue == nil {
+                    viewModel.clearActiveError()
                 }
             }
         )
@@ -320,11 +337,12 @@ struct ContentView: View {
                                 onOpenDetails: {
                                     showingCharacterSheet = true
                                 },
-                                embeddedInRail: true
+                                embeddedInRail: true,
+                                compactMode: prefersPortraitRail
                             )
-                            .padding(.horizontal, 12)
-                            .padding(.top, 12)
-                            .padding(.bottom, 10)
+                            .padding(.horizontal, prefersPortraitRail ? 2 : 12)
+                            .padding(.top, prefersPortraitRail ? 2 : 12)
+                            .padding(.bottom, prefersPortraitRail ? 8 : 10)
 
                             Rectangle()
                                 .fill(Theme.parchmentDeep.opacity(0.18))
@@ -391,12 +409,19 @@ struct ContentView: View {
                         .accessibilityIdentifier("mapButton")
                     }
                 }
-                .padding(.horizontal, 12)
-                .padding(.top, 10)
-                .padding(.bottom, 12)
+                .padding(.horizontal, prefersPortraitRail ? 10 : 12)
+                .padding(.top, prefersPortraitRail ? 8 : 10)
+                .padding(.bottom, prefersPortraitRail ? 10 : 12)
                 .background(Theme.toolbarBackground)
             }
                 .disabled(viewModel.gameState.status == .gameOver)
+                .alert(item: activeErrorBinding) { error in
+                    Alert(
+                        title: Text(error.title),
+                        message: Text(error.message),
+                        dismissButton: .default(Text("OK"))
+                    )
+                }
                 .sheet(item: $pendingRoll) { pending in
                     if let character = selectedCharacter {
                         let clockID = viewModel.gameState.activeClocks.first?.id
@@ -415,16 +440,11 @@ struct ContentView: View {
                 }
                 .sheet(isPresented: $showingCharacterSheet) {
                     if let character = selectedCharacter {
-                        ScrollView {
-                            CharacterSheetView(
-                                character: character,
-                                locationName: viewModel.getNodeName(for: character.id),
-                                harmFamilies: viewModel.harmFamilies
-                            )
-                            .padding()
-                        }
-                        .background(Theme.bgWarm)
-                        .presentationBackground(Theme.bgWarm)
+                        CharacterDetailSheetView(
+                            character: character,
+                            locationName: viewModel.getNodeName(for: character.id),
+                            harmFamilies: viewModel.harmFamilies
+                        )
                         .presentationDetents([.medium, .large])
                     } else {
                         Text("No explorer selected")

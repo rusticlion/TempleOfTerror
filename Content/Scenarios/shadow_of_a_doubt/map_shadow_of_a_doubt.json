@@ -28,11 +28,268 @@
               }
             }
           ]
+        },
+        {
+          "id": "shadow_of_a_doubt_silver_lantern",
+          "title": "Silver Lantern",
+          "description": "A soot-black lantern hangs cold by the mantel until someone speaks over it.",
+          "availableActions": [
+            {
+              "name": "Lift it for the others",
+              "actionType": "Attune",
+              "position": "controlled",
+              "effect": "standard",
+              "outcomes": {
+                "success": [
+                  {
+                    "type": "grantModifier",
+                    "targetScope": "othersHere",
+                    "modifier": {
+                      "sourceKey": "sod_lantern_guidance",
+                      "improvePosition": true,
+                      "applicableToAction": "Study",
+                      "uses": 1,
+                      "isOptionalToApply": false,
+                      "description": "from Lantern Guidance"
+                    }
+                  }
+                ],
+                "partial": [
+                  {
+                    "type": "grantModifier",
+                    "targetScope": "othersHere",
+                    "modifier": {
+                      "sourceKey": "sod_lantern_guidance",
+                      "improvePosition": true,
+                      "applicableToAction": "Study",
+                      "uses": 1,
+                      "isOptionalToApply": false,
+                      "description": "from Lantern Guidance"
+                    }
+                  },
+                  {
+                    "type": "gainStress",
+                    "amount": 1
+                  }
+                ],
+                "failure": [
+                  {
+                    "type": "gainStress",
+                    "amount": 1
+                  }
+                ]
+              }
+            }
+          ],
+          "tags": [
+            "Support",
+            "Light"
+          ]
         }
       ],
-      "connections": [],
+      "connections": [
+        {
+          "toNodeID": "1DF98C8E-C1C0-5CB8-99A7-5ED5ADF28FFF",
+          "isUnlocked": true,
+          "description": "Climb the grand stair"
+        }
+      ],
       "theme": "approach",
       "isDiscovered": true
+    },
+    "1DF98C8E-C1C0-5CB8-99A7-5ED5ADF28FFF": {
+      "id": "1DF98C8E-C1C0-5CB8-99A7-5ED5ADF28FFF",
+      "name": "Grand Stair",
+      "soundProfile": "chasm_wind",
+      "interactables": [
+        {
+          "id": "shadow_of_a_doubt_nursery_door",
+          "title": "Half-Open Nursery Door",
+          "description": "A nursery door stands ajar. A lullaby continues on the other side whether anyone is there or not.",
+          "availableActions": [
+            {
+              "name": "Follow the humming together",
+              "actionType": "Attune",
+              "position": "risky",
+              "effect": "standard",
+              "conditions": [
+                {
+                  "type": "scenarioFlagSet",
+                  "stringParam": "sod_stairs_listened"
+                }
+              ],
+              "outcomes": {
+                "success": [
+                  {
+                    "type": "unlockConnection",
+                    "fromNodeID": "1DF98C8E-C1C0-5CB8-99A7-5ED5ADF28FFF",
+                    "toNodeID": "B1CC6D95-FC92-5750-986B-17C48F2169C9"
+                  },
+                  {
+                    "type": "removeInteractable",
+                    "id": "self"
+                  },
+                  {
+                    "type": "moveActingCharacterToNode",
+                    "targetScope": "allHere",
+                    "toNodeID": "B1CC6D95-FC92-5750-986B-17C48F2169C9"
+                  }
+                ],
+                "partial": [
+                  {
+                    "type": "unlockConnection",
+                    "fromNodeID": "1DF98C8E-C1C0-5CB8-99A7-5ED5ADF28FFF",
+                    "toNodeID": "B1CC6D95-FC92-5750-986B-17C48F2169C9"
+                  },
+                  {
+                    "type": "removeInteractable",
+                    "id": "self"
+                  },
+                  {
+                    "type": "moveActingCharacterToNode",
+                    "targetScope": "allHere",
+                    "toNodeID": "B1CC6D95-FC92-5750-986B-17C48F2169C9"
+                  },
+                  {
+                    "type": "gainStress",
+                    "amount": 1
+                  }
+                ],
+                "failure": [
+                  {
+                    "type": "gainStress",
+                    "amount": 1
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "connections": [
+        {
+          "toNodeID": "D04E37DB-9093-56D7-9348-975968C3CE92",
+          "isUnlocked": true,
+          "description": "Descend to the parlor"
+        },
+        {
+          "toNodeID": "B1CC6D95-FC92-5750-986B-17C48F2169C9",
+          "isUnlocked": false,
+          "description": "Cross the nursery threshold"
+        }
+      ],
+      "theme": "staircase",
+      "isDiscovered": false,
+      "onEnter": [
+        {
+          "type": "removeModifier",
+          "targetScope": "allHere",
+          "sourceKey": "sod_nursery_hush",
+          "description": "The nursery's hush breaks as soon as you reach the stair."
+        }
+      ],
+      "onFirstEnter": [
+        {
+          "type": "setScenarioFlag",
+          "flagId": "sod_stairs_listened",
+          "description": "Something in the wallpaper starts listening back."
+        }
+      ]
+    },
+    "B1CC6D95-FC92-5750-986B-17C48F2169C9": {
+      "id": "B1CC6D95-FC92-5750-986B-17C48F2169C9",
+      "name": "Nursery",
+      "soundProfile": "silent_tomb",
+      "interactables": [
+        {
+          "id": "shadow_of_a_doubt_family_ledger",
+          "title": "Family Ledger",
+          "description": "Names have been scratched out and rewritten until the whole bloodline looks negotiated.",
+          "availableActions": [
+            {
+              "name": "Read the altered family record",
+              "actionType": "Study",
+              "position": "risky",
+              "effect": "standard",
+              "conditions": [
+                {
+                  "type": "scenarioFlagSet",
+                  "stringParam": "sod_nursery_awakened"
+                }
+              ],
+              "outcomes": {
+                "success": [
+                  {
+                    "type": "gainTreasure",
+                    "treasureId": "sod_inheritance_record"
+                  },
+                  {
+                    "type": "removeInteractable",
+                    "id": "self"
+                  }
+                ],
+                "partial": [
+                  {
+                    "type": "gainTreasure",
+                    "treasureId": "sod_inheritance_record"
+                  },
+                  {
+                    "type": "gainStress",
+                    "amount": 1
+                  },
+                  {
+                    "type": "removeInteractable",
+                    "id": "self"
+                  }
+                ],
+                "failure": [
+                  {
+                    "type": "gainStress",
+                    "amount": 1
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "connections": [
+        {
+          "toNodeID": "1DF98C8E-C1C0-5CB8-99A7-5ED5ADF28FFF",
+          "isUnlocked": true,
+          "description": "Retreat to the stair"
+        }
+      ],
+      "theme": "haunted_nursery",
+      "isDiscovered": false,
+      "onEnter": [
+        {
+          "type": "gainStress",
+          "amount": 1,
+          "targetScope": "allHere",
+          "description": "The rocking horse turns to follow the newcomers."
+        }
+      ],
+      "onFirstEnter": [
+        {
+          "type": "setScenarioFlag",
+          "flagId": "sod_nursery_awakened",
+          "description": "Every toy in the room goes still at once."
+        },
+        {
+          "type": "grantModifier",
+          "targetScope": "allHere",
+          "description": "The nursery dampens every breath until the smallest details stand out.",
+          "modifier": {
+            "sourceKey": "sod_nursery_hush",
+            "bonusDice": 1,
+            "applicableToAction": "Study",
+            "uses": 1,
+            "isOptionalToApply": false,
+            "description": "from the Nursery's Hush"
+          }
+        }
+      ]
     }
   }
 }

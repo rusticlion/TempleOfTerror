@@ -1,0 +1,46 @@
+{
+  "yaml.validate": true,
+  "yaml.format.enable": true,
+  "yaml.schemas": {
+    "Authoring/Schemas/scenario.schema.json": [
+      "Authoring/Scenarios/*/scenario.yaml",
+      "Authoring/Scenarios/*/scenario.yml"
+    ],
+    "Authoring/Schemas/archetypes.schema.json": [
+      "Authoring/Scenarios/*/archetypes.yaml",
+      "Authoring/Scenarios/*/archetypes.yml"
+    ],
+    "Authoring/Schemas/clocks.schema.json": [
+      "Authoring/Scenarios/*/clocks.yaml",
+      "Authoring/Scenarios/*/clocks.yml"
+    ],
+    "Authoring/Schemas/treasures.schema.json": [
+      "Authoring/Scenarios/*/treasures.yaml",
+      "Authoring/Scenarios/*/treasures.yml"
+    ],
+    "Authoring/Schemas/harm_families.schema.json": [
+      "Authoring/Scenarios/*/harm_families.yaml",
+      "Authoring/Scenarios/*/harm_families.yml"
+    ],
+    "Authoring/Schemas/map.schema.json": [
+      "Authoring/Scenarios/*/map.yaml",
+      "Authoring/Scenarios/*/map.yml"
+    ],
+    "Authoring/Schemas/interactables.schema.json": [
+      "Authoring/Scenarios/*/interactables.yaml",
+      "Authoring/Scenarios/*/interactables.yml"
+    ],
+    "Authoring/Schemas/interactable_entry.schema.json": [
+      "Authoring/Scenarios/*/interactables/*.yaml",
+      "Authoring/Scenarios/*/interactables/*.yml"
+    ],
+    "Authoring/Schemas/events.schema.json": [
+      "Authoring/Scenarios/*/events.yaml",
+      "Authoring/Scenarios/*/events.yml"
+    ],
+    "Authoring/Schemas/event.schema.json": [
+      "Authoring/Scenarios/*/events/*.yaml",
+      "Authoring/Scenarios/*/events/*.yml"
+    ]
+  }
+}

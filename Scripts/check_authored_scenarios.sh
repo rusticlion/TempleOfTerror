@@ -48,6 +48,8 @@ if [[ "${#SCENARIO_IDS[@]}" -eq 0 ]]; then
   exit 1
 fi
 
+"$ROOT_DIR/Scripts/validate_authored_yaml.sh" "${SCENARIO_IDS[@]}"
+
 "$ROOT_DIR/Scripts/compile_scenarios.sh" "${SCENARIO_IDS[@]}"
 
 for scenario_id in "${SCENARIO_IDS[@]}"; do

@@ -46,8 +46,10 @@ class AuthoredMapPreviewer
 
   def build_preview(scenario_id)
     scenario_dir = File.join(AUTHORING_ROOT, scenario_id)
-    map_path = File.join(scenario_dir, "map.yaml")
-    raise PreviewError, "Missing #{relative_to_root(map_path)}" unless File.file?(map_path)
+    map_path = find_yaml_file(scenario_dir, "map")
+    unless map_path
+      raise PreviewError, "Missing #{relative_to_root(File.join(scenario_dir, "map.yaml"))} or #{relative_to_root(File.join(scenario_dir, "map.yml"))}"
+    end
 
     map_document = deep_stringify(YAML.safe_load(File.read(map_path), aliases: true))
     nodes = map_document["nodes"]

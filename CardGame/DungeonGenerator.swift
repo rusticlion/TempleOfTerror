@@ -267,15 +267,21 @@ struct ScenarioRuntime {
             return MoveOutcome(didMove: false, enteredNode: nil)
         }
 
+        let movedIDs: [UUID]
         if movingGroupedParty {
-            for member in gameState.party where !member.isDefeated {
-                gameState.characterLocations[member.id.uuidString] = connection.toNodeID
-            }
+            movedIDs = gameState.party
+                .filter { !$0.isDefeated }
+                .map(\.id)
         } else {
-            gameState.characterLocations[characterID.uuidString] = connection.toNodeID
+            movedIDs = [characterID]
         }
 
-        let enteredNode = discoverNode(id: connection.toNodeID, in: &gameState)
+        let enteredNode = moveCharacters(
+            ids: movedIDs,
+            toNodeID: connection.toNodeID,
+            focusCharacterID: characterID,
+            in: &gameState
+        )
         return MoveOutcome(didMove: true, enteredNode: enteredNode)
     }
 
@@ -332,9 +338,66 @@ struct ScenarioRuntime {
         toNodeID: UUID,
         in gameState: inout GameState
     ) -> MapNode? {
+        moveCharacters(
+            ids: [characterID],
+            toNodeID: toNodeID,
+            focusCharacterID: characterID,
+            in: &gameState
+        )
+    }
+
+    @discardableResult
+    func moveCharacters(
+        ids characterIDs: [UUID],
+        toNodeID: UUID,
+        focusCharacterID: UUID? = nil,
+        in gameState: inout GameState
+    ) -> MapNode? {
         guard gameState.dungeon?.nodes[toNodeID.uuidString] != nil else { return nil }
-        gameState.characterLocations[characterID.uuidString] = toNodeID
+
+        var seenIDs: Set<UUID> = []
+        let uniqueIDs = characterIDs.filter { seenIDs.insert($0).inserted }
+        for characterID in uniqueIDs {
+            gameState.characterLocations[characterID.uuidString] = toNodeID
+        }
+
+        if let focusCharacterID {
+            if uniqueIDs.contains(focusCharacterID) {
+                gameState.currentNodeID = toNodeID
+            } else if let focusedNodeID = currentNodeID(for: focusCharacterID, in: gameState) {
+                gameState.currentNodeID = focusedNodeID
+            }
+        } else {
+            gameState.currentNodeID = toNodeID
+        }
+
         return discoverNode(id: toNodeID, in: &gameState)
+    }
+
+    func entryConsequences(
+        for nodeID: UUID,
+        via connection: NodeConnection? = nil,
+        in gameState: inout GameState
+    ) -> [Consequence] {
+        guard let node = gameState.dungeon?.nodes[nodeID.uuidString] else {
+            return connection?.onTraverse ?? []
+        }
+
+        var consequences = connection?.onTraverse ?? []
+        let firstEnterConsequences = node.onFirstEnter ?? []
+        let firstEnterKey = nodeID.uuidString
+        let isFirstEnter = !gameState.triggeredFirstEnterNodeIDs.contains(firstEnterKey)
+
+        if !firstEnterConsequences.isEmpty, isFirstEnter {
+            gameState.triggeredFirstEnterNodeIDs.append(firstEnterKey)
+            consequences.append(contentsOf: firstEnterConsequences)
+        }
+
+        if let onEnter = node.onEnter {
+            consequences.append(contentsOf: onEnter)
+        }
+
+        return consequences
     }
 
     @discardableResult

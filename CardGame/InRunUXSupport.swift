@@ -298,65 +298,127 @@ struct ActiveExplorerTacticalHUD: View {
     let immediateWarnings: [String]
     let onOpenDetails: () -> Void
     var embeddedInRail: Bool = false
+    var compactMode: Bool = false
 
     private var titleSize: CGFloat {
-        embeddedInRail ? 18 : 22
+        if compactMode { return 16 }
+        return embeddedInRail ? 18 : 22
     }
 
     private var actionFontSize: CGFloat {
-        embeddedInRail ? 13 : 14
+        if compactMode { return 12 }
+        return embeddedInRail ? 13 : 14
     }
 
     private var verticalSpacing: CGFloat {
-        embeddedInRail ? 8 : 10
+        if compactMode { return 6 }
+        return embeddedInRail ? 8 : 10
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: verticalSpacing) {
-            HStack(alignment: .top, spacing: 12) {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(character.name)
-                        .font(Theme.displayFont(size: titleSize, weight: .semibold))
-                        .foregroundColor(Theme.parchment)
+            if compactMode {
+                HStack(alignment: .top, spacing: 10) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(character.name)
+                            .font(Theme.displayFont(size: titleSize, weight: .semibold))
+                            .foregroundColor(Theme.parchment)
+                            .lineLimit(1)
 
-                    Text(character.characterClass)
-                        .font(Theme.systemFont(size: 11, weight: .semibold))
-                        .foregroundColor(Theme.inkFaded)
-                        .textCase(.uppercase)
-                        .tracking(0.7)
+                        Text(character.characterClass)
+                            .font(Theme.systemFont(size: 10, weight: .semibold))
+                            .foregroundColor(Theme.inkFaded)
+                            .textCase(.uppercase)
+                            .tracking(0.7)
+                    }
+
+                    Spacer(minLength: 8)
+
+                    HStack(spacing: 8) {
+                        InRunStateBadge(
+                            text: "Stress \(character.stress)/9",
+                            foreground: Theme.ink,
+                            fill: Theme.gold.opacity(0.82)
+                        )
+
+                        InRunStateBadge(
+                            text: character.coarseHarmStateLabel,
+                            foreground: character.coarseHarmTint == Theme.gold ? Theme.ink : .white,
+                            fill: character.coarseHarmTint.opacity(0.85)
+                        )
+                    }
                 }
 
-                Spacer(minLength: 12)
+                HStack(alignment: .center, spacing: 10) {
+                    StressTrackView(stress: character.stress, size: 8)
 
-                VStack(alignment: .trailing, spacing: 8) {
-                    InRunStateBadge(
-                        text: character.coarseHarmStateLabel,
-                        foreground: character.coarseHarmTint == Theme.gold ? Theme.ink : .white,
-                        fill: character.coarseHarmTint.opacity(0.85)
+                    ActionRatingsLine(
+                        character: character,
+                        fontSize: actionFontSize,
+                        foreground: Theme.parchmentDark
                     )
 
+                    Spacer(minLength: 8)
+
                     Button("Details", action: onOpenDetails)
-                        .font(Theme.systemFont(size: 11, weight: .semibold))
+                        .font(Theme.systemFont(size: 10, weight: .semibold))
                         .foregroundColor(Theme.gold)
                         .buttonStyle(.plain)
                 }
-            }
 
-            VStack(alignment: .leading, spacing: 5) {
-                Text("Stress \(character.stress)/9")
-                    .font(Theme.systemFont(size: 11, weight: .semibold))
-                    .foregroundColor(Theme.inkFaded)
+                if !immediateWarnings.isEmpty {
+                    Text(immediateWarnings.joined(separator: " • "))
+                        .font(Theme.systemFont(size: 10, weight: .semibold))
+                        .foregroundColor(Theme.dangerLight)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
+                }
+            } else {
+                HStack(alignment: .top, spacing: 12) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(character.name)
+                            .font(Theme.displayFont(size: titleSize, weight: .semibold))
+                            .foregroundColor(Theme.parchment)
 
-                StressTrackView(stress: character.stress)
-            }
+                        Text(character.characterClass)
+                            .font(Theme.systemFont(size: 11, weight: .semibold))
+                            .foregroundColor(Theme.inkFaded)
+                            .textCase(.uppercase)
+                            .tracking(0.7)
+                    }
 
-            ActionRatingsLine(character: character, fontSize: actionFontSize, foreground: Theme.parchmentDark)
+                    Spacer(minLength: 12)
 
-            if !immediateWarnings.isEmpty {
-                Text(immediateWarnings.joined(separator: " • "))
-                    .font(Theme.systemFont(size: 11, weight: .semibold))
-                    .foregroundColor(Theme.dangerLight)
-                    .fixedSize(horizontal: false, vertical: true)
+                    VStack(alignment: .trailing, spacing: 8) {
+                        InRunStateBadge(
+                            text: character.coarseHarmStateLabel,
+                            foreground: character.coarseHarmTint == Theme.gold ? Theme.ink : .white,
+                            fill: character.coarseHarmTint.opacity(0.85)
+                        )
+
+                        Button("Details", action: onOpenDetails)
+                            .font(Theme.systemFont(size: 11, weight: .semibold))
+                            .foregroundColor(Theme.gold)
+                            .buttonStyle(.plain)
+                    }
+                }
+
+                VStack(alignment: .leading, spacing: 5) {
+                    Text("Stress \(character.stress)/9")
+                        .font(Theme.systemFont(size: 11, weight: .semibold))
+                        .foregroundColor(Theme.inkFaded)
+
+                    StressTrackView(stress: character.stress)
+                }
+
+                ActionRatingsLine(character: character, fontSize: actionFontSize, foreground: Theme.parchmentDark)
+
+                if !immediateWarnings.isEmpty {
+                    Text(immediateWarnings.joined(separator: " • "))
+                        .font(Theme.systemFont(size: 11, weight: .semibold))
+                        .foregroundColor(Theme.dangerLight)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
             }
         }
         .padding(.horizontal, embeddedInRail ? 0 : 16)

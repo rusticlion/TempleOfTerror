@@ -151,6 +151,23 @@ Recommended structure:
 - use flags/counters for scenario memory
 - use clocks for visible pressure, not invisible bookkeeping
 
+Use the newer room/state primitives deliberately:
+
+- use `grantModifier` when a scene should create a visible temporary state that can matter on later rolls
+- use `removeModifier` when that state should be cleaned up explicitly by room flow or a resolving action
+- use node `onFirstEnter` for a room's one-time reveal or setup beat
+- use node `onEnter` for recurring pressure every time explorers arrive
+- use scoped `moveActingCharacterToNode` when a trap, guide, escort, or supernatural effect should relocate a full local cohort
+
+Current concrete example:
+
+- `Authoring/Scenarios/shadow_of_a_doubt/map.yaml` now includes a small authored slice showing:
+  - a support action that grants a modifier to `othersHere`
+  - an action that unlocks a path and force-moves `allHere`
+  - a room `onFirstEnter` hook that grants a temporary room-state modifier
+  - a room `onEnter` hook that applies recurring pressure
+  - a return-room `onEnter` hook that clears the room-specific modifier
+
 For larger scenarios, create split event files:
 
 ```bash
@@ -198,11 +215,12 @@ Prefer this during active development:
 ./Scripts/check_authored_scenarios.sh shadow_of_a_doubt
 ```
 
-This currently does three things:
+This currently does four things:
 
-1. compiles authored YAML
-2. validates the generated runtime scenario
-3. refreshes the authored preview in `Authoring/Previews/`
+1. validates authored YAML against the local schemas
+2. compiles authored YAML
+3. validates the generated runtime scenario
+4. refreshes the authored preview in `Authoring/Previews/`
 
 Use plain validator runs when you only need semantic validation:
 

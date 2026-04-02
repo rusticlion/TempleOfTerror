@@ -64,6 +64,12 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
+        "id": {
+          "type": "string"
+        },
+        "sourceKey": {
+          "type": "string"
+        },
         "bonusDice": {
           "type": "integer"
         },
@@ -219,10 +225,16 @@
             "requiresMinPositionLevel",
             "requiresExactPositionLevel",
             "characterHasTreasureId",
+            "characterHasTreasureWithTag",
             "characterHasTag",
             "characterLacksTag",
             "partyHasTreasureWithTag",
             "partyHasMemberWithTag",
+            "partyIsSplit",
+            "characterIsAlone",
+            "anotherPartyMemberHere",
+            "partyMemberHereWithTag",
+            "partyMemberElsewhereWithTag",
             "clockProgress",
             "scenarioFlagSet",
             "scenarioCounter"
@@ -264,11 +276,32 @@
         "attribute"
       ]
     },
+    "consequenceTargetScope": {
+      "type": "string",
+      "enum": [
+        "actingCharacter",
+        "allHere",
+        "othersHere",
+        "allParty"
+      ]
+    },
     "choiceOption": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
         "title": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "conditions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/gameCondition"
+          }
+        },
+        "costLabel": {
           "type": "string"
         },
         "consequences": {
@@ -287,6 +320,12 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
+        "critical": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/consequence"
+          }
+        },
         "success": {
           "type": "array",
           "items": {
@@ -350,7 +389,7 @@
         "outcomes"
       ]
     },
-    "interactable": {
+    "interactableCore": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
@@ -398,6 +437,14 @@
         "availableActions"
       ]
     },
+    "interactable": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/interactableCore"
+        }
+      ],
+      "unevaluatedProperties": false
+    },
     "consequence": {
       "type": "object",
       "additionalProperties": false,
@@ -419,6 +466,10 @@
             "addInteractable",
             "addInteractableHere",
             "gainTreasure",
+            "removeTreasure",
+            "removeTreasureWithTag",
+            "grantModifier",
+            "removeModifier",
             "modifyDice",
             "createChoice",
             "triggerEvent",
@@ -470,7 +521,7 @@
           "type": "string"
         },
         "inNodeID": {
-          "oneOf": [
+          "anyOf": [
             {
               "type": "string"
             },
@@ -488,6 +539,12 @@
           "type": "string"
         },
         "treasureId": {
+          "type": "string"
+        },
+        "modifier": {
+          "$ref": "#/$defs/modifier"
+        },
+        "sourceKey": {
           "type": "string"
         },
         "duration": {
@@ -534,6 +591,9 @@
         },
         "resistance": {
           "$ref": "#/$defs/resistanceRule"
+        },
+        "targetScope": {
+          "$ref": "#/$defs/consequenceTargetScope"
         }
       },
       "required": [
@@ -745,6 +805,18 @@
         },
         "isDiscovered": {
           "type": "boolean"
+        },
+        "onEnter": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/consequence"
+          }
+        },
+        "onFirstEnter": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/consequence"
+          }
         }
       },
       "required": [

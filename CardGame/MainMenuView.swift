@@ -7,6 +7,7 @@ struct MainMenuView: View {
     @State private var path = NavigationPath()
     @State private var continueVM: GameViewModel?
     @State private var continueActive = false
+    @State private var activeError: UserFacingError?
 
     private var preferredScenario: ResolvedScenarioCatalogEntry? {
         catalogViewModel.preferredScenario
@@ -17,107 +18,122 @@ struct MainMenuView: View {
             ZStack {
                 Theme.bg.ignoresSafeArea()
 
-                VStack(spacing: 16) {
-                    Spacer(minLength: 40)
-
-                    Text("Dice Delver")
-                        .font(Theme.displayFont(size: 36))
-                        .foregroundColor(Theme.parchment)
-
-                    LinearGradient(
-                        colors: [.clear, Theme.goldDim, Theme.goldDim, .clear],
-                        startPoint: .leading,
-                        endPoint: .trailing
-                    )
-                    .frame(height: 1)
-                    .padding(.horizontal, 48)
-
-                    Spacer(minLength: 12)
-
-                    Button {
-                        if let scenario = preferredScenario {
-                            path.append(scenario)
-                        }
-                    } label: {
-                        Text("Start New Game")
-                            .font(Theme.displayFont(size: 20, weight: .semibold))
-                            .foregroundColor(Theme.ink)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 12)
-                            .background(
-                                LinearGradient(
-                                    colors: [Theme.gold, Theme.goldDim],
-                                    startPoint: .top,
-                                    endPoint: .bottom
-                                )
-                            )
-                            .clipShape(RoundedRectangle(cornerRadius: 8))
-                            .shadow(color: Theme.gold.opacity(0.3), radius: 12, y: 4)
-                    }
-                    .buttonStyle(.plain)
-                    .disabled(preferredScenario == nil)
-                    .opacity(preferredScenario == nil ? 0.55 : 1)
-                    .accessibilityIdentifier("startNewGameButton")
-
-                    Button {
-                        let vm = GameViewModel()
-                        if vm.loadGame() {
-                            continueVM = vm
-                            continueActive = true
-                        }
-                    } label: {
-                        Text("Continue")
-                            .font(Theme.displayFont(size: 18, weight: .semibold))
+                ScrollView {
+                    VStack(spacing: 16) {
+                        Text("Dice Delver")
+                            .font(Theme.displayFont(size: 36))
                             .foregroundColor(Theme.parchment)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 11)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 8)
-                                    .stroke(Theme.parchmentDeep.opacity(0.4), lineWidth: 1)
-                            )
-                    }
-                    .buttonStyle(.plain)
-                    .disabled(!GameViewModel.saveExists)
-                    .opacity(GameViewModel.saveExists ? 1 : 0.5)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.55)
 
-                    Button {
-                        showingScenarioSelect = true
-                    } label: {
-                        Text("Scenario Select")
-                            .font(Theme.displayFont(size: 18, weight: .semibold))
-                            .foregroundColor(Theme.parchment)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 11)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 8)
-                                    .stroke(Theme.parchmentDeep.opacity(0.4), lineWidth: 1)
-                            )
-                    }
-                    .buttonStyle(.plain)
-
-                    Button {
-                            showingSettings = true
-                    } label: {
-                        Text("Settings")
-                        }
-                        .font(Theme.displayFont(size: 16, weight: .semibold))
-                        .foregroundColor(catalogViewModel.hasTestingAccessOverrides ? Theme.gold : Theme.inkFaded)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 11)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 8)
-                                .stroke(style: StrokeStyle(lineWidth: 1, dash: [4, 3]))
-                                .foregroundColor(
-                                    catalogViewModel.hasTestingAccessOverrides
-                                        ? Theme.gold.opacity(0.55)
-                                        : Theme.inkFaded.opacity(0.5)
-                                )
+                        LinearGradient(
+                            colors: [.clear, Theme.goldDim, Theme.goldDim, .clear],
+                            startPoint: .leading,
+                            endPoint: .trailing
                         )
+                        .frame(height: 1)
+                        .padding(.horizontal, 48)
+
+                        Button {
+                            if let scenario = preferredScenario {
+                                path.append(scenario)
+                            }
+                        } label: {
+                            Text("Start New Game")
+                                .font(Theme.displayFont(size: 20, weight: .semibold))
+                                .foregroundColor(Theme.ink)
+                                .multilineTextAlignment(.center)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.7)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 12)
+                                .background(
+                                    LinearGradient(
+                                        colors: [Theme.gold, Theme.goldDim],
+                                        startPoint: .top,
+                                        endPoint: .bottom
+                                    )
+                                )
+                                .clipShape(RoundedRectangle(cornerRadius: 8))
+                                .shadow(color: Theme.gold.opacity(0.3), radius: 12, y: 4)
+                        }
+                        .buttonStyle(.plain)
+                        .disabled(preferredScenario == nil)
+                        .opacity(preferredScenario == nil ? 0.55 : 1)
+                        .accessibilityIdentifier("startNewGameButton")
+
+                        Button {
+                            let vm = GameViewModel()
+                            if vm.loadGame() {
+                                continueVM = vm
+                                continueActive = true
+                            } else if let loadError = vm.activeError {
+                                activeError = loadError
+                            }
+                        } label: {
+                            Text("Continue")
+                                .font(Theme.displayFont(size: 18, weight: .semibold))
+                                .foregroundColor(Theme.parchment)
+                                .multilineTextAlignment(.center)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.7)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 11)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .stroke(Theme.parchmentDeep.opacity(0.4), lineWidth: 1)
+                                )
+                        }
+                        .buttonStyle(.plain)
+                        .disabled(!GameViewModel.saveExists)
+                        .opacity(GameViewModel.saveExists ? 1 : 0.5)
+
+                        Button {
+                            showingScenarioSelect = true
+                        } label: {
+                            Text("Scenario Select")
+                                .font(Theme.displayFont(size: 18, weight: .semibold))
+                                .foregroundColor(Theme.parchment)
+                                .multilineTextAlignment(.center)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.7)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 11)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .stroke(Theme.parchmentDeep.opacity(0.4), lineWidth: 1)
+                                )
+                        }
                         .buttonStyle(.plain)
 
-                    Spacer()
+                        Button {
+                                showingSettings = true
+                        } label: {
+                            Text("Settings")
+                            }
+                            .font(Theme.displayFont(size: 16, weight: .semibold))
+                            .foregroundColor(catalogViewModel.hasTestingAccessOverrides ? Theme.gold : Theme.inkFaded)
+                            .multilineTextAlignment(.center)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.75)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 11)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .stroke(style: StrokeStyle(lineWidth: 1, dash: [4, 3]))
+                                    .foregroundColor(
+                                        catalogViewModel.hasTestingAccessOverrides
+                                            ? Theme.gold.opacity(0.55)
+                                            : Theme.inkFaded.opacity(0.5)
+                                    )
+                            )
+                            .buttonStyle(.plain)
+                    }
+                    .frame(maxWidth: 720)
+                    .frame(maxWidth: .infinity)
+                    .padding(.horizontal, 30)
+                    .padding(.vertical, 32)
                 }
-                .padding(.horizontal, 30)
             }
             .navigationDestination(for: ResolvedScenarioCatalogEntry.self) { scenario in
                 PartySetupView(scenarioEntry: scenario)
@@ -150,6 +166,13 @@ struct MainMenuView: View {
             }
             .onAppear {
                 catalogViewModel.refresh()
+            }
+            .alert(item: $activeError) { error in
+                Alert(
+                    title: Text(error.title),
+                    message: Text(error.message),
+                    dismissButton: .default(Text("OK"))
+                )
             }
         }
     }

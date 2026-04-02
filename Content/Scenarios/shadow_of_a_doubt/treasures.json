@@ -1,1 +1,21 @@
-[]
+[
+  {
+    "id": "sod_inheritance_record",
+    "name": "Inheritance Record",
+    "description": "A torn ledger page mapping who belonged in the house and who was written out of it.",
+    "grantedModifier": {
+      "bonusDice": 1,
+      "applicableActions": [
+        "Command",
+        "Consort"
+      ],
+      "uses": 1,
+      "description": "from the Inheritance Record",
+      "isOptionalToApply": true
+    },
+    "tags": [
+      "Clue",
+      "Family"
+    ]
+  }
+]

@@ -2,6 +2,10 @@ import XCTest
 @testable import CardGame
 
 final class DependencyCompositionTests: XCTestCase {
+    private var unwritableSaveStore: SaveGameStore {
+        SaveGameStore(saveURL: URL(fileURLWithPath: "/dev/null/savegame.json"))
+    }
+
     func testRestartCurrentScenarioKeepsScenarioSelection() throws {
         let viewModel = GameViewModel()
         viewModel.startNewRun(scenario: "charons_bargain")
@@ -109,5 +113,90 @@ final class DependencyCompositionTests: XCTestCase {
 
         XCTAssertEqual(viewModel.gameState.party[0].stress, 0)
         XCTAssertEqual(viewModel.gameState.party[0].harm.lesser.first?.familyId, "vfe_cerebral_euphoria")
+    }
+
+    func testPerformFreeActionRollsBackStateWhenSaveFails() throws {
+        let character = Character(
+            id: UUID(),
+            name: "Archivist",
+            characterClass: "Scholar",
+            stress: 0,
+            harm: HarmState(),
+            actions: ["Study": 2]
+        )
+        let viewModel = GameViewModel(saveStore: unwritableSaveStore)
+        viewModel.gameState.party = [character]
+        viewModel.gameState.scenarioFlags["already_set"] = true
+
+        let action = ActionOption(
+            name: "Decode the mural",
+            actionType: "Study",
+            position: .controlled,
+            effect: .standard,
+            requiresTest: false,
+            outcomes: [.success: [.setScenarioFlag("should_not_persist")]]
+        )
+
+        let description = viewModel.performFreeAction(
+            for: action,
+            with: character,
+            interactableID: nil
+        )
+
+        XCTAssertEqual(description, "That action could not be saved.")
+        XCTAssertEqual(viewModel.gameState.scenarioFlags["already_set"], true)
+        XCTAssertNil(viewModel.gameState.scenarioFlags["should_not_persist"])
+        XCTAssertEqual(viewModel.activeError?.title, "Couldn't Save Action")
+    }
+
+    func testMoveRollsBackStateWhenSaveFails() throws {
+        let startID = UUID()
+        let nextID = UUID()
+        let connection = NodeConnection(toNodeID: nextID, description: "Advance")
+        let character = Character(
+            id: UUID(),
+            name: "Scout",
+            characterClass: "Scout",
+            stress: 0,
+            harm: HarmState(),
+            actions: ["Prowl": 1]
+        )
+        let viewModel = GameViewModel(saveStore: unwritableSaveStore)
+        viewModel.gameState = GameState(
+            party: [character],
+            dungeon: DungeonMap(
+                nodes: [
+                    startID.uuidString: MapNode(
+                        id: startID,
+                        name: "Entry",
+                        soundProfile: "entry",
+                        interactables: [],
+                        connections: [connection],
+                        isDiscovered: true
+                    ),
+                    nextID.uuidString: MapNode(
+                        id: nextID,
+                        name: "Vault",
+                        soundProfile: "vault",
+                        interactables: [],
+                        connections: [],
+                        isDiscovered: false
+                    )
+                ],
+                startingNodeID: startID
+            ),
+            currentNodeID: startID,
+            characterLocations: [character.id.uuidString: startID]
+        )
+
+        viewModel.move(characterID: character.id, to: connection)
+
+        XCTAssertEqual(viewModel.gameState.characterLocations[character.id.uuidString], startID)
+        XCTAssertEqual(viewModel.gameState.currentNodeID, startID)
+        XCTAssertEqual(
+            viewModel.gameState.dungeon?.nodes[nextID.uuidString]?.isDiscovered,
+            false
+        )
+        XCTAssertEqual(viewModel.activeError?.title, "Couldn't Move Party")
     }
 }

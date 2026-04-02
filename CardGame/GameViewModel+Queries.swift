@@ -14,6 +14,29 @@ struct PresentedNodeConnection: Identifiable {
 }
 
 extension GameViewModel {
+    func groupActionParticipants(
+        for action: ActionOption,
+        interactableID: String?,
+        leaderID: UUID
+    ) -> [Character] {
+        guard let nodeID = runtime.currentNodeID(for: leaderID, in: gameState) else {
+            return []
+        }
+
+        let interactableTags = currentInteractable(id: interactableID ?? "", for: leaderID)?.tags ?? []
+        return gameState.party.filter { character in
+            guard !character.isDefeated else { return false }
+            guard gameState.characterLocations[character.id.uuidString] == nodeID else { return false }
+
+            let projection = calculateProjection(
+                for: action,
+                with: character,
+                interactableTags: interactableTags
+            )
+            return !projection.isActionBanned
+        }
+    }
+
     func node(for characterID: UUID?) -> MapNode? {
         runtime.node(for: characterID, in: gameState)
     }

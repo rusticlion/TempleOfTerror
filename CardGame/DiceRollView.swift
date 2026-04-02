@@ -277,11 +277,33 @@ struct ResolutionDecisionCard: View {
                             showingResistanceRoll = false
                             _ = viewModel.choosePendingChoice(at: index)
                         } label: {
-                            HStack {
-                                Text(option.title)
-                                    .font(Theme.bodyFont(size: 14))
-                                    .foregroundColor(Theme.parchment)
+                            HStack(alignment: .top, spacing: 12) {
+                                VStack(alignment: .leading, spacing: 6) {
+                                    Text(option.title)
+                                        .font(Theme.bodyFont(size: 14))
+                                        .foregroundColor(Theme.parchment)
+
+                                    if let description = option.description,
+                                       !description.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                                        Text(description)
+                                            .font(Theme.bodyFont(size: 12))
+                                            .foregroundColor(Theme.parchmentDark)
+                                            .multilineTextAlignment(.leading)
+                                    }
+                                }
+
                                 Spacer()
+
+                                if let costLabel = option.costLabel,
+                                   !costLabel.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                                    Text(costLabel)
+                                        .font(Theme.systemFont(size: 10, weight: .semibold))
+                                        .foregroundColor(Theme.goldBright)
+                                        .padding(.horizontal, 8)
+                                        .padding(.vertical, 5)
+                                        .background(Theme.gold.opacity(0.14), in: Capsule())
+                                }
+
                                 Image(systemName: "chevron.right")
                                     .font(.system(size: 11, weight: .bold))
                                     .foregroundColor(Theme.gold)
@@ -339,6 +361,16 @@ struct ResolutionDecisionCard: View {
                         .font(Theme.bodyFont(size: 13))
                         .foregroundColor(Theme.parchmentDark)
 
+                    if guidanceStore.shouldShow(.resistancePrompt) {
+                        GuidanceHintCard(
+                            hintID: .resistancePrompt,
+                            title: "Resistance Trades Certainty For Stress",
+                            message: "When a consequence appears, resisting can soften it or stop it entirely. Better rolls mean less Stress paid afterward.",
+                            onDismiss: { guidanceStore.dismiss(.resistancePrompt) },
+                            onOpenReference: onOpenReference
+                        )
+                    }
+
                     VStack(alignment: .leading, spacing: 5) {
                         Text("If You Resist")
                             .font(Theme.systemFont(size: 11, weight: .semibold))
@@ -386,16 +418,6 @@ struct ResolutionDecisionCard: View {
                                 .background(Theme.parchment.opacity(0.05), in: RoundedRectangle(cornerRadius: 8))
                             }
                         }
-                    }
-
-                    if guidanceStore.shouldShow(.resistancePrompt) {
-                        GuidanceHintCard(
-                            hintID: .resistancePrompt,
-                            title: "Resistance Trades Certainty For Stress",
-                            message: "When a consequence appears, resisting can soften it or stop it entirely. Better rolls mean less Stress paid afterward.",
-                            onDismiss: { guidanceStore.dismiss(.resistancePrompt) },
-                            onOpenReference: onOpenReference
-                        )
                     }
 
                     if onPrepareResistanceRoll != nil {
@@ -666,16 +688,9 @@ struct DiceRollView: View {
         resistanceVerdictToken = token
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.35) {
             guard resistanceVerdictToken == token else { return }
+            resistanceVerdictToken = nil
             withAnimation(.easeInOut(duration: 0.24)) {
                 recentResistanceVerdict = nil
-            }
-            if let rolled = result?.actualDiceRolled {
-                applyResolvedDice(
-                    rolled,
-                    highlightedValue: result?.highestRoll ?? rolled.max() ?? 1,
-                    highlightAllMatches: result?.isCritical == true,
-                    playCue: false
-                )
             }
         }
     }
@@ -813,6 +828,40 @@ struct DiceRollView: View {
 
     private var selectedModifierInfos: [SelectableModifierInfo] {
         availableOptionalModifiers.filter { chosenModifierIDs.contains($0.id) }
+    }
+
+    private var groupActionParticipants: [Character] {
+        guard action.isGroupAction else { return [] }
+        return viewModel.groupActionParticipants(
+            for: action,
+            interactableID: interactableID,
+            leaderID: character.id
+        )
+    }
+
+    private var supportingParticipants: [Character] {
+        groupActionParticipants.filter { $0.id != character.id }
+    }
+
+    private var groupActionRosterText: String {
+        let names = groupActionParticipants.map(\.name)
+        guard !names.isEmpty else { return character.name }
+        return names.joined(separator: ", ")
+    }
+
+    private var groupActionSummaryText: String {
+        if supportingParticipants.isEmpty {
+            return "No one else is in this room right now, so the move resolves off \(character.name)'s lead roll until support arrives."
+        }
+        return "\(groupActionRosterText) can work this together from here. The tray is \(character.name)'s lead roll, and the strongest room result sets the outcome."
+    }
+
+    private var groupActionStressText: String {
+        if supportingParticipants.isEmpty {
+            return "No supporting slips can tax the leader while the room team is just you."
+        }
+        let supporterCount = supportingParticipants.count
+        return "\(supporterCount) supporter\(supporterCount == 1 ? "" : "s") here can join. Each supporting 1-3 roll costs the leader 1 Stress."
     }
 
     private var hasLoadedBoosts: Bool {
@@ -975,7 +1024,11 @@ struct DiceRollView: View {
                     .font(Theme.displayFont(size: 26))
                     .foregroundColor(Theme.parchment)
 
-                Text("\(action.actionType) \(character.actions[action.actionType] ?? 0)")
+                Text(
+                    action.isGroupAction
+                        ? "\(action.actionType) \(character.actions[action.actionType] ?? 0) • Lead roll"
+                        : "\(action.actionType) \(character.actions[action.actionType] ?? 0)"
+                )
                     .font(Theme.systemFont(size: 12))
                     .foregroundColor(Theme.inkFaded)
             }
@@ -1108,6 +1161,32 @@ struct DiceRollView: View {
                         .stroke(Theme.parchmentDeep.opacity(0.2), lineWidth: 1)
                 )
                 .opacity(isRolling ? 0.7 : 1)
+
+                if action.isGroupAction {
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text("Coordinated Here")
+                            .font(Theme.systemFont(size: 11, weight: .semibold))
+                            .foregroundColor(Theme.gold)
+                            .textCase(.uppercase)
+                            .tracking(0.7)
+
+                        Text(groupActionSummaryText)
+                            .font(Theme.bodyFont(size: 14))
+                            .foregroundColor(Theme.parchmentDark)
+
+                        Text(groupActionStressText)
+                            .font(Theme.systemFont(size: 12, weight: .medium))
+                            .foregroundColor(Theme.inkFaded)
+                    }
+                    .padding(14)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(Theme.gold.opacity(0.08), in: RoundedRectangle(cornerRadius: 12))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(Theme.goldDim.opacity(0.28), lineWidth: 1)
+                    )
+                    .opacity(isRolling ? 0.68 : 1)
+                }
 
                 if guidanceStore.shouldShow(.rollForecast) {
                     GuidanceHintCard(
@@ -1271,8 +1350,12 @@ struct DiceRollView: View {
                 )
                 .padding(8)
         }
-        .frame(height: 248)
+        .frame(height: trayHeight)
         .shadow(color: .black.opacity(0.35), radius: 10, y: 6)
+    }
+
+    private var trayHeight: CGFloat {
+        return 248
     }
 
     @ViewBuilder

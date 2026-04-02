@@ -1,5 +1,11 @@
 import SwiftUI
 
+struct UserFacingError: Identifiable {
+    let id = UUID()
+    let title: String
+    let message: String
+}
+
 struct RollProjectionDetails {
     var baseDiceCount: Int
     var finalDiceCount: Int
@@ -58,6 +64,7 @@ class GameViewModel: ObservableObject {
     @Published var partyMovementMode: PartyMovementMode = .grouped
     @Published var debugFixedDiceEnabled: Bool = false
     @Published var debugFixedDiceValues: [Int] = [6]
+    @Published var activeError: UserFacingError?
 
     /// Enable verbose logging when processing consequences.
     static var debugConsequences = true
@@ -154,14 +161,89 @@ class GameViewModel: ObservableObject {
         )
     }
 
-    /// Persist the current game state to disk.
-    func saveGame() {
+    func clearActiveError() {
+        activeError = nil
+    }
+
+    @discardableResult
+    private func persistCurrentState(
+        operationTitle: String,
+        failureMessage: String
+    ) -> Bool {
         do {
             print("Attempting to save game to: \(saveStore.saveURL.path)")
             try runSessionController.saveGame(gameState)
+            activeError = nil
+            return true
         } catch {
             print("Failed to save game: \(error)")
+            activeError = UserFacingError(
+                title: operationTitle,
+                message: failureMessage
+            )
+            return false
         }
+    }
+
+    private func withRollbackOnSaveFailure<T>(
+        operationTitle: String,
+        failureMessage: String,
+        failureResult: @autoclosure () -> T,
+        mutation: () -> T
+    ) -> T {
+        let previousState = gameState
+        let result = mutation()
+
+        guard persistCurrentState(
+            operationTitle: operationTitle,
+            failureMessage: failureMessage
+        ) else {
+            gameState = previousState
+            return failureResult()
+        }
+
+        return result
+    }
+
+    private func withRollbackOnSaveFailure<T>(
+        operationTitle: String,
+        failureMessage: String,
+        mutation: () -> T?
+    ) -> T? {
+        let previousState = gameState
+        guard let result = mutation() else { return nil }
+
+        guard persistCurrentState(
+            operationTitle: operationTitle,
+            failureMessage: failureMessage
+        ) else {
+            gameState = previousState
+            return nil
+        }
+
+        return result
+    }
+
+    private func persistenceFailureResult(
+        message: String = "Progress could not be saved. The action was not applied."
+    ) -> DiceRollResult {
+        DiceRollResult(
+            highestRoll: 0,
+            outcome: "Error",
+            consequences: message,
+            actualDiceRolled: nil,
+            isCritical: nil,
+            finalEffect: nil,
+            isAwaitingDecision: false
+        )
+    }
+
+    /// Persist the current game state to disk.
+    func saveGame() {
+        _ = persistCurrentState(
+            operationTitle: "Couldn't Save Progress",
+            failureMessage: "Your latest changes could not be written to disk. Please try again."
+        )
     }
 
     /// Attempt to load a saved game from disk. Returns `true` on success.
@@ -169,9 +251,14 @@ class GameViewModel: ObservableObject {
         guard runSessionController.saveExists() else { return false }
         do {
             self.gameState = try runSessionController.loadGame(using: &runtime)
+            activeError = nil
             return true
         } catch {
             print("Failed to load game: \(error)")
+            activeError = UserFacingError(
+                title: "Couldn't Load Save",
+                message: "The saved expedition could not be opened."
+            )
             return false
         }
     }
@@ -201,8 +288,13 @@ class GameViewModel: ObservableObject {
     }
 
     func clearPendingResolution() {
-        gameState.pendingResolution = nil
-        saveGame()
+        withRollbackOnSaveFailure(
+            operationTitle: "Couldn't Clear Resolution",
+            failureMessage: "The resolution panel could not be dismissed because progress was not saved.",
+            failureResult: ()
+        ) {
+            gameState.pendingResolution = nil
+        }
     }
 
     func pendingResolutionText() -> String {
@@ -237,34 +329,43 @@ class GameViewModel: ObservableObject {
 
     @discardableResult
     func choosePendingChoice(at index: Int) -> String {
-        let result = pendingResolutionDriver.choosePendingChoice(
-            at: index,
-            in: &gameState
-        )
-        saveGame()
-        return result
+        withRollbackOnSaveFailure(
+            operationTitle: "Couldn't Save Your Choice",
+            failureMessage: "That choice was not applied because progress could not be saved.",
+            failureResult: "That choice could not be saved."
+        ) {
+            pendingResolutionDriver.choosePendingChoice(
+                at: index,
+                in: &gameState
+            )
+        }
     }
 
     @discardableResult
     func acceptPendingResistance() -> String {
-        let result = pendingResolutionDriver.acceptPendingResistance(
-            in: &gameState
-        )
-        saveGame()
-        return result
+        withRollbackOnSaveFailure(
+            operationTitle: "Couldn't Continue Resolution",
+            failureMessage: "The consequence outcome was not applied because progress could not be saved.",
+            failureResult: "The outcome could not be saved."
+        ) {
+            pendingResolutionDriver.acceptPendingResistance(
+                in: &gameState
+            )
+        }
     }
 
     @discardableResult
     func resistPendingConsequence(usingDice diceResults: [Int]? = nil) -> ConsequenceExecutor.ResistanceRollOutcome? {
         let resolvedDice = diceResults ?? debugResistanceDiceOverride()
-        guard let rollOutcome = pendingResolutionDriver.resistPendingConsequence(
-            usingDice: resolvedDice,
-            in: &gameState
-        ) else {
-            return nil
+        return withRollbackOnSaveFailure(
+            operationTitle: "Couldn't Save Resistance",
+            failureMessage: "The resistance roll was not applied because progress could not be saved."
+        ) {
+            pendingResolutionDriver.resistPendingConsequence(
+                usingDice: resolvedDice,
+                in: &gameState
+            )
         }
-        saveGame()
-        return rollOutcome
     }
 
     /// Executes a free action that does not require a roll, applying its success
@@ -277,14 +378,18 @@ class GameViewModel: ObservableObject {
         ) {
             return unavailableMessage
         }
-        let description = actionResolver.performFreeAction(
-            for: action,
-            with: character,
-            interactableID: interactableID,
-            in: &gameState
-        )
-        saveGame()
-        return description
+        return withRollbackOnSaveFailure(
+            operationTitle: "Couldn't Save Action",
+            failureMessage: "That action was not applied because progress could not be saved.",
+            failureResult: "That action could not be saved."
+        ) {
+            actionResolver.performFreeAction(
+                for: action,
+                with: character,
+                interactableID: interactableID,
+                in: &gameState
+            )
+        }
     }
 
     /// The main dice roll function, now returns the result for the UI.
@@ -308,21 +413,31 @@ class GameViewModel: ObservableObject {
                 isAwaitingDecision: false
             )
         }
-        let result = actionResolver.performAction(
-            for: action,
-            with: character,
-            interactableID: interactableID,
-            usingDice: diceResults,
-            chosenOptionalModifierIDs: chosenOptionalModifierIDs,
-            partyMovementMode: partyMovementMode,
-            in: &gameState
-        )
-        saveGame()
-        return result
+        return withRollbackOnSaveFailure(
+            operationTitle: "Couldn't Save Roll",
+            failureMessage: "That roll was cancelled because progress could not be saved.",
+            failureResult: persistenceFailureResult()
+        ) {
+            actionResolver.performAction(
+                for: action,
+                with: character,
+                interactableID: interactableID,
+                usingDice: diceResults,
+                chosenOptionalModifierIDs: chosenOptionalModifierIDs,
+                partyMovementMode: partyMovementMode,
+                in: &gameState
+            )
+        }
     }
 
     func pushYourself(forCharacter character: Character) {
-        actionResolver.pushYourself(for: character, in: &gameState)
+        withRollbackOnSaveFailure(
+            operationTitle: "Couldn't Save Stress Change",
+            failureMessage: "The stress change was not applied because progress could not be saved.",
+            failureResult: ()
+        ) {
+            actionResolver.pushYourself(for: character, in: &gameState)
+        }
     }
 
     /// Starts a brand new run, resetting the game state. The scenario id
@@ -334,8 +449,13 @@ class GameViewModel: ObservableObject {
                 partyPlan: partyPlan,
                 using: &runtime
             )
+            activeError = nil
         } catch {
             print("Failed to start new run: \(error)")
+            activeError = UserFacingError(
+                title: "Couldn't Start Scenario",
+                message: "A new expedition could not be created."
+            )
         }
     }
 
@@ -345,13 +465,19 @@ class GameViewModel: ObservableObject {
                 from: gameState,
                 using: &runtime
             )
+            activeError = nil
         } catch {
             print("Failed to restart scenario: \(error)")
+            activeError = UserFacingError(
+                title: "Couldn't Restart Scenario",
+                message: "The current expedition could not be restarted."
+            )
         }
     }
 
     /// Move one or all party members depending on the current movement mode.
     func move(characterID: UUID, to connection: NodeConnection) {
+        let previousState = gameState
         do {
             _ = try runSessionController.move(
                 characterID: characterID,
@@ -360,8 +486,14 @@ class GameViewModel: ObservableObject {
                 using: &runtime,
                 in: &gameState
             )
+            activeError = nil
         } catch {
             print("Failed to move party: \(error)")
+            gameState = previousState
+            activeError = UserFacingError(
+                title: "Couldn't Move Party",
+                message: "That movement was cancelled because progress could not be saved."
+            )
         }
     }
 

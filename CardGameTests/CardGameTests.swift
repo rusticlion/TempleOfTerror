@@ -1028,6 +1028,69 @@ final class CardGameTests: XCTestCase {
         )
     }
 
+    func testScenarioValidatorRejectsUnsupportedTargetScope() throws {
+        let scenarioID = "validator_bad_target_scope"
+        let fixture = try makeValidatorFixtureRoot(scenarioID: scenarioID)
+        defer { try? FileManager.default.removeItem(at: fixture.rootURL) }
+
+        var tickClock = Consequence.tickClock(name: "Alarm", amount: 1)
+        tickClock.targetScope = .allParty
+
+        let action = ActionOption(
+            name: "Set Off Alarm",
+            actionType: "Study",
+            position: .controlled,
+            effect: .standard,
+            outcomes: [.success: [tickClock]]
+        )
+        let interactable = Interactable(
+            id: "alarm_console",
+            title: "Alarm Console",
+            description: "",
+            availableActions: [action]
+        )
+
+        try writeJSON([interactable], to: fixture.scenarioURL.appendingPathComponent("interactables.json"))
+        try writeJSON(
+            [GameClock(name: "Alarm", segments: 4, progress: 0)],
+            to: fixture.scenarioURL.appendingPathComponent("clocks.json")
+        )
+
+        let report = ScenarioValidator().validateScenario(at: fixture.scenarioURL)
+        XCTAssertTrue(
+            report.errors.contains(where: { $0.message.contains("tickClock does not support targetScope") }),
+            report.formattedDescription
+        )
+    }
+
+    func testScenarioValidatorRejectsUnknownRemoveTreasureReference() throws {
+        let scenarioID = "validator_bad_remove_treasure"
+        let fixture = try makeValidatorFixtureRoot(scenarioID: scenarioID)
+        defer { try? FileManager.default.removeItem(at: fixture.rootURL) }
+
+        let action = ActionOption(
+            name: "Spend a Missing Key",
+            actionType: "Study",
+            position: .controlled,
+            effect: .standard,
+            outcomes: [.success: [.removeTreasure(id: "missing_key")]]
+        )
+        let interactable = Interactable(
+            id: "missing_key_console",
+            title: "Missing Key Console",
+            description: "",
+            availableActions: [action]
+        )
+
+        try writeJSON([interactable], to: fixture.scenarioURL.appendingPathComponent("interactables.json"))
+
+        let report = ScenarioValidator().validateScenario(at: fixture.scenarioURL)
+        XCTAssertTrue(
+            report.errors.contains(where: { $0.message.contains("Unknown treasure 'missing_key'") }),
+            report.formattedDescription
+        )
+    }
+
     func testScenarioValidatorRejectsAmbiguousInteractableSpawnForms() throws {
         let scenarioID = "validator_bad_spawn_forms"
         let fixture = try makeValidatorFixtureRoot(scenarioID: scenarioID, mapFile: "map.json")
@@ -1192,6 +1255,84 @@ final class CardGameTests: XCTestCase {
 
         XCTAssertTrue(vm.gameState.party[0].stateTags.contains(tag))
         XCTAssertEqual(Set(vm.visibleInteractables(for: character.id).map(\.id)), Set(["oath_tablet", "inner_door"]))
+    }
+
+    func testTreasureTagConditionAndSpendConsequencesUpdateInventory() throws {
+        let vm = GameViewModel()
+        let nodeID = UUID()
+
+        let rope = Treasure(
+            id: "rope_bundle",
+            name: "Rope Bundle",
+            description: "",
+            grantedModifier: Modifier(bonusDice: 1, uses: 1, description: "from Rope Bundle"),
+            tags: ["utility"]
+        )
+        let brassKey = Treasure(
+            id: "brass_key",
+            name: "Brass Key",
+            description: "",
+            grantedModifier: Modifier(bonusDice: 1, uses: 1, description: "from Brass Key"),
+            tags: ["key"]
+        )
+
+        let spendAction = ActionOption(
+            name: "Pay the Toll",
+            actionType: "Study",
+            position: .controlled,
+            effect: .standard,
+            requiresTest: false,
+            outcomes: [
+                .success: [
+                    .removeTreasure(id: "rope_bundle"),
+                    .removeTreasureWithTag("key")
+                ]
+            ]
+        )
+        let node = MapNode(
+            id: nodeID,
+            name: "Causeway",
+            soundProfile: "",
+            interactables: [
+                Interactable(
+                    id: "toll_shrine",
+                    title: "Toll Shrine",
+                    description: "",
+                    availableActions: [spendAction]
+                ),
+                Interactable(
+                    id: "keyed_gate",
+                    title: "Keyed Gate",
+                    description: "",
+                    availableActions: [],
+                    conditions: [GameCondition(type: .characterHasTreasureWithTag, stringParam: "key")]
+                )
+            ],
+            connections: []
+        )
+
+        let character = Character(
+            id: UUID(),
+            name: "Nadia",
+            characterClass: "Scholar",
+            stress: 0,
+            harm: HarmState(),
+            actions: ["Study": 1],
+            treasures: [rope, brassKey],
+            modifiers: [rope.grantedModifier, brassKey.grantedModifier]
+        )
+
+        vm.gameState.dungeon = DungeonMap(nodes: [nodeID.uuidString: node], startingNodeID: nodeID)
+        vm.gameState.party = [character]
+        vm.gameState.characterLocations[character.id.uuidString] = nodeID
+
+        XCTAssertEqual(Set(vm.visibleInteractables(for: character.id).map(\.id)), Set(["toll_shrine", "keyed_gate"]))
+
+        _ = vm.performFreeAction(for: spendAction, with: character, interactableID: "toll_shrine")
+
+        XCTAssertTrue(vm.gameState.party[0].treasures.isEmpty)
+        XCTAssertTrue(vm.gameState.party[0].modifiers.isEmpty)
+        XCTAssertEqual(vm.visibleInteractables(for: character.id).map(\.id), ["toll_shrine"])
     }
 
     func testPartyHasMemberWithTagConditionUsesAnotherPartyMemberTraitTag() throws {

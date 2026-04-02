@@ -3,6 +3,7 @@ import SwiftUI
 struct StatusSheetView: View {
     @ObservedObject var viewModel: GameViewModel
     @Binding var selectedCharacterID: UUID?
+    @State private var inspectedCharacter: Character?
     @Environment(\.dismiss) private var dismiss
 
     private struct RoomGroup: Identifiable {
@@ -32,21 +33,6 @@ struct StatusSheetView: View {
     private var selectedLocationKey: String? {
         guard let selectedCharacterID else { return nil }
         return viewModel.gameState.characterLocations[selectedCharacterID.uuidString]?.uuidString
-    }
-
-    private var occupiedRoomCount: Int {
-        max(Set(viewModel.gameState.characterLocations.values).count, 1)
-    }
-
-    private var movementSummary: String {
-        switch viewModel.partyMovementMode {
-        case .grouped:
-            return "Together"
-        case .solo where viewModel.isPartyActuallySplit():
-            return "Split: \(occupiedRoomCount) rooms"
-        case .solo:
-            return "Scout"
-        }
     }
 
     private var roomGroups: [RoomGroup] {
@@ -118,8 +104,6 @@ struct StatusSheetView: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
-                    expeditionSummary
-
                     VStack(alignment: .leading, spacing: 14) {
                         Text("Party By Room")
                             .font(Theme.displayFont(size: 22, weight: .semibold))
@@ -150,7 +134,7 @@ struct StatusSheetView: View {
                         }
                     }
 
-                    Text("Tap an explorer to make them the acting explorer.")
+                    Text("Tap an explorer to review their full sheet. Change the acting explorer from the selector bar in the main view.")
                         .font(Theme.bodyFont(size: 13, italic: true))
                         .foregroundColor(Theme.inkFaded)
                 }
@@ -158,48 +142,32 @@ struct StatusSheetView: View {
             }
             .background(Theme.bgWarm)
             .presentationBackground(Theme.bgWarm)
-            .navigationTitle("Expedition")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbarBackground(Theme.leather, for: .navigationBar)
+            .toolbarBackground(.visible, for: .navigationBar)
+            .toolbarColorScheme(.dark, for: .navigationBar)
             .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Text("Expedition")
+                        .font(Theme.displayFont(size: 22, weight: .semibold))
+                        .foregroundColor(Theme.parchment)
+                }
+
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Close") { dismiss() }
                         .foregroundColor(Theme.parchment)
                 }
             }
         }
-        .accessibilityIdentifier("expeditionDrawer")
-    }
-
-    private var expeditionSummary: some View {
-        HStack(spacing: 12) {
-            VStack(alignment: .leading, spacing: 4) {
-                Text(movementSummary)
-                    .font(Theme.displayFont(size: 20, weight: .semibold))
-                    .foregroundColor(Theme.parchment)
-
-                Text(visibleClocks.isEmpty ? "No active clocks" : "\(visibleClocks.count) active clock\(visibleClocks.count == 1 ? "" : "s")")
-                    .font(Theme.systemFont(size: 11, weight: .semibold))
-                    .foregroundColor(Theme.inkFaded)
-                    .textCase(.uppercase)
-                    .tracking(0.6)
-            }
-
-            Spacer()
-
-            InRunStateBadge(
-                text: movementSummary,
-                foreground: Theme.ink,
-                fill: Theme.gold.opacity(0.82)
+        .sheet(item: $inspectedCharacter) { character in
+            CharacterDetailSheetView(
+                character: character,
+                locationName: viewModel.getNodeName(for: character.id),
+                harmFamilies: viewModel.harmFamilies
             )
+            .presentationDetents([.medium, .large])
         }
-        .padding(14)
-        .background(
-            RoundedRectangle(cornerRadius: 14)
-                .fill(Theme.leather.opacity(0.88))
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 14)
-                .stroke(Theme.goldDim.opacity(0.2), lineWidth: 1)
-        )
+        .accessibilityIdentifier("expeditionDrawer")
     }
 
     @ViewBuilder
@@ -223,8 +191,7 @@ struct StatusSheetView: View {
 
     private func explorerRow(for character: Character, in group: RoomGroup) -> some View {
         Button {
-            selectedCharacterID = character.id
-            dismiss()
+            inspectedCharacter = character
         } label: {
             VStack(alignment: .leading, spacing: 8) {
                 HStack(alignment: .firstTextBaseline, spacing: 10) {
@@ -238,6 +205,10 @@ struct StatusSheetView: View {
                     Text("Stress \(character.stress) / 9")
                         .font(Theme.systemFont(size: 11, weight: .semibold))
                         .foregroundColor(Theme.parchmentDark)
+
+                    Image(systemName: "chevron.right.circle.fill")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundColor(Theme.inkFaded)
                 }
 
                 HStack(alignment: .center, spacing: 8) {
@@ -279,6 +250,7 @@ struct StatusSheetView: View {
             )
         }
         .buttonStyle(.plain)
+        .accessibilityIdentifier("expeditionExplorerRow")
     }
 }
 

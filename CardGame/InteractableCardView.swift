@@ -130,6 +130,18 @@ struct InteractableCardView: View {
             cues.append(ActionStateCue(text: "Auto", foreground: Theme.ink, fill: Theme.parchmentDeep.opacity(0.8)))
         }
 
+        if action.isGroupAction, let selectedCharacter {
+            let participants = viewModel.groupActionParticipants(
+                for: action,
+                interactableID: interactable.id,
+                leaderID: selectedCharacter.id
+            )
+            let label = participants.count > 1
+                ? "Room team: \(participants.count)"
+                : "Room team: just you"
+            cues.append(ActionStateCue(text: label, foreground: Theme.ink, fill: Theme.gold.opacity(0.72)))
+        }
+
         if hasBonus(for: action) {
             cues.append(ActionStateCue(text: "Bonus ready", foreground: Theme.ink, fill: Theme.success.opacity(0.78)))
         }

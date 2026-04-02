@@ -76,8 +76,20 @@ struct RunSessionController {
         partyPlan: PartyBuildPlan? = nil,
         using runtime: inout ScenarioRuntime
     ) throws -> GameState {
-        let gameState = runtime.newGameState(scenario: scenario, partyPlan: partyPlan)
-        syncAmbientAudio(startingNode(in: gameState))
+        var gameState = runtime.newGameState(scenario: scenario, partyPlan: partyPlan)
+
+        if let startingNodeID = gameState.dungeon?.startingNodeID,
+           let actingCharacterID = gameState.party.first(where: { !$0.isDefeated })?.id {
+            processEntryConsequences(
+                runtime: runtime,
+                consequences: runtime.entryConsequences(for: startingNodeID, in: &gameState),
+                actingCharacterID: actingCharacterID,
+                scopeNodeID: startingNodeID,
+                in: &gameState
+            )
+        }
+
+        syncAmbientAudio(currentAmbientNode(in: gameState))
         try saveGame(gameState)
         return gameState
     }
@@ -109,28 +121,19 @@ struct RunSessionController {
         )
         guard outcome.didMove else { return outcome }
 
-        if let consequences = connection.onTraverse,
-           !consequences.isEmpty {
-            let traversalContext = ConsequenceContext(
-                characterID: characterID,
-                interactableID: nil,
-                finalEffect: .standard,
-                finalPosition: .risky,
-                isCritical: false
-            )
-            _ = PendingResolutionDriver(
-                runtime: runtime,
-                debugLogging: false
-            ).processConsequences(
-                consequences,
-                context: traversalContext,
-                source: .freeAction,
-                rollPresentation: nil,
+        processEntryConsequences(
+            runtime: runtime,
+            consequences: runtime.entryConsequences(
+                for: connection.toNodeID,
+                via: connection,
                 in: &gameState
-            )
-        }
+            ),
+            actingCharacterID: characterID,
+            scopeNodeID: connection.toNodeID,
+            in: &gameState
+        )
 
-        syncAmbientAudio(runtime.node(for: characterID, in: gameState) ?? outcome.enteredNode)
+        syncAmbientAudio(currentAmbientNode(in: gameState))
         try saveGame(gameState)
         return outcome
     }
@@ -172,6 +175,11 @@ struct RunSessionController {
     }
 
     private func currentAmbientNode(in gameState: GameState) -> MapNode? {
+        if let currentNodeID = gameState.currentNodeID,
+           let currentNode = gameState.dungeon?.nodes[currentNodeID.uuidString] {
+            return currentNode
+        }
+
         guard let nodeID = gameState.characterLocations.first?.value else {
             return startingNode(in: gameState)
         }
@@ -181,6 +189,35 @@ struct RunSessionController {
     private static func playAmbientAudio(for node: MapNode?) {
         guard let node else { return }
         AudioManager.shared.play(sound: "ambient_\(node.soundProfile).wav", loop: true)
+    }
+
+    private func processEntryConsequences(
+        runtime: ScenarioRuntime,
+        consequences: [Consequence],
+        actingCharacterID: UUID,
+        scopeNodeID: UUID,
+        in gameState: inout GameState
+    ) {
+        guard !consequences.isEmpty else { return }
+
+        let traversalContext = ConsequenceContext(
+            characterID: actingCharacterID,
+            interactableID: nil,
+            finalEffect: .standard,
+            finalPosition: .risky,
+            isCritical: false,
+            scopeNodeID: scopeNodeID
+        )
+        _ = PendingResolutionDriver(
+            runtime: runtime,
+            debugLogging: false
+        ).processConsequences(
+            consequences,
+            context: traversalContext,
+            source: .freeAction,
+            rollPresentation: nil,
+            in: &gameState
+        )
     }
 }
 

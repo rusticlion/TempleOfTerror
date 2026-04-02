@@ -102,7 +102,9 @@ class ScenarioCompiler
         "interactables" => transform_node_refs(node_hash.fetch("interactables", []), node_lookup, node_path),
         "connections" => compile_connections(node_hash.fetch("connections", []), node_lookup, node_path),
         "theme" => node_hash["theme"],
-        "isDiscovered" => node_hash.fetch("isDiscovered", false)
+        "isDiscovered" => node_hash.fetch("isDiscovered", false),
+        "onEnter" => node_hash.key?("onEnter") ? transform_node_refs(node_hash["onEnter"], node_lookup, "#{node_path}.onEnter") : nil,
+        "onFirstEnter" => node_hash.key?("onFirstEnter") ? transform_node_refs(node_hash["onFirstEnter"], node_lookup, "#{node_path}.onFirstEnter") : nil
       }.compact
     end
 

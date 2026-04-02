@@ -67,6 +67,23 @@ struct ConsequenceContext: Codable {
     let finalEffect: RollEffect
     let finalPosition: RollPosition
     let isCritical: Bool
+    let scopeNodeID: UUID?
+
+    init(
+        characterID: UUID,
+        interactableID: String?,
+        finalEffect: RollEffect,
+        finalPosition: RollPosition,
+        isCritical: Bool,
+        scopeNodeID: UUID? = nil
+    ) {
+        self.characterID = characterID
+        self.interactableID = interactableID
+        self.finalEffect = finalEffect
+        self.finalPosition = finalPosition
+        self.isCritical = isCritical
+        self.scopeNodeID = scopeNodeID
+    }
 
     func character(in gameState: GameState) -> Character? {
         gameState.party.first(where: { $0.id == characterID })
@@ -251,6 +268,7 @@ struct GameState: Codable {
     var runOutcomeText: String? = nil
     var scenarioFlags: [String: Bool] = [:]
     var scenarioCounters: [String: Int] = [:]
+    var triggeredFirstEnterNodeIDs: [String] = []
     var launchPartyPlan: PartyBuildPlan? = nil
     var pendingResolution: PendingConsequenceResolution? = nil
     // ... other global state can be added later
@@ -258,7 +276,8 @@ struct GameState: Codable {
     enum CodingKeys: String, CodingKey {
         case scenarioName, party, activeClocks, dungeon, currentNodeID
         case characterLocations, status, runOutcome, runOutcomeText
-        case scenarioFlags, scenarioCounters, launchPartyPlan, pendingResolution
+        case scenarioFlags, scenarioCounters, triggeredFirstEnterNodeIDs
+        case launchPartyPlan, pendingResolution
     }
 
     init(
@@ -273,6 +292,7 @@ struct GameState: Codable {
         runOutcomeText: String? = nil,
         scenarioFlags: [String: Bool] = [:],
         scenarioCounters: [String: Int] = [:],
+        triggeredFirstEnterNodeIDs: [String] = [],
         launchPartyPlan: PartyBuildPlan? = nil,
         pendingResolution: PendingConsequenceResolution? = nil
     ) {
@@ -287,6 +307,7 @@ struct GameState: Codable {
         self.runOutcomeText = runOutcomeText
         self.scenarioFlags = scenarioFlags
         self.scenarioCounters = scenarioCounters
+        self.triggeredFirstEnterNodeIDs = triggeredFirstEnterNodeIDs
         self.launchPartyPlan = launchPartyPlan
         self.pendingResolution = pendingResolution
     }
@@ -304,6 +325,7 @@ struct GameState: Codable {
         runOutcomeText = try container.decodeIfPresent(String.self, forKey: .runOutcomeText)
         scenarioFlags = try container.decodeIfPresent([String: Bool].self, forKey: .scenarioFlags) ?? [:]
         scenarioCounters = try container.decodeIfPresent([String: Int].self, forKey: .scenarioCounters) ?? [:]
+        triggeredFirstEnterNodeIDs = try container.decodeIfPresent([String].self, forKey: .triggeredFirstEnterNodeIDs) ?? []
         launchPartyPlan = try container.decodeIfPresent(PartyBuildPlan.self, forKey: .launchPartyPlan)
         pendingResolution = try container.decodeIfPresent(PendingConsequenceResolution.self, forKey: .pendingResolution)
     }
@@ -325,6 +347,9 @@ struct GameState: Codable {
         if !scenarioCounters.isEmpty {
             try container.encode(scenarioCounters, forKey: .scenarioCounters)
         }
+        if !triggeredFirstEnterNodeIDs.isEmpty {
+            try container.encode(triggeredFirstEnterNodeIDs, forKey: .triggeredFirstEnterNodeIDs)
+        }
         try container.encodeIfPresent(launchPartyPlan, forKey: .launchPartyPlan)
         try container.encodeIfPresent(pendingResolution, forKey: .pendingResolution)
     }
@@ -333,6 +358,7 @@ struct GameState: Codable {
 /// A general-purpose modifier that can adjust action rolls.
 struct Modifier: Codable {
     var id: UUID = UUID()
+    var sourceKey: String? = nil
     var bonusDice: Int = 0
     var improvePosition: Bool = false
     var improveEffect: Bool = false
@@ -345,15 +371,17 @@ struct Modifier: Codable {
     var uses: Int = 1
     var isOptionalToApply: Bool = true
     var description: String
+    var usedExplicitIDField: Bool = false
     var usedLegacyActionTypeAlias: Bool = false
 
     enum CodingKeys: String, CodingKey {
-        case id, bonusDice, improvePosition, improveEffect
+        case id, sourceKey, bonusDice, improvePosition, improveEffect
         case applicableToAction, applicableActions, actionType
         case requiredTag, uses, isOptionalToApply, description
     }
 
     init(id: UUID = UUID(),
+         sourceKey: String? = nil,
          bonusDice: Int = 0,
          improvePosition: Bool = false,
          improveEffect: Bool = false,
@@ -364,6 +392,7 @@ struct Modifier: Codable {
          isOptionalToApply: Bool = true,
          description: String) {
         self.id = id
+        self.sourceKey = sourceKey
         self.bonusDice = bonusDice
         self.improvePosition = improvePosition
         self.improveEffect = improveEffect
@@ -373,12 +402,23 @@ struct Modifier: Codable {
         self.uses = uses
         self.isOptionalToApply = isOptionalToApply
         self.description = description
+        self.usedExplicitIDField = false
         self.usedLegacyActionTypeAlias = false
     }
 
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        id = try container.decodeIfPresent(UUID.self, forKey: .id) ?? UUID()
+        if let explicitID = try container.decodeIfPresent(UUID.self, forKey: .id) {
+            id = explicitID
+            usedExplicitIDField = true
+        } else if let explicitIDString = try container.decodeIfPresent(String.self, forKey: .id) {
+            id = UUID(uuidString: explicitIDString) ?? UUID()
+            usedExplicitIDField = true
+        } else {
+            id = UUID()
+            usedExplicitIDField = false
+        }
+        sourceKey = try container.decodeIfPresent(String.self, forKey: .sourceKey)
         bonusDice = try container.decodeIfPresent(Int.self, forKey: .bonusDice) ?? 0
         improvePosition = try container.decodeIfPresent(Bool.self, forKey: .improvePosition) ?? false
         improveEffect = try container.decodeIfPresent(Bool.self, forKey: .improveEffect) ?? false
@@ -398,6 +438,7 @@ struct Modifier: Codable {
     func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(id, forKey: .id)
+        try container.encodeIfPresent(sourceKey, forKey: .sourceKey)
         try container.encode(bonusDice, forKey: .bonusDice)
         try container.encode(improvePosition, forKey: .improvePosition)
         try container.encode(improveEffect, forKey: .improveEffect)
@@ -1069,6 +1110,7 @@ extension ActionOption: Identifiable {
 }
 
 enum RollOutcome: String, Codable {
+    case critical
     case success
     case partial
     case failure
@@ -1083,10 +1125,16 @@ struct GameCondition: Codable {
         case requiresMinPositionLevel
         case requiresExactPositionLevel
         case characterHasTreasureId
+        case characterHasTreasureWithTag
         case characterHasTag
         case characterLacksTag
         case partyHasTreasureWithTag
         case partyHasMemberWithTag
+        case partyIsSplit
+        case characterIsAlone
+        case anotherPartyMemberHere
+        case partyMemberHereWithTag
+        case partyMemberElsewhereWithTag
         case clockProgress
         case scenarioFlagSet
         case scenarioCounter
@@ -1124,7 +1172,17 @@ struct ScenarioEvent: Codable, Identifiable {
 /// Represents a selectable option in a `createChoice` consequence.
 struct ChoiceOption: Codable {
     var title: String
+    var description: String? = nil
+    var conditions: [GameCondition]? = nil
+    var costLabel: String? = nil
     var consequences: [Consequence]
+}
+
+enum ConsequenceTargetScope: String, Codable {
+    case actingCharacter
+    case allHere
+    case othersHere
+    case allParty
 }
 
 struct Consequence: Codable {
@@ -1143,6 +1201,10 @@ struct Consequence: Codable {
         case addInteractable
         case addInteractableHere
         case gainTreasure
+        case removeTreasure
+        case removeTreasureWithTag
+        case grantModifier
+        case removeModifier
         case modifyDice
         case createChoice
         case triggerEvent
@@ -1173,6 +1235,8 @@ struct Consequence: Codable {
     var newInteractable: Interactable?
     var interactableTemplateID: String?
     var treasureId: String?
+    var modifier: Modifier?
+    var sourceKey: String?
     var duration: String?
     var choiceOptions: [ChoiceOption]?
     var eventId: String?
@@ -1183,6 +1247,7 @@ struct Consequence: Codable {
     var endingOutcome: RunOutcome?
     var endingText: String?
     var resistance: ResistanceRule?
+    var targetScope: ConsequenceTargetScope = .actingCharacter
 
     // Gating Conditions
     var conditions: [GameCondition]?
@@ -1194,13 +1259,16 @@ struct Consequence: Codable {
         case type, amount, level, familyId, clockName
         case fromNodeID, toNodeID, id, inNodeID
         case interactable, interactableTemplateID, treasure, treasureId
+        case modifier, sourceKey
         case duration, options, eventId, consequences
         case actionName, action, conditions, description
         case flagId, counterId, tag, runOutcome, runOutcomeText, resistance
+        case targetScope
     }
 
     init(kind: ConsequenceKind) {
         self.kind = kind
+        self.targetScope = .actingCharacter
     }
 
     init(from decoder: Decoder) throws {
@@ -1220,6 +1288,8 @@ struct Consequence: Codable {
         newInteractable = nil
         interactableTemplateID = nil
         treasureId = nil
+        modifier = nil
+        sourceKey = nil
         duration = try container.decodeIfPresent(String.self, forKey: .duration)
         choiceOptions = try container.decodeIfPresent([ChoiceOption].self, forKey: .options)
         eventId = try container.decodeIfPresent(String.self, forKey: .eventId)
@@ -1230,6 +1300,7 @@ struct Consequence: Codable {
         endingOutcome = try container.decodeIfPresent(RunOutcome.self, forKey: .runOutcome)
         endingText = try container.decodeIfPresent(String.self, forKey: .runOutcomeText)
         resistance = try container.decodeIfPresent(ResistanceRule.self, forKey: .resistance)
+        targetScope = try container.decodeIfPresent(ConsequenceTargetScope.self, forKey: .targetScope) ?? .actingCharacter
 
         if resolvedKind == .removeInteractable, interactableId == "self" {
             resolvedKind = .removeSelfInteractable
@@ -1259,12 +1330,18 @@ struct Consequence: Codable {
             interactableTemplateID = try container.decodeIfPresent(String.self, forKey: .interactableTemplateID)
         }
 
-        if resolvedKind == .gainTreasure {
+        if resolvedKind == .gainTreasure || resolvedKind == .removeTreasure {
             if let tid = try container.decodeIfPresent(String.self, forKey: .treasureId) {
                 treasureId = tid
             } else if let treasure = try container.decodeIfPresent(Treasure.self, forKey: .treasure) {
                 treasureId = treasure.id
             }
+        }
+
+        if resolvedKind == .grantModifier {
+            modifier = try container.decodeIfPresent(Modifier.self, forKey: .modifier)
+        } else if resolvedKind == .removeModifier {
+            sourceKey = try container.decodeIfPresent(String.self, forKey: .sourceKey)
         }
 
         conditions = try container.decodeIfPresent([GameCondition].self, forKey: .conditions)
@@ -1338,6 +1415,18 @@ struct Consequence: Codable {
         case .gainTreasure:
             try container.encode(ConsequenceKind.gainTreasure, forKey: .type)
             try container.encodeIfPresent(treasureId, forKey: .treasureId)
+        case .removeTreasure:
+            try container.encode(ConsequenceKind.removeTreasure, forKey: .type)
+            try container.encodeIfPresent(treasureId, forKey: .treasureId)
+        case .removeTreasureWithTag:
+            try container.encode(ConsequenceKind.removeTreasureWithTag, forKey: .type)
+            try container.encodeIfPresent(tag, forKey: .tag)
+        case .grantModifier:
+            try container.encode(ConsequenceKind.grantModifier, forKey: .type)
+            try container.encodeIfPresent(modifier, forKey: .modifier)
+        case .removeModifier:
+            try container.encode(ConsequenceKind.removeModifier, forKey: .type)
+            try container.encodeIfPresent(sourceKey, forKey: .sourceKey)
         case .modifyDice:
             try container.encode(ConsequenceKind.modifyDice, forKey: .type)
             try container.encodeIfPresent(amount, forKey: .amount)
@@ -1382,10 +1471,28 @@ struct Consequence: Codable {
         try container.encodeIfPresent(conditions, forKey: .conditions)
         try container.encodeIfPresent(description, forKey: .description)
         try container.encodeIfPresent(resistance, forKey: .resistance)
+        if targetScope != .actingCharacter {
+            try container.encode(targetScope, forKey: .targetScope)
+        }
     }
 }
 
 extension Consequence {
+    var supportsTargetScope: Bool {
+        switch kind {
+        case .gainStress, .adjustStress, .sufferHarm, .healHarm, .modifyDice,
+             .grantModifier, .removeModifier, .moveActingCharacterToNode,
+             .addCharacterTag, .removeCharacterTag:
+            return true
+        default:
+            return false
+        }
+    }
+
+    var effectiveTargetScope: ConsequenceTargetScope {
+        supportsTargetScope ? targetScope : .actingCharacter
+    }
+
     var effectiveResistanceRule: ResistanceRule? {
         if let resistance {
             return resistance
@@ -1521,6 +1628,32 @@ extension Consequence {
     static func gainTreasure(id: String) -> Consequence {
         var c = Consequence(kind: .gainTreasure)
         c.treasureId = id
+        return c
+    }
+
+    /// Remove a specific treasure from the acting character.
+    static func removeTreasure(id: String) -> Consequence {
+        var c = Consequence(kind: .removeTreasure)
+        c.treasureId = id
+        return c
+    }
+
+    /// Remove the first treasure with a matching tag from the acting character.
+    static func removeTreasureWithTag(_ tag: String) -> Consequence {
+        var c = Consequence(kind: .removeTreasureWithTag)
+        c.tag = tag
+        return c
+    }
+
+    static func grantModifier(_ modifier: Modifier) -> Consequence {
+        var c = Consequence(kind: .grantModifier)
+        c.modifier = modifier
+        return c
+    }
+
+    static func removeModifier(sourceKey: String) -> Consequence {
+        var c = Consequence(kind: .removeModifier)
+        c.sourceKey = sourceKey
         return c
     }
 
@@ -1715,6 +1848,8 @@ struct MapNode: Identifiable, Codable {
     var connections: [NodeConnection]
     var theme: String? = nil
     var isDiscovered: Bool = false // To support fog of war
+    var onEnter: [Consequence]? = nil
+    var onFirstEnter: [Consequence]? = nil
 }
 
 // Represents a path from one node to another

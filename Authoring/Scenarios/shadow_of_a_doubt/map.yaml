@@ -21,4 +21,161 @@ nodes:
                 - type: endRun
                   runOutcome: escaped
                   runOutcomeText: You leave with your people alive and your ambition deferred.
-    connections: []
+      - id: shadow_of_a_doubt_silver_lantern
+        title: Silver Lantern
+        description: A soot-black lantern hangs cold by the mantel until someone speaks over it.
+        availableActions:
+          - name: Lift it for the others
+            actionType: Attune
+            position: controlled
+            effect: standard
+            outcomes:
+              success:
+                - type: grantModifier
+                  targetScope: othersHere
+                  modifier:
+                    sourceKey: sod_lantern_guidance
+                    improvePosition: true
+                    applicableToAction: Study
+                    uses: 1
+                    isOptionalToApply: false
+                    description: from Lantern Guidance
+              partial:
+                - type: grantModifier
+                  targetScope: othersHere
+                  modifier:
+                    sourceKey: sod_lantern_guidance
+                    improvePosition: true
+                    applicableToAction: Study
+                    uses: 1
+                    isOptionalToApply: false
+                    description: from Lantern Guidance
+                - type: gainStress
+                  amount: 1
+              failure:
+                - type: gainStress
+                  amount: 1
+        tags:
+          - Support
+          - Light
+    connections:
+      - to: grand_stair
+        isUnlocked: true
+        description: Climb the grand stair
+  grand_stair:
+    name: Grand Stair
+    soundProfile: chasm_wind
+    theme: staircase
+    isDiscovered: false
+    # Showcase: the first arrival reveals the room's premise, while every
+    # later arrival can clean up a room-specific modifier from elsewhere.
+    onFirstEnter:
+      - type: setScenarioFlag
+        flagId: sod_stairs_listened
+        description: Something in the wallpaper starts listening back.
+    onEnter:
+      - type: removeModifier
+        targetScope: allHere
+        sourceKey: sod_nursery_hush
+        description: The nursery's hush breaks as soon as you reach the stair.
+    interactables:
+      - id: shadow_of_a_doubt_nursery_door
+        title: Half-Open Nursery Door
+        description: A nursery door stands ajar. A lullaby continues on the other side whether anyone is there or not.
+        availableActions:
+          - name: Follow the humming together
+            actionType: Attune
+            position: risky
+            effect: standard
+            conditions:
+              - type: scenarioFlagSet
+                stringParam: sod_stairs_listened
+            outcomes:
+              success:
+                - type: unlockConnection
+                  fromNode: grand_stair
+                  toNode: nursery
+                - type: removeInteractable
+                  id: self
+                - type: moveActingCharacterToNode
+                  targetScope: allHere
+                  toNode: nursery
+              partial:
+                - type: unlockConnection
+                  fromNode: grand_stair
+                  toNode: nursery
+                - type: removeInteractable
+                  id: self
+                - type: moveActingCharacterToNode
+                  targetScope: allHere
+                  toNode: nursery
+                - type: gainStress
+                  amount: 1
+              failure:
+                - type: gainStress
+                  amount: 1
+    connections:
+      - to: parlor_room
+        isUnlocked: true
+        description: Descend to the parlor
+      - to: nursery
+        isUnlocked: false
+        description: Cross the nursery threshold
+  nursery:
+    name: Nursery
+    soundProfile: silent_tomb
+    theme: haunted_nursery
+    isDiscovered: false
+    # Showcase: first entry grants a temporary room-state modifier to the
+    # full arriving cohort, then recurring entry applies pressure.
+    onFirstEnter:
+      - type: setScenarioFlag
+        flagId: sod_nursery_awakened
+        description: Every toy in the room goes still at once.
+      - type: grantModifier
+        targetScope: allHere
+        description: The nursery dampens every breath until the smallest details stand out.
+        modifier:
+          sourceKey: sod_nursery_hush
+          bonusDice: 1
+          applicableToAction: Study
+          uses: 1
+          isOptionalToApply: false
+          description: from the Nursery's Hush
+    onEnter:
+      - type: gainStress
+        amount: 1
+        targetScope: allHere
+        description: The rocking horse turns to follow the newcomers.
+    interactables:
+      - id: shadow_of_a_doubt_family_ledger
+        title: Family Ledger
+        description: Names have been scratched out and rewritten until the whole bloodline looks negotiated.
+        availableActions:
+          - name: Read the altered family record
+            actionType: Study
+            position: risky
+            effect: standard
+            conditions:
+              - type: scenarioFlagSet
+                stringParam: sod_nursery_awakened
+            outcomes:
+              success:
+                - type: gainTreasure
+                  treasureId: sod_inheritance_record
+                - type: removeInteractable
+                  id: self
+              partial:
+                - type: gainTreasure
+                  treasureId: sod_inheritance_record
+                - type: gainStress
+                  amount: 1
+                - type: removeInteractable
+                  id: self
+              failure:
+                - type: gainStress
+                  amount: 1
+    connections:
+      - to: grand_stair
+        isUnlocked: true
+        description: Retreat to the stair

@@ -84,6 +84,50 @@ final class ModifierSystemTests: XCTestCase {
         XCTAssertTrue(vm.gameState.party[0].modifiers.isEmpty)
     }
 
+    func testPerformActionConsumesAlwaysOnModifierWhenItChangesCommittedRoll() throws {
+        var character = makeTestCharacter()
+        let mod = Modifier(bonusDice: 1, uses: 1, isOptionalToApply: false, description: "Battle Fury")
+        character.modifiers = [mod]
+        let vm = TestFixtures.makeViewModel()
+        vm.gameState.party = [character]
+        vm.gameState.characterLocations[character.id.uuidString] = UUID()
+
+        _ = vm.performAction(
+            for: makeTestAction(),
+            with: character,
+            interactableID: nil,
+            usingDice: [6, 5, 4]
+        )
+
+        XCTAssertTrue(vm.gameState.party[0].modifiers.isEmpty)
+    }
+
+    func testPerformActionKeepsAlwaysOnModifierWhenItDoesNotMateriallyChangeRoll() throws {
+        var character = makeTestCharacter()
+        let mod = Modifier(improvePosition: true, uses: 1, isOptionalToApply: false, description: "Perfect Cover")
+        character.modifiers = [mod]
+        let vm = TestFixtures.makeViewModel()
+        vm.gameState.party = [character]
+        vm.gameState.characterLocations[character.id.uuidString] = UUID()
+
+        let controlledAction = ActionOption(
+            name: "Hold Position",
+            actionType: "Skirmish",
+            position: .controlled,
+            effect: .standard
+        )
+
+        _ = vm.performAction(
+            for: controlledAction,
+            with: character,
+            interactableID: nil,
+            usingDice: [6, 5]
+        )
+
+        XCTAssertEqual(vm.gameState.party[0].modifiers.count, 1)
+        XCTAssertEqual(vm.gameState.party[0].modifiers.first?.uses, 1)
+    }
+
     func testActionSpecificArrayModifier() throws {
         let vm = GameViewModel()
         var character = makeTestCharacter()
@@ -330,7 +374,7 @@ final class ModifierSystemTests: XCTestCase {
             with: leader,
             interactableID: nil,
             partyMovementMode: .grouped,
-            groupRolls: [[2], [6]],
+            groupRolls: [[6], [2]],
             in: &gameState
         )
 
@@ -338,5 +382,73 @@ final class ModifierSystemTests: XCTestCase {
         XCTAssertEqual(gameState.party[0].stress, 1)
         XCTAssertEqual(gameState.scenarioFlags["group_success"], true)
         XCTAssertTrue(result.consequences.contains("Leader takes 1 Stress"))
+    }
+
+    func testActionResolverGroupActionOnlyUsesCharactersInSameRoom() throws {
+        let runtime = ScenarioRuntime()
+        let resolver = ActionResolver(
+            runtime: runtime,
+            rollRules: RollRulesEngine(),
+            debugLogging: false
+        )
+
+        let sharedNodeID = UUID()
+        let remoteNodeID = UUID()
+        let leader = Character(
+            id: UUID(),
+            name: "Leader",
+            characterClass: "Rogue",
+            stress: 0,
+            harm: HarmState(),
+            actions: ["Skirmish": 2]
+        )
+        let ally = Character(
+            id: UUID(),
+            name: "Ally",
+            characterClass: "Guardian",
+            stress: 0,
+            harm: HarmState(),
+            actions: ["Skirmish": 1]
+        )
+        let remote = Character(
+            id: UUID(),
+            name: "Remote",
+            characterClass: "Sniper",
+            stress: 0,
+            harm: HarmState(),
+            actions: ["Skirmish": 3]
+        )
+        let groupAction = ActionOption(
+            name: "Hold the Line",
+            actionType: "Skirmish",
+            position: .risky,
+            effect: .standard,
+            isGroupAction: true,
+            outcomes: [
+                .success: [.setScenarioFlag("should_not_happen")],
+                .failure: [.setScenarioFlag("local_failure")]
+            ]
+        )
+
+        var gameState = GameState(party: [leader, ally, remote])
+        gameState.characterLocations = [
+            leader.id.uuidString: sharedNodeID,
+            ally.id.uuidString: sharedNodeID,
+            remote.id.uuidString: remoteNodeID
+        ]
+
+        let result = resolver.performAction(
+            for: groupAction,
+            with: leader,
+            interactableID: nil,
+            partyMovementMode: .solo,
+            groupRolls: [[2], [2], [6]],
+            in: &gameState
+        )
+
+        XCTAssertEqual(result.outcome, "Failure.")
+        XCTAssertEqual(gameState.party[0].stress, 1)
+        XCTAssertEqual(gameState.scenarioFlags["local_failure"], true)
+        XCTAssertNil(gameState.scenarioFlags["should_not_happen"])
     }
 }

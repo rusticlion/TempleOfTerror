@@ -299,6 +299,123 @@ final class ScenarioRuntimeTests: XCTestCase {
         XCTAssertTrue(runtime.canTraverse(characterID: scout.id, via: conditionedConnection, in: gameState))
     }
 
+    func testScenarioRuntimeLocationAwareConditionsInspectPartyLayout() throws {
+        let sharedNodeID = UUID()
+        let soloNodeID = UUID()
+        let runtime = ScenarioRuntime()
+
+        let lead = Character(
+            id: UUID(),
+            name: "Lead",
+            characterClass: "Scout",
+            stress: 0,
+            harm: HarmState(),
+            actions: ["Study": 1]
+        )
+        let engineer = Character(
+            id: UUID(),
+            name: "Engineer",
+            characterClass: "Engineer",
+            stress: 0,
+            harm: HarmState(),
+            actions: ["Tinker": 2],
+            traitTags: ["Mechanic"]
+        )
+        let courier = Character(
+            id: UUID(),
+            name: "Courier",
+            characterClass: "Runner",
+            stress: 0,
+            harm: HarmState(),
+            actions: ["Prowl": 2],
+            traitTags: ["Signal"]
+        )
+
+        let sharedNode = MapNode(
+            id: sharedNodeID,
+            name: "Shared Chamber",
+            soundProfile: "",
+            interactables: [
+                Interactable(
+                    id: "backup_only",
+                    title: "Backup Only",
+                    description: "",
+                    availableActions: [],
+                    conditions: [GameCondition(type: .anotherPartyMemberHere)]
+                ),
+                Interactable(
+                    id: "mechanic_help",
+                    title: "Mechanic Help",
+                    description: "",
+                    availableActions: [],
+                    conditions: [GameCondition(type: .partyMemberHereWithTag, stringParam: "Mechanic")]
+                ),
+                Interactable(
+                    id: "remote_signal",
+                    title: "Remote Signal",
+                    description: "",
+                    availableActions: [],
+                    conditions: [GameCondition(type: .partyMemberElsewhereWithTag, stringParam: "Signal")]
+                ),
+                Interactable(
+                    id: "split_only",
+                    title: "Split Only",
+                    description: "",
+                    availableActions: [],
+                    conditions: [GameCondition(type: .partyIsSplit)]
+                ),
+                Interactable(
+                    id: "alone_only",
+                    title: "Alone Only",
+                    description: "",
+                    availableActions: [],
+                    conditions: [GameCondition(type: .characterIsAlone)]
+                )
+            ],
+            connections: []
+        )
+        let soloNode = MapNode(
+            id: soloNodeID,
+            name: "Solo Watch",
+            soundProfile: "",
+            interactables: [
+                Interactable(
+                    id: "solo_console",
+                    title: "Solo Console",
+                    description: "",
+                    availableActions: [],
+                    conditions: [GameCondition(type: .characterIsAlone)]
+                )
+            ],
+            connections: []
+        )
+
+        let gameState = GameState(
+            party: [lead, engineer, courier],
+            dungeon: DungeonMap(
+                nodes: [
+                    sharedNodeID.uuidString: sharedNode,
+                    soloNodeID.uuidString: soloNode
+                ],
+                startingNodeID: sharedNodeID
+            ),
+            characterLocations: [
+                lead.id.uuidString: sharedNodeID,
+                engineer.id.uuidString: sharedNodeID,
+                courier.id.uuidString: soloNodeID
+            ]
+        )
+
+        XCTAssertEqual(
+            Set(runtime.visibleInteractables(for: lead.id, in: gameState).map(\.id)),
+            Set(["backup_only", "mechanic_help", "remote_signal", "split_only"])
+        )
+        XCTAssertEqual(
+            runtime.visibleInteractables(for: courier.id, in: gameState).map(\.id),
+            ["solo_console"]
+        )
+    }
+
     func testScenarioRuntimeMoveCharacterDiscoversDestinationNode() throws {
         let startID = UUID()
         let nextID = UUID()

@@ -13,7 +13,7 @@
   ],
   "allOf": [
     {
-      "$ref": "./common.schema.json#/$defs/interactable"
+      "$ref": "./common.schema.json#/$defs/interactableCore"
     }
   ],
   "unevaluatedProperties": false

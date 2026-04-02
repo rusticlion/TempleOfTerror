@@ -80,7 +80,7 @@ Scripts/run_tests.sh all
 Scripts/check_authored_scenarios.sh
 ```
 
-This compiles authored YAML into packaged JSON, validates the generated scenarios, and writes map previews to `Authoring/Previews`.
+This validates authored YAML, compiles it into packaged JSON, validates the generated scenarios, and writes map previews to `Authoring/Previews`.
 
 ## Recommended Codex Workflow
 

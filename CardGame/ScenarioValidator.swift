@@ -431,7 +431,7 @@ struct ScenarioValidator {
                 severity: .warning,
                 file: "treasures.json",
                 path: "treasure[\(treasureID)]",
-                message: "Treasure is defined but never referenced by gainTreasure or characterHasTreasureId."
+                message: "Treasure is defined but never referenced by gainTreasure, removeTreasure, or characterHasTreasureId."
             )
         }
 
@@ -515,6 +515,28 @@ struct ScenarioValidator {
                         state: &state
                     )
                 }
+            }
+
+            if let onFirstEnter = node.onFirstEnter {
+                validateConsequences(
+                    onFirstEnter,
+                    file: mapFile,
+                    path: "node[\(node.id.uuidString)].onFirstEnter",
+                    catalog: catalog,
+                    state: &state,
+                    owningNodeID: node.id
+                )
+            }
+
+            if let onEnter = node.onEnter {
+                validateConsequences(
+                    onEnter,
+                    file: mapFile,
+                    path: "node[\(node.id.uuidString)].onEnter",
+                    catalog: catalog,
+                    state: &state,
+                    owningNodeID: node.id
+                )
             }
 
             if !reachableNodeIDs.contains(node.id) {
@@ -772,7 +794,7 @@ struct ScenarioValidator {
             )
         }
 
-        let orderedOutcomes: [RollOutcome] = [.success, .partial, .failure]
+        let orderedOutcomes: [RollOutcome] = [.critical, .success, .partial, .failure]
         for outcome in orderedOutcomes {
             guard let consequences = action.outcomes[outcome] else { continue }
             validateConsequences(
@@ -903,8 +925,40 @@ struct ScenarioValidator {
         file: String,
         path: String,
         catalog: ValidationCatalog,
-        state: inout ValidationState
+        state: inout ValidationState,
+        requiresSourceKey: Bool = false,
+        warnOnExplicitRuntimeID: Bool = false,
+        requireMechanicalEffect: Bool = false
     ) {
+        if warnOnExplicitRuntimeID, modifier.usedExplicitIDField {
+            state.report.add(
+                severity: .warning,
+                file: file,
+                path: "\(path).id",
+                message: "Authored modifiers should omit runtime id; a fresh UUID will be assigned at runtime."
+            )
+        }
+
+        if let sourceKey = modifier.sourceKey,
+           sourceKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            state.report.add(
+                severity: .error,
+                file: file,
+                path: "\(path).sourceKey",
+                message: "modifier.sourceKey cannot be blank."
+            )
+        }
+
+        if requiresSourceKey,
+           modifier.sourceKey?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ?? true {
+            state.report.add(
+                severity: .error,
+                file: file,
+                path: "\(path).sourceKey",
+                message: "Authored grantModifier requires modifier.sourceKey."
+            )
+        }
+
         if modifier.usedLegacyActionTypeAlias {
             state.report.add(
                 severity: .warning,
@@ -924,6 +978,27 @@ struct ScenarioValidator {
                 message: "Unsupported action scope '\(actionName)' in modifier. Supported values: \(supported)."
             )
         }
+
+        if modifier.uses < -1 {
+            state.report.add(
+                severity: .error,
+                file: file,
+                path: "\(path).uses",
+                message: "Modifier uses must be >= -1."
+            )
+        }
+
+        if requireMechanicalEffect,
+           modifier.bonusDice == 0,
+           !modifier.improvePosition,
+           !modifier.improveEffect {
+            state.report.add(
+                severity: .error,
+                file: file,
+                path: path,
+                message: "grantModifier must include at least one mechanical effect."
+            )
+        }
     }
 
     private func validateConsequences(
@@ -931,7 +1006,8 @@ struct ScenarioValidator {
         file: String,
         path: String,
         catalog: ValidationCatalog,
-        state: inout ValidationState
+        state: inout ValidationState,
+        owningNodeID: UUID? = nil
     ) {
         for (index, consequence) in consequences.enumerated() {
             let consequencePath = "\(path)[\(index)]"
@@ -942,6 +1018,15 @@ struct ScenarioValidator {
                 catalog: catalog,
                 state: &state
             )
+
+            if consequence.targetScope != .actingCharacter && !consequence.supportsTargetScope {
+                state.report.add(
+                    severity: .error,
+                    file: file,
+                    path: "\(consequencePath).targetScope",
+                    message: "\(consequence.kind.rawValue) does not support targetScope."
+                )
+            }
 
             switch consequence.kind {
             case .gainStress:
@@ -1108,14 +1193,22 @@ struct ScenarioValidator {
                         state: &state
                     )
 
-                    if let toNodeID = consequence.toNodeID,
-                       !catalog.nodeIDs.contains(toNodeID) {
-                        state.report.add(
-                            severity: .error,
-                            file: file,
-                            path: consequencePath,
-                            message: "moveActingCharacterToNode references missing toNodeID \(toNodeID.uuidString)."
-                        )
+                    if let toNodeID = consequence.toNodeID {
+                        if !catalog.nodeIDs.contains(toNodeID) {
+                            state.report.add(
+                                severity: .error,
+                                file: file,
+                                path: consequencePath,
+                                message: "moveActingCharacterToNode references missing toNodeID \(toNodeID.uuidString)."
+                            )
+                        } else if owningNodeID == toNodeID {
+                            state.report.add(
+                                severity: .warning,
+                                file: file,
+                                path: consequencePath,
+                                message: "moveActingCharacterToNode targets the same node that owns this hook."
+                            )
+                        }
                     }
                 }
 
@@ -1216,6 +1309,65 @@ struct ScenarioValidator {
                     )
                 }
 
+            case .removeTreasure:
+                if let treasureID = consequence.treasureId {
+                    state.referencedTreasureIDs.insert(treasureID)
+                    if !catalog.treasureIDs.contains(treasureID) {
+                        state.report.add(
+                            severity: .error,
+                            file: file,
+                            path: consequencePath,
+                            message: "Unknown treasure '\(treasureID)'."
+                        )
+                    }
+                } else {
+                    state.report.add(
+                        severity: .error,
+                        file: file,
+                        path: consequencePath,
+                        message: "removeTreasure requires treasureId."
+                    )
+                }
+
+            case .removeTreasureWithTag:
+                require(
+                    !(consequence.tag?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ?? true),
+                    file: file,
+                    path: consequencePath,
+                    message: "removeTreasureWithTag requires tag.",
+                    state: &state
+                )
+
+            case .grantModifier:
+                if let modifier = consequence.modifier {
+                    validateModifier(
+                        modifier,
+                        file: file,
+                        path: "\(consequencePath).modifier",
+                        catalog: catalog,
+                        state: &state,
+                        requiresSourceKey: true,
+                        warnOnExplicitRuntimeID: true,
+                        requireMechanicalEffect: true
+                    )
+                } else {
+                    state.report.add(
+                        severity: .error,
+                        file: file,
+                        path: consequencePath,
+                        message: "grantModifier requires modifier."
+                    )
+                }
+
+            case .removeModifier:
+                require(
+                    !(consequence.sourceKey?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ?? true),
+                    file: file,
+                    path: consequencePath,
+                    message: "removeModifier requires sourceKey.",
+                    state: &state
+                )
+
             case .modifyDice:
                 require(
                     consequence.amount != nil,
@@ -1228,6 +1380,20 @@ struct ScenarioValidator {
             case .createChoice:
                 if let options = consequence.choiceOptions, !options.isEmpty {
                     for (optionIndex, option) in options.enumerated() {
+                        require(
+                            !option.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+                            file: file,
+                            path: "\(consequencePath).options[\(optionIndex)].title",
+                            message: "Choice option requires a non-empty title.",
+                            state: &state
+                        )
+                        validateConditions(
+                            option.conditions,
+                            file: file,
+                            path: "\(consequencePath).options[\(optionIndex):\(option.title)].conditions",
+                            catalog: catalog,
+                            state: &state
+                        )
                         validateConsequences(
                             option.consequences,
                             file: file,
@@ -1462,7 +1628,8 @@ struct ScenarioValidator {
                     )
                 }
 
-            case .characterHasTag, .characterLacksTag, .partyHasMemberWithTag:
+            case .characterHasTreasureWithTag, .characterHasTag, .characterLacksTag, .partyHasMemberWithTag,
+                 .partyMemberHereWithTag, .partyMemberElsewhereWithTag:
                 require(
                     !(condition.stringParam?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ?? true),
                     file: file,
@@ -1479,6 +1646,9 @@ struct ScenarioValidator {
                     message: "partyHasTreasureWithTag requires stringParam.",
                     state: &state
                 )
+
+            case .partyIsSplit, .characterIsAlone, .anotherPartyMemberHere:
+                break
 
             case .clockProgress:
                 require(

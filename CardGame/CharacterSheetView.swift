@@ -1,5 +1,46 @@
 import SwiftUI
 
+struct CharacterDetailSheetView: View {
+    let character: Character
+    var locationName: String? = nil
+    let harmFamilies: [String: HarmFamily]
+
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                CharacterSheetView(
+                    character: character,
+                    locationName: locationName,
+                    harmFamilies: harmFamilies
+                )
+                .padding(20)
+            }
+            .background(Theme.bgWarm)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbarBackground(Theme.leather, for: .navigationBar)
+            .toolbarBackground(.visible, for: .navigationBar)
+            .toolbarColorScheme(.dark, for: .navigationBar)
+            .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Text("Explorer Details")
+                        .font(Theme.displayFont(size: 22, weight: .semibold))
+                        .foregroundColor(Theme.parchment)
+                }
+
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Close") { dismiss() }
+                        .foregroundColor(Theme.parchment)
+                        .accessibilityIdentifier("characterDetailCloseButton")
+                }
+            }
+        }
+        .presentationBackground(Theme.bgWarm)
+        .accessibilityIdentifier("characterDetailSheet")
+    }
+}
+
 struct CharacterSheetView: View {
     struct SelectedHarm: Identifiable {
         let familyId: String

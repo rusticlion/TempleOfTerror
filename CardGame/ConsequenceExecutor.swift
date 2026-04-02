@@ -83,7 +83,15 @@ struct ConsequenceExecutor {
 
             for consequence in frame.remainingConsequences {
                 if consequence.kind == .createChoice {
-                    return previews
+                    let availableOptions = availableChoiceOptions(
+                        from: consequence,
+                        context: frame.context,
+                        gameState: gameState
+                    )
+                    if !availableOptions.isEmpty {
+                        return previews
+                    }
+                    continue
                 }
 
                 guard areConditionsMet(
@@ -251,9 +259,19 @@ struct ConsequenceExecutor {
             if consequence.kind == .createChoice,
                let options = consequence.choiceOptions,
                !options.isEmpty {
+                let availableOptions = availableChoiceOptions(
+                    from: consequence,
+                    context: context,
+                    gameState: gameState
+                )
+                guard !availableOptions.isEmpty else {
+                    append(consequence.description, to: &resolution)
+                    append("No options are currently available.", to: &resolution)
+                    continue
+                }
                 resolution.pendingChoice = PendingChoiceState(
                     prompt: consequence.description,
-                    options: options
+                    options: availableOptions
                 )
                 resolution.requiresAcknowledgement = true
                 return ProcessingResult(description: resolution.resolvedText, pendingResolution: resolution)
@@ -310,36 +328,100 @@ struct ConsequenceExecutor {
 
         switch consequence.kind {
         case .gainStress:
-            if let amount = consequence.amount,
-               let charIndex = gameState.party.firstIndex(where: { $0.id == actingCharacter.id }) {
-                if let stressText = applyStressDelta(amount, toCharacterAt: charIndex, gameState: &gameState) {
-                    append(stressText, to: &resolution)
+            if let amount = consequence.amount {
+                for targetID in scopedCharacterIDs(
+                    for: consequence,
+                    context: context,
+                    actingCharacterID: actingCharacter.id,
+                    gameState: gameState
+                ) {
+                    guard let charIndex = gameState.party.firstIndex(where: { $0.id == targetID }) else { continue }
+                    if let stressText = applyStressDelta(amount, toCharacterAt: charIndex, gameState: &gameState) {
+                        append(
+                            formattedScopedMessage(
+                                stressText,
+                                forCharacterID: targetID,
+                                consequence: consequence,
+                                actingCharacterID: actingCharacter.id,
+                                gameState: gameState
+                            ),
+                            to: &resolution
+                        )
+                    }
                 }
             }
         case .adjustStress:
-            if let amount = consequence.amount,
-               let charIndex = gameState.party.firstIndex(where: { $0.id == actingCharacter.id }) {
-                if let stressText = applyStressDelta(amount, toCharacterAt: charIndex, gameState: &gameState) {
-                    append(stressText, to: &resolution)
+            if let amount = consequence.amount {
+                for targetID in scopedCharacterIDs(
+                    for: consequence,
+                    context: context,
+                    actingCharacterID: actingCharacter.id,
+                    gameState: gameState
+                ) {
+                    guard let charIndex = gameState.party.firstIndex(where: { $0.id == targetID }) else { continue }
+                    if let stressText = applyStressDelta(amount, toCharacterAt: charIndex, gameState: &gameState) {
+                        append(
+                            formattedScopedMessage(
+                                stressText,
+                                forCharacterID: targetID,
+                                consequence: consequence,
+                                actingCharacterID: actingCharacter.id,
+                                gameState: gameState
+                            ),
+                            to: &resolution
+                        )
+                    }
                 }
             }
         case .sufferHarm:
             if let level = consequence.level,
                let familyID = consequence.familyId {
-                let harmDescription = applyHarm(
-                    familyId: familyID,
-                    level: level,
-                    toCharacter: actingCharacter.id,
-                    gameState: &gameState
-                )
-                if !narrativeUsed {
-                    append(harmDescription, to: &resolution)
+                for targetID in scopedCharacterIDs(
+                    for: consequence,
+                    context: context,
+                    actingCharacterID: actingCharacter.id,
+                    gameState: gameState
+                ) {
+                    let harmDescription = applyHarm(
+                        familyId: familyID,
+                        level: level,
+                        toCharacter: targetID,
+                        gameState: &gameState
+                    )
+                    if !narrativeUsed {
+                        append(
+                            formattedScopedMessage(
+                                harmDescription,
+                                forCharacterID: targetID,
+                                consequence: consequence,
+                                actingCharacterID: actingCharacter.id,
+                                gameState: gameState
+                            ),
+                            to: &resolution
+                        )
+                    }
                 }
             }
         case .healHarm:
-            let healDescription = healHarm(forCharacter: actingCharacter.id, gameState: &gameState)
-            if !narrativeUsed {
-                append(healDescription, to: &resolution)
+            for targetID in scopedCharacterIDs(
+                for: consequence,
+                context: context,
+                actingCharacterID: actingCharacter.id,
+                gameState: gameState
+            ) {
+                let healDescription = healHarm(forCharacter: targetID, gameState: &gameState)
+                if !narrativeUsed {
+                    append(
+                        formattedScopedMessage(
+                            healDescription,
+                            forCharacterID: targetID,
+                            consequence: consequence,
+                            actingCharacterID: actingCharacter.id,
+                            gameState: gameState
+                        ),
+                        to: &resolution
+                    )
+                }
             }
         case .tickClock:
             if let clockName = consequence.clockName,
@@ -387,10 +469,43 @@ struct ConsequenceExecutor {
                 }
             }
         case .moveActingCharacterToNode:
-            if let toNodeID = consequence.toNodeID,
-               let destination = runtime.moveCharacter(id: actingCharacter.id, toNodeID: toNodeID, in: &gameState),
-               !narrativeUsed {
-                append("Moved to \(destination.name).", to: &resolution)
+            if let toNodeID = consequence.toNodeID {
+                let targetIDs = scopedCharacterIDs(
+                    for: consequence,
+                    context: context,
+                    actingCharacterID: actingCharacter.id,
+                    gameState: gameState
+                ).filter { runtime.currentNodeID(for: $0, in: gameState) != toNodeID }
+
+                guard !targetIDs.isEmpty,
+                      let destination = runtime.moveCharacters(
+                        ids: targetIDs,
+                        toNodeID: toNodeID,
+                        focusCharacterID: actingCharacter.id,
+                        in: &gameState
+                      ) else {
+                    break
+                }
+
+                if !narrativeUsed {
+                    append(movementMessage(for: consequence, destination: destination.name), to: &resolution)
+                }
+
+                let entryConsequences = runtime.entryConsequences(for: toNodeID, in: &gameState)
+                if !entryConsequences.isEmpty {
+                    let hookContext = ConsequenceContext(
+                        characterID: actingCharacter.id,
+                        interactableID: nil,
+                        finalEffect: .standard,
+                        finalPosition: .risky,
+                        isCritical: false,
+                        scopeNodeID: toNodeID
+                    )
+                    enqueueAfterCurrentFrame(
+                        QueuedFrame(context: hookContext, consequences: entryConsequences),
+                        to: &resolution
+                    )
+                }
             }
         case .removeInteractable:
             if let interactableID = consequence.interactableId,
@@ -475,19 +590,115 @@ struct ConsequenceExecutor {
                     print("Treasure with ID \(treasureID) not found in active scenario treasure templates.")
                 }
             }
+        case .removeTreasure:
+            if let treasureID = consequence.treasureId,
+               let removedTreasure = removeTreasure(
+                   id: treasureID,
+                   fromCharacter: actingCharacter.id,
+                   gameState: &gameState
+               ),
+               !narrativeUsed {
+                append("Spent Treasure: \(removedTreasure.name).", to: &resolution)
+            }
+        case .removeTreasureWithTag:
+            if let tag = consequence.tag,
+               let removedTreasure = removeFirstTreasure(
+                   withTag: tag,
+                   fromCharacter: actingCharacter.id,
+                   gameState: &gameState
+               ),
+               !narrativeUsed {
+                append("Spent Treasure: \(removedTreasure.name).", to: &resolution)
+            }
+        case .grantModifier:
+            if let modifier = consequence.modifier {
+                for targetID in scopedCharacterIDs(
+                    for: consequence,
+                    context: context,
+                    actingCharacterID: actingCharacter.id,
+                    gameState: gameState
+                ) {
+                    guard grantModifier(
+                        modifier,
+                        toCharacter: targetID,
+                        gameState: &gameState
+                    ) else {
+                        continue
+                    }
+
+                    if !narrativeUsed {
+                        append(
+                            formattedScopedMessage(
+                                "Gain modifier: \(modifier.longDescription).",
+                                forCharacterID: targetID,
+                                consequence: consequence,
+                                actingCharacterID: actingCharacter.id,
+                                gameState: gameState
+                            ),
+                            to: &resolution
+                        )
+                    }
+                }
+            }
+        case .removeModifier:
+            if let sourceKey = consequence.sourceKey {
+                for targetID in scopedCharacterIDs(
+                    for: consequence,
+                    context: context,
+                    actingCharacterID: actingCharacter.id,
+                    gameState: gameState
+                ) {
+                    guard removeModifier(
+                        sourceKey: sourceKey,
+                        fromCharacter: targetID,
+                        gameState: &gameState
+                    ) else {
+                        continue
+                    }
+
+                    if !narrativeUsed {
+                        append(
+                            formattedScopedMessage(
+                                "Lose modifier: \(sourceKey).",
+                                forCharacterID: targetID,
+                                consequence: consequence,
+                                actingCharacterID: actingCharacter.id,
+                                gameState: gameState
+                            ),
+                            to: &resolution
+                        )
+                    }
+                }
+            }
         case .modifyDice:
-            if let amount = consequence.amount,
-               let charIndex = gameState.party.firstIndex(where: { $0.id == actingCharacter.id }) {
+            if let amount = consequence.amount {
                 let duration = consequence.duration ?? "next roll"
                 let uses = duration == "next roll" ? 1 : 99
-                let modifier = Modifier(
-                    bonusDice: amount,
-                    uses: uses,
-                    description: "Bonus from consequence"
-                )
-                gameState.party[charIndex].modifiers.append(modifier)
-                if !narrativeUsed {
-                    append("Gain +\(amount)d for \(duration).", to: &resolution)
+                for targetID in scopedCharacterIDs(
+                    for: consequence,
+                    context: context,
+                    actingCharacterID: actingCharacter.id,
+                    gameState: gameState
+                ) {
+                    guard let charIndex = gameState.party.firstIndex(where: { $0.id == targetID }) else { continue }
+                    let modifier = Modifier(
+                        bonusDice: amount,
+                        uses: uses,
+                        description: "Bonus from consequence"
+                    )
+                    gameState.party[charIndex].modifiers.append(modifier)
+                    if !narrativeUsed {
+                        append(
+                            formattedScopedMessage(
+                                "Gain +\(amount)d for \(duration).",
+                                forCharacterID: targetID,
+                                consequence: consequence,
+                                actingCharacterID: actingCharacter.id,
+                                gameState: gameState
+                            ),
+                            to: &resolution
+                        )
+                    }
                 }
             }
         case .createChoice:
@@ -537,16 +748,50 @@ struct ConsequenceExecutor {
                 gameState.scenarioCounters[counterID] = consequence.amount ?? 0
             }
         case .addCharacterTag:
-            if let tag = consequence.tag,
-               addCharacterStateTag(tag, toCharacter: actingCharacter.id, gameState: &gameState),
-               !narrativeUsed {
-                append("Gained tag: \(tag).", to: &resolution)
+            if let tag = consequence.tag {
+                for targetID in scopedCharacterIDs(
+                    for: consequence,
+                    context: context,
+                    actingCharacterID: actingCharacter.id,
+                    gameState: gameState
+                ) {
+                    guard addCharacterStateTag(tag, toCharacter: targetID, gameState: &gameState) else { continue }
+                    if !narrativeUsed {
+                        append(
+                            formattedScopedMessage(
+                                "Gained tag: \(tag).",
+                                forCharacterID: targetID,
+                                consequence: consequence,
+                                actingCharacterID: actingCharacter.id,
+                                gameState: gameState
+                            ),
+                            to: &resolution
+                        )
+                    }
+                }
             }
         case .removeCharacterTag:
-            if let tag = consequence.tag,
-               removeCharacterStateTag(tag, fromCharacter: actingCharacter.id, gameState: &gameState),
-               !narrativeUsed {
-                append("Lost tag: \(tag).", to: &resolution)
+            if let tag = consequence.tag {
+                for targetID in scopedCharacterIDs(
+                    for: consequence,
+                    context: context,
+                    actingCharacterID: actingCharacter.id,
+                    gameState: gameState
+                ) {
+                    guard removeCharacterStateTag(tag, fromCharacter: targetID, gameState: &gameState) else { continue }
+                    if !narrativeUsed {
+                        append(
+                            formattedScopedMessage(
+                                "Lost tag: \(tag).",
+                                forCharacterID: targetID,
+                                consequence: consequence,
+                                actingCharacterID: actingCharacter.id,
+                                gameState: gameState
+                            ),
+                            to: &resolution
+                        )
+                    }
+                }
             }
         case .endRun:
             gameState.status = .gameOver
@@ -583,6 +828,10 @@ struct ConsequenceExecutor {
                 if let treasureID = condition.stringParam {
                     conditionMet = character.treasures.contains(where: { $0.id == treasureID })
                 }
+            case .characterHasTreasureWithTag:
+                if let tag = condition.stringParam {
+                    conditionMet = character.treasures.contains(where: { $0.tags.contains(tag) })
+                }
             case .characterHasTag:
                 if let tag = condition.stringParam {
                     conditionMet = character.hasTag(tag)
@@ -598,6 +847,20 @@ struct ConsequenceExecutor {
             case .partyHasMemberWithTag:
                 if let tag = condition.stringParam {
                     conditionMet = partyHasMemberWithTag(tag, gameState: gameState)
+                }
+            case .partyIsSplit:
+                conditionMet = partyIsSplit(gameState: gameState)
+            case .characterIsAlone:
+                conditionMet = characterIsAlone(character.id, gameState: gameState)
+            case .anotherPartyMemberHere:
+                conditionMet = anotherPartyMemberHere(character.id, gameState: gameState)
+            case .partyMemberHereWithTag:
+                if let tag = condition.stringParam {
+                    conditionMet = partyMemberHere(withTag: tag, relativeTo: character.id, gameState: gameState)
+                }
+            case .partyMemberElsewhereWithTag:
+                if let tag = condition.stringParam {
+                    conditionMet = partyMemberElsewhere(withTag: tag, relativeTo: character.id, gameState: gameState)
                 }
             case .clockProgress:
                 if let name = condition.stringParam,
@@ -787,6 +1050,59 @@ struct ConsequenceExecutor {
         gameState.party.contains { !$0.isDefeated && $0.hasTag(tag) }
     }
 
+    private func partyIsSplit(gameState: GameState) -> Bool {
+        let occupiedNodes = Set(
+            gameState.party
+                .filter { !$0.isDefeated }
+                .compactMap { gameState.characterLocations[$0.id.uuidString] }
+        )
+        return occupiedNodes.count > 1
+    }
+
+    private func characterIsAlone(_ characterID: UUID, gameState: GameState) -> Bool {
+        guard runtime.currentNodeID(for: characterID, in: gameState) != nil else { return false }
+        return !anotherPartyMemberHere(characterID, gameState: gameState)
+    }
+
+    private func anotherPartyMemberHere(_ characterID: UUID, gameState: GameState) -> Bool {
+        guard let nodeID = runtime.currentNodeID(for: characterID, in: gameState) else { return false }
+        return gameState.party.contains { member in
+            !member.isDefeated &&
+            member.id != characterID &&
+            gameState.characterLocations[member.id.uuidString] == nodeID
+        }
+    }
+
+    private func partyMemberHere(
+        withTag tag: String,
+        relativeTo characterID: UUID,
+        gameState: GameState
+    ) -> Bool {
+        guard let nodeID = runtime.currentNodeID(for: characterID, in: gameState) else { return false }
+        return gameState.party.contains { member in
+            !member.isDefeated &&
+            member.id != characterID &&
+            gameState.characterLocations[member.id.uuidString] == nodeID &&
+            member.hasTag(tag)
+        }
+    }
+
+    private func partyMemberElsewhere(
+        withTag tag: String,
+        relativeTo characterID: UUID,
+        gameState: GameState
+    ) -> Bool {
+        guard let nodeID = runtime.currentNodeID(for: characterID, in: gameState) else { return false }
+        return gameState.party.contains { member in
+            guard !member.isDefeated,
+                  member.id != characterID,
+                  let memberNodeID = gameState.characterLocations[member.id.uuidString] else {
+                return false
+            }
+            return memberNodeID != nodeID && member.hasTag(tag)
+        }
+    }
+
     private func addCharacterStateTag(
         _ tag: String,
         toCharacter characterID: UUID,
@@ -832,6 +1148,146 @@ struct ConsequenceExecutor {
         }
 
         return messages.joined(separator: "\n")
+    }
+
+    private func removeTreasure(
+        id treasureID: String,
+        fromCharacter characterID: UUID,
+        gameState: inout GameState
+    ) -> Treasure? {
+        guard let charIndex = gameState.party.firstIndex(where: { $0.id == characterID }),
+              let treasureIndex = gameState.party[charIndex].treasures.firstIndex(where: { $0.id == treasureID }) else {
+            return nil
+        }
+
+        let removedTreasure = gameState.party[charIndex].treasures.remove(at: treasureIndex)
+        gameState.party[charIndex].modifiers.removeAll { $0.id == removedTreasure.grantedModifier.id }
+        return removedTreasure
+    }
+
+    private func removeFirstTreasure(
+        withTag tag: String,
+        fromCharacter characterID: UUID,
+        gameState: inout GameState
+    ) -> Treasure? {
+        guard let charIndex = gameState.party.firstIndex(where: { $0.id == characterID }),
+              let treasureIndex = gameState.party[charIndex].treasures.firstIndex(where: { $0.tags.contains(tag) }) else {
+            return nil
+        }
+
+        let removedTreasure = gameState.party[charIndex].treasures.remove(at: treasureIndex)
+        gameState.party[charIndex].modifiers.removeAll { $0.id == removedTreasure.grantedModifier.id }
+        return removedTreasure
+    }
+
+    private func grantModifier(
+        _ modifier: Modifier,
+        toCharacter characterID: UUID,
+        gameState: inout GameState
+    ) -> Bool {
+        guard let charIndex = gameState.party.firstIndex(where: { $0.id == characterID }) else {
+            return false
+        }
+
+        var grantedModifier = modifier
+        grantedModifier.id = UUID()
+
+        if let sourceKey = grantedModifier.sourceKey?.trimmingCharacters(in: .whitespacesAndNewlines),
+           !sourceKey.isEmpty {
+            grantedModifier.sourceKey = sourceKey
+            gameState.party[charIndex].modifiers.removeAll { $0.sourceKey == sourceKey }
+        }
+
+        gameState.party[charIndex].modifiers.append(grantedModifier)
+        return true
+    }
+
+    private func removeModifier(
+        sourceKey: String,
+        fromCharacter characterID: UUID,
+        gameState: inout GameState
+    ) -> Bool {
+        guard let charIndex = gameState.party.firstIndex(where: { $0.id == characterID }) else {
+            return false
+        }
+
+        let trimmedSourceKey = sourceKey.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedSourceKey.isEmpty else { return false }
+
+        let beforeCount = gameState.party[charIndex].modifiers.count
+        gameState.party[charIndex].modifiers.removeAll { $0.sourceKey == trimmedSourceKey }
+        return gameState.party[charIndex].modifiers.count != beforeCount
+    }
+
+    private func scopedCharacterIDs(
+        for consequence: Consequence,
+        context: ConsequenceContext,
+        actingCharacterID: UUID,
+        gameState: GameState
+    ) -> [UUID] {
+        switch consequence.effectiveTargetScope {
+        case .actingCharacter:
+            return gameState.party.contains(where: { $0.id == actingCharacterID && !$0.isDefeated }) ? [actingCharacterID] : []
+        case .allHere:
+            guard let nodeID = context.scopeNodeID ?? runtime.currentNodeID(for: actingCharacterID, in: gameState) else { return [] }
+            return gameState.party.compactMap { member in
+                guard !member.isDefeated,
+                      gameState.characterLocations[member.id.uuidString] == nodeID else {
+                    return nil
+                }
+                return member.id
+            }
+        case .othersHere:
+            guard let nodeID = context.scopeNodeID ?? runtime.currentNodeID(for: actingCharacterID, in: gameState) else { return [] }
+            return gameState.party.compactMap { member in
+                guard !member.isDefeated,
+                      member.id != actingCharacterID,
+                      gameState.characterLocations[member.id.uuidString] == nodeID else {
+                    return nil
+                }
+                return member.id
+            }
+        case .allParty:
+            return gameState.party.compactMap { member in
+                guard !member.isDefeated else { return nil }
+                return member.id
+            }
+        }
+    }
+
+    private func formattedScopedMessage(
+        _ message: String,
+        forCharacterID targetID: UUID,
+        consequence: Consequence,
+        actingCharacterID: UUID,
+        gameState: GameState
+    ) -> String {
+        let requiresNamePrefix =
+            consequence.effectiveTargetScope != .actingCharacter || targetID != actingCharacterID
+        guard requiresNamePrefix,
+              let name = gameState.party.first(where: { $0.id == targetID })?.name else {
+            return message
+        }
+
+        return message
+            .split(separator: "\n", omittingEmptySubsequences: false)
+            .map { line in
+                line.isEmpty ? "\(name):" : "\(name): \(line)"
+            }
+            .joined(separator: "\n")
+    }
+
+    private func movementMessage(for consequence: Consequence, destination: String) -> String {
+        switch consequence.effectiveTargetScope {
+        case .actingCharacter:
+            return "Moved to \(destination)."
+        case .allHere:
+            return "Moved everyone here to \(destination)."
+        case .othersHere:
+            return "Moved others here to \(destination)."
+        case .allParty:
+            return "Moved the whole party to \(destination)."
+        }
     }
 
     private func resolveSpawnInteractable(from consequence: Consequence) -> Interactable? {
@@ -901,9 +1357,45 @@ struct ConsequenceExecutor {
         }
     }
 
+    private func enqueueAfterCurrentFrame(
+        _ queuedFrame: QueuedFrame,
+        to resolution: inout PendingConsequenceResolution
+    ) {
+        let insertionIndex = min(1, resolution.frames.count)
+        resolution.frames.insert(
+            ConsequenceResolutionFrame(
+                context: queuedFrame.context,
+                remainingConsequences: queuedFrame.consequences
+            ),
+            at: insertionIndex
+        )
+    }
+
     private func append(_ text: String?, to resolution: inout PendingConsequenceResolution) {
         guard let text, !text.isEmpty else { return }
         resolution.resolvedDescriptions.append(text)
+    }
+
+    private func availableChoiceOptions(
+        from consequence: Consequence,
+        context: ConsequenceContext,
+        gameState: GameState
+    ) -> [ChoiceOption] {
+        guard consequence.kind == .createChoice,
+              let character = context.character(in: gameState),
+              let options = consequence.choiceOptions else {
+            return []
+        }
+
+        return options.filter { option in
+            areConditionsMet(
+                conditions: option.conditions,
+                forCharacter: character,
+                finalEffect: context.finalEffect,
+                finalPosition: context.finalPosition,
+                gameState: gameState
+            )
+        }
     }
 
     private func resolveResistanceRoll(
@@ -941,14 +1433,30 @@ struct ConsequenceExecutor {
     }
 
     private func resistanceRule(for consequence: Consequence) -> ResistanceRule? {
-        guard let rule = consequence.effectiveResistanceRule else { return nil }
+        if let explicitRule = consequence.resistance {
+            switch consequence.kind {
+            case .createChoice:
+                return nil
+            case .sufferHarm:
+                return (consequence.level != nil && consequence.familyId != nil) ? explicitRule : nil
+            case .gainStress, .adjustStress, .tickClock, .incrementScenarioCounter:
+                return (consequence.amount ?? 0) > 0 ? explicitRule : nil
+            default:
+                return explicitRule
+            }
+        }
 
         switch consequence.kind {
         case .sufferHarm:
-            return (consequence.level != nil && consequence.familyId != nil) ? rule : nil
-        case .gainStress, .adjustStress, .tickClock:
+            return (consequence.level != nil && consequence.familyId != nil)
+                ? ResistanceRule(attribute: .prowess, amount: 1)
+                : nil
+        case .gainStress, .adjustStress:
             let amount = consequence.amount ?? 0
-            return amount > 0 ? rule : nil
+            return amount > 0 ? ResistanceRule(attribute: .resolve, amount: 2) : nil
+        case .tickClock:
+            let amount = consequence.amount ?? 0
+            return amount > 0 ? ResistanceRule(attribute: .insight, amount: 2) : nil
         default:
             return nil
         }
@@ -971,9 +1479,13 @@ struct ConsequenceExecutor {
             consequence: consequence,
             prompt: prompt,
             attribute: resistanceRule.attribute,
-            title: falloutTitle(for: consequence),
+            title: falloutTitle(for: consequence, gameState: gameState),
             summary: falloutSummary(for: consequence, gameState: gameState, futureTense: true),
-            resistPreview: resistancePreview(for: consequence, attribute: resistanceRule.attribute),
+            resistPreview: resistancePreview(
+                for: consequence,
+                attribute: resistanceRule.attribute,
+                gameState: gameState
+            ),
             sequenceIndex: sequenceIndex,
             sequenceTotal: sequenceTotal
         )
@@ -990,7 +1502,15 @@ struct ConsequenceExecutor {
 
             for consequence in frame.remainingConsequences {
                 if consequence.kind == .createChoice {
-                    return count
+                    let availableOptions = availableChoiceOptions(
+                        from: consequence,
+                        context: frame.context,
+                        gameState: gameState
+                    )
+                    if !availableOptions.isEmpty {
+                        return count
+                    }
+                    continue
                 }
 
                 guard areConditionsMet(
@@ -1012,7 +1532,7 @@ struct ConsequenceExecutor {
         return count
     }
 
-    private func falloutTitle(for consequence: Consequence) -> String {
+    private func falloutTitle(for consequence: Consequence, gameState: GameState) -> String {
         switch consequence.kind {
         case .sufferHarm:
             if let level = consequence.level {
@@ -1033,7 +1553,60 @@ struct ConsequenceExecutor {
                 return "\(clockName) +\(amount)"
             }
             return amount > 0 ? "Clock +\(amount)" : "Clock"
+        case .moveActingCharacterToNode:
+            return "Forced Move"
+        case .lockConnection:
+            return "Route Cut Off"
+        case .unlockConnection:
+            return "Route Opens"
+        case .removeTreasure:
+            if let treasureID = consequence.treasureId {
+                return "Lose \(treasureName(for: treasureID, gameState: gameState))"
+            }
+            return "Lose Treasure"
+        case .removeTreasureWithTag:
+            if let tag = consequence.tag {
+                return "Lose \(readableIdentifier(tag)) Treasure"
+            }
+            return "Lose Tagged Treasure"
+        case .removeModifier:
+            return "Lose Modifier"
+        case .grantModifier:
+            return "Modifier Applied"
+        case .modifyDice:
+            let amount = consequence.amount ?? 0
+            if amount > 0 {
+                return "+\(amount)d"
+            } else if amount < 0 {
+                return "\(amount)d"
+            }
+            return "Dice Shift"
+        case .setScenarioFlag:
+            return consequence.flagId.map { "\(readableIdentifier($0)) Set" } ?? "Flag Set"
+        case .clearScenarioFlag:
+            return consequence.flagId.map { "\(readableIdentifier($0)) Cleared" } ?? "Flag Cleared"
+        case .incrementScenarioCounter:
+            if let counterID = consequence.counterId {
+                return "\(readableIdentifier(counterID)) +\(consequence.amount ?? 1)"
+            }
+            return "Counter Advances"
+        case .setScenarioCounter:
+            if let counterID = consequence.counterId {
+                return "\(readableIdentifier(counterID)) = \(consequence.amount ?? 0)"
+            }
+            return "Counter Set"
+        case .addCharacterTag:
+            return consequence.tag.map { "Gain \(readableIdentifier($0))" } ?? "Gain Tag"
+        case .removeCharacterTag:
+            return consequence.tag.map { "Lose \(readableIdentifier($0))" } ?? "Lose Tag"
+        case .endRun:
+            return "Run Ends"
+        case .triggerEvent, .triggerConsequences:
+            return "Triggered Fallout"
         default:
+            if let description = trimmedDescription(for: consequence) {
+                return description
+            }
             return "Consequence"
         }
     }
@@ -1047,6 +1620,9 @@ struct ConsequenceExecutor {
         case .sufferHarm:
             let levelText = consequence.level?.rawValue.capitalized ?? "Unknown"
             let harmText = harmDescription(for: consequence, gameState: gameState)
+            if consequence.effectiveTargetScope != .actingCharacter {
+                return "\(falloutSubject(for: consequence, futureTense: futureTense)) suffer \(levelText) Harm: \(harmText)."
+            }
             if futureTense {
                 return "You would suffer \(levelText) Harm: \(harmText)."
             }
@@ -1054,11 +1630,17 @@ struct ConsequenceExecutor {
         case .gainStress, .adjustStress:
             let amount = consequence.amount ?? 0
             if amount > 0 {
+                if consequence.effectiveTargetScope != .actingCharacter {
+                    return "\(falloutSubject(for: consequence, futureTense: futureTense)) take \(amount) Stress."
+                }
                 if futureTense {
                     return "You would take \(amount) Stress."
                 }
                 return "+\(amount) Stress."
             } else if amount < 0 {
+                if consequence.effectiveTargetScope != .actingCharacter {
+                    return "\(falloutSubject(for: consequence, futureTense: futureTense)) recover \(abs(amount)) Stress."
+                }
                 if futureTense {
                     return "You would recover \(abs(amount)) Stress."
                 }
@@ -1072,9 +1654,91 @@ struct ConsequenceExecutor {
                 return "\(clockName) advances by \(amount)."
             }
             return "\(clockName) +\(amount)."
+        case .moveActingCharacterToNode:
+            let destination = destinationName(for: consequence, gameState: gameState)
+            if consequence.effectiveTargetScope != .actingCharacter {
+                return "\(falloutSubject(for: consequence, futureTense: futureTense)) be forced to \(destination)."
+            }
+            return futureTense ? "You would be forced to \(destination)." : "Forced to \(destination)."
+        case .lockConnection:
+            let route = routeDescription(for: consequence, gameState: gameState)
+            return futureTense ? "\(route) would close." : "\(route) closes."
+        case .unlockConnection:
+            let route = routeDescription(for: consequence, gameState: gameState)
+            return futureTense ? "\(route) would open." : "\(route) opens."
+        case .removeTreasure:
+            if let treasureID = consequence.treasureId {
+                let name = treasureName(for: treasureID, gameState: gameState)
+                return futureTense ? "You would lose \(name)." : "Lose \(name)."
+            }
+            return futureTense ? "You would lose a treasure." : "Lose a treasure."
+        case .removeTreasureWithTag:
+            if let tag = consequence.tag {
+                return futureTense
+                    ? "You would lose a \(readableIdentifier(tag)) treasure."
+                    : "Lose a \(readableIdentifier(tag)) treasure."
+            }
+            return futureTense ? "You would lose a tagged treasure." : "Lose a tagged treasure."
+        case .removeModifier:
+            let modifierName = consequence.sourceKey.map(readableIdentifier) ?? "a modifier"
+            if consequence.effectiveTargetScope != .actingCharacter {
+                return "\(falloutSubject(for: consequence, futureTense: futureTense)) lose \(modifierName)."
+            }
+            return futureTense ? "You would lose \(modifierName)." : "Lose \(modifierName)."
+        case .grantModifier:
+            let modifierText = consequence.modifier?.longDescription ?? "a modifier"
+            if consequence.effectiveTargetScope != .actingCharacter {
+                return "\(falloutSubject(for: consequence, futureTense: futureTense)) gain \(modifierText)."
+            }
+            return futureTense ? "You would gain \(modifierText)." : "Gain \(modifierText)."
+        case .modifyDice:
+            let amount = consequence.amount ?? 0
+            let duration = consequence.duration ?? "next roll"
+            let diceText = amount > 0 ? "+\(amount)d" : "\(amount)d"
+            if consequence.effectiveTargetScope != .actingCharacter {
+                return "\(falloutSubject(for: consequence, futureTense: futureTense)) roll with \(diceText) for \(duration)."
+            }
+            return futureTense
+                ? "Your roll would shift by \(diceText) for \(duration)."
+                : "Roll shifts by \(diceText) for \(duration)."
+        case .setScenarioFlag:
+            let flagName = consequence.flagId.map(readableIdentifier) ?? "a flag"
+            return futureTense ? "\(flagName) would be set." : "\(flagName) is set."
+        case .clearScenarioFlag:
+            let flagName = consequence.flagId.map(readableIdentifier) ?? "a flag"
+            return futureTense ? "\(flagName) would be cleared." : "\(flagName) is cleared."
+        case .incrementScenarioCounter:
+            let counterName = consequence.counterId.map(readableIdentifier) ?? "A counter"
+            let amount = consequence.amount ?? 1
+            if amount >= 0 {
+                return futureTense ? "\(counterName) increases by \(amount)." : "\(counterName) +\(amount)."
+            }
+            return futureTense ? "\(counterName) decreases by \(abs(amount))." : "\(counterName) \(amount)."
+        case .setScenarioCounter:
+            let counterName = consequence.counterId.map(readableIdentifier) ?? "A counter"
+            let amount = consequence.amount ?? 0
+            return futureTense ? "\(counterName) would be set to \(amount)." : "\(counterName) = \(amount)."
+        case .addCharacterTag:
+            let tagName = consequence.tag.map(readableIdentifier) ?? "a tag"
+            if consequence.effectiveTargetScope != .actingCharacter {
+                return "\(falloutSubject(for: consequence, futureTense: futureTense)) gain \(tagName)."
+            }
+            return futureTense ? "You would gain \(tagName)." : "Gain \(tagName)."
+        case .removeCharacterTag:
+            let tagName = consequence.tag.map(readableIdentifier) ?? "a tag"
+            if consequence.effectiveTargetScope != .actingCharacter {
+                return "\(falloutSubject(for: consequence, futureTense: futureTense)) lose \(tagName)."
+            }
+            return futureTense ? "You would lose \(tagName)." : "Lose \(tagName)."
+        case .endRun:
+            return futureTense ? "The expedition would end." : "The expedition ends."
+        case .triggerEvent, .triggerConsequences:
+            if let description = trimmedDescription(for: consequence) {
+                return description
+            }
+            return futureTense ? "Additional fallout would trigger." : "Additional fallout triggers."
         default:
-            if let description = consequence.description,
-               !description.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            if let description = trimmedDescription(for: consequence) {
                 return description
             }
             return futureTense ? "This consequence would apply." : "This consequence applies."
@@ -1083,21 +1747,65 @@ struct ConsequenceExecutor {
 
     private func resistancePreview(
         for consequence: Consequence,
-        attribute: ResistanceAttribute
+        attribute: ResistanceAttribute,
+        gameState: GameState
     ) -> String {
         guard let mitigated = mitigatedConsequence(from: consequence, using: attribute) else {
-            return "Resist: avoid this."
+            switch consequence.kind {
+            case .moveActingCharacterToNode:
+                return "Resist: hold your ground."
+            case .lockConnection:
+                return "Resist: keep the route open."
+            case .removeTreasure:
+                if let treasureID = consequence.treasureId {
+                    return "Resist: keep \(treasureName(for: treasureID, gameState: gameState))."
+                }
+                return "Resist: keep your treasure."
+            case .removeTreasureWithTag:
+                return "Resist: keep that treasure."
+            case .removeModifier:
+                return "Resist: keep this modifier."
+            case .modifyDice:
+                let amount = consequence.amount ?? 0
+                if amount < 0 {
+                    return "Resist: avoid the dice penalty."
+                }
+                return "Resist: avoid this."
+            case .setScenarioFlag, .clearScenarioFlag, .incrementScenarioCounter, .setScenarioCounter,
+                 .triggerEvent, .triggerConsequences:
+                return "Resist: stop this escalation."
+            case .addCharacterTag:
+                if let tag = consequence.tag {
+                    return "Resist: avoid gaining \(readableIdentifier(tag))."
+                }
+                return "Resist: avoid this mark."
+            case .removeCharacterTag:
+                if let tag = consequence.tag {
+                    return "Resist: keep \(readableIdentifier(tag))."
+                }
+                return "Resist: keep this edge."
+            case .endRun:
+                return "Resist: keep the expedition alive."
+            default:
+                return "Resist: avoid this."
+            }
         }
 
         switch mitigated.kind {
         case .sufferHarm:
             if let level = mitigated.level {
+                if mitigated.effectiveTargetScope != .actingCharacter {
+                    return "Resist: reduce \(resistanceTarget(for: mitigated)) to \(level.rawValue.capitalized) Harm."
+                }
                 return "Resist: reduce to \(level.rawValue.capitalized) Harm."
             }
             return "Resist: reduce this Harm."
         case .gainStress, .adjustStress:
             let amount = mitigated.amount ?? 0
             if amount > 0 {
+                if mitigated.effectiveTargetScope != .actingCharacter {
+                    return "Resist: reduce \(resistanceTarget(for: mitigated)) to +\(amount) Stress."
+                }
                 return "Resist: reduce to +\(amount) Stress."
             }
             return "Resist: avoid this."
@@ -1107,8 +1815,22 @@ struct ConsequenceExecutor {
                 return "Resist: reduce to \(clockName) +\(amount)."
             }
             return "Resist: reduce this clock by \(amount)."
+        case .modifyDice:
+            let amount = mitigated.amount ?? 0
+            if amount > 0 {
+                return "Resist: reduce to +\(amount)d."
+            } else if amount < 0 {
+                return "Resist: reduce to \(amount)d."
+            }
+            return "Resist: avoid this."
+        case .incrementScenarioCounter:
+            let amount = mitigated.amount ?? 0
+            if let counterID = mitigated.counterId {
+                return "Resist: reduce to \(readableIdentifier(counterID)) +\(amount)."
+            }
+            return "Resist: reduce this increase to +\(amount)."
         default:
-            return "Resist: soften this."
+            return "Resist: avoid this."
         }
     }
 
@@ -1126,6 +1848,77 @@ struct ConsequenceExecutor {
         case .none:
             return family.lesser.description
         }
+    }
+
+    private func falloutSubject(for consequence: Consequence, futureTense: Bool) -> String {
+        switch consequence.effectiveTargetScope {
+        case .actingCharacter:
+            return futureTense ? "You would" : "You"
+        case .allHere:
+            return futureTense ? "Everyone here would" : "Everyone here"
+        case .othersHere:
+            return futureTense ? "Others here would" : "Others here"
+        case .allParty:
+            return futureTense ? "The whole party would" : "The whole party"
+        }
+    }
+
+    private func resistanceTarget(for consequence: Consequence) -> String {
+        switch consequence.effectiveTargetScope {
+        case .actingCharacter:
+            return "this"
+        case .allHere:
+            return "everyone here"
+        case .othersHere:
+            return "others here"
+        case .allParty:
+            return "the whole party"
+        }
+    }
+
+    private func trimmedDescription(for consequence: Consequence) -> String? {
+        let trimmed = consequence.description?.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed?.isEmpty == false ? trimmed : nil
+    }
+
+    private func destinationName(for consequence: Consequence, gameState: GameState) -> String {
+        guard let nodeID = consequence.toNodeID,
+              let name = gameState.dungeon?.nodes[nodeID.uuidString]?.name else {
+            return "another room"
+        }
+        return name
+    }
+
+    private func routeDescription(for consequence: Consequence, gameState: GameState) -> String {
+        guard let fromNodeID = consequence.fromNodeID,
+              let toNodeID = consequence.toNodeID else {
+            return "A route"
+        }
+
+        let fromName = gameState.dungeon?.nodes[fromNodeID.uuidString]?.name ?? "one room"
+        let toName = gameState.dungeon?.nodes[toNodeID.uuidString]?.name ?? "another room"
+        return "The route between \(fromName) and \(toName)"
+    }
+
+    private func treasureName(for treasureID: String, gameState: GameState) -> String {
+        for member in gameState.party {
+            if let treasure = member.treasures.first(where: { $0.id == treasureID }) {
+                return treasure.name
+            }
+        }
+
+        if let template = content.treasureTemplates.first(where: { $0.id == treasureID }) {
+            return template.name
+        }
+
+        return readableIdentifier(treasureID)
+    }
+
+    private func readableIdentifier(_ identifier: String) -> String {
+        identifier
+            .replacingOccurrences(of: "_", with: " ")
+            .replacingOccurrences(of: "-", with: " ")
+            .capitalized
     }
 
     private func mitigatedConsequence(
@@ -1157,6 +1950,28 @@ struct ConsequenceExecutor {
             let reduction = max(rule?.amount ?? 2, 0)
             let newAmount = max(0, (consequence.amount ?? 0) - reduction)
             guard newAmount > 0 else { return nil }
+            var adjusted = consequence
+            adjusted.amount = newAmount
+            adjusted.resistance = nil
+            return adjusted
+        case .incrementScenarioCounter:
+            let reduction = max(rule?.amount ?? 1, 0)
+            let newAmount = max(0, (consequence.amount ?? 0) - reduction)
+            guard newAmount > 0 else { return nil }
+            var adjusted = consequence
+            adjusted.amount = newAmount
+            adjusted.resistance = nil
+            return adjusted
+        case .modifyDice:
+            let reduction = max(rule?.amount ?? 1, 0)
+            let amount = consequence.amount ?? 0
+            let newAmount: Int
+            if amount < 0 {
+                newAmount = min(0, amount + reduction)
+            } else {
+                newAmount = max(0, amount - reduction)
+            }
+            guard newAmount != 0 else { return nil }
             var adjusted = consequence
             adjusted.amount = newAmount
             adjusted.resistance = nil

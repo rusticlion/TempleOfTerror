@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "Authoring/Schemas/events.schema.json",
+  "title": "Scenario Events",
+  "oneOf": [
+    {
+      "$ref": "./event.schema.json"
+    },
+    {
+      "type": "array",
+      "items": {
+        "$ref": "./event.schema.json"
+      }
+    }
+  ]
+}

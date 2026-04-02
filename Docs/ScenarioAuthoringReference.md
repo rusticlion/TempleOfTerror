@@ -33,9 +33,10 @@ Experimental YAML authoring sources can also live in `Authoring/Scenarios/<scena
 Current workflow:
 
 1. Edit YAML source files in `Authoring/Scenarios/<scenario_id>/`
-2. Run `./Scripts/compile_scenarios.sh <scenario_id>` (or no arg to compile all authored scenarios)
-3. Review the generated runtime JSON in `Content/Scenarios/<scenario_id>/`
-4. Run `./Scripts/validate_scenarios.sh`
+2. Run `./Scripts/validate_authored_yaml.sh <scenario_id>` (or no arg to validate all authored scenarios)
+3. Run `./Scripts/compile_scenarios.sh <scenario_id>` (or no arg to compile all authored scenarios)
+4. Review the generated runtime JSON in `Content/Scenarios/<scenario_id>/`
+5. Run `./Scripts/validate_scenarios.sh`
 
 Preferred one-command authoring check:
 
@@ -43,7 +44,7 @@ Preferred one-command authoring check:
 ./Scripts/check_authored_scenarios.sh <scenario_id>
 ```
 
-This compiles authored YAML, validates the generated runtime scenario, and refreshes the authored map preview in `Authoring/Previews/` in one pass.
+This validates authored YAML, compiles it, validates the generated runtime scenario, and refreshes the authored map preview in `Authoring/Previews/` in one pass.
 
 Schema-backed editing:
 
@@ -64,6 +65,7 @@ Current YAML compiler support:
 - node keys are symbolic ids
 - `connections[].to`, `fromNode`, `toNode`, and `inNode` compile back into UUID-based runtime fields
 - `connections[].conditions` and `connections[].onTraverse` are supported
+- `nodes[].onEnter` and `nodes[].onFirstEnter` are supported
 - authors may pin migrated maps to existing UUIDs with a node-local `uuid` field
 
 Split interactable file notes:
@@ -212,9 +214,12 @@ Validator treats any other `actionType` as an error.
 
 Roll outcomes use keys:
 
+- `critical`
 - `success`
 - `partial`
 - `failure`
+
+`critical` is additive. On a critical success, runtime still resolves the base `success` or `partial` outcome and then appends any authored `critical` consequences.
 
 ## Conditions
 
@@ -225,10 +230,16 @@ Supported `GameCondition.type` values:
 - `requiresMinPositionLevel` (`positionParam`)
 - `requiresExactPositionLevel` (`positionParam`)
 - `characterHasTreasureId` (`stringParam` treasure id)
+- `characterHasTreasureWithTag` (`stringParam` tag)
 - `characterHasTag` (`stringParam` tag)
 - `characterLacksTag` (`stringParam` tag)
 - `partyHasTreasureWithTag` (`stringParam` tag)
 - `partyHasMemberWithTag` (`stringParam` tag)
+- `partyIsSplit`
+- `characterIsAlone`
+- `anotherPartyMemberHere`
+- `partyMemberHereWithTag` (`stringParam` tag on another colocated party member)
+- `partyMemberElsewhereWithTag` (`stringParam` tag on another party member in a different location)
 - `clockProgress` (`stringParam` clock name, `intParam` minimum progress, optional `intParamMax`)
 - `scenarioFlagSet` (`stringParam` flag id)
 - `scenarioCounter` (`stringParam` counter id, optional `intParam` min and `intParamMax` max)
@@ -256,22 +267,62 @@ Authoring guidance:
 - Use connection `onTraverse` for deterministic side effects after a successful move.
 - If traversal itself should carry Position/Effect, make it an action that uses `moveActingCharacterToNode` on outcome instead of a plain connection.
 
+## Room Hooks
+
+Fixed-map `MapNode` also supports:
+
+- optional `onFirstEnter`
+- optional `onEnter`
+
+Use `onFirstEnter` for one-time room beats:
+
+- reveals
+- state setup
+- one-shot room fallout
+- granting temporary room-state modifiers
+
+Use `onEnter` for recurring arrival pressure:
+
+- room tax
+- recurring eerie beats
+- cleanup of room-specific state when someone leaves or returns
+
+Runtime order is:
+
+1. connection `onTraverse` after a successful plain move
+2. destination `onFirstEnter` if the room has never fired it this run
+3. destination `onEnter`
+
+Important semantics:
+
+- `onFirstEnter` also fires for the starting node when a new run begins.
+- Forced relocation through `moveActingCharacterToNode` fires destination node hooks too.
+- Same-node relocation is ignored and does not retrigger entry hooks.
+- Pending choice/resistance flow still pauses later hooks; `onEnter` does not run underneath an unresolved `onFirstEnter`.
+
 ## Consequences
 
 Supported `Consequence.type` values and required params:
 
 - `gainStress`: `amount`
+- `adjustStress`: `amount`
 - `sufferHarm`: `level`, `familyId`
 - `tickClock`: `clockName`, `amount`
 - `unlockConnection`: `fromNodeID`, `toNodeID` (fixed-map usage)
 - `lockConnection`: `fromNodeID`, `toNodeID` (fixed-map usage)
 - `moveActingCharacterToNode`: `toNodeID` (fixed-map usage)
 - `removeInteractable`: `id` (or `id: "self"` for remove-self behavior)
+- `removeSelfInteractable`: no params when authored via `id: "self"`
 - `removeAction`: `id`, `actionName`
 - `addAction`: `id`, `action` payload
 - `addInteractable`: `inNodeID`, `interactable` payload (`"current"` maps to add-here behavior)
+- `addInteractableHere`: use `inNodeID: "current"` in authored JSON/YAML
 - `gainTreasure`: `treasureId`
+- `removeTreasure`: `treasureId`
+- `removeTreasureWithTag`: `tag`
 - `modifyDice`: `amount` (and optional `duration`)
+- `grantModifier`: `modifier` (`modifier.sourceKey` required for authored content; supports `targetScope`)
+- `removeModifier`: `sourceKey` (supports `targetScope`)
 - `createChoice`: `options` (one or more)
 - `triggerEvent`: `eventId`
 - `triggerConsequences`: `consequences` (nested)
@@ -280,8 +331,8 @@ Supported `Consequence.type` values and required params:
 - `clearScenarioFlag`: `flagId`
 - `incrementScenarioCounter`: `counterId`, optional `amount` (defaults to 1)
 - `setScenarioCounter`: `counterId`, `amount` (target value)
-- `addCharacterTag`: `tag` (applies to the acting character)
-- `removeCharacterTag`: `tag` (applies to the acting character)
+- `addCharacterTag`: `tag` (defaults to the acting character; supports `targetScope`)
+- `removeCharacterTag`: `tag` (defaults to the acting character; supports `targetScope`)
 - `endRun`: optional `runOutcome`, optional `runOutcomeText`
 
 Each consequence may also include:
@@ -289,6 +340,7 @@ Each consequence may also include:
 - `conditions`: optional array of `GameCondition`
 - `description`: optional narrative line
 - `resistance`: optional explicit resistance rule
+- `targetScope`: optional target fan-out for supported character-facing consequences
 
 ### Resistance Rules
 
@@ -300,7 +352,72 @@ If `resistance` is omitted, runtime defaults are:
 - `gainStress` -> `resolve`, mitigates by 2 stress
 - `tickClock` -> `insight`, mitigates by 2 clock ticks
 
+If `resistance` is authored explicitly, it can also be attached to broader fallout such as forced movement, route loss, counter escalation, tag changes, modifier loss, or other scenario-specific consequences.
+
+When a consequence has no partial mitigation rule, resisting avoids it entirely. `resistance.amount` is currently used for:
+
+- `sufferHarm`
+- `gainStress`
+- `adjustStress`
+- `tickClock`
+- `incrementScenarioCounter`
+- `modifyDice`
+
 Explicit `resistance.amount` must be `>= 0`.
+
+## Scoped Character Fallout
+
+`targetScope` defaults to `actingCharacter`.
+
+Supported `targetScope` values:
+
+- `actingCharacter`
+- `allHere`
+- `othersHere`
+- `allParty`
+
+Runtime currently honors `targetScope` on:
+
+- `gainStress`
+- `adjustStress`
+- `sufferHarm`
+- `healHarm`
+- `modifyDice`
+- `grantModifier`
+- `removeModifier`
+- `addCharacterTag`
+- `removeCharacterTag`
+- `moveActingCharacterToNode`
+
+Use this for room-wide fallout, support buffs, collateral harm, and split-party coordination beats.
+
+Notes:
+
+- `moveActingCharacterToNode` snapshots the target cohort before relocation, then moves that whole set together.
+- `allHere` and `othersHere` inside node hooks are anchored to the room being entered, not whichever room later consequences move the acting character into.
+
+## Authored Modifiers
+
+Use `grantModifier` when the scenario should create a real temporary gameplay state rather than a one-off numeric bump.
+
+Authoring rules:
+
+- authored `grantModifier` requires `modifier.sourceKey`
+- authored `removeModifier` removes by `sourceKey`
+- granting the same `sourceKey` to the same character replaces the prior modifier instead of stacking it
+- finite always-on modifiers consume only when they materially affect a committed roll
+
+Use `modifyDice` when you only need a lightweight bonus and do not need the modifier to persist as visible run state.
+
+## Authored Choices
+
+`createChoice.options` supports:
+
+- `title` (required)
+- `description` (optional supporting text)
+- `costLabel` (optional compact tradeoff label shown in UI)
+- `conditions` (optional `GameCondition` array; unavailable options are hidden)
+- `consequences` (required)
 
 ## Events, Flags, and Counters
 
@@ -334,6 +451,13 @@ Run for one scenario directory:
 ./Scripts/validate_scenarios.sh Content/Scenarios/<scenario_id>
 ```
 
+Validate authored YAML against the local schemas:
+
+```bash
+./Scripts/validate_authored_yaml.sh
+./Scripts/validate_authored_yaml.sh <scenario_id>
+```
+
 Compile and validate authored scenarios in one step:
 
 ```bash
@@ -345,7 +469,7 @@ This also refreshes `Authoring/Previews/<scenario_id>_map_preview.md` for author
 
 Validator highlights:
 
-- schema/required-field errors
+- authored YAML schema/required-field errors
 - unknown action types
 - missing references (events, treasures, clocks)
 - fixed-map reachability from entry

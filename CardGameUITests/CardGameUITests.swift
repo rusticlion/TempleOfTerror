@@ -90,6 +90,35 @@ final class CardGameUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Party By Room"].waitForExistence(timeout: 5))
     }
 
+    func testPartySheetExplorerRowOpensDetailSheetWithoutDismissingDrawer() throws {
+        let app = launchApp(state: "split")
+
+        let partyButton = app.buttons["statusButton"]
+        XCTAssertTrue(partyButton.waitForExistence(timeout: 5))
+        partyButton.tap()
+
+        let explorerRow = app.buttons.matching(identifier: "expeditionExplorerRow").firstMatch
+        XCTAssertTrue(explorerRow.waitForExistence(timeout: 5))
+        explorerRow.tap()
+
+        XCTAssertTrue(app.descendants(matching: .any)["characterDetailSheet"].waitForExistence(timeout: 5))
+
+        let closeButton = app.buttons["characterDetailCloseButton"]
+        XCTAssertTrue(closeButton.waitForExistence(timeout: 5))
+        closeButton.tap()
+
+        XCTAssertTrue(app.descendants(matching: .any)["expeditionDrawer"].waitForExistence(timeout: 5))
+    }
+
+    func testMapScreenShowsDiscoveredNodesAndLegend() throws {
+        let app = launchApp(screen: "map", state: "split")
+
+        XCTAssertTrue(app.descendants(matching: .any)["mapCanvas"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.descendants(matching: .any)["mapLegend"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["River Landing"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Sun Gate"].waitForExistence(timeout: 5))
+    }
+
     func testLaunchPerformance() throws {
         if #available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 7.0, *) {
             measure(metrics: [XCTApplicationLaunchMetric()]) {
@@ -101,11 +130,12 @@ final class CardGameUITests: XCTestCase {
 
     @discardableResult
     private func launchApp(
+        screen: String = "content",
         state: String = "fresh",
         fixedDice: String? = nil
     ) -> XCUIApplication {
         let app = XCUIApplication()
-        app.launchEnvironment["CODEX_DEBUG_SCREEN"] = "content"
+        app.launchEnvironment["CODEX_DEBUG_SCREEN"] = screen
         app.launchEnvironment["CODEX_DEBUG_SCENARIO"] = "temple_of_terror"
         app.launchEnvironment["CODEX_DEBUG_STATE"] = state
         app.launchEnvironment["CODEX_RESET_GUIDANCE_HINTS"] = "1"
