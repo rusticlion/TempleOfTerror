@@ -27,6 +27,62 @@ private final class LayoutAwareSCNView: SCNView {
     }
 }
 
+private struct RoundedContainmentBounds {
+    let halfWidth: Float
+    let halfDepth: Float
+    let cornerRadius: Float
+
+    static func inset(halfWidth: Float,
+                      halfDepth: Float,
+                      cornerRadius: Float,
+                      clearance: Float,
+                      minimumExtent: Float = 0.3) -> RoundedContainmentBounds {
+        let insetHalfWidth = max(halfWidth - clearance, minimumExtent)
+        let insetHalfDepth = max(halfDepth - clearance, minimumExtent)
+        let insetCornerRadius = max(
+            min(cornerRadius - clearance, min(insetHalfWidth, insetHalfDepth)),
+            0
+        )
+
+        return RoundedContainmentBounds(
+            halfWidth: insetHalfWidth,
+            halfDepth: insetHalfDepth,
+            cornerRadius: insetCornerRadius
+        )
+    }
+
+    func clamped(_ position: SCNVector3) -> SCNVector3 {
+        var clamped = position
+        clamped.x = Swift.max(-halfWidth, Swift.min(halfWidth, clamped.x))
+        clamped.z = Swift.max(-halfDepth, Swift.min(halfDepth, clamped.z))
+
+        guard cornerRadius > 0 else { return clamped }
+
+        let cornerCenterHalfWidth = Swift.max(halfWidth - cornerRadius, 0)
+        let cornerCenterHalfDepth = Swift.max(halfDepth - cornerRadius, 0)
+        let cornerCenterX = Swift.max(-cornerCenterHalfWidth, Swift.min(cornerCenterHalfWidth, clamped.x))
+        let cornerCenterZ = Swift.max(-cornerCenterHalfDepth, Swift.min(cornerCenterHalfDepth, clamped.z))
+        let deltaX = clamped.x - cornerCenterX
+        let deltaZ = clamped.z - cornerCenterZ
+        let distanceSquared = (deltaX * deltaX) + (deltaZ * deltaZ)
+        let radiusSquared = cornerRadius * cornerRadius
+
+        guard distanceSquared > radiusSquared else { return clamped }
+
+        let distance = sqrt(distanceSquared)
+        guard distance > 0.0001 else {
+            clamped.x = cornerCenterX
+            clamped.z = cornerCenterZ
+            return clamped
+        }
+
+        let scale = cornerRadius / distance
+        clamped.x = cornerCenterX + (deltaX * scale)
+        clamped.z = cornerCenterZ + (deltaZ * scale)
+        return clamped
+    }
+}
+
 class SceneKitDiceController: NSObject, ObservableObject, SCNSceneRendererDelegate {
     fileprivate var dice: [DieNode] = []
     var onDiceSettled: (([Int]) -> Void)? = nil
@@ -44,26 +100,10 @@ class SceneKitDiceController: NSObject, ObservableObject, SCNSceneRendererDelega
     var trayInnerDepth: Float = 8.0
     var trayPlayableHalfWidth: Float = 3.8
     var trayPlayableHalfDepth: Float = 3.8
+    var trayPlayableCornerRadius: Float = 1.9
     /// Runtime containment radius derived from the actual die model scale.
     var dieContainmentRadius: Float = 0.6
-    private var manuallySettledIndices: Set<Int> = []
-    private var lowEnergyStartTimes: [Int: TimeInterval] = [:]
-    private var cornerBumpCounts: [Int: Int] = [:]
-    private var lastCornerBumpTimes: [Int: TimeInterval] = [:]
-    private let lowEnergyHoldDuration: TimeInterval = 0.28
-    private let minimumManualSettleDelay: TimeInterval = 0.75
-    private let linearSettleThreshold: Float = 0.085
-    private let verticalSettleThreshold: Float = 0.05
-    private let angularSettleThreshold: Float = 0.24
-    private let floorSettleSlack: Float = 0.18
-    private let wallSettleSlack: Float = 0.14
-    private let cornerBumpCooldown: TimeInterval = 0.18
-    private let cornerBumpLinearThreshold: Float = 0.22
-    private let cornerBumpVerticalThreshold: Float = 0.16
-    private let cornerBumpAngularThreshold: Float = 0.75
-    private let cornerBumpImpulse: Float = 0.14
-    private let cornerBumpLift: Float = 0.05
-    private let maxCornerBumps = 2
+    private let settleTimeout: TimeInterval = 3.5
 
     #if DEBUG
     private let debugInstrumentation = true
@@ -74,23 +114,11 @@ class SceneKitDiceController: NSObject, ObservableObject, SCNSceneRendererDelega
     private var debugMaxY: Float = 0
     private var debugMaxOverflowX: Float = 0
     private var debugMaxOverflowZ: Float = 0
-    private var debugPrintedStuckSnapshot = false
     #endif
-
-    private func clamp(_ value: Float, min minValue: Float, max maxValue: Float) -> Float {
-        Swift.max(minValue, Swift.min(maxValue, value))
-    }
 
     func setViewportReady(_ ready: Bool) {
         guard isViewportReady != ready else { return }
         isViewportReady = ready
-    }
-
-    private func resetTrackedSettleState() {
-        manuallySettledIndices.removeAll()
-        lowEnergyStartTimes.removeAll()
-        cornerBumpCounts.removeAll()
-        lastCornerBumpTimes.removeAll()
     }
 
     #if DEBUG
@@ -101,9 +129,17 @@ class SceneKitDiceController: NSObject, ObservableObject, SCNSceneRendererDelega
         debugMaxY = 0
         debugMaxOverflowX = 0
         debugMaxOverflowZ = 0
-        debugPrintedStuckSnapshot = false
     }
     #endif
+
+    private func playableBounds(clearance: Float) -> RoundedContainmentBounds {
+        RoundedContainmentBounds.inset(
+            halfWidth: trayPlayableHalfWidth,
+            halfDepth: trayPlayableHalfDepth,
+            cornerRadius: trayPlayableCornerRadius,
+            clearance: clearance
+        )
+    }
 
     func rollDice() {
         guard !dice.isEmpty else { return }
@@ -111,30 +147,31 @@ class SceneKitDiceController: NSObject, ObservableObject, SCNSceneRendererDelega
         awaitingResults = true
         hasStartedRolling = false
         rollStartTime = CACurrentMediaTime()
-        resetTrackedSettleState()
         highlightDice(at: [], fadeOthers: false, isCritical: false)
 
-        let maxX = Swift.max(trayPlayableHalfWidth - dieContainmentRadius - 0.18, 0.40)
-        let maxZ = Swift.max(trayPlayableHalfDepth - dieContainmentRadius - 0.18, 0.40)
-        let spreadScale = Swift.min(0.55, maxX / Swift.max(Float(dice.count), 1.0))
+        let spawnBounds = playableBounds(clearance: dieContainmentRadius + 0.18)
+        let spreadScale = Swift.min(0.55, spawnBounds.halfWidth / Swift.max(Float(dice.count), 1.0))
 
         #if DEBUG
         if debugInstrumentation {
             debugRollID += 1
             resetDebugRollStats()
-            print("[DiceDebug][roll \(debugRollID)] begin dice=\(dice.count) containR=\(String(format: "%.3f", dieContainmentRadius)) maxX=\(String(format: "%.3f", maxX)) maxZ=\(String(format: "%.3f", maxZ)) playableHalf=(\(String(format: "%.3f", trayPlayableHalfWidth)), \(String(format: "%.3f", trayPlayableHalfDepth))) trayInner=(\(String(format: "%.3f", trayInnerWidth)), \(String(format: "%.3f", trayInnerDepth)))")
+            print("[DiceDebug][roll \(debugRollID)] begin dice=\(dice.count) containR=\(String(format: "%.3f", dieContainmentRadius)) spawnHalf=(\(String(format: "%.3f", spawnBounds.halfWidth)), \(String(format: "%.3f", spawnBounds.halfDepth))) playableHalf=(\(String(format: "%.3f", trayPlayableHalfWidth)), \(String(format: "%.3f", trayPlayableHalfDepth))) cornerR=\(String(format: "%.3f", trayPlayableCornerRadius)) trayInner=(\(String(format: "%.3f", trayInnerWidth)), \(String(format: "%.3f", trayInnerDepth)))")
         }
         #endif
 
         for (index, die) in dice.enumerated() {
             let spread = Float(index) - Float(dice.count - 1) / 2
-            let rawX = spread * spreadScale + Float.random(in: -0.18...0.18)
-            let rawZ = Float.random(in: -(maxZ * 0.30)...(maxZ * 0.30))
-
+            let rawPosition = SCNVector3(
+                spread * spreadScale + Float.random(in: -0.18...0.18),
+                0,
+                Float.random(in: -(spawnBounds.halfDepth * 0.30)...(spawnBounds.halfDepth * 0.30))
+            )
+            let clampedPosition = spawnBounds.clamped(rawPosition)
             let pos = SCNVector3(
-                clamp(rawX, min: -maxX, max: maxX),
+                clampedPosition.x,
                 1.05 + Float.random(in: 0.0...0.22),
-                clamp(rawZ, min: -maxZ, max: maxZ)
+                clampedPosition.z
             )
             die.prepareForRoll(at: pos)
 
@@ -259,98 +296,6 @@ class SceneKitDiceController: NSObject, ObservableObject, SCNSceneRendererDelega
         }
     }
 
-    private func linearSpeed(of velocity: SCNVector3) -> Float {
-        sqrt((velocity.x * velocity.x) + (velocity.y * velocity.y) + (velocity.z * velocity.z))
-    }
-
-    private func isNearContainmentWall(_ position: SCNVector3, for die: DieNode) -> Bool {
-        let maxX = max(trayPlayableHalfWidth - die.containmentRadius, 0.35)
-        let maxZ = max(trayPlayableHalfDepth - die.containmentRadius, 0.35)
-
-        return abs(position.x) >= maxX - wallSettleSlack
-            || abs(position.z) >= maxZ - wallSettleSlack
-    }
-
-    private func isLowEnergyCandidate(_ die: DieNode, body: SCNPhysicsBody) -> Bool {
-        let position = die.node.presentation.position
-        let velocity = body.velocity
-        let angularVelocity = body.angularVelocity
-        let nearFloor = position.y <= max(die.containmentRadius + floorSettleSlack, 0.52)
-
-        return nearFloor
-            && isNearContainmentWall(position, for: die)
-            && linearSpeed(of: velocity) <= linearSettleThreshold
-            && abs(velocity.y) <= verticalSettleThreshold
-            && abs(angularVelocity.w) <= angularSettleThreshold
-    }
-
-    private func cornerBumpVector(for position: SCNVector3, die: DieNode) -> SCNVector3? {
-        let maxX = max(trayPlayableHalfWidth - die.containmentRadius, 0.35)
-        let maxZ = max(trayPlayableHalfDepth - die.containmentRadius, 0.35)
-
-        let nearPositiveX = position.x >= maxX - wallSettleSlack
-        let nearNegativeX = position.x <= -maxX + wallSettleSlack
-        let nearPositiveZ = position.z >= maxZ - wallSettleSlack
-        let nearNegativeZ = position.z <= -maxZ + wallSettleSlack
-
-        guard (nearPositiveX || nearNegativeX) && (nearPositiveZ || nearNegativeZ) else {
-            return nil
-        }
-
-        let x = nearPositiveX ? -cornerBumpImpulse : cornerBumpImpulse
-        let z = nearPositiveZ ? -cornerBumpImpulse : cornerBumpImpulse
-        return SCNVector3(x, cornerBumpLift, z)
-    }
-
-    private func applyCornerBumpIfNeeded(_ die: DieNode, body: SCNPhysicsBody, index: Int, now: TimeInterval) -> Bool {
-        let position = die.node.presentation.position
-        let velocity = body.velocity
-        let angularVelocity = body.angularVelocity
-        let nearFloor = position.y <= max(die.containmentRadius + floorSettleSlack + 0.06, 0.58)
-
-        guard nearFloor,
-              let bump = cornerBumpVector(for: position, die: die),
-              linearSpeed(of: velocity) <= cornerBumpLinearThreshold,
-              abs(velocity.y) <= cornerBumpVerticalThreshold,
-              abs(angularVelocity.w) <= cornerBumpAngularThreshold else {
-            return false
-        }
-
-        let bumpCount = cornerBumpCounts[index] ?? 0
-        if bumpCount >= maxCornerBumps {
-            forceSettle(die, at: index)
-            lowEnergyStartTimes.removeValue(forKey: index)
-            lastCornerBumpTimes.removeValue(forKey: index)
-            return true
-        }
-
-        let lastBumpTime = lastCornerBumpTimes[index] ?? 0
-        guard now - lastBumpTime >= cornerBumpCooldown else { return false }
-
-        die.node.position = position
-        body.clearAllForces()
-        body.resetTransform()
-
-        var nudgedVelocity = body.velocity
-        nudgedVelocity.x = bump.x
-        nudgedVelocity.y = max(nudgedVelocity.y, bump.y)
-        nudgedVelocity.z = bump.z
-        body.velocity = nudgedVelocity
-        body.angularVelocity.w *= 0.65
-
-        cornerBumpCounts[index] = bumpCount + 1
-        lastCornerBumpTimes[index] = now
-        lowEnergyStartTimes[index] = now
-
-        #if DEBUG
-        if debugInstrumentation {
-            print("[DiceDebug][roll \(debugRollID)] cornerBump die=\(index) vel=(\(String(format: "%.3f", nudgedVelocity.x)), \(String(format: "%.3f", nudgedVelocity.y)), \(String(format: "%.3f", nudgedVelocity.z)))")
-        }
-        #endif
-
-        return true
-    }
-
     private func forceSettle(_ die: DieNode, at index: Int) {
         guard let body = die.node.physicsBody else { return }
 
@@ -359,7 +304,6 @@ class SceneKitDiceController: NSObject, ObservableObject, SCNSceneRendererDelega
         body.resetTransform()
         body.velocity = SCNVector3Zero
         body.angularVelocity = SCNVector4Zero
-        manuallySettledIndices.insert(index)
 
         #if DEBUG
         if debugInstrumentation {
@@ -369,69 +313,8 @@ class SceneKitDiceController: NSObject, ObservableObject, SCNSceneRendererDelega
         #endif
     }
 
-    private func stabilizeLowEnergyDice() {
-        let now = CACurrentMediaTime()
-        guard now - rollStartTime >= minimumManualSettleDelay else { return }
-
-        for (index, die) in dice.enumerated() {
-            guard !manuallySettledIndices.contains(index),
-                  let body = die.node.physicsBody else {
-                lowEnergyStartTimes.removeValue(forKey: index)
-                continue
-            }
-
-            guard !body.isResting else {
-                lowEnergyStartTimes.removeValue(forKey: index)
-                continue
-            }
-
-            if applyCornerBumpIfNeeded(die, body: body, index: index, now: now) {
-                continue
-            }
-
-            guard isLowEnergyCandidate(die, body: body) else {
-                lowEnergyStartTimes.removeValue(forKey: index)
-                continue
-            }
-
-            let holdStart = lowEnergyStartTimes[index] ?? now
-            lowEnergyStartTimes[index] = holdStart
-
-            if now - holdStart >= lowEnergyHoldDuration {
-                forceSettle(die, at: index)
-                lowEnergyStartTimes.removeValue(forKey: index)
-            }
-        }
-    }
-
     func renderer(_ renderer: SCNSceneRenderer, updateAtTime time: TimeInterval) {
         guard awaitingResults else { return }
-
-        enforceContainmentBounds()
-
-        #if DEBUG
-        if debugInstrumentation, hasStartedRolling, !debugPrintedStuckSnapshot {
-            let elapsed = CACurrentMediaTime() - rollStartTime
-            if elapsed > 5.0 {
-                debugPrintedStuckSnapshot = true
-                let elapsedText = String(format: "%.2f", elapsed)
-                print("[DiceDebug][roll \(debugRollID)] stuck elapsed=\(elapsedText)s")
-                for (idx, die) in dice.enumerated() {
-                    let pos = die.node.presentation.position
-                    let body = die.node.physicsBody
-                    let vel = body?.velocity ?? SCNVector3Zero
-                    let isResting = body?.isResting ?? false
-                    let px = String(format: "%.3f", pos.x)
-                    let py = String(format: "%.3f", pos.y)
-                    let pz = String(format: "%.3f", pos.z)
-                    let vx = String(format: "%.3f", vel.x)
-                    let vy = String(format: "%.3f", vel.y)
-                    let vz = String(format: "%.3f", vel.z)
-                    print("[DiceDebug][roll \(debugRollID)] die=\(idx) resting=\(isResting) pos=(\(px), \(py), \(pz)) vel=(\(vx), \(vy), \(vz))")
-                }
-            }
-        }
-        #endif
 
         if !hasStartedRolling {
             let anyMoving = dice.contains { !($0.node.physicsBody?.isResting ?? true) }
@@ -441,18 +324,27 @@ class SceneKitDiceController: NSObject, ObservableObject, SCNSceneRendererDelega
             return
         }
 
-        stabilizeLowEnergyDice()
+        let allResting = dice.allSatisfy { $0.node.physicsBody?.isResting ?? true }
+        let elapsed = CACurrentMediaTime() - rollStartTime
+        let timedOut = elapsed > settleTimeout
 
-        let allResting = dice.enumerated().allSatisfy { index, die in
-            manuallySettledIndices.contains(index) || (die.node.physicsBody?.isResting ?? false)
-        }
-        if allResting {
+        if allResting || timedOut {
             awaitingResults = false
-            for die in dice {
+
+            #if DEBUG
+            if debugInstrumentation, timedOut, !allResting {
+                let elapsedText = String(format: "%.2f", elapsed)
+                print("[DiceDebug][roll \(debugRollID)] timeout elapsed=\(elapsedText)s")
+            }
+            #endif
+
+            for (index, die) in dice.enumerated() {
+                if timedOut && !(die.node.physicsBody?.isResting ?? true) {
+                    forceSettle(die, at: index)
+                }
                 die.updateValueFromOrientation()
             }
             let values = dice.map { $0.value }
-            resetTrackedSettleState()
             #if DEBUG
             if debugInstrumentation {
                 print("[DiceDebug][roll \(debugRollID)] settle values=\(values) maxAbs=(x:\(String(format: "%.3f", debugMaxAbsX)), z:\(String(format: "%.3f", debugMaxAbsZ))) maxY=\(String(format: "%.3f", debugMaxY)) maxOverflow=(x:\(String(format: "%.3f", debugMaxOverflowX)), z:\(String(format: "%.3f", debugMaxOverflowZ))) oobEvents=\(debugOutOfBoundsEventCount)")
@@ -461,6 +353,8 @@ class SceneKitDiceController: NSObject, ObservableObject, SCNSceneRendererDelega
             DispatchQueue.main.async {
                 self.onDiceSettled?(values)
             }
+        } else {
+            enforceContainmentBounds()
         }
     }
 
@@ -468,44 +362,28 @@ class SceneKitDiceController: NSObject, ObservableObject, SCNSceneRendererDelega
     private func enforceContainmentBounds() {
         for (index, die) in dice.enumerated() {
             guard let body = die.node.physicsBody else { continue }
-            let maxX = max(trayPlayableHalfWidth - die.containmentRadius, 0.35)
-            let maxZ = max(trayPlayableHalfDepth - die.containmentRadius, 0.35)
-            var position = die.node.presentation.position
+            let bounds = playableBounds(clearance: die.containmentRadius)
+            let presentedPosition = die.node.presentation.position
+            var position = bounds.clamped(presentedPosition)
             var velocity = body.velocity
             var angularVelocity = body.angularVelocity
-            var clamped = false
-            let overflowX = max(abs(position.x) - maxX, 0)
-            let overflowZ = max(abs(position.z) - maxZ, 0)
+            let overflowX = abs(position.x - presentedPosition.x)
+            let overflowZ = abs(position.z - presentedPosition.z)
             let minimumSafeY = max(die.containmentRadius + 0.08, 0.42)
+            let clamped = overflowX > 0.001 || overflowZ > 0.001
 
             #if DEBUG
             if debugInstrumentation {
-                debugMaxAbsX = max(debugMaxAbsX, abs(position.x))
-                debugMaxAbsZ = max(debugMaxAbsZ, abs(position.z))
-                debugMaxY = max(debugMaxY, position.y)
+                debugMaxAbsX = max(debugMaxAbsX, abs(presentedPosition.x))
+                debugMaxAbsZ = max(debugMaxAbsZ, abs(presentedPosition.z))
+                debugMaxY = max(debugMaxY, presentedPosition.y)
                 debugMaxOverflowX = max(debugMaxOverflowX, overflowX)
                 debugMaxOverflowZ = max(debugMaxOverflowZ, overflowZ)
             }
             #endif
 
-            if position.x < -maxX {
-                position.x = -maxX
-                clamped = true
-            } else if position.x > maxX {
-                position.x = maxX
-                clamped = true
-            }
-
-            if position.z < -maxZ {
-                position.z = -maxZ
-                clamped = true
-            } else if position.z > maxZ {
-                position.z = maxZ
-                clamped = true
-            }
-
             if clamped {
-                position.y = max(position.y, minimumSafeY)
+                position.y = max(presentedPosition.y, minimumSafeY)
                 velocity.x = 0
                 velocity.z = 0
                 velocity.y = max(min(velocity.y, 0.25), -0.15)
@@ -520,7 +398,7 @@ class SceneKitDiceController: NSObject, ObservableObject, SCNSceneRendererDelega
                 if debugInstrumentation {
                     debugOutOfBoundsEventCount += 1
                     if debugOutOfBoundsEventCount <= 20 {
-                        print("[DiceDebug][roll \(debugRollID)] OOB die=\(index) preOverflow=(x:\(String(format: "%.3f", overflowX)), z:\(String(format: "%.3f", overflowZ))) correctedPos=(\(String(format: "%.3f", position.x)), \(String(format: "%.3f", position.y)), \(String(format: "%.3f", position.z))) vel=(\(String(format: "%.3f", velocity.x)), \(String(format: "%.3f", velocity.y)), \(String(format: "%.3f", velocity.z))) bounds=(±\(String(format: "%.3f", maxX)), ±\(String(format: "%.3f", maxZ)))")
+                        print("[DiceDebug][roll \(debugRollID)] OOB die=\(index) preOverflow=(x:\(String(format: "%.3f", overflowX)), z:\(String(format: "%.3f", overflowZ))) correctedPos=(\(String(format: "%.3f", position.x)), \(String(format: "%.3f", position.y)), \(String(format: "%.3f", position.z))) vel=(\(String(format: "%.3f", velocity.x)), \(String(format: "%.3f", velocity.y)), \(String(format: "%.3f", velocity.z))) bounds=(half:\(String(format: "%.3f", bounds.halfWidth)), \(String(format: "%.3f", bounds.halfDepth)) corner:\(String(format: "%.3f", bounds.cornerRadius)))")
                     }
                 }
                 #endif
@@ -546,10 +424,6 @@ struct SceneKitDiceView: UIViewRepresentable {
     private let containmentWallHeight: Float = 4.6
     private let containmentWallThickness: Float = 0.18
     private let containmentWallInset: Float = 0.04
-
-    private func clamp(_ value: Float, min minValue: Float, max maxValue: Float) -> Float {
-        Swift.max(minValue, Swift.min(maxValue, value))
-    }
 
     private func playableHalfExtent(for innerExtent: Float) -> Float {
         max(innerExtent * 0.5 - wallThickness * 0.5 - containmentWallThickness - containmentWallInset, 1.2)
@@ -752,11 +626,15 @@ struct SceneKitDiceView: UIViewRepresentable {
             controller.trayInnerDepth = innerDepth
             controller.trayPlayableHalfWidth = playableHalfExtent(for: innerWidth)
             controller.trayPlayableHalfDepth = playableHalfExtent(for: innerDepth)
+            controller.trayPlayableCornerRadius = max(
+                min(controller.trayPlayableHalfWidth, controller.trayPlayableHalfDepth),
+                0.6
+            )
             buildTray(in: scene, innerWidth: innerWidth, innerDepth: innerDepth)
             clampDiceIntoVisibleBounds()
 
             #if DEBUG
-            print("[DiceDebug][layout] view=\(Int(size.width))x\(Int(size.height)) aspect=\(String(format: "%.3f", aspect)) visible=(w:\(String(format: "%.3f", visibleWidth)), h:\(String(format: "%.3f", visibleHeight))) inner=(w:\(String(format: "%.3f", innerWidth)), d:\(String(format: "%.3f", innerDepth))) playableHalf=(\(String(format: "%.3f", controller.trayPlayableHalfWidth)), \(String(format: "%.3f", controller.trayPlayableHalfDepth))) wallHalfThickness=\(String(format: "%.3f", wallThickness * 0.5))")
+            print("[DiceDebug][layout] view=\(Int(size.width))x\(Int(size.height)) aspect=\(String(format: "%.3f", aspect)) visible=(w:\(String(format: "%.3f", visibleWidth)), h:\(String(format: "%.3f", visibleHeight))) inner=(w:\(String(format: "%.3f", innerWidth)), d:\(String(format: "%.3f", innerDepth))) playableHalf=(\(String(format: "%.3f", controller.trayPlayableHalfWidth)), \(String(format: "%.3f", controller.trayPlayableHalfDepth))) cornerR=\(String(format: "%.3f", controller.trayPlayableCornerRadius)) wallHalfThickness=\(String(format: "%.3f", wallThickness * 0.5))")
             #endif
         }
 
@@ -809,12 +687,10 @@ struct SceneKitDiceView: UIViewRepresentable {
 
         let backWall = SCNNode(geometry: frontBackWallGeometry)
         backWall.position = SCNVector3(0, wallHeight / 2 - 0.21, -innerDepth / 2)
-        backWall.physicsBody = SCNPhysicsBody.static()
         root.addChildNode(backWall)
 
         let frontWall = SCNNode(geometry: frontBackWallGeometry)
         frontWall.position = SCNVector3(0, wallHeight / 2 - 0.21, innerDepth / 2)
-        frontWall.physicsBody = SCNPhysicsBody.static()
         root.addChildNode(frontWall)
 
         let leftRightWallGeometry = SCNBox(
@@ -827,12 +703,10 @@ struct SceneKitDiceView: UIViewRepresentable {
 
         let leftWall = SCNNode(geometry: leftRightWallGeometry)
         leftWall.position = SCNVector3(-innerWidth / 2, wallHeight / 2 - 0.21, 0)
-        leftWall.physicsBody = SCNPhysicsBody.static()
         root.addChildNode(leftWall)
 
         let rightWall = SCNNode(geometry: leftRightWallGeometry)
         rightWall.position = SCNVector3(innerWidth / 2, wallHeight / 2 - 0.21, 0)
-        rightWall.physicsBody = SCNPhysicsBody.static()
         root.addChildNode(rightWall)
 
         let lipMaterial = makeLipMaterial()
@@ -871,7 +745,7 @@ struct SceneKitDiceView: UIViewRepresentable {
         rightLip.position = SCNVector3(innerWidth / 2 - lipDepth / 2, 0.02, 0)
         root.addChildNode(rightLip)
 
-        addContainmentWalls(to: root, innerWidth: innerWidth, innerDepth: innerDepth)
+        addContainmentWalls(to: root)
 
         scene.rootNode.addChildNode(root)
     }
@@ -903,25 +777,37 @@ struct SceneKitDiceView: UIViewRepresentable {
     }
 
     private func randomSpawnPosition() -> SCNVector3 {
-        let maxX = Swift.max(controller.trayPlayableHalfWidth - controller.dieContainmentRadius - 0.12, 0.35)
-        let maxZ = Swift.max(controller.trayPlayableHalfDepth - controller.dieContainmentRadius - 0.12, 0.35)
+        let spawnBounds = RoundedContainmentBounds.inset(
+            halfWidth: controller.trayPlayableHalfWidth,
+            halfDepth: controller.trayPlayableHalfDepth,
+            cornerRadius: controller.trayPlayableCornerRadius,
+            clearance: controller.dieContainmentRadius + 0.12
+        )
+        let candidate = SCNVector3(
+            Float.random(in: -spawnBounds.halfWidth...spawnBounds.halfWidth),
+            0,
+            Float.random(in: -spawnBounds.halfDepth...spawnBounds.halfDepth)
+        )
+        let clamped = spawnBounds.clamped(candidate)
 
         return SCNVector3(
-            Float.random(in: -maxX...maxX),
+            clamped.x,
             Float.random(in: 0.90...1.22),
-            Float.random(in: -maxZ...maxZ)
+            clamped.z
         )
     }
 
     private func clampDiceIntoVisibleBounds() {
-        let maxX = Swift.max(controller.trayPlayableHalfWidth - controller.dieContainmentRadius, 0.3)
-        let maxZ = Swift.max(controller.trayPlayableHalfDepth - controller.dieContainmentRadius, 0.3)
+        let bounds = RoundedContainmentBounds.inset(
+            halfWidth: controller.trayPlayableHalfWidth,
+            halfDepth: controller.trayPlayableHalfDepth,
+            cornerRadius: controller.trayPlayableCornerRadius,
+            clearance: controller.dieContainmentRadius
+        )
 
         for die in controller.dice {
             let original = die.node.position
-            var pos = die.node.position
-            pos.x = clamp(pos.x, min: -maxX, max: maxX)
-            pos.z = clamp(pos.z, min: -maxZ, max: maxZ)
+            var pos = bounds.clamped(die.node.position)
             pos.y = Swift.max(pos.y, 0.6)
 
             guard abs(pos.x - original.x) > 0.001
@@ -935,55 +821,102 @@ struct SceneKitDiceView: UIViewRepresentable {
         }
     }
 
-    private func addContainmentWalls(to root: SCNNode, innerWidth: Float, innerDepth: Float) {
+    private func addContainmentWalls(to root: SCNNode) {
         let wallMaterial = makeContainmentMaterial()
         let containmentY = containmentWallHeight * 0.5 - 0.21
         let containmentHalfWidth = controller.trayPlayableHalfWidth + containmentWallThickness * 0.5
         let containmentHalfDepth = controller.trayPlayableHalfDepth + containmentWallThickness * 0.5
-
-        let frontBackContainmentGeometry = SCNBox(
-            width: CGFloat(innerWidth),
-            height: CGFloat(containmentWallHeight),
-            length: CGFloat(containmentWallThickness),
-            chamferRadius: 0.01
+        let cornerInset = min(
+            max(controller.dieContainmentRadius * 0.95, 0.58),
+            min(controller.trayPlayableHalfWidth, controller.trayPlayableHalfDepth) * 0.45
         )
-        frontBackContainmentGeometry.materials = Array(repeating: wallMaterial, count: 6)
+        let straightFrontBackWidth = max((controller.trayPlayableHalfWidth - cornerInset) * 2, 0.8)
+        let straightLeftRightDepth = max((controller.trayPlayableHalfDepth - cornerInset) * 2, 0.8)
+        let overlap: Float = 0.06
+        let bevelLength = max((cornerInset + containmentWallThickness) * sqrt(2), 0.7)
 
-        let backContainment = SCNNode(geometry: frontBackContainmentGeometry)
-        backContainment.position = SCNVector3(0, containmentY, -containmentHalfDepth)
-        backContainment.physicsBody = SCNPhysicsBody.static()
-        backContainment.opacity = 0.0
-        backContainment.castsShadow = false
-        root.addChildNode(backContainment)
+        let containmentNode = SCNNode()
+        containmentNode.name = "tray-containment"
 
-        let frontContainment = SCNNode(geometry: frontBackContainmentGeometry)
-        frontContainment.position = SCNVector3(0, containmentY, containmentHalfDepth)
-        frontContainment.physicsBody = SCNPhysicsBody.static()
-        frontContainment.opacity = 0.0
-        frontContainment.castsShadow = false
-        root.addChildNode(frontContainment)
+        func makeSegment(width: Float,
+                         length: Float,
+                         position: SCNVector3,
+                         yRotation: Float = 0) {
+            let geometry = SCNBox(
+                width: CGFloat(width),
+                height: CGFloat(containmentWallHeight),
+                length: CGFloat(length),
+                chamferRadius: 0.01
+            )
+            geometry.materials = [wallMaterial]
 
-        let leftRightContainmentGeometry = SCNBox(
-            width: CGFloat(containmentWallThickness),
-            height: CGFloat(containmentWallHeight),
-            length: CGFloat(innerDepth),
-            chamferRadius: 0.01
+            let node = SCNNode(geometry: geometry)
+            node.position = position
+            node.eulerAngles = SCNVector3(0, yRotation, 0)
+            node.opacity = 0.0
+            node.castsShadow = false
+            containmentNode.addChildNode(node)
+        }
+
+        makeSegment(
+            width: straightFrontBackWidth + overlap,
+            length: containmentWallThickness,
+            position: SCNVector3(0, containmentY, -containmentHalfDepth)
         )
-        leftRightContainmentGeometry.materials = Array(repeating: wallMaterial, count: 6)
+        makeSegment(
+            width: straightFrontBackWidth + overlap,
+            length: containmentWallThickness,
+            position: SCNVector3(0, containmentY, containmentHalfDepth)
+        )
+        makeSegment(
+            width: containmentWallThickness,
+            length: straightLeftRightDepth + overlap,
+            position: SCNVector3(-containmentHalfWidth, containmentY, 0)
+        )
+        makeSegment(
+            width: containmentWallThickness,
+            length: straightLeftRightDepth + overlap,
+            position: SCNVector3(containmentHalfWidth, containmentY, 0)
+        )
 
-        let leftContainment = SCNNode(geometry: leftRightContainmentGeometry)
-        leftContainment.position = SCNVector3(-containmentHalfWidth, containmentY, 0)
-        leftContainment.physicsBody = SCNPhysicsBody.static()
-        leftContainment.opacity = 0.0
-        leftContainment.castsShadow = false
-        root.addChildNode(leftContainment)
+        let bevelOffsetX = controller.trayPlayableHalfWidth - cornerInset * 0.5
+        let bevelOffsetZ = controller.trayPlayableHalfDepth - cornerInset * 0.5
+        makeSegment(
+            width: bevelLength,
+            length: containmentWallThickness,
+            position: SCNVector3(bevelOffsetX, containmentY, bevelOffsetZ),
+            yRotation: -.pi / 4
+        )
+        makeSegment(
+            width: bevelLength,
+            length: containmentWallThickness,
+            position: SCNVector3(-bevelOffsetX, containmentY, bevelOffsetZ),
+            yRotation: .pi / 4
+        )
+        makeSegment(
+            width: bevelLength,
+            length: containmentWallThickness,
+            position: SCNVector3(bevelOffsetX, containmentY, -bevelOffsetZ),
+            yRotation: .pi / 4
+        )
+        makeSegment(
+            width: bevelLength,
+            length: containmentWallThickness,
+            position: SCNVector3(-bevelOffsetX, containmentY, -bevelOffsetZ),
+            yRotation: -.pi / 4
+        )
 
-        let rightContainment = SCNNode(geometry: leftRightContainmentGeometry)
-        rightContainment.position = SCNVector3(containmentHalfWidth, containmentY, 0)
-        rightContainment.physicsBody = SCNPhysicsBody.static()
-        rightContainment.opacity = 0.0
-        rightContainment.castsShadow = false
-        root.addChildNode(rightContainment)
+        containmentNode.physicsBody = SCNPhysicsBody(
+            type: .static,
+            shape: SCNPhysicsShape(
+                node: containmentNode,
+                options: [
+                    .keepAsCompound: true,
+                    .collisionMargin: 0.01
+                ]
+            )
+        )
+        root.addChildNode(containmentNode)
     }
 
     private func makeFrameMaterial() -> SCNMaterial {

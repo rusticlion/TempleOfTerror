@@ -24,6 +24,30 @@ class DieNode {
         Float(calculatedEffectiveSideLength) * 0.90
     }
 
+    private func makePhysicsBody() -> SCNPhysicsBody {
+        let physicsChamfer = calculatedEffectiveSideLength * 0.20
+        let physicsGeometry = SCNBox(
+            width: calculatedEffectiveSideLength,
+            height: calculatedEffectiveSideLength,
+            length: calculatedEffectiveSideLength,
+            chamferRadius: physicsChamfer
+        )
+        let shape = SCNPhysicsShape(
+            geometry: physicsGeometry,
+            options: [.collisionMargin: 0.005]
+        )
+
+        let body = SCNPhysicsBody(type: .dynamic, shape: shape)
+        body.continuousCollisionDetectionThreshold = 0.001
+        body.mass = 0.45
+        body.friction = 0.50
+        body.restitution = 0.16
+        body.rollingFriction = 0.50
+        body.damping = 0.2
+        body.angularDamping = 0.4
+        return body
+    }
+
     init() {
         self.node = SCNNode()
         self.visualNode = SCNNode()
@@ -69,23 +93,7 @@ class DieNode {
                 self.calculatedEffectiveSideLength = CGFloat(max(visualWidth, visualHeight, visualLength))
             }
 
-            let cubeGeometry = SCNBox(
-                width: calculatedEffectiveSideLength,
-                height: calculatedEffectiveSideLength,
-                length: calculatedEffectiveSideLength,
-                chamferRadius: calculatedEffectiveSideLength * 0.05
-            )
-            let shape = SCNPhysicsShape(geometry: cubeGeometry, options: nil)
-
-            let body = SCNPhysicsBody(type: .dynamic, shape: shape)
-            body.continuousCollisionDetectionThreshold = 0.001
-            body.mass = 0.45
-            body.friction = 0.72
-            body.restitution = 0.16
-            body.rollingFriction = 0.62
-            body.damping = 0.18
-            body.angularDamping = 0.18
-            self.node.physicsBody = body
+            self.node.physicsBody = makePhysicsBody()
 
             configureVisualMaterials()
         } else {
@@ -104,6 +112,10 @@ class DieNode {
             self.visualNode = v
             self.baseVisualScale = v.scale
             self.node.addChildNode(v)
+        }
+
+        if node.physicsBody == nil {
+            node.physicsBody = makePhysicsBody()
         }
     }
 
