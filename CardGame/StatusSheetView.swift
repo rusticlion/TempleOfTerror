@@ -134,7 +134,7 @@ struct StatusSheetView: View {
                         }
                     }
 
-                    Text("Tap an explorer to review their full sheet. Change the acting explorer from the selector bar in the main view.")
+                    Text("Tap an explorer to make them active. Use the detail button for the full sheet.")
                         .font(Theme.bodyFont(size: 13, italic: true))
                         .foregroundColor(Theme.inkFaded)
                 }
@@ -189,68 +189,84 @@ struct StatusSheetView: View {
         }
     }
 
+    private func selectExplorer(_ character: Character) {
+        selectedCharacterID = character.id
+        dismiss()
+    }
+
     private func explorerRow(for character: Character, in group: RoomGroup) -> some View {
-        Button {
-            inspectedCharacter = character
-        } label: {
-            VStack(alignment: .leading, spacing: 8) {
-                HStack(alignment: .firstTextBaseline, spacing: 10) {
-                    Text(character.name)
-                        .font(Theme.displayFont(size: 18, weight: .semibold))
-                        .foregroundColor(Theme.parchment)
-                        .lineLimit(1)
+        HStack(alignment: .center, spacing: 10) {
+            Button {
+                selectExplorer(character)
+            } label: {
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack(alignment: .firstTextBaseline, spacing: 10) {
+                        Text(character.name)
+                            .font(Theme.displayFont(size: 18, weight: .semibold))
+                            .foregroundColor(Theme.parchment)
+                            .lineLimit(1)
 
-                    Spacer(minLength: 10)
+                        Spacer(minLength: 10)
 
-                    Text("Stress \(character.stress) / 9")
-                        .font(Theme.systemFont(size: 11, weight: .semibold))
-                        .foregroundColor(Theme.parchmentDark)
-
-                    Image(systemName: "chevron.right.circle.fill")
-                        .font(.system(size: 13, weight: .semibold))
-                        .foregroundColor(Theme.inkFaded)
-                }
-
-                HStack(alignment: .center, spacing: 8) {
-                    Text(character.characterClass)
-                        .font(Theme.systemFont(size: 11, weight: .semibold))
-                        .foregroundColor(Theme.inkFaded)
-                        .textCase(.uppercase)
-                        .tracking(0.7)
-
-                    Spacer(minLength: 8)
-
-                    InRunStateBadge(
-                        text: character.coarseHarmStateLabel,
-                        foreground: character.coarseHarmTint == Theme.gold ? Theme.ink : .white,
-                        fill: character.coarseHarmTint.opacity(0.82)
-                    )
-
-                    ForEach(stateChips(for: character, in: group)) { chip in
-                        InRunStateBadge(
-                            text: chip.text,
-                            foreground: chip.foreground,
-                            fill: chip.fill
-                        )
+                        Text("Stress \(character.stress) / 9")
+                            .font(Theme.systemFont(size: 11, weight: .semibold))
+                            .foregroundColor(Theme.parchmentDark)
                     }
-                }
 
-                ActionRatingsLine(character: character, fontSize: 12, foreground: Theme.parchmentDark)
+                    HStack(alignment: .center, spacing: 8) {
+                        Text(character.characterClass)
+                            .font(Theme.systemFont(size: 11, weight: .semibold))
+                            .foregroundColor(Theme.inkFaded)
+                            .textCase(.uppercase)
+                            .tracking(0.7)
+
+                        Spacer(minLength: 8)
+
+                        InRunStateBadge(
+                            text: character.coarseHarmStateLabel,
+                            foreground: character.coarseHarmTint == Theme.gold ? Theme.ink : .white,
+                            fill: character.coarseHarmTint.opacity(0.82)
+                        )
+
+                        ForEach(stateChips(for: character, in: group)) { chip in
+                            InRunStateBadge(
+                                text: chip.text,
+                                foreground: chip.foreground,
+                                fill: chip.fill
+                            )
+                        }
+                    }
+
+                    ActionRatingsLine(character: character, fontSize: 12, foreground: Theme.parchmentDark)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.horizontal, 14)
-            .padding(.vertical, 12)
-            .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(Theme.leatherLight.opacity(character.id == selectedCharacterID ? 0.8 : 0.58))
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(character.id == selectedCharacterID ? Theme.gold.opacity(0.8) : Theme.parchmentDeep.opacity(0.2), lineWidth: character.id == selectedCharacterID ? 2 : 1)
-            )
+            .buttonStyle(.plain)
+            .accessibilityIdentifier("expeditionExplorerRow")
+
+            Button {
+                inspectedCharacter = character
+            } label: {
+                Image(systemName: "info.circle.fill")
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundColor(Theme.inkFaded)
+                    .frame(width: 34, height: 34)
+                    .background(Theme.bgWarm.opacity(0.25), in: Circle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Explorer details")
+            .accessibilityIdentifier("expeditionExplorerDetailsButton")
         }
-        .buttonStyle(.plain)
-        .accessibilityIdentifier("expeditionExplorerRow")
+        .padding(.horizontal, 14)
+        .padding(.vertical, 12)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Theme.leatherLight.opacity(character.id == selectedCharacterID ? 0.8 : 0.58))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(character.id == selectedCharacterID ? Theme.gold.opacity(0.8) : Theme.parchmentDeep.opacity(0.2), lineWidth: character.id == selectedCharacterID ? 2 : 1)
+        )
     }
 }
 

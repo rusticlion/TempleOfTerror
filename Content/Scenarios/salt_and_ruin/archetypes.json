@@ -1,0 +1,50 @@
+[
+  {
+    "id": "salvager",
+    "name": "Salvager",
+    "description": "Knows how to strip a wreck for anything worth keeping. Good with rough hands and crude tools.",
+    "defaultActions": {
+      "Wreck": 2,
+      "Finesse": 1,
+      "Survey": 1
+    },
+    "personalityTagPool": [
+      "Practical",
+      "Reckless",
+      "Weathered",
+      "Impatient"
+    ]
+  },
+  {
+    "id": "antiquarian",
+    "name": "Antiquarian",
+    "description": "Reads dead languages and handles fragile things. The reason anyone funds these expeditions.",
+    "defaultActions": {
+      "Study": 2,
+      "Attune": 1,
+      "Consort": 1
+    },
+    "personalityTagPool": [
+      "Meticulous",
+      "Obsessive",
+      "Reverent",
+      "Fragile"
+    ]
+  },
+  {
+    "id": "diver",
+    "name": "Diver",
+    "description": "Comfortable in dark water and tight spaces. Moves quietly and sees what others miss.",
+    "defaultActions": {
+      "Prowl": 2,
+      "Survey": 1,
+      "Hunt": 1
+    },
+    "personalityTagPool": [
+      "Calm",
+      "Solitary",
+      "Alert",
+      "Superstitious"
+    ]
+  }
+]

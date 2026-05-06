@@ -1,0 +1,14 @@
+{
+  "id": "salt_and_ruin",
+  "title": "Salt and Ruin",
+  "description": "The tide pulls back once a century, baring the drowned temple of Vethara to open air. Your expedition has hours before the ocean returns. Take what you can. Get out alive.",
+  "entryNode": "Tidal Gate",
+  "mapFile": "map_salt_and_ruin.json",
+  "partySize": 3,
+  "nativeArchetypeIDs": [
+    "salvager",
+    "antiquarian",
+    "diver"
+  ],
+  "stressOverflowHarmFamilyID": "brine_sickness"
+}

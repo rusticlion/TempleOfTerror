@@ -1,0 +1,82 @@
+{
+  "families": [
+    {
+      "id": "brine_sickness",
+      "lesser": {
+        "description": "Nausea",
+        "penalty": {
+          "type": "reduceEffect"
+        }
+      },
+      "moderate": {
+        "description": "Retching",
+        "penalty": {
+          "type": "actionPenalty",
+          "actionType": "Finesse"
+        }
+      },
+      "severe": {
+        "description": "Hemorrhaging",
+        "penalty": {
+          "type": "banAction",
+          "actionType": "Prowl"
+        }
+      },
+      "fatal": {
+        "description": "Drowned From Within"
+      }
+    },
+    {
+      "id": "crushing_pressure",
+      "lesser": {
+        "description": "Bruised",
+        "penalty": {
+          "type": "reduceEffect"
+        }
+      },
+      "moderate": {
+        "description": "Cracked Ribs",
+        "penalty": {
+          "type": "actionPenalty",
+          "actionType": "Wreck"
+        }
+      },
+      "severe": {
+        "description": "Crushed Limb",
+        "penalty": {
+          "type": "banAction",
+          "actionType": "Skirmish"
+        }
+      },
+      "fatal": {
+        "description": "Entombed"
+      }
+    },
+    {
+      "id": "mental_fraying",
+      "lesser": {
+        "description": "Unsteady",
+        "penalty": {
+          "type": "reduceEffect"
+        }
+      },
+      "moderate": {
+        "description": "Fragmented Thoughts",
+        "penalty": {
+          "type": "actionPenalty",
+          "actionType": "Study"
+        }
+      },
+      "severe": {
+        "description": "Shattered Psyche",
+        "penalty": {
+          "type": "banAction",
+          "actionType": "Command"
+        }
+      },
+      "fatal": {
+        "description": "Mind Lost to the Deep"
+      }
+    }
+  ]
+}

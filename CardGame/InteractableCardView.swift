@@ -223,7 +223,7 @@ struct InteractableCardView: View {
                                     DualLabelForecastChip(
                                         title: "Impact",
                                         value: (actionProjection?.finalEffect ?? action.effect).rawValue.capitalized,
-                                        accent: Theme.parchmentDeep,
+                                        accent: Theme.inkLight,
                                         compact: true
                                     )
                                     .accessibilityIdentifier("actionForecastImpactChip")

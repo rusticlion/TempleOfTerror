@@ -278,6 +278,18 @@ struct ContentView: View {
                     VStack(alignment: .leading, spacing: 16) {
                         CompactPressureRow(items: pressureItems)
 
+                        if let selectedCharacter {
+                            ActiveExplorerTacticalHUD(
+                                character: selectedCharacter,
+                                immediateWarnings: activeExplorerWarnings,
+                                onOpenDetails: {
+                                    showingCharacterSheet = true
+                                },
+                                compactMode: prefersPortraitRail
+                            )
+                            .accessibilityIdentifier("activeExplorerHUD")
+                        }
+
                         if let node = selectedNode {
                             VStack(alignment: .leading, spacing: 16) {
                                 if !activeRoomModifiers.isEmpty {
@@ -372,43 +384,21 @@ struct ContentView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
 
                 VStack(spacing: 10) {
-                    VStack(spacing: 0) {
-                        if let selectedCharacter {
-                            ActiveExplorerTacticalHUD(
-                                character: selectedCharacter,
-                                immediateWarnings: activeExplorerWarnings,
-                                onOpenDetails: {
-                                    showingCharacterSheet = true
-                                },
-                                embeddedInRail: true,
-                                compactMode: prefersPortraitRail
-                            )
-                            .padding(.horizontal, prefersPortraitRail ? 2 : 12)
-                            .padding(.top, prefersPortraitRail ? 2 : 12)
-                            .padding(.bottom, prefersPortraitRail ? 8 : 10)
-
-                            Rectangle()
-                                .fill(Theme.parchmentDeep.opacity(0.18))
-                                .frame(height: 1)
-                                .padding(.horizontal, 12)
-                        }
-
-                        CharacterSelectorView(characters: viewModel.gameState.party,
-                                              selectedCharacterID: $selectedCharacterID,
-                                              movementMode: viewModel.partyMovementMode,
-                                              locationNames: characterLocationNames)
-                            .frame(maxWidth: .infinity)
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 10)
-                    }
-                    .background(
-                        RoundedRectangle(cornerRadius: 18)
-                            .fill(Theme.leather.opacity(0.9))
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 18)
-                            .stroke(Theme.parchmentDeep.opacity(0.18), lineWidth: 1)
-                    )
+                    CharacterSelectorView(characters: viewModel.gameState.party,
+                                          selectedCharacterID: $selectedCharacterID,
+                                          movementMode: viewModel.partyMovementMode,
+                                          locationNames: characterLocationNames)
+                        .frame(maxWidth: .infinity)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 10)
+                        .background(
+                            RoundedRectangle(cornerRadius: 18)
+                                .fill(Theme.leather.opacity(0.9))
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 18)
+                                .stroke(Theme.parchmentDeep.opacity(0.18), lineWidth: 1)
+                        )
 
                     HStack(spacing: 8) {
                         Button {

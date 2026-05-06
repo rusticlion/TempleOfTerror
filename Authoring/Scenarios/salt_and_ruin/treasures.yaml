@@ -1,0 +1,64 @@
+# yaml-language-server: $schema=../../Schemas/treasures.schema.json
+- id: sar_waterlogged_journal
+  name: Waterlogged Journal
+  description: A previous expedition's log, leather cover bloated and pages fused. Enough is legible to piece together what they found and where they died.
+  grantedModifier:
+    bonusDice: 1
+    applicableToAction: Survey
+    uses: 2
+    description: from the Waterlogged Journal
+    isOptionalToApply: true
+  tags:
+    - Knowledge
+    - Expedition
+- id: sar_corroded_idol
+  name: Corroded Idol
+  description: A figure carved from green-black stone, heavy for its size. Its face has been eaten by salt but the hands are still clasped in supplication.
+  grantedModifier:
+    bonusDice: 1
+    applicableToAction: Attune
+    uses: 2
+    description: from the Corroded Idol
+    isOptionalToApply: true
+  tags:
+    - Relic
+    - Vethara
+- id: sar_phosphor_vial
+  name: Phosphor Vial
+  description: A glass tube filled with something alive and luminous. It pulses like a slow heartbeat and casts a clean blue-white light.
+  grantedModifier:
+    improvePosition: true
+    applicableToAction: Study
+    uses: 1
+    description: from the Phosphor Vial
+    isOptionalToApply: true
+  tags:
+    - Light
+    - Supply
+- id: sar_bone_needle
+  name: Bone Needle
+  description: A ritual implement carved from a human rib. Thread-thin channels run its length, stained with something older than the temple.
+  grantedModifier:
+    bonusDice: 1
+    applicableToAction: Command
+    uses: 1
+    description: from the Bone Needle
+    isOptionalToApply: true
+  tags:
+    - Ritual
+    - Bone
+- id: sar_tidal_lens
+  name: Tidal Lens
+  description: A disc of polished obsidian set in a coral frame. When held to the eye it shows the drowned — not as they are, but as they were at the moment the water took them.
+  grantedModifier:
+    bonusDice: 1
+    applicableActions:
+      - Study
+      - Attune
+    uses: 3
+    description: from the Tidal Lens
+    isOptionalToApply: true
+  tags:
+    - Artifact
+    - Vethara
+    - Objective

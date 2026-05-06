@@ -1,0 +1,8 @@
+# yaml-language-server: $schema=../../Schemas/clocks.schema.json
+- name: Rising Tide
+  segments: 8
+  progress: 0
+  onCompleteConsequences:
+    - type: endRun
+      runOutcome: defeat
+      runOutcomeText: The ocean does not negotiate. The water comes all at once through every corridor, black and absolute. The temple swallows your expedition whole.

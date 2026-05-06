@@ -1,0 +1,1142 @@
+{
+  "startingNodeID": "42B39665-EE55-5180-9A43-52272780668D",
+  "nodes": {
+    "42B39665-EE55-5180-9A43-52272780668D": {
+      "id": "42B39665-EE55-5180-9A43-52272780668D",
+      "name": "Tidal Gate",
+      "soundProfile": "chasm_wind",
+      "interactables": [
+        {
+          "id": "sar_break_camp",
+          "title": "Break Camp",
+          "description": "The sky is still visible from here. You can leave with your lives, if not your prize.",
+          "availableActions": [
+            {
+              "name": "Retreat empty-handed",
+              "actionType": "Consort",
+              "position": "controlled",
+              "effect": "standard",
+              "requiresTest": false,
+              "isGroupAction": true,
+              "outcomes": {
+                "success": [
+                  {
+                    "type": "endRun",
+                    "runOutcome": "escaped",
+                    "runOutcomeText": "You scramble back over the rocks as the first waves lick the threshold. The temple sinks behind you. Whatever is down there stays down there."
+                  }
+                ]
+              }
+            },
+            {
+              "name": "Depart with the Lens",
+              "actionType": "Consort",
+              "position": "controlled",
+              "effect": "standard",
+              "requiresTest": false,
+              "isGroupAction": true,
+              "conditions": [
+                {
+                  "type": "partyHasTreasureWithTag",
+                  "stringParam": "Objective"
+                }
+              ],
+              "outcomes": {
+                "success": [
+                  {
+                    "type": "endRun",
+                    "runOutcome": "victory",
+                    "runOutcomeText": "You climb into grey daylight with the Lens wrapped in your coat. Behind you the ocean seals the temple shut for another hundred years. Whatever the Lens shows, it belongs to the surface now."
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "sar_survey_threshold",
+          "title": "Carved Threshold",
+          "description": "The entrance frame is cut with eroded figures — wave patterns, processions, something with many arms. The pattern might tell you what is below.",
+          "availableActions": [
+            {
+              "name": "Read the carvings",
+              "actionType": "Study",
+              "position": "controlled",
+              "effect": "standard",
+              "outcomes": {
+                "success": [
+                  {
+                    "type": "tickClock",
+                    "clockName": "Rising Tide",
+                    "amount": 1
+                  },
+                  {
+                    "type": "setScenarioFlag",
+                    "flagId": "sar_carvings_read",
+                    "description": "The carvings depict a temple with a chapel to the west, stores to the east, and a sanctum at the lowest level. A large figure guards the descent."
+                  },
+                  {
+                    "type": "grantModifier",
+                    "targetScope": "actingCharacter",
+                    "modifier": {
+                      "sourceKey": "sar_threshold_knowledge",
+                      "bonusDice": 1,
+                      "applicableToAction": "Survey",
+                      "uses": 1,
+                      "isOptionalToApply": false,
+                      "description": "from reading the threshold carvings"
+                    }
+                  },
+                  {
+                    "type": "removeInteractable",
+                    "id": "self"
+                  }
+                ],
+                "partial": [
+                  {
+                    "type": "tickClock",
+                    "clockName": "Rising Tide",
+                    "amount": 1
+                  },
+                  {
+                    "type": "setScenarioFlag",
+                    "flagId": "sar_carvings_read",
+                    "description": "You make out fragments. Something about a chapel, a guardian, a lowest chamber. Not enough to be sure of the rest."
+                  },
+                  {
+                    "type": "gainStress",
+                    "amount": 1
+                  },
+                  {
+                    "type": "removeInteractable",
+                    "id": "self"
+                  }
+                ],
+                "failure": [
+                  {
+                    "type": "tickClock",
+                    "clockName": "Rising Tide",
+                    "amount": 1,
+                    "description": "The carvings are too eroded. You waste precious time tracing shapes that resolve into nothing."
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "connections": [
+        {
+          "toNodeID": "5CD4E9DB-CF9B-5112-8AD8-5D2AB7EBD0BB",
+          "isUnlocked": true,
+          "description": "Descend into the gallery"
+        }
+      ],
+      "theme": "approach",
+      "isDiscovered": true
+    },
+    "5CD4E9DB-CF9B-5112-8AD8-5D2AB7EBD0BB": {
+      "id": "5CD4E9DB-CF9B-5112-8AD8-5D2AB7EBD0BB",
+      "name": "Kelp Gallery",
+      "soundProfile": "cave_drips",
+      "interactables": [
+        {
+          "id": "sar_kelp_curtains",
+          "title": "Dead Kelp Curtains",
+          "description": "The kelp is dry and brittle near the ceiling but damp where it touches the floor. Some of it conceals markings on the walls beneath. Pulling it aside takes time.",
+          "availableActions": [
+            {
+              "name": "Clear the kelp and search",
+              "actionType": "Survey",
+              "position": "controlled",
+              "effect": "standard",
+              "outcomes": {
+                "success": [
+                  {
+                    "type": "tickClock",
+                    "clockName": "Rising Tide",
+                    "amount": 1
+                  },
+                  {
+                    "type": "gainTreasure",
+                    "treasureId": "sar_waterlogged_journal"
+                  },
+                  {
+                    "type": "removeInteractable",
+                    "id": "self",
+                    "description": "Behind the thickest curtain of kelp you find a leather satchel pinned to the wall by a rusted spike. Inside is a journal, pages swollen but legible."
+                  }
+                ],
+                "partial": [
+                  {
+                    "type": "tickClock",
+                    "clockName": "Rising Tide",
+                    "amount": 1
+                  },
+                  {
+                    "type": "gainTreasure",
+                    "treasureId": "sar_waterlogged_journal"
+                  },
+                  {
+                    "type": "gainStress",
+                    "amount": 1
+                  },
+                  {
+                    "type": "removeInteractable",
+                    "id": "self",
+                    "description": "The kelp tears away in clumps, releasing a stench of rot. You find the journal but the smell clings to your hands."
+                  }
+                ],
+                "failure": [
+                  {
+                    "type": "tickClock",
+                    "clockName": "Rising Tide",
+                    "amount": 1,
+                    "description": "You pull kelp aside for what feels like an age. Nothing but bare stone and the smell of the sea."
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "connections": [
+        {
+          "toNodeID": "42B39665-EE55-5180-9A43-52272780668D",
+          "isUnlocked": true,
+          "description": "Ascend to the gate"
+        },
+        {
+          "toNodeID": "5B18CF61-D154-591B-82CD-00F10E268DA6",
+          "isUnlocked": true,
+          "description": "Take the west passage to the chapel"
+        },
+        {
+          "toNodeID": "7B70A346-E20E-554E-9425-6CEACDB159FE",
+          "isUnlocked": true,
+          "description": "Take the east passage to the cellars"
+        },
+        {
+          "toNodeID": "0495894C-6673-5689-87A8-89F3A414EFE6",
+          "isUnlocked": true,
+          "description": "Descend into the flooded passage"
+        }
+      ],
+      "theme": "passage",
+      "isDiscovered": false,
+      "onFirstEnter": [
+        {
+          "type": "setScenarioFlag",
+          "flagId": "sar_gallery_entered",
+          "description": "A long corridor stretches into the dark, walls draped in dead kelp that hangs like wet curtains. The floor is slick with brine. Passages branch in three directions and the air smells of salt and something older."
+        }
+      ]
+    },
+    "5B18CF61-D154-591B-82CD-00F10E268DA6": {
+      "id": "5B18CF61-D154-591B-82CD-00F10E268DA6",
+      "name": "Brine Chapel",
+      "soundProfile": "silent_tomb",
+      "interactables": [
+        {
+          "id": "sar_corroded_altar",
+          "title": "Altar of Vethara",
+          "description": "The wave-shaped altar is carved from a single block of dark stone. A shallow depression in its surface holds a film of brine. A corroded idol sits at the crest, arms raised as if conducting the tide.",
+          "availableActions": [
+            {
+              "name": "Take the idol",
+              "actionType": "Attune",
+              "position": "risky",
+              "effect": "standard",
+              "outcomes": {
+                "success": [
+                  {
+                    "type": "tickClock",
+                    "clockName": "Rising Tide",
+                    "amount": 1
+                  },
+                  {
+                    "type": "gainTreasure",
+                    "treasureId": "sar_corroded_idol"
+                  },
+                  {
+                    "type": "removeInteractable",
+                    "id": "self",
+                    "description": "Your fingers close around the idol and the brine in the depression ripples once, then goes still. The idol is heavier than it looks and very cold."
+                  }
+                ],
+                "partial": [
+                  {
+                    "type": "tickClock",
+                    "clockName": "Rising Tide",
+                    "amount": 1
+                  },
+                  {
+                    "type": "gainTreasure",
+                    "treasureId": "sar_corroded_idol"
+                  },
+                  {
+                    "type": "gainStress",
+                    "amount": 1
+                  },
+                  {
+                    "type": "removeInteractable",
+                    "id": "self",
+                    "description": "As you lift the idol the brine surges up your wrist and burns. The idol comes free but a deep cold settles into your hand and does not leave."
+                  }
+                ],
+                "failure": [
+                  {
+                    "type": "tickClock",
+                    "clockName": "Rising Tide",
+                    "amount": 1
+                  },
+                  {
+                    "type": "sufferHarm",
+                    "level": "lesser",
+                    "familyId": "brine_sickness",
+                    "description": "The brine erupts when you touch the idol, coating your face and filling your mouth with salt. You retch and stagger back. The idol remains where it sits."
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "sar_chapel_inscription",
+          "title": "Wall Inscription",
+          "description": "Words are cut into the wall behind the altar in a script that shifts between familiar and alien. It might be readable with patience.",
+          "availableActions": [
+            {
+              "name": "Decipher the inscription",
+              "actionType": "Study",
+              "position": "controlled",
+              "effect": "standard",
+              "outcomes": {
+                "success": [
+                  {
+                    "type": "tickClock",
+                    "clockName": "Rising Tide",
+                    "amount": 1
+                  },
+                  {
+                    "type": "setScenarioFlag",
+                    "flagId": "sar_guardian_warned",
+                    "description": "The inscription describes a warden of the threshold — something left behind to guard the sanctum when the waters recede. It sleeps in the flooded passage and wakes at the sound of footsteps. It can be commanded to stand aside, but only in the old tongue of Vethara."
+                  },
+                  {
+                    "type": "removeInteractable",
+                    "id": "self"
+                  }
+                ],
+                "partial": [
+                  {
+                    "type": "tickClock",
+                    "clockName": "Rising Tide",
+                    "amount": 1
+                  },
+                  {
+                    "type": "setScenarioFlag",
+                    "flagId": "sar_guardian_warned",
+                    "description": "You piece together fragments. Something guards the descent. It can be spoken to. The rest is illegible under salt damage."
+                  },
+                  {
+                    "type": "gainStress",
+                    "amount": 1
+                  },
+                  {
+                    "type": "removeInteractable",
+                    "id": "self"
+                  }
+                ],
+                "failure": [
+                  {
+                    "type": "tickClock",
+                    "clockName": "Rising Tide",
+                    "amount": 1,
+                    "description": "The script resists you. Every time you find a pattern it dissolves into decoration. Time wasted."
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "connections": [
+        {
+          "toNodeID": "5CD4E9DB-CF9B-5112-8AD8-5D2AB7EBD0BB",
+          "isUnlocked": true,
+          "description": "Return to the gallery"
+        },
+        {
+          "toNodeID": "728902C7-4D82-5844-891F-AC48E9C6BF1C",
+          "isUnlocked": true,
+          "description": "Descend to the ossuary"
+        }
+      ],
+      "theme": "shrine",
+      "isDiscovered": false,
+      "onFirstEnter": [
+        {
+          "type": "gainStress",
+          "amount": 1,
+          "targetScope": "allHere",
+          "description": "The chapel is intact and that is worse than ruin. Pews of black wood face an altar shaped like a wave about to break. Everything is covered in a crust of salt that glitters in your light. It looks like a room preserved in amber."
+        }
+      ]
+    },
+    "728902C7-4D82-5844-891F-AC48E9C6BF1C": {
+      "id": "728902C7-4D82-5844-891F-AC48E9C6BF1C",
+      "name": "Ossuary",
+      "soundProfile": "silent_tomb",
+      "interactables": [
+        {
+          "id": "sar_bone_arrangements",
+          "title": "Ritual Implements",
+          "description": "Some sections of the wall use carved bones as structural elements in deliberate patterns. A few of the larger pieces were clearly shaped after the flesh was gone — tools, not remains.",
+          "availableActions": [
+            {
+              "name": "Extract a ritual implement",
+              "actionType": "Finesse",
+              "position": "risky",
+              "effect": "standard",
+              "outcomes": {
+                "success": [
+                  {
+                    "type": "tickClock",
+                    "clockName": "Rising Tide",
+                    "amount": 1
+                  },
+                  {
+                    "type": "gainTreasure",
+                    "treasureId": "sar_bone_needle"
+                  },
+                  {
+                    "type": "removeInteractable",
+                    "id": "self",
+                    "description": "You ease a long needle of carved rib free from the mortar without breaking it. Thread-thin channels run its length, stained dark. It feels like it was meant to be found."
+                  }
+                ],
+                "partial": [
+                  {
+                    "type": "tickClock",
+                    "clockName": "Rising Tide",
+                    "amount": 1
+                  },
+                  {
+                    "type": "gainTreasure",
+                    "treasureId": "sar_bone_needle"
+                  },
+                  {
+                    "type": "gainStress",
+                    "amount": 2
+                  },
+                  {
+                    "type": "removeInteractable",
+                    "id": "self",
+                    "description": "The wall shifts as you pull the needle free. A skull drops and shatters at your feet. For a moment you would swear it was watching you fall. The needle is intact."
+                  }
+                ],
+                "failure": [
+                  {
+                    "type": "tickClock",
+                    "clockName": "Rising Tide",
+                    "amount": 1
+                  },
+                  {
+                    "type": "gainStress",
+                    "amount": 1,
+                    "description": "The bones resist. Nothing comes free without bringing a section of wall down with it."
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "sar_death_rites",
+          "title": "Carved Tablet",
+          "description": "A flat stone tablet is set into the floor, ringed by skulls facing inward. The text is dense and very old. Reading it feels like it would cost something.",
+          "availableActions": [
+            {
+              "name": "Study the death rites",
+              "actionType": "Attune",
+              "position": "desperate",
+              "effect": "great",
+              "outcomes": {
+                "success": [
+                  {
+                    "type": "tickClock",
+                    "clockName": "Rising Tide",
+                    "amount": 1
+                  },
+                  {
+                    "type": "setScenarioFlag",
+                    "flagId": "sar_death_rites_known",
+                    "description": "The rites describe how the priests of Vethara entered the sanctum. A phrase in the margin translates to something like 'I give the sea what the sea is owed.' The ritual requires speaking this while offering blood to the water."
+                  },
+                  {
+                    "type": "grantModifier",
+                    "targetScope": "actingCharacter",
+                    "modifier": {
+                      "sourceKey": "sar_death_rites",
+                      "improvePosition": true,
+                      "applicableToAction": "Attune",
+                      "uses": 1,
+                      "isOptionalToApply": false,
+                      "description": "from the Death Rites of Vethara"
+                    }
+                  },
+                  {
+                    "type": "removeInteractable",
+                    "id": "self"
+                  }
+                ],
+                "partial": [
+                  {
+                    "type": "tickClock",
+                    "clockName": "Rising Tide",
+                    "amount": 1
+                  },
+                  {
+                    "type": "setScenarioFlag",
+                    "flagId": "sar_death_rites_known",
+                    "description": "The rites sear into your mind. You understand them but the understanding sits wrong, like a bone set at a bad angle. The sanctum demands an offering."
+                  },
+                  {
+                    "type": "gainStress",
+                    "amount": 2
+                  },
+                  {
+                    "type": "removeInteractable",
+                    "id": "self"
+                  }
+                ],
+                "failure": [
+                  {
+                    "type": "tickClock",
+                    "clockName": "Rising Tide",
+                    "amount": 1
+                  },
+                  {
+                    "type": "gainStress",
+                    "amount": 3
+                  },
+                  {
+                    "type": "sufferHarm",
+                    "level": "lesser",
+                    "familyId": "brine_sickness",
+                    "description": "The words crawl behind your eyes. Your nose bleeds salt water. You understand nothing except that you should not have tried."
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "connections": [
+        {
+          "toNodeID": "5B18CF61-D154-591B-82CD-00F10E268DA6",
+          "isUnlocked": true,
+          "description": "Return to the chapel"
+        }
+      ],
+      "theme": "crypt",
+      "isDiscovered": false,
+      "onFirstEnter": [
+        {
+          "type": "gainStress",
+          "amount": 1,
+          "targetScope": "allHere",
+          "description": "The bones are arranged, not piled. Every wall is a mosaic of femurs and skulls and ribs set in mortar with the precision of brickwork. The oldest ones have fused with the salt deposits until it is impossible to tell where stone ends and bone begins."
+        }
+      ]
+    },
+    "7B70A346-E20E-554E-9425-6CEACDB159FE": {
+      "id": "7B70A346-E20E-554E-9425-6CEACDB159FE",
+      "name": "The Cellars",
+      "soundProfile": "cave_drips",
+      "interactables": [
+        {
+          "id": "sar_corroded_containers",
+          "title": "Corroded Containers",
+          "description": "Metal boxes and ceramic jars crowd the remaining shelves. Most are empty or calcified shut. A few might still hold something useful.",
+          "availableActions": [
+            {
+              "name": "Search methodically",
+              "actionType": "Survey",
+              "position": "controlled",
+              "effect": "standard",
+              "outcomes": {
+                "success": [
+                  {
+                    "type": "tickClock",
+                    "clockName": "Rising Tide",
+                    "amount": 1
+                  },
+                  {
+                    "type": "gainTreasure",
+                    "treasureId": "sar_phosphor_vial"
+                  },
+                  {
+                    "type": "removeInteractable",
+                    "id": "self",
+                    "description": "Behind a row of empty jars you find a glass vial sealed with wax, still glowing faintly. It pulses in your hand like something with a heartbeat."
+                  }
+                ],
+                "partial": [
+                  {
+                    "type": "tickClock",
+                    "clockName": "Rising Tide",
+                    "amount": 1
+                  },
+                  {
+                    "type": "gainTreasure",
+                    "treasureId": "sar_phosphor_vial"
+                  },
+                  {
+                    "type": "gainStress",
+                    "amount": 1
+                  },
+                  {
+                    "type": "removeInteractable",
+                    "id": "self",
+                    "description": "A jar shatters as you reach past it, slicing your palm. But behind it — light. A sealed vial, still glowing after centuries under the sea."
+                  }
+                ],
+                "failure": [
+                  {
+                    "type": "tickClock",
+                    "clockName": "Rising Tide",
+                    "amount": 1,
+                    "description": "Jar after jar of nothing. Calcite, brine, a dead crab, the smell of centuries. The stores were picked clean long ago."
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "sar_waterlogged_crate",
+          "title": "Waterlogged Crate",
+          "description": "A heavy wooden crate sits in the corner, partially submerged. Its lid is nailed shut but the wood is soft with rot.",
+          "availableActions": [
+            {
+              "name": "Pry it open",
+              "actionType": "Wreck",
+              "position": "risky",
+              "effect": "standard",
+              "outcomes": {
+                "success": [
+                  {
+                    "type": "tickClock",
+                    "clockName": "Rising Tide",
+                    "amount": 1
+                  },
+                  {
+                    "type": "grantModifier",
+                    "targetScope": "actingCharacter",
+                    "modifier": {
+                      "sourceKey": "sar_salvaged_tools",
+                      "bonusDice": 1,
+                      "applicableToAction": "Tinker",
+                      "uses": 2,
+                      "isOptionalToApply": true,
+                      "description": "from Salvaged Tools"
+                    }
+                  },
+                  {
+                    "type": "removeInteractable",
+                    "id": "self",
+                    "description": "The lid gives way. Inside you find a roll of treated canvas, copper wire, and a set of fine picks. Expedition tools from the last team. They did not make it out but their gear did."
+                  }
+                ],
+                "partial": [
+                  {
+                    "type": "tickClock",
+                    "clockName": "Rising Tide",
+                    "amount": 1
+                  },
+                  {
+                    "type": "grantModifier",
+                    "targetScope": "actingCharacter",
+                    "modifier": {
+                      "sourceKey": "sar_salvaged_tools",
+                      "bonusDice": 1,
+                      "applicableToAction": "Tinker",
+                      "uses": 1,
+                      "isOptionalToApply": true,
+                      "description": "from Salvaged Tools"
+                    }
+                  },
+                  {
+                    "type": "gainStress",
+                    "amount": 1
+                  },
+                  {
+                    "type": "removeInteractable",
+                    "id": "self",
+                    "description": "A nail catches your palm as the lid splinters. The crate holds tools — not a full set, but enough to be useful."
+                  }
+                ],
+                "failure": [
+                  {
+                    "type": "tickClock",
+                    "clockName": "Rising Tide",
+                    "amount": 1
+                  },
+                  {
+                    "type": "sufferHarm",
+                    "level": "lesser",
+                    "familyId": "crushing_pressure",
+                    "description": "The crate collapses inward as you wrench at it. A piece of waterlogged timber catches your forearm. Whatever was inside is ruined."
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "connections": [
+        {
+          "toNodeID": "5CD4E9DB-CF9B-5112-8AD8-5D2AB7EBD0BB",
+          "isUnlocked": true,
+          "description": "Return to the gallery"
+        }
+      ],
+      "theme": "storage",
+      "isDiscovered": false,
+      "onFirstEnter": [
+        {
+          "type": "setScenarioFlag",
+          "flagId": "sar_cellars_entered",
+          "description": "Stone shelves line every wall, most of them bare. A few corroded containers remain. The floor is ankle-deep in standing water that came in from somewhere and never left."
+        }
+      ]
+    },
+    "0495894C-6673-5689-87A8-89F3A414EFE6": {
+      "id": "0495894C-6673-5689-87A8-89F3A414EFE6",
+      "name": "Flooded Passage",
+      "soundProfile": "cave_drips",
+      "interactables": [
+        {
+          "id": "sar_the_warden",
+          "title": "The Warden",
+          "description": "A shape in the dark water. Long, segmented, vaguely crustacean. It has not attacked yet but it fills the passage completely. You cannot reach the sanctum without getting past it.",
+          "isThreat": true,
+          "availableActions": [
+            {
+              "name": "Speak the old command",
+              "actionType": "Command",
+              "position": "risky",
+              "effect": "great",
+              "conditions": [
+                {
+                  "type": "scenarioFlagSet",
+                  "stringParam": "sar_guardian_warned"
+                }
+              ],
+              "outcomes": {
+                "success": [
+                  {
+                    "type": "removeInteractable",
+                    "id": "self"
+                  },
+                  {
+                    "type": "unlockConnection",
+                    "fromNodeID": "0495894C-6673-5689-87A8-89F3A414EFE6",
+                    "toNodeID": "645E1338-A101-57ED-B81D-A1C8742FD3A5",
+                    "description": "You speak the words from the chapel inscription and the thing goes still. Then, with a sound like a hull groaning, it folds itself against the wall. The passage opens."
+                  }
+                ],
+                "partial": [
+                  {
+                    "type": "gainStress",
+                    "amount": 1
+                  },
+                  {
+                    "type": "removeInteractable",
+                    "id": "self"
+                  },
+                  {
+                    "type": "unlockConnection",
+                    "fromNodeID": "0495894C-6673-5689-87A8-89F3A414EFE6",
+                    "toNodeID": "645E1338-A101-57ED-B81D-A1C8742FD3A5",
+                    "description": "The words come out wrong the first time and the thing surges forward. You say them again, louder. It stops. Slowly, it pulls itself aside."
+                  }
+                ],
+                "failure": [
+                  {
+                    "type": "gainStress",
+                    "amount": 2
+                  },
+                  {
+                    "type": "sufferHarm",
+                    "level": "lesser",
+                    "familyId": "crushing_pressure",
+                    "description": "The words mean nothing. Or you said them wrong. It strikes once — fast — then settles back. The passage remains blocked."
+                  }
+                ]
+              }
+            },
+            {
+              "name": "Lure it aside with light",
+              "actionType": "Tinker",
+              "position": "risky",
+              "effect": "standard",
+              "conditions": [
+                {
+                  "type": "characterHasTreasureWithTag",
+                  "stringParam": "Light"
+                }
+              ],
+              "outcomes": {
+                "success": [
+                  {
+                    "type": "removeInteractable",
+                    "id": "self"
+                  },
+                  {
+                    "type": "unlockConnection",
+                    "fromNodeID": "0495894C-6673-5689-87A8-89F3A414EFE6",
+                    "toNodeID": "645E1338-A101-57ED-B81D-A1C8742FD3A5"
+                  },
+                  {
+                    "type": "removeTreasureWithTag",
+                    "tag": "Light",
+                    "description": "You crack the vial and hurl it into the side channel. The warden turns toward the glow and follows it into the dark. The passage clears. You are in the dark now, but the way is open."
+                  }
+                ],
+                "partial": [
+                  {
+                    "type": "gainStress",
+                    "amount": 1
+                  },
+                  {
+                    "type": "removeInteractable",
+                    "id": "self"
+                  },
+                  {
+                    "type": "unlockConnection",
+                    "fromNodeID": "0495894C-6673-5689-87A8-89F3A414EFE6",
+                    "toNodeID": "645E1338-A101-57ED-B81D-A1C8742FD3A5"
+                  },
+                  {
+                    "type": "removeTreasureWithTag",
+                    "tag": "Light",
+                    "description": "The vial skips off the water and rolls wrong. For a terrible second the thing turns toward you instead. Then the light catches its attention and it follows. You lost your light, but the passage is open."
+                  }
+                ],
+                "failure": [
+                  {
+                    "type": "gainStress",
+                    "amount": 1
+                  },
+                  {
+                    "type": "removeTreasureWithTag",
+                    "tag": "Light",
+                    "description": "The vial shatters against the wall and the light dies instantly. The warden does not move. Your light is gone for nothing."
+                  }
+                ]
+              }
+            },
+            {
+              "name": "Force past it",
+              "actionType": "Skirmish",
+              "position": "desperate",
+              "effect": "standard",
+              "outcomes": {
+                "success": [
+                  {
+                    "type": "removeInteractable",
+                    "id": "self"
+                  },
+                  {
+                    "type": "unlockConnection",
+                    "fromNodeID": "0495894C-6673-5689-87A8-89F3A414EFE6",
+                    "toNodeID": "645E1338-A101-57ED-B81D-A1C8742FD3A5",
+                    "description": "You drive into the thing with everything you have. Chitin cracks. It screams — a sound like tearing metal — and thrashes past you into deeper water. The passage opens."
+                  }
+                ],
+                "partial": [
+                  {
+                    "type": "gainStress",
+                    "amount": 2
+                  },
+                  {
+                    "type": "sufferHarm",
+                    "level": "moderate",
+                    "familyId": "crushing_pressure"
+                  },
+                  {
+                    "type": "removeInteractable",
+                    "id": "self"
+                  },
+                  {
+                    "type": "unlockConnection",
+                    "fromNodeID": "0495894C-6673-5689-87A8-89F3A414EFE6",
+                    "toNodeID": "645E1338-A101-57ED-B81D-A1C8742FD3A5",
+                    "description": "It takes a piece of you with it. But it retreats into the dark and the passage opens. You are bleeding into the black water."
+                  }
+                ],
+                "failure": [
+                  {
+                    "type": "gainStress",
+                    "amount": 2
+                  },
+                  {
+                    "type": "sufferHarm",
+                    "level": "severe",
+                    "familyId": "crushing_pressure",
+                    "description": "It pins you against the wall. Something in your chest gives. Your companions drag you back into the gallery. The thing settles again, unmoved."
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "connections": [
+        {
+          "toNodeID": "5CD4E9DB-CF9B-5112-8AD8-5D2AB7EBD0BB",
+          "isUnlocked": true,
+          "description": "Retreat to the gallery"
+        },
+        {
+          "toNodeID": "645E1338-A101-57ED-B81D-A1C8742FD3A5",
+          "isUnlocked": false,
+          "description": "Wade deeper to the sanctum"
+        }
+      ],
+      "theme": "hazard",
+      "isDiscovered": false,
+      "onFirstEnter": [
+        {
+          "type": "gainStress",
+          "amount": 1,
+          "targetScope": "allHere",
+          "description": "The passage slopes sharply downward. Water stands knee-deep and black. Something large shifts in the darkness ahead — slow, deliberate, filling the corridor wall to wall. It is between you and whatever lies below."
+        }
+      ]
+    },
+    "645E1338-A101-57ED-B81D-A1C8742FD3A5": {
+      "id": "645E1338-A101-57ED-B81D-A1C8742FD3A5",
+      "name": "The Sanctum",
+      "soundProfile": "chasm_wind",
+      "interactables": [
+        {
+          "id": "sar_the_reliquary",
+          "title": "The Tidal Lens",
+          "description": "The Lens sits on its plinth, cradled by coral that pulses faintly with bioluminescence. Taking it will not be as simple as lifting it free. The coral holds it like fingers around a throat.",
+          "availableActions": [
+            {
+              "name": "Perform the offering",
+              "actionType": "Attune",
+              "position": "risky",
+              "effect": "great",
+              "conditions": [
+                {
+                  "type": "scenarioFlagSet",
+                  "stringParam": "sar_death_rites_known"
+                }
+              ],
+              "outcomes": {
+                "success": [
+                  {
+                    "type": "tickClock",
+                    "clockName": "Rising Tide",
+                    "amount": 1
+                  },
+                  {
+                    "type": "gainTreasure",
+                    "treasureId": "sar_tidal_lens"
+                  },
+                  {
+                    "type": "removeInteractable",
+                    "id": "self",
+                    "description": "You speak the words and cut your palm. Blood hits the water and the coral relaxes, opens, releases. The Lens comes free as gently as if it were handed to you."
+                  }
+                ],
+                "partial": [
+                  {
+                    "type": "tickClock",
+                    "clockName": "Rising Tide",
+                    "amount": 1
+                  },
+                  {
+                    "type": "gainTreasure",
+                    "treasureId": "sar_tidal_lens"
+                  },
+                  {
+                    "type": "gainStress",
+                    "amount": 2
+                  },
+                  {
+                    "type": "removeInteractable",
+                    "id": "self",
+                    "description": "The coral tightens before it gives. Your blood clouds the water and for a moment you see through the Lens without meaning to — shapes beneath the ocean floor, vast and patient. The Lens comes free. You wish it had not shown you that."
+                  }
+                ],
+                "failure": [
+                  {
+                    "type": "tickClock",
+                    "clockName": "Rising Tide",
+                    "amount": 1
+                  },
+                  {
+                    "type": "gainStress",
+                    "amount": 2
+                  },
+                  {
+                    "type": "sufferHarm",
+                    "level": "lesser",
+                    "familyId": "brine_sickness",
+                    "description": "The offering is wrong, or not enough. The coral constricts and brine erupts from the plinth, filling your mouth with salt and heat. The Lens stays where it is."
+                  }
+                ]
+              }
+            },
+            {
+              "name": "Study the mechanism",
+              "actionType": "Study",
+              "position": "risky",
+              "effect": "standard",
+              "outcomes": {
+                "success": [
+                  {
+                    "type": "tickClock",
+                    "clockName": "Rising Tide",
+                    "amount": 1
+                  },
+                  {
+                    "type": "gainTreasure",
+                    "treasureId": "sar_tidal_lens"
+                  },
+                  {
+                    "type": "removeInteractable",
+                    "id": "self",
+                    "description": "You find the seam. The coral is not one organism but many, interlocking. You ease the Lens out along the grain, like removing a keystone. It takes patience and steady hands. It works."
+                  }
+                ],
+                "partial": [
+                  {
+                    "type": "tickClock",
+                    "clockName": "Rising Tide",
+                    "amount": 1
+                  },
+                  {
+                    "type": "gainTreasure",
+                    "treasureId": "sar_tidal_lens"
+                  },
+                  {
+                    "type": "gainStress",
+                    "amount": 1
+                  },
+                  {
+                    "type": "removeInteractable",
+                    "id": "self",
+                    "description": "You find most of the seam. The last section you have to guess at. The coral cracks and the Lens tumbles free. A piece of the frame breaks off. You hope it does not matter."
+                  }
+                ],
+                "failure": [
+                  {
+                    "type": "tickClock",
+                    "clockName": "Rising Tide",
+                    "amount": 1
+                  },
+                  {
+                    "type": "gainStress",
+                    "amount": 1,
+                    "description": "The mechanism is too intricate. Every path you trace leads to another interlock. You are burning time you do not have."
+                  }
+                ]
+              }
+            },
+            {
+              "name": "Break the coral by force",
+              "actionType": "Wreck",
+              "position": "desperate",
+              "effect": "standard",
+              "outcomes": {
+                "success": [
+                  {
+                    "type": "tickClock",
+                    "clockName": "Rising Tide",
+                    "amount": 1
+                  },
+                  {
+                    "type": "gainTreasure",
+                    "treasureId": "sar_tidal_lens"
+                  },
+                  {
+                    "type": "removeInteractable",
+                    "id": "self",
+                    "description": "The coral screams — a harmonic whine that fills the chamber and rattles your teeth. It shatters. The Lens drops into your hands, trailing threads of living tissue. Done."
+                  }
+                ],
+                "partial": [
+                  {
+                    "type": "tickClock",
+                    "clockName": "Rising Tide",
+                    "amount": 1
+                  },
+                  {
+                    "type": "gainTreasure",
+                    "treasureId": "sar_tidal_lens"
+                  },
+                  {
+                    "type": "gainStress",
+                    "amount": 2
+                  },
+                  {
+                    "type": "sufferHarm",
+                    "level": "moderate",
+                    "familyId": "crushing_pressure"
+                  },
+                  {
+                    "type": "removeInteractable",
+                    "id": "self",
+                    "description": "The coral fights back. A shard drives into your forearm as the frame breaks apart. But the Lens comes free — slick with your blood and something else. The chamber shudders around you."
+                  }
+                ],
+                "failure": [
+                  {
+                    "type": "tickClock",
+                    "clockName": "Rising Tide",
+                    "amount": 1
+                  },
+                  {
+                    "type": "gainStress",
+                    "amount": 2
+                  },
+                  {
+                    "type": "sufferHarm",
+                    "level": "severe",
+                    "familyId": "crushing_pressure",
+                    "description": "The coral whips around your hand. You feel bones shift against each other. Your companions pull you free but the Lens sits unmoved in its cradle."
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "connections": [
+        {
+          "toNodeID": "0495894C-6673-5689-87A8-89F3A414EFE6",
+          "isUnlocked": true,
+          "description": "Ascend to the flooded passage"
+        }
+      ],
+      "theme": "sanctum",
+      "isDiscovered": false,
+      "onFirstEnter": [
+        {
+          "type": "gainStress",
+          "amount": 1,
+          "targetScope": "allHere",
+          "description": "The lowest chamber. The ceiling is so low you crouch. Water covers the floor completely — warm, and faintly luminous. In the center, on a plinth of fused coral, sits a disc of black glass in a frame of living coral that is still growing, still wet, even after a century in the open air. This is what you came for."
+        }
+      ]
+    }
+  }
+}

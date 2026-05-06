@@ -52,6 +52,24 @@
       "coverArtAsset": "catalog_charons_bargain",
       "accentColorHex": "#2B6D7A",
       "contentStatus": "bundled"
+    },
+    {
+      "scenarioID": "salt_and_ruin",
+      "legacyScenarioIDs": [],
+      "title": "Salt and Ruin",
+      "tagline": "The tide pulls back once a century.",
+      "shortDescription": "A drowned temple exposed by a rare low tide. Retrieve the Tidal Lens before the ocean reclaims everything.",
+      "sortOrder": 50,
+      "recommendedStart": false,
+      "complexityTier": "standard",
+      "priceTier": "standard",
+      "availabilityModel": "included",
+      "productID": null,
+      "toneTags": ["Expedition", "Coastal", "Time Pressure"],
+      "nativeArchetypePreview": ["Salvager", "Antiquarian", "Diver"],
+      "coverArtAsset": "cover_salt_and_ruin",
+      "accentColorHex": "#2A5C6B",
+      "contentStatus": "bundled"
     }
   ]
 }

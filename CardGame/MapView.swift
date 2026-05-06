@@ -225,7 +225,7 @@ struct MapView: View {
         let isPortrait = size.height >= size.width
         let maxNodesPerDepth = max(nodesByDepth.values.map(\.count).max() ?? 1, 1)
         let horizontalInset: CGFloat = isPortrait ? 26 : 48
-        let topInset: CGFloat = isPortrait ? 34 : 42
+        let topInset: CGFloat = isPortrait ? 94 : 72
         let bottomInset: CGFloat = isPortrait ? 118 : 82
         let availableWidth = max(size.width - (horizontalInset * 2), 1)
         let widthPerNode = availableWidth / CGFloat(maxNodesPerDepth)
