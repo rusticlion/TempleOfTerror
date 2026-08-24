@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "Bash(grep:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(./Scripts/check_authored_scenarios.sh)",
+      "Bash(./Scripts/run_tests.sh unit *)"
     ],
     "deny": []
   },
